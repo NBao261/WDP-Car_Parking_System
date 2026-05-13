@@ -24,6 +24,7 @@ import exceptionRoutes from './routes/exception.routes';
 import feedbackRoutes from './routes/feedback.routes';
 import reportRoutes from './routes/report.routes';
 import configRoutes from './routes/config.routes';
+import publicRoutes from './routes/public.routes';
 
 const app = express();
 
@@ -58,6 +59,7 @@ app.get('/health', (_req, res) => {
 // ─── API Routes ───────────────────────────────────────
 const API_PREFIX = '/api/v1';
 
+app.use(`${API_PREFIX}/public`, publicRoutes);
 app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/facilities`, facilityRoutes);

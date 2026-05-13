@@ -1,0 +1,358 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - Phase 2
+  version: 1.0.0
+  description: API endpoints for Floors, Slots, Pricing, Public Access, and SystemConfig
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Local Development Server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ================= PUBLIC APIs =================
+  /public/facilities:
+    get:
+      summary: Get all active facilities
+      tags: [Public]
+      security: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: OK
+
+  /public/facilities/{facilityId}/pricing:
+    get:
+      summary: Get active pricing for a facility
+      tags: [Public]
+      security: []
+      parameters:
+        - in: path
+          name: facilityId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /public/facilities/{facilityId}/available-slots:
+    get:
+      summary: Get available slot counts by vehicle type
+      tags: [Public]
+      security: []
+      parameters:
+        - in: path
+          name: facilityId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  # ================= FLOORS APIs =================
+  /floors:
+    get:
+      summary: List all floors
+      tags: [Floors]
+      parameters:
+        - in: query
+          name: facilityId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create a new floor
+      tags: [Floors]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                facilityId:
+                  type: string
+                name:
+                  type: string
+                status:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /floors/{id}:
+    get:
+      summary: Get floor by ID
+      tags: [Floors]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    patch:
+      summary: Update floor
+      tags: [Floors]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Soft delete floor
+      tags: [Floors]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /floors/{id}/assign-vehicles:
+    patch:
+      summary: Assign allowed vehicle types to floor
+      tags: [Floors]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                allowedVehicleTypes:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: OK
+
+  # ================= PARKING SLOTS APIs =================
+  /slots:
+    post:
+      summary: Create a single slot
+      tags: [Slots]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                floorId:
+                  type: string
+                facilityId:
+                  type: string
+                vehicleTypeId:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /slots/bulk:
+    post:
+      summary: Create slots in bulk
+      tags: [Slots]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                facilityId:
+                  type: string
+                floorId:
+                  type: string
+                vehicleType:
+                  type: string
+                prefix:
+                  type: string
+                startNumber:
+                  type: integer
+                count:
+                  type: integer
+      responses:
+        '201':
+          description: Created
+
+  /slots/floor/{floorId}:
+    get:
+      summary: Get all slots on a floor
+      tags: [Slots]
+      parameters:
+        - in: path
+          name: floorId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /slots/{id}/status:
+    patch:
+      summary: Update slot status (e.g. maintenance)
+      tags: [Slots]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [available, maintenance, locked]
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: OK
+
+  # ================= PRICING APIs =================
+  /pricing:
+    get:
+      summary: List all pricing plans
+      tags: [Pricing]
+      parameters:
+        - in: query
+          name: facilityId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create pricing plan
+      tags: [Pricing]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                vehicleTypeId:
+                  type: string
+                facilityId:
+                  type: string
+                feeType:
+                  type: string
+                rates:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      label:
+                        type: string
+                      amount:
+                        type: number
+                      unit:
+                        type: string
+                status:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  # ================= SYSTEM CONFIG APIs =================
+  /config:
+    get:
+      summary: Get all system configs
+      tags: [SystemConfig]
+      responses:
+        '200':
+          description: OK
+  /config/logs:
+    get:
+      summary: Get audit logs
+      tags: [SystemConfig]
+      responses:
+        '200':
+          description: OK
+  /config/{key}:
+    get:
+      summary: Get specific config
+      tags: [SystemConfig]
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Update specific config
+      tags: [SystemConfig]
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                value:
+                  type: object
+      responses:
+        '200':
+          description: OK

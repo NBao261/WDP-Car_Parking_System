@@ -1,0 +1,86 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - Vehicle Types
+  version: 1.0.0
+paths:
+  /vehicle-types:
+    get:
+      summary: Get all vehicle types
+      tags: [VehicleTypes]
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create a vehicle type
+      tags: [VehicleTypes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+                slotSize:
+                  type: string
+                icon:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /vehicle-types/{id}:
+    get:
+      summary: Get vehicle type by ID
+      tags: [VehicleTypes]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    patch:
+      summary: Update vehicle type
+      tags: [VehicleTypes]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+                slotSize:
+                  type: string
+                icon:
+                  type: string
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Soft delete vehicle type
+      tags: [VehicleTypes]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK

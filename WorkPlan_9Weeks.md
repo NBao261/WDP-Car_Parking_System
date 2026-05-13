@@ -94,16 +94,16 @@
 
 #### BE1
 
-- [ ] API Authentication: Register, Login, Refresh Token (JWT)
-- [ ] Middleware Auth: verifyToken, checkRole (RBAC)
-- [ ] API User CRUD (FR-18): create, update, lock/unlock, resetPassword, list
+- [x] API Authentication: Register, Login, Refresh Token (JWT)
+- [x] Middleware Auth: verifyToken, checkRole (RBAC)
+- [x] API User CRUD (FR-18): create, update, lock/unlock, resetPassword, list
 - [ ] API Role & Permission (FR-19): getAll roles, assignRole, updatePermissions
 
 #### BE2
 
-- [ ] API ParkingFacility CRUD (FR-1): create, update, deactivate, list
-- [ ] API VehicleType CRUD (FR-2): create, update, delete (soft), list
-- [ ] API Floor CRUD + gán loại xe (FR-3): create, assignVehicleTypes, getFloorMap
+- [x] API ParkingFacility CRUD (FR-1): create, update, deactivate, list
+- [x] API VehicleType CRUD (FR-2): create, update, delete (soft), list
+- [x] API Floor CRUD + gán loại xe (FR-3): create, assignVehicleTypes, getFloorMap
 - [ ] Validation middleware cho tất cả API trên
 
 #### FE1
@@ -129,16 +129,16 @@
 
 #### BE1
 
-- [ ] API ParkingSlot CRUD (FR-4): create (bulk), update status, delete, getByFloor
-- [ ] Business logic: validate chuyển trạng thái slot (BR-3.3)
-- [ ] API PricingPlan CRUD (FR-5): create, assign to facility, deactivate, list
-- [ ] Business logic: chỉ 1 bảng giá active / tổ hợp (BR-4.2)
+- [x] API ParkingSlot CRUD (FR-4): create (bulk), update status, delete, getByFloor
+- [x] Business logic: validate chuyển trạng thái slot (BR-3.3)
+- [x] API PricingPlan CRUD (FR-5): create, assign to facility, deactivate, list
+- [x] Business logic: chỉ 1 bảng giá active / tổ hợp (BR-4.2)
 
 #### BE2
 
-- [ ] API SystemConfig (FR-20): get/update config, notification settings
-- [ ] API AuditLog (FR-20.4): list logs with filter
-- [ ] API xem thông tin bãi xe công khai (FR-12): facility info, pricing, slot count
+- [x] API SystemConfig (FR-20): get/update config, notification settings
+- [x] API AuditLog (FR-20.4): list logs with filter
+- [x] API xem thông tin bãi xe công khai (FR-12): facility info, pricing, slot count
 - [ ] Unit test cho tất cả API tuần 2-3
 
 #### FE1

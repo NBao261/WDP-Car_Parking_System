@@ -2,33 +2,48 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { AppError } from './error.middleware';
-import { UserRole } from '../models';
+import { UserRole } from '../models/user.model';
 
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    role: UserRole;
-  };
+export interface AuthPayload {
+  userId: string;
+  role: UserRole;
 }
 
-export const authenticate = (req: AuthRequest, _res: Response, next: NextFunction) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) throw new AppError('Access token required', 401);
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthPayload;
+    }
+  }
+}
 
+export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
   try {
-    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as { id: string; role: UserRole };
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new AppError('No token provided or invalid format', 401);
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as AuthPayload;
+
     req.user = decoded;
     next();
-  } catch {
-    throw new AppError('Invalid or expired token', 401);
+  } catch (error: any) {
+    next(new AppError(`Unauthorized: ${error.message}`, 401));
   }
 };
 
-export const authorize = (...roles: UserRole[]) => {
-  return (req: AuthRequest, _res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      throw new AppError('Insufficient permissions', 403);
+export const checkRole = (roles: UserRole[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return next(new AppError('Unauthorized', 401));
     }
+
+    if (!roles.includes(req.user.role)) {
+      return next(new AppError('Forbidden: Insufficient permissions', 403));
+    }
+
     next();
   };
 };
