@@ -1,24 +1,22 @@
 import { Router } from 'express';
 import { FacilityController } from '../controllers/facility.controller';
-import { verifyToken, checkRole } from '../middlewares/auth.middleware';
+import { verifyToken, checkRole, checkPermission } from '../middlewares/auth.middleware';
 import { UserRole } from '../models/user.model';
 import { validate } from '../middlewares/validate.middleware';
 import { createFacilitySchema, updateFacilitySchema } from '../validations/facility.validation';
-
+import { PERMISSIONS } from '../config/permissions';
 
 const router = Router();
 
 router.use(verifyToken);
 
-// Managers and Admins can view facilities
-router.get('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), FacilityController.getAllFacilities);
-router.get('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), FacilityController.getFacilityById);
+// Xem thông tin tòa nhà (Admin, Manager, Staff đều có FACILITY_READ)
+router.get('/', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), checkPermission(PERMISSIONS.FACILITY_READ), FacilityController.getAllFacilities);
+router.get('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), checkPermission(PERMISSIONS.FACILITY_READ), FacilityController.getFacilityById);
 
-// Only Admins and Managers can modify facilities (based on the permission matrix)
-// Usually Admins have full access, and Managers have access to their assigned facilities.
-// We'll restrict these to ADMIN and MANAGER.
-router.post('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(createFacilitySchema), FacilityController.createFacility);
-router.patch('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(updateFacilitySchema), FacilityController.updateFacility);
-router.delete('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), FacilityController.deactivateFacility);
+// Tạo/Sửa/Xóa tòa nhà (chỉ Admin + Manager theo SRS 3.1)
+router.post('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(createFacilitySchema), checkPermission(PERMISSIONS.FACILITY_CREATE), FacilityController.createFacility);
+router.patch('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(updateFacilitySchema), checkPermission(PERMISSIONS.FACILITY_UPDATE), FacilityController.updateFacility);
+router.delete('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), checkPermission(PERMISSIONS.FACILITY_DELETE), FacilityController.deactivateFacility);
 
 export default router;

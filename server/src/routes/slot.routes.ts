@@ -1,21 +1,26 @@
 import { Router } from 'express';
 import { SlotController } from '../controllers/slot.controller';
-import { verifyToken, checkRole } from '../middlewares/auth.middleware';
+import { verifyToken, checkRole, checkPermission } from '../middlewares/auth.middleware';
 import { UserRole } from '../models/user.model';
 import { validate } from '../middlewares/validate.middleware';
 import { createSlotSchema, createBulkSlotsSchema, updateSlotStatusSchema } from '../validations/slot.validation';
 import { objectIdParamSchema, floorIdParamSchema } from '../validations/common.validation';
+import { PERMISSIONS } from '../config/permissions';
 
 const router = Router();
 
 router.use(verifyToken);
 
-router.get('/floor/:floorId', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), validate(floorIdParamSchema), SlotController.getSlotsByFloor);
-router.get('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), validate(objectIdParamSchema), SlotController.getSlotById);
+// Xem slot (SRS 3.2: Admin, Manager, Staff xem trạng thái)
+router.get('/floor/:floorId', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), validate(floorIdParamSchema), checkPermission(PERMISSIONS.SLOT_READ), SlotController.getSlotsByFloor);
+router.get('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), validate(objectIdParamSchema), checkPermission(PERMISSIONS.SLOT_READ), SlotController.getSlotById);
 
-router.post('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(createSlotSchema), SlotController.createSlot);
-router.post('/bulk', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(createBulkSlotsSchema), SlotController.createBulkSlots);
-router.patch('/:id/status', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), validate(updateSlotStatusSchema), SlotController.updateSlotStatus);
-router.delete('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(objectIdParamSchema), SlotController.deleteSlot);
+// Tạo/Xóa slot (SRS 3.2: chỉ Admin + Manager)
+router.post('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(createSlotSchema), checkPermission(PERMISSIONS.SLOT_CREATE), SlotController.createSlot);
+router.post('/bulk', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(createBulkSlotsSchema), checkPermission(PERMISSIONS.SLOT_CREATE), SlotController.createBulkSlots);
+router.delete('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(objectIdParamSchema), checkPermission(PERMISSIONS.SLOT_DELETE), SlotController.deleteSlot);
+
+// Cập nhật trạng thái slot (SRS 3.2: Admin, Manager full; Staff giới hạn)
+router.patch('/:id/status', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), validate(updateSlotStatusSchema), checkPermission(PERMISSIONS.SLOT_UPDATE_STATUS), SlotController.updateSlotStatus);
 
 export default router;
