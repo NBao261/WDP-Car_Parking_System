@@ -1,0 +1,161 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - Roles & Permissions
+  version: 1.0.0
+paths:
+  /roles:
+    get:
+      summary: Get all roles
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        code:
+                          type: string
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        permissions:
+                          type: array
+                          items:
+                            type: string
+                        isDefault:
+                          type: boolean
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+    post:
+      summary: Create a role
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - name
+              properties:
+                code:
+                  type: string
+                  description: 'Unique code for the role (e.g. admin, manager, staff)'
+                name:
+                  type: string
+                  description: 'Display name for the role'
+                description:
+                  type: string
+                permissions:
+                  type: array
+                  items:
+                    type: string
+                isDefault:
+                  type: boolean
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /roles/{id}/permissions:
+    put:
+      summary: Update permissions for a specific role
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Role ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - permissions
+              properties:
+                permissions:
+                  type: array
+                  items:
+                    type: string
+                  description: 'List of permission strings'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Role Not Found
+
+  /roles/assign:
+    post:
+      summary: Assign a role and optional custom permissions to a user
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - roleCode
+              properties:
+                userId:
+                  type: string
+                  description: User ID to assign the role to
+                roleCode:
+                  type: string
+                  description: Role code to assign (e.g. manager, staff)
+                customPermissions:
+                  type: array
+                  items:
+                    type: string
+                  description: 'List of extra custom permission strings for the user'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: User or Role Not Found

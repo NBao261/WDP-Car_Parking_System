@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { FacilityController } from '../controllers/facility.controller';
 import { verifyToken, checkRole } from '../middlewares/auth.middleware';
 import { UserRole } from '../models/user.model';
+import { validate } from '../middlewares/validate.middleware';
+import { createFacilitySchema, updateFacilitySchema } from '../validations/facility.validation';
+
 
 const router = Router();
 
@@ -14,8 +17,8 @@ router.get('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), FacilityContro
 // Only Admins and Managers can modify facilities (based on the permission matrix)
 // Usually Admins have full access, and Managers have access to their assigned facilities.
 // We'll restrict these to ADMIN and MANAGER.
-router.post('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), FacilityController.createFacility);
-router.patch('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), FacilityController.updateFacility);
+router.post('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(createFacilitySchema), FacilityController.createFacility);
+router.patch('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(updateFacilitySchema), FacilityController.updateFacility);
 router.delete('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), FacilityController.deactivateFacility);
 
 export default router;

@@ -97,14 +97,14 @@
 - [x] API Authentication: Register, Login, Refresh Token (JWT)
 - [x] Middleware Auth: verifyToken, checkRole (RBAC)
 - [x] API User CRUD (FR-18): create, update, lock/unlock, resetPassword, list
-- [ ] API Role & Permission (FR-19): getAll roles, assignRole, updatePermissions
+- [x] API Role & Permission (FR-19): getAll roles, assignRole, updatePermissions
 
 #### BE2
 
 - [x] API ParkingFacility CRUD (FR-1): create, update, deactivate, list
 - [x] API VehicleType CRUD (FR-2): create, update, delete (soft), list
 - [x] API Floor CRUD + gán loại xe (FR-3): create, assignVehicleTypes, getFloorMap
-- [ ] Validation middleware cho tất cả API trên
+- [x] Validation middleware cho tất cả API trên
 
 #### FE1
 

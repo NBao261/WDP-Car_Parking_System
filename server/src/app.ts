@@ -25,6 +25,8 @@ import feedbackRoutes from './routes/feedback.routes';
 import reportRoutes from './routes/report.routes';
 import configRoutes from './routes/config.routes';
 import publicRoutes from './routes/public.routes';
+import roleRoutes from './routes/role.routes';
+
 
 const app = express();
 
@@ -74,6 +76,8 @@ app.use(`${API_PREFIX}/exceptions`, exceptionRoutes);
 app.use(`${API_PREFIX}/feedbacks`, feedbackRoutes);
 app.use(`${API_PREFIX}/reports`, reportRoutes);
 app.use(`${API_PREFIX}/config`, configRoutes);
+app.use(`${API_PREFIX}/roles`, roleRoutes);
+
 
 // ─── Error Handling ───────────────────────────────────
 app.use(notFoundHandler);
