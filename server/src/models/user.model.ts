@@ -23,6 +23,7 @@ export interface IUser extends Document {
   role: UserRole;
   status: UserStatus;
   assignedFacilities: mongoose.Types.ObjectId[];
+  customPermissions: string[];
   failedLoginAttempts: number;
   lockedUntil: Date | null;
   mustChangePassword: boolean;
@@ -42,6 +43,7 @@ const userSchema = new Schema<IUser>(
     role: { type: String, enum: Object.values(UserRole), required: true },
     status: { type: String, enum: Object.values(UserStatus), default: UserStatus.ACTIVE },
     assignedFacilities: [{ type: Schema.Types.ObjectId, ref: 'ParkingFacility' }],
+    customPermissions: [{ type: String }],
     failedLoginAttempts: { type: Number, default: 0 },
     lockedUntil: { type: Date, default: null },
     mustChangePassword: { type: Boolean, default: true },
