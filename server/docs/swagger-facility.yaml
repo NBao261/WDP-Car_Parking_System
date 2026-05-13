@@ -1,0 +1,91 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - Facilities
+  version: 1.0.0
+paths:
+  /facilities:
+    get:
+      summary: Get all parking facilities
+      tags: [Facilities]
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create a parking facility
+      tags: [Facilities]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                address:
+                  type: string
+                openTime:
+                  type: string
+                closeTime:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /facilities/{id}:
+    get:
+      summary: Get facility by ID
+      tags: [Facilities]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    patch:
+      summary: Update facility
+      tags: [Facilities]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                address:
+                  type: string
+                openTime:
+                  type: string
+                closeTime:
+                  type: string
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Deactivate facility
+      tags: [Facilities]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
