@@ -2,8 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ════════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES — Design Tokens from Figma Admin UI
+   ════════════════════════════════════════════════════════════ */
+:root {
+  /* Brand */
+  --color-brand: #060606;
+  --color-brand-foreground: #ffffff;
+
+  /* Accent (Lime / Neon Green) */
+  --color-accent: #d7ee46;
+  --color-accent-dark: #96a827;
+  --color-accent-darker: #7a8c17;
+
+  /* Surfaces */
+  --color-background: #f9fafb;
+  --color-card: #ffffff;
+  --color-sidebar: #eff0ef;
+
+  /* Semantic */
+  --color-destructive: #d4183d;
+  --color-destructive-foreground: #ffffff;
+
+  /* Muted */
+  --color-muted: #ececf0;
+  --color-muted-foreground: #717182;
+
+  /* Input */
+  --color-input-bg: #f3f3f5;
+
+  /* Border */
+  --color-border: rgba(0, 0, 0, 0.1);
+
+  /* Ring (focus) */
+  --color-ring: #b0b0b0;
+
+  /* Radius base */
+  --radius: 0.625rem;
+
+  /* Font */
+  --font-size-base: 16px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+}
+
+/* ════════════════════════════════════════════════════════════
+   BASE LAYER — Typography & Global Defaults
+   Mirrors the base styles from Figma's theme.css
+   ════════════════════════════════════════════════════════════ */
 @layer base {
+  /* Global reset */
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-size: var(--font-size-base);
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-surface text-gray-900 antialiased;
+    font-family:
+      'Inter',
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
+  }
+
+  /* Heading hierarchy — from Figma theme.css */
+  h1 {
+    @apply text-2xl font-bold;
+    line-height: 1.5;
+  }
+
+  h2 {
+    @apply text-xl font-bold;
+    line-height: 1.5;
+  }
+
+  h3 {
+    @apply text-lg font-bold;
+    line-height: 1.5;
+  }
+
+  h4 {
+    @apply text-base font-medium;
+    line-height: 1.5;
+  }
+
+  label {
+    @apply text-base font-medium;
+    line-height: 1.5;
+  }
+
+  button {
+    @apply text-base font-medium;
+    line-height: 1.5;
+  }
+
+  input {
+    @apply text-base font-normal;
+    line-height: 1.5;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   COMPONENT LAYER — Reusable patterns from Figma
+   ════════════════════════════════════════════════════════════ */
+@layer components {
+  /* Focus ring — consistent across all interactive elements */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2;
   }
 }
