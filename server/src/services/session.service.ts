@@ -7,6 +7,7 @@ import { Floor } from '../models/floor.model';
 import { PricingPlan } from '../models/pricingPlan.model';
 import { AppError } from '../middlewares/error.middleware';
 import { generateSessionCode, generateCardCode } from '../utils/codeGenerator';
+import { getIO } from '../config/socket';
 
 interface CheckConditionsResult {
   eligible: boolean;
@@ -234,6 +235,17 @@ export class SessionService {
       .populate('slotId', 'code')
       .populate('staffInId', 'name email');
 
+    // Emit socket event
+    try {
+      getIO().to(`facility:${data.facilityId}`).emit('slot:statusChanged', {
+        slotId: slot._id,
+        status: SlotStatus.OCCUPIED,
+        facilityId: data.facilityId,
+      });
+    } catch (err) {
+      // Ignore if socket is not initialized
+    }
+
     return populatedSession!;
   }
 
@@ -333,5 +345,175 @@ export class SessionService {
     }
 
     return session;
+  }
+
+  /**
+   * FR-9.2: Xem danh sách lượt gửi đang hoạt động
+   */
+  static async getActiveSessions(query: any): Promise<{ data: IParkingSession[], total: number, page: number, totalPages: number }> {
+    const { 
+      page = 1, 
+      limit = 10, 
+      facilityId, 
+      vehicleTypeId, 
+      floorId, 
+      licensePlate,
+      sortBy = 'checkInTime',
+      sortOrder = 'desc'
+    } = query;
+
+    const filter: any = { status: SessionStatus.ACTIVE };
+
+    if (facilityId) filter.facilityId = facilityId;
+    if (vehicleTypeId) filter.vehicleTypeId = vehicleTypeId;
+    if (floorId) filter.floorId = floorId;
+    if (licensePlate) filter.licensePlate = { $regex: licensePlate, $options: 'i' };
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const sort: any = { [sortBy as string]: sortOrder === 'asc' ? 1 : -1 };
+
+    const [data, total] = await Promise.all([
+      ParkingSession.find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(Number(limit))
+        .populate('vehicleTypeId', 'name code icon')
+        .populate('facilityId', 'name address')
+        .populate('floorId', 'name')
+        .populate('slotId', 'code status')
+        .populate('pricingPlanId', 'name feeType rates')
+        .populate('staffInId', 'name email'),
+      ParkingSession.countDocuments(filter)
+    ]);
+
+    return { 
+      data, 
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / Number(limit))
+    };
+  }
+
+  /**
+   * FR-10.2: Tính phí tự động
+   * Tính phí dựa trên bảng giá áp dụng
+   */
+  static async calculateFee(sessionId: string, checkOutTime: Date = new Date()): Promise<{ totalFee: number, details: any }> {
+    const session = await ParkingSession.findById(sessionId).populate('pricingPlanId');
+    if (!session) throw new AppError('Session không tồn tại', 404);
+    
+    const pricingPlan: any = session.pricingPlanId;
+    if (!pricingPlan) throw new AppError('Không tìm thấy bảng giá cho session này', 400);
+
+    const checkInTime = session.checkInTime;
+    const durationMs = checkOutTime.getTime() - checkInTime.getTime();
+    if (durationMs < 0) {
+      throw new AppError('Thời gian ra phải sau thời gian vào', 400);
+    }
+    const durationHours = Math.ceil(durationMs / (1000 * 60 * 60)); // làm tròn lên
+
+    let totalFee = 0;
+    let baseFee = 0;
+    let overnightFee = 0;
+    let overtimeFee = 0;
+
+    // Check if overnight (crosses 00:00) - simple calculation: check days diff
+    const startDay = new Date(checkInTime.getFullYear(), checkInTime.getMonth(), checkInTime.getDate());
+    const endDay = new Date(checkOutTime.getFullYear(), checkOutTime.getMonth(), checkOutTime.getDate());
+    const daysDiff = Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (pricingPlan.feeType === 'per_turn') {
+      baseFee = pricingPlan.rates[0]?.amount || 0;
+      if (daysDiff > 0 && pricingPlan.overnightFee > 0) {
+        overnightFee = pricingPlan.overnightFee * daysDiff;
+      }
+    } else if (pricingPlan.feeType === 'hourly') {
+      const firstHourRate = pricingPlan.rates.find((r: any) => r.label === 'Giờ đầu' || r.label === 'first_hour')?.amount || pricingPlan.rates[0]?.amount || 0;
+      const nextHourRate = pricingPlan.rates.find((r: any) => r.label === 'Giờ tiếp theo' || r.label === 'next_hour')?.amount || pricingPlan.rates[1]?.amount || firstHourRate;
+      
+      if (durationHours <= 1) {
+        baseFee = firstHourRate;
+      } else {
+        baseFee = firstHourRate + (durationHours - 1) * nextHourRate;
+      }
+      
+      if (daysDiff > 0 && pricingPlan.overnightFee > 0) {
+        overnightFee = pricingPlan.overnightFee * daysDiff;
+      }
+    } else {
+      // Default fallback
+      baseFee = pricingPlan.rates[0]?.amount || 0;
+    }
+
+    // Phí quá giờ (nếu durationHours > 24)
+    if (durationHours > 24 && pricingPlan.overtimeFeePerHour > 0) {
+      overtimeFee = (durationHours - 24) * pricingPlan.overtimeFeePerHour;
+    }
+
+    totalFee = baseFee + overnightFee + overtimeFee;
+
+    return {
+      totalFee,
+      details: {
+        durationHours,
+        baseFee,
+        overnightFee,
+        overtimeFee,
+        pricingPlanName: pricingPlan.name,
+        daysDiff
+      }
+    };
+  }
+
+  /**
+   * FR-10.3: Thu phí gửi xe và check-out
+   */
+  static async checkOut(data: { sessionId: string, gateOut: string, staffOutId: string }): Promise<IParkingSession> {
+    const session = await ParkingSession.findById(data.sessionId);
+    if (!session) throw new AppError('Session không tồn tại', 404);
+    if (session.status === SessionStatus.COMPLETED) {
+      throw new AppError('Lượt gửi xe đã kết thúc', 400);
+    }
+
+    const checkOutTime = new Date();
+    const feeResult = await this.calculateFee(data.sessionId, checkOutTime);
+
+    session.checkOutTime = checkOutTime;
+    session.gateOut = data.gateOut;
+    session.staffOutId = new mongoose.Types.ObjectId(data.staffOutId);
+    session.totalFee = feeResult.totalFee;
+    session.status = SessionStatus.COMPLETED;
+    
+    await session.save();
+
+    // Update slot -> Available
+    const slot = await ParkingSlot.findById(session.slotId);
+    if (slot) {
+      slot.status = SlotStatus.AVAILABLE;
+      slot.currentSessionId = null;
+      await slot.save();
+    }
+
+    const populatedSession = await ParkingSession.findById(session._id)
+      .populate('vehicleTypeId', 'name code icon')
+      .populate('facilityId', 'name address')
+      .populate('floorId', 'name')
+      .populate('slotId', 'code status')
+      .populate('pricingPlanId', 'name feeType rates')
+      .populate('staffInId', 'name email')
+      .populate('staffOutId', 'name email');
+
+    // Emit socket event
+    try {
+      getIO().to(`facility:${session.facilityId}`).emit('slot:statusChanged', {
+        slotId: session.slotId,
+        status: SlotStatus.AVAILABLE,
+        facilityId: session.facilityId,
+      });
+    } catch (err) {
+      // Ignore if socket is not initialized
+    }
+
+    return populatedSession!;
   }
 }

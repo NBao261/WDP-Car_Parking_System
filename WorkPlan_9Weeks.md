@@ -180,12 +180,12 @@
 
 #### BE2
 
-- [ ] API Check-out xe (FR-10.2 + FR-10.3):
+- [x] API Check-out xe (FR-10.2 + FR-10.3):
   - Tính phí tự động theo bảng giá (BR-4.3, BR-4.4, BR-4.5)
   - Logic: làm tròn giờ, phí qua đêm, phí quá giờ
   - Thu phí + cập nhật session → Completed, slot → Available
-- [ ] API lấy danh sách session đang active (FR-9.2): filter, sort
-- [ ] Socket.IO: emit event khi slot thay đổi trạng thái
+- [x] API lấy danh sách session đang active (FR-9.2): filter, sort
+- [x] Socket.IO: emit event khi slot thay đổi trạng thái
 
 #### FE1
 
