@@ -27,7 +27,7 @@ paths:
                   example: "0901234567"
                 password:
                   type: string
-                  example: "Password@123"
+                  example: "smartparking123"
                 role:
                   type: string
                   enum: [admin, manager, staff, driver]
@@ -64,7 +64,7 @@ paths:
                   example: "admin@smartparking.com"
                 password:
                   type: string
-                  example: "Admin@123"
+                  example: "smartparking123"
       responses:
         '200':
           description: Login successful

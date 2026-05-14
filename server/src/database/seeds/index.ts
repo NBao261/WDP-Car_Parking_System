@@ -96,7 +96,8 @@ const seed = async () => {
     // 3. Seed Users (5 users: 1 admin, 1 manager, 2 staff, 1 driver)
     // ═══════════════════════════════════════════════════
     logger.info('👤 Seeding users...');
-    const hashedPassword = await bcrypt.hash('Admin@123', 10);
+    const defaultPassword = process.env.SEED_DEFAULT_PASSWORD || 'smartparking123';
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
     const users = await User.insertMany([
       {
@@ -145,7 +146,7 @@ const seed = async () => {
         mustChangePassword: false,
       },
     ]);
-    logger.info(`✅ ${users.length} users created (password: Admin@123)`);
+    logger.info(`✅ ${users.length} users created (password: ${defaultPassword})`);
 
     // ═══════════════════════════════════════════════════
     // 4. Seed Vehicle Types (5 loại)
@@ -373,7 +374,7 @@ const seed = async () => {
     logger.info('  • 25 Slots (5 per floor)');
     logger.info('  • 5 Pricing Plans');
     logger.info('────────────────────────────────────────');
-    logger.info('🔐 Login credentials: any email / Admin@123');
+    logger.info(`🔐 Login credentials: any email / ${defaultPassword}`);
     logger.info('');
 
     process.exit(0);
