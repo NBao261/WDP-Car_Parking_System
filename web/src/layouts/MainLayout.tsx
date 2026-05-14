@@ -9,16 +9,26 @@ const MainLayout: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <header className="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <Link to="/" className="text-xl font-bold">SPMS</Link>
+          <Link to="/" className="text-xl font-bold">
+            SPMS
+          </Link>
           <nav className="hidden md:flex space-x-4">
-            <Link to="/admin" className="hover:text-blue-200">Admin</Link>
-            <Link to="/manager" className="hover:text-blue-200">Manager</Link>
-            <Link to="/staff" className="hover:text-blue-200">Staff</Link>
+            <Link to="/admin" className="hover:text-blue-200">
+              Admin
+            </Link>
+            <Link to="/manager" className="hover:text-blue-200">
+              Manager
+            </Link>
+            <Link to="/staff" className="hover:text-blue-200">
+              Staff
+            </Link>
           </nav>
         </div>
         <div className="flex items-center space-x-4">
-          <span>{user?.name} ({user?.role})</span>
-          <button 
+          <span>
+            {user?.name} ({user?.role})
+          </span>
+          <button
             onClick={logout}
             className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded transition"
           >

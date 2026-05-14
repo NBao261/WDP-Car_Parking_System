@@ -1,8 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { UserRole } from '../../../shared/types';
-import { ProtectedRoute } from '../components/ProtectedRoute';
+import { ProtectedRoute, AuthRedirect } from '../components/ProtectedRoute';
 import MainLayout from '../layouts/MainLayout';
-import { useAuthStore } from '../store';
 
 // Pages
 import LoginPage from '../pages/auth/LoginPage';
@@ -10,22 +9,6 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
 import StaffDashboard from '../pages/staff/StaffDashboard';
 import UnauthorizedPage from '../pages/error/UnauthorizedPage';
-
-const AuthRedirect = ({ children }: { children: JSX.Element }) => {
-  const { isAuthenticated, user } = useAuthStore();
-  
-  if (isAuthenticated && user) {
-    // Redirect to the appropriate dashboard based on role
-    const dashboardPath = user.role === UserRole.ADMIN 
-      ? '/admin' 
-      : user.role === UserRole.MANAGER 
-        ? '/manager' 
-        : '/staff';
-    return <Navigate to={dashboardPath} replace />;
-  }
-  
-  return children;
-};
 
 export const router = createBrowserRouter([
   {
@@ -76,7 +59,9 @@ export const router = createBrowserRouter([
           // Staff Routes
           {
             path: 'staff',
-            element: <ProtectedRoute allowedRoles={[UserRole.STAFF, UserRole.MANAGER, UserRole.ADMIN]} />,
+            element: (
+              <ProtectedRoute allowedRoles={[UserRole.STAFF, UserRole.MANAGER, UserRole.ADMIN]} />
+            ),
             children: [
               {
                 index: true,
@@ -93,5 +78,3 @@ export const router = createBrowserRouter([
     element: <Navigate to="/login" replace />,
   },
 ]);
-
-

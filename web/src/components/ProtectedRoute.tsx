@@ -21,3 +21,19 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) 
 
   return <Outlet />;
 };
+
+export const AuthRedirect = ({ children }: { children: JSX.Element }) => {
+  const { isAuthenticated, user } = useAuthStore();
+
+  if (isAuthenticated && user) {
+    const dashboardPath =
+      user.role === UserRole.ADMIN
+        ? '/admin'
+        : user.role === UserRole.MANAGER
+          ? '/manager'
+          : '/staff';
+    return <Navigate to={dashboardPath} replace />;
+  }
+
+  return children;
+};
