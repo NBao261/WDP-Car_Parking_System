@@ -15,6 +15,21 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "60b9b0b9e6b3f3b3b4f3b3b4"
+                    name: "Central Hub Parking"
+                    address: "123 Main Street, District 1, HCMC"
+                    openTime: "00:00"
+                    closeTime: "23:59"
+                    status: "active"
+                pagination:
+                  page: 1
+                  limit: 10
+                  total: 1
     post:
       summary: Create a parking facility
       tags: [Facilities]
@@ -27,15 +42,30 @@ paths:
               properties:
                 name:
                   type: string
+                  example: "Central Hub Parking"
                 address:
                   type: string
+                  example: "123 Main Street, District 1, HCMC"
                 openTime:
                   type: string
+                  example: "00:00"
                 closeTime:
                   type: string
+                  example: "23:59"
       responses:
         '201':
           description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  name: "Central Hub Parking"
+                  address: "123 Main Street, District 1, HCMC"
+                  openTime: "00:00"
+                  closeTime: "23:59"
+                  status: "active"
 
   /facilities/{id}:
     get:
@@ -47,9 +77,21 @@ paths:
           required: true
           schema:
             type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b4"
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  name: "Central Hub Parking"
+                  address: "123 Main Street, District 1, HCMC"
+                  openTime: "00:00"
+                  closeTime: "23:59"
+                  status: "active"
     patch:
       summary: Update facility
       tags: [Facilities]
@@ -59,6 +101,7 @@ paths:
           required: true
           schema:
             type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b4"
       requestBody:
         required: true
         content:
@@ -68,15 +111,30 @@ paths:
               properties:
                 name:
                   type: string
+                  example: "Sunrise Tower Parking"
                 address:
                   type: string
+                  example: "456 Sunrise Avenue, District 2, HCMC"
                 openTime:
                   type: string
+                  example: "06:00"
                 closeTime:
                   type: string
+                  example: "22:00"
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  name: "Sunrise Tower Parking"
+                  address: "456 Sunrise Avenue, District 2, HCMC"
+                  openTime: "06:00"
+                  closeTime: "22:00"
+                  status: "active"
     delete:
       summary: Deactivate facility
       tags: [Facilities]
@@ -89,3 +147,8 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}

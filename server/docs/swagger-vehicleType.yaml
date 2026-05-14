@@ -10,6 +10,11 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
     post:
       summary: Create a vehicle type
       tags: [VehicleTypes]
@@ -22,15 +27,24 @@ paths:
               properties:
                 name:
                   type: string
+                  example: "Xe Máy"
                 code:
                   type: string
+                  example: "MOTO"
                 slotSize:
                   type: string
+                  example: "small"
                 icon:
                   type: string
+                  example: "🏍️"
       responses:
         '201':
           description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
 
   /vehicle-types/{id}:
     get:
@@ -42,9 +56,15 @@ paths:
           required: true
           schema:
             type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b6"
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
     patch:
       summary: Update vehicle type
       tags: [VehicleTypes]
@@ -54,6 +74,7 @@ paths:
           required: true
           schema:
             type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b6"
       requestBody:
         required: true
         content:
@@ -63,15 +84,24 @@ paths:
               properties:
                 name:
                   type: string
+                  example: "Xe Máy Cỡ Lớn"
                 code:
                   type: string
+                  example: "MOTO_LARGE"
                 slotSize:
                   type: string
+                  example: "medium"
                 icon:
                   type: string
+                  example: "🏍️"
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
     delete:
       summary: Soft delete vehicle type
       tags: [VehicleTypes]
@@ -84,3 +114,8 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
