@@ -171,12 +171,12 @@
 
 #### BE1
 
-- [ ] API Check-in xe (FR-8 + FR-9): checkConditions, createSession
+- [x] API Check-in xe (FR-8 + FR-9): checkConditions, createSession
   - Validate: loại xe, slot trống, giờ hoạt động, blacklist (BR-5.1)
   - Tạo session + cập nhật slot → Occupied
   - Sinh mã thẻ xe / QR code
-- [ ] API gợi ý tầng/khu vực (FR-8.3): dựa trên loại xe + slot trống
-- [ ] API tìm session (FR-10.1): theo mã thẻ, biển số, mã session
+- [x] API gợi ý tầng/khu vực (FR-8.3): dựa trên loại xe + slot trống
+- [x] API tìm session (FR-10.1): theo mã thẻ, biển số, mã session
 
 #### BE2
 

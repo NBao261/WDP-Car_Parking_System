@@ -38,6 +38,11 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
 
   /public/facilities/{facilityId}/pricing:
     get:
@@ -53,6 +58,11 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
 
   /public/facilities/{facilityId}/available-slots:
     get:
@@ -68,6 +78,11 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
 
   # ================= FLOORS APIs =================
   /floors:
@@ -82,6 +97,11 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
     post:
       summary: Create a new floor
       tags: [Floors]
@@ -94,13 +114,21 @@ paths:
               properties:
                 facilityId:
                   type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b4"
                 name:
                   type: string
+                  example: "Tầng B1"
                 status:
                   type: string
+                  example: "active"
       responses:
         '201':
           description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
 
   /floors/{id}:
     get:
@@ -115,6 +143,11 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
     patch:
       summary: Update floor
       tags: [Floors]
@@ -127,9 +160,15 @@ paths:
               properties:
                 name:
                   type: string
+                  example: "Tầng B1 (Updated)"
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
     delete:
       summary: Soft delete floor
       tags: [Floors]
@@ -142,6 +181,11 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
 
   /floors/{id}/assign-vehicles:
     patch:
@@ -164,9 +208,15 @@ paths:
                   type: array
                   items:
                     type: string
+                  example: ["60b9b0b9e6b3f3b3b4f3b3b6", "60b9b0b9e6b3f3b3b4f3b3b7"]
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
 
   # ================= PARKING SLOTS APIs =================
   /slots:
@@ -182,15 +232,24 @@ paths:
               properties:
                 code:
                   type: string
+                  example: "A-01"
                 floorId:
                   type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b8"
                 facilityId:
                   type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b4"
                 vehicleTypeId:
                   type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b6"
       responses:
         '201':
           description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
 
   /slots/bulk:
     post:
@@ -205,19 +264,30 @@ paths:
               properties:
                 facilityId:
                   type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b4"
                 floorId:
                   type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b8"
                 vehicleType:
                   type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b6"
                 prefix:
                   type: string
+                  example: "A"
                 startNumber:
                   type: integer
+                  example: 1
                 count:
                   type: integer
+                  example: 10
       responses:
         '201':
           description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
 
   /slots/floor/{floorId}:
     get:
@@ -232,6 +302,11 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
 
   /slots/{id}/status:
     patch:
@@ -253,11 +328,18 @@ paths:
                 status:
                   type: string
                   enum: [available, maintenance, locked]
+                  example: "maintenance"
                 reason:
                   type: string
+                  example: "Sửa chữa cảm biến"
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
 
   # ================= PRICING APIs =================
   /pricing:
@@ -272,6 +354,11 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
     post:
       summary: Create pricing plan
       tags: [Pricing]
@@ -284,12 +371,16 @@ paths:
               properties:
                 name:
                   type: string
+                  example: "Xe Máy - Theo giờ"
                 vehicleTypeId:
                   type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b6"
                 facilityId:
                   type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b4"
                 feeType:
                   type: string
+                  example: "hourly"
                 rates:
                   type: array
                   items:
@@ -297,15 +388,24 @@ paths:
                     properties:
                       label:
                         type: string
+                        example: "Giờ đầu"
                       amount:
                         type: number
+                        example: 5000
                       unit:
                         type: string
+                        example: "VND"
                 status:
                   type: string
+                  example: "active"
       responses:
         '201':
           description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
 
   # ================= SYSTEM CONFIG APIs =================
   /config:
@@ -315,6 +415,11 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
   /config/logs:
     get:
       summary: Get audit logs
@@ -322,6 +427,11 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
   /config/{key}:
     get:
       summary: Get specific config
@@ -335,6 +445,11 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
     put:
       summary: Update specific config
       tags: [SystemConfig]
@@ -353,6 +468,12 @@ paths:
               properties:
                 value:
                   type: object
+                  example: {"timezone": "Asia/Ho_Chi_Minh", "currency": "VND"}
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}

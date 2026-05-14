@@ -29,6 +29,21 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "60b9b0b9e6b3f3b3b4f3b3b5"
+                    name: "Nguyen Van B"
+                    email: "nguyenvanb@example.com"
+                    phone: "0909876543"
+                    role: "staff"
+                    status: "active"
+                pagination:
+                  page: 1
+                  limit: 10
+                  total: 1
     post:
       summary: Create a user
       tags: [Users]
@@ -41,17 +56,33 @@ paths:
               properties:
                 name:
                   type: string
+                  example: "Nguyen Van B"
                 email:
                   type: string
+                  example: "nguyenvanb@example.com"
                 phone:
                   type: string
+                  example: "0909876543"
                 password:
                   type: string
+                  example: "User@123"
                 role:
                   type: string
+                  example: "staff"
       responses:
         '201':
           description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b5"
+                  name: "Nguyen Van B"
+                  email: "nguyenvanb@example.com"
+                  phone: "0909876543"
+                  role: "staff"
+                  status: "active"
 
   /users/{id}:
     get:
@@ -63,9 +94,21 @@ paths:
           required: true
           schema:
             type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b5"
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b5"
+                  name: "Nguyen Van B"
+                  email: "nguyenvanb@example.com"
+                  phone: "0909876543"
+                  role: "staff"
+                  status: "active"
     patch:
       summary: Update user
       tags: [Users]
@@ -75,6 +118,7 @@ paths:
           required: true
           schema:
             type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b5"
       requestBody:
         required: true
         content:
@@ -84,13 +128,27 @@ paths:
               properties:
                 name:
                   type: string
+                  example: "Nguyen Van B Updated"
                 phone:
                   type: string
+                  example: "0909876544"
                 status:
                   type: string
+                  example: "active"
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b5"
+                  name: "Nguyen Van B Updated"
+                  email: "nguyenvanb@example.com"
+                  phone: "0909876544"
+                  role: "staff"
+                  status: "active"
 
   /users/{id}/lock:
     patch:
@@ -102,6 +160,7 @@ paths:
           required: true
           schema:
             type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b5"
       requestBody:
         required: true
         content:
@@ -112,9 +171,15 @@ paths:
                 status:
                   type: string
                   enum: [active, locked]
+                  example: "locked"
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                message: "User status updated to locked"
 
   /users/{id}/reset-password:
     patch:
@@ -126,6 +191,7 @@ paths:
           required: true
           schema:
             type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b5"
       requestBody:
         required: true
         content:
@@ -135,6 +201,12 @@ paths:
               properties:
                 newPassword:
                   type: string
+                  example: "NewPassword@123"
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}

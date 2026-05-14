@@ -61,20 +61,30 @@ paths:
                 code:
                   type: string
                   description: 'Unique code for the role (e.g. admin, manager, staff)'
+                  example: "auditor"
                 name:
                   type: string
                   description: 'Display name for the role'
+                  example: "System Auditor"
                 description:
                   type: string
+                  example: "Can view audit logs and reports"
                 permissions:
                   type: array
                   items:
                     type: string
+                  example: ["reports:view", "logs:view"]
                 isDefault:
                   type: boolean
+                  example: false
       responses:
         '201':
           description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
         '400':
           description: Bad Request
         '401':
@@ -94,6 +104,7 @@ paths:
           required: true
           schema:
             type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b7"
           description: Role ID
       requestBody:
         required: true
@@ -109,9 +120,15 @@ paths:
                   items:
                     type: string
                   description: 'List of permission strings'
+                  example: ["users:read", "users:write"]
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
         '400':
           description: Bad Request
         '401':
@@ -140,17 +157,25 @@ paths:
                 userId:
                   type: string
                   description: User ID to assign the role to
+                  example: "60b9b0b9e6b3f3b3b4f3b3b5"
                 roleCode:
                   type: string
                   description: Role code to assign (e.g. manager, staff)
+                  example: "staff"
                 customPermissions:
                   type: array
                   items:
                     type: string
                   description: 'List of extra custom permission strings for the user'
+                  example: ["slots:create"]
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data: {}
         '400':
           description: Bad Request
         '401':
