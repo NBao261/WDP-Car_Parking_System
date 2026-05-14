@@ -56,6 +56,20 @@ export const suggestFloorSchema = z.object({
   }),
 });
 
+// FR-9.2: Lấy danh sách session active
+export const getActiveSessionsSchema = z.object({
+  query: z.object({
+    page: z.string().regex(/^\d+$/, 'Page must be a number').optional(),
+    limit: z.string().regex(/^\d+$/, 'Limit must be a number').optional(),
+    facilityId: z.string().regex(objectIdRegex, 'Invalid facility ID').optional(),
+    vehicleTypeId: z.string().regex(objectIdRegex, 'Invalid vehicle type ID').optional(),
+    floorId: z.string().regex(objectIdRegex, 'Invalid floor ID').optional(),
+    licensePlate: z.string().optional(),
+    sortBy: z.enum(['checkInTime', 'licensePlate', 'totalFee']).optional(),
+    sortOrder: z.enum(['asc', 'desc']).optional(),
+  }),
+});
+
 // FR-10.1: Tìm lượt gửi xe
 export const searchSessionSchema = z.object({
   query: z
@@ -68,4 +82,16 @@ export const searchSessionSchema = z.object({
       (data) => data.cardCode || data.licensePlate || data.code,
       { message: 'At least one search parameter is required (cardCode, licensePlate, or code)' }
     ),
+});
+
+// FR-10.3: Thu phí gửi xe và check-out
+export const checkOutSchema = z.object({
+  params: z.object({
+    id: z.string().regex(objectIdRegex, 'Invalid session ID format'),
+  }),
+  body: z.object({
+    gateOut: z
+      .string({ required_error: 'Gate out is required' })
+      .min(1, 'Gate out is required'),
+  }),
 });
