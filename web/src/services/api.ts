@@ -1,28 +1,45 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/useAuthStore';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 export const apiClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+// Request interceptor
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = useAuthStore.getState().token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
+// Response interceptor
 apiClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    // Return only the data portion of the response
+    return response.data;
+  },
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
+    const originalRequest = error.config;
+
+    // Handle Unauthorized errors (401)
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      useAuthStore.getState().logout();
       window.location.href = '/login';
     }
-    return Promise.reject(error.response?.data || error.message);
+
+    // Format the error message
+    const errorMessage = error.response?.data?.message || error.message || 'Something went wrong';
+    return Promise.reject(new Error(errorMessage));
   }
 );
+
