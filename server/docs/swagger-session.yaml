@@ -192,6 +192,86 @@ paths:
                     availableSlots: 95
                     totalSlots: 150
 
+  /sessions/active:
+    get:
+      summary: Xem danh sách lượt gửi đang hoạt động (FR-9.2)
+      description: |
+        Lấy danh sách các session đang active.
+        Hỗ trợ phân trang, lọc theo bãi xe, tầng, loại xe, biển số, và sắp xếp.
+      tags: [Sessions]
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: Số trang
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+          description: Số lượng trên 1 trang
+        - name: facilityId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: MongoDB ObjectId của bãi xe
+        - name: vehicleTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: MongoDB ObjectId của loại phương tiện
+        - name: floorId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: MongoDB ObjectId của tầng
+        - name: licensePlate
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Biển số xe (tìm kiếm tương đối)
+        - name: sortBy
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [checkInTime, licensePlate, totalFee]
+            default: "checkInTime"
+          description: Trường để sắp xếp
+        - name: sortOrder
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: "desc"
+          description: Thứ tự sắp xếp
+      responses:
+        '200':
+          description: Danh sách lượt gửi xe đang hoạt động
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "683f1a2b3c4d5e6f7a8b9c10"
+                    code: "PS-20260514-A1B2"
+                    licensePlate: "59A-12345"
+                    status: "active"
+                    checkInTime: "2026-05-14T06:30:00.000Z"
+                    totalFee: 0
+                total: 1
+                page: 1
+                totalPages: 1
+
   /sessions/search:
     get:
       summary: Tìm lượt gửi xe (FR-10.1)
@@ -275,3 +355,97 @@ paths:
               example:
                 success: false
                 message: "Không tìm thấy lượt gửi xe"
+
+  /sessions/{id}/fee:
+    get:
+      summary: Tính phí tự động (FR-10.2)
+      description: |
+        Tính toán phí gửi xe tạm tính hoặc phí lúc check-out dựa trên bảng giá áp dụng.
+        Hỗ trợ làm tròn giờ, tính phí qua đêm, phí quá giờ.
+      tags: [Sessions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "683f1a2b3c4d5e6f7a8b9c10"
+          description: MongoDB ObjectId của session
+      responses:
+        '200':
+          description: Thông tin phí gửi xe
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  totalFee: 15000
+                  details:
+                    durationHours: 4
+                    baseFee: 15000
+                    overnightFee: 0
+                    overtimeFee: 0
+                    pricingPlanName: "Xe Máy - Theo giờ"
+                    daysDiff: 0
+        '404':
+          description: Không tìm thấy lượt gửi xe
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Session không tồn tại"
+
+  /sessions/{id}/check-out:
+    post:
+      summary: Thu phí gửi xe và check-out (FR-10.3)
+      description: |
+        Thực hiện check-out cho xe:
+        - Tính phí và ghi nhận vào session
+        - Cập nhật thời gian check-out, cổng ra, nhân viên thu phí
+        - Chuyển trạng thái session -> "completed"
+        - Cập nhật trạng thái slot tương ứng -> "available"
+      tags: [Sessions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "683f1a2b3c4d5e6f7a8b9c10"
+          description: MongoDB ObjectId của session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [gateOut]
+              properties:
+                gateOut:
+                  type: string
+                  description: Tên/mã cổng ra
+                  example: "GATE-B"
+            example:
+              gateOut: "GATE-B"
+      responses:
+        '200':
+          description: Check-out thành công
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c10"
+                  code: "PS-20260514-A1B2"
+                  licensePlate: "59A-12345"
+                  status: "completed"
+                  checkOutTime: "2026-05-14T10:30:00.000Z"
+                  gateOut: "GATE-B"
+                  totalFee: 15000
+        '400':
+          description: Lượt gửi xe đã kết thúc trước đó
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Lượt gửi xe đã kết thúc"

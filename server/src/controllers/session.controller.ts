@@ -59,6 +59,19 @@ export class SessionController {
   }
 
   /**
+   * GET /sessions/active
+   * FR-9.2: Xem danh sách lượt gửi đang hoạt động
+   */
+  static async getActiveSessions(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await SessionService.getActiveSessions(req.query);
+      res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * GET /sessions/search
    * FR-10.1: Tìm lượt gửi xe
    */
@@ -70,6 +83,42 @@ export class SessionController {
         licensePlate: licensePlate as string,
         code: code as string,
       });
+      res.status(200).json({ success: true, data: session });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /sessions/:id/fee
+   * FR-10.2: Tính phí tự động
+   */
+  static async calculateFee(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const result = await SessionService.calculateFee(id as string);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /sessions/:id/check-out
+   * FR-10.3: Thu phí gửi xe và check-out
+   */
+  static async checkOut(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { gateOut } = req.body;
+      const staffOutId = req.user!.userId;
+
+      const session = await SessionService.checkOut({
+        sessionId: id as string,
+        gateOut: gateOut as string,
+        staffOutId: staffOutId as string,
+      });
+
       res.status(200).json({ success: true, data: session });
     } catch (error) {
       next(error);

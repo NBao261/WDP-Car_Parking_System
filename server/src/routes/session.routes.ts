@@ -7,7 +7,9 @@ import {
   checkConditionsSchema,
   checkInSchema,
   suggestFloorSchema,
+  getActiveSessionsSchema,
   searchSessionSchema,
+  checkOutSchema,
 } from '../validations/session.validation';
 import { PERMISSIONS } from '../config/permissions';
 
@@ -42,6 +44,15 @@ router.get(
   SessionController.suggestFloors
 );
 
+// FR-9.2: Xem danh sách lượt gửi đang hoạt động
+router.get(
+  '/active',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
+  validate(getActiveSessionsSchema),
+  checkPermission(PERMISSIONS.SESSION_READ),
+  SessionController.getActiveSessions
+);
+
 // FR-10.1: Tìm lượt gửi xe — Staff + Admin + Manager
 router.get(
   '/search',
@@ -49,6 +60,23 @@ router.get(
   validate(searchSessionSchema),
   checkPermission(PERMISSIONS.SESSION_READ),
   SessionController.searchSession
+);
+
+// FR-10.2: Tính phí tự động
+router.get(
+  '/:id/fee',
+  checkRole([UserRole.STAFF]),
+  checkPermission(PERMISSIONS.SESSION_CLOSE),
+  SessionController.calculateFee
+);
+
+// FR-10.3: Thu phí gửi xe và check-out
+router.post(
+  '/:id/check-out',
+  checkRole([UserRole.STAFF]),
+  validate(checkOutSchema),
+  checkPermission(PERMISSIONS.SESSION_CLOSE),
+  SessionController.checkOut
 );
 
 export default router;
