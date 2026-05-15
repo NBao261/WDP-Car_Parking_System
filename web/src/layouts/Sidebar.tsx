@@ -9,10 +9,10 @@ import {
   Settings,
   ScrollText,
   LogOut,
-  ParkingCircle,
   Building2,
   ClipboardList,
   ScanLine,
+  Shield,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '../store';
@@ -31,7 +31,8 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/admin/zones', label: 'Facilities & Zones', icon: Map, roles: [UserRole.ADMIN] },
   { path: '/admin/vehicles', label: 'Vehicles', icon: Car, roles: [UserRole.ADMIN] },
   { path: '/admin/billing', label: 'Pricing & Revenue', icon: Wallet, roles: [UserRole.ADMIN] },
-  { path: '/admin/users', label: 'Users & Roles', icon: Users, roles: [UserRole.ADMIN] },
+  { path: '/admin/users', label: 'Users', icon: Users, roles: [UserRole.ADMIN] },
+  { path: '/admin/roles', label: 'Roles & Permissions', icon: Shield, roles: [UserRole.ADMIN] },
   { path: '/admin/config', label: 'System Config', icon: Settings, roles: [UserRole.ADMIN] },
   { path: '/admin/logs', label: 'Audit Logs', icon: ScrollText, roles: [UserRole.ADMIN] },
 

@@ -1,42 +1,36 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../store';
-import { UserRole } from '../../../../shared/types';
-import { Button } from '../../components/ui/button';
+import { DecorativeShape } from './components/DecorativeShape';
+import { BottomLeftShape } from './components/BottomLeftShape';
+import { LoginForm } from './components/LoginForm';
+
+import { motion } from 'framer-motion';
 
 const LoginPage: React.FC = () => {
-  const { setAuth } = useAuthStore();
-  const navigate = useNavigate();
-
-  const handleMockLogin = () => {
-    // Mock setting the user state so ProtectedRoute lets us pass
-    setAuth(
-      {
-        id: '1',
-        name: 'Super Admin',
-        email: 'admin@parkmaster.com',
-        role: UserRole.ADMIN,
-      },
-      'mock-jwt-token'
-    );
-    navigate('/admin');
-  };
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg border border-gray-100">
-        <h2 className="mb-2 text-2xl font-bold text-center text-brand">SPMS Login</h2>
-        <p className="text-gray-500 text-center mb-8">Please enter your credentials</p>
-        
-        {/* Quick Mock Login for testing Layout */}
-        <Button 
-          className="w-full" 
-          size="lg" 
-          onClick={handleMockLogin}
-        >
-          Mock Login as Admin
-        </Button>
-      </div>
+    <div className="min-h-screen bg-[#E7E7F1] relative overflow-hidden flex items-center justify-center font-sans">
+      <BottomLeftShape />
+      <DecorativeShape />
+
+      {/* Premium Absolute Header - Top Left */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
+        className="absolute top-0 left-0 w-full p-6 sm:p-10 z-20 flex items-center gap-3"
+      >
+        <img src="/Logo.png" alt="LYNC Park Logo" className="h-[40px] sm:h-[48px] w-auto object-contain rounded-[8px]" />
+        <h1 className="text-[#062F28] font-bold text-[20px] sm:text-[24px] tracking-tight">LYNC Park</h1>
+      </motion.div>
+
+      {/* Container for Centered Form */}
+      <motion.div
+        initial={{ opacity: 0, y: 40, filter: "blur(8px)" }}
+        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+        transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
+        className="w-full flex items-center justify-center relative z-10 px-4 py-8"
+      >
+        <LoginForm />
+      </motion.div>
     </div>
   );
 };
