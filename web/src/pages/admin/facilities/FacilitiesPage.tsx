@@ -3,8 +3,9 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   MapPin, Plus, BatteryCharging, Wrench, CheckCircle2,
-  GripHorizontal, Building2, ChevronLeft,
+  GripHorizontal, Building2, ChevronLeft, MoreVertical, Edit, PowerOff, CheckCircle, Trash2, Loader2
 } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { facilityService, Facility } from '../../../services/facility.service';
 import { floorService, Floor } from '../../../services/floor.service';
 import { vehicleTypeService, VehicleType } from '../../../services/vehicleType.service';
@@ -34,17 +35,23 @@ const slotClass: Record<SlotType, string> = {
 interface FloorCardProps {
   floor: Floor;
   vehicleTypes: VehicleType[];
-  onEditMapping: (floor: Floor) => void;
+  onEdit: (floor: Floor) => void;
+  onRefresh: () => void;
 }
 
-function FloorCard({ floor, vehicleTypes, onEditMapping }: FloorCardProps) {
+function FloorCard({ floor, vehicleTypes, onEdit, onRefresh }: FloorCardProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const used = 0; // real-time occupancy → future integration
   const total = floor.totalSlots || 1;
   const ratio = used / total;
   const barColor = ratio > 0.9 ? 'bg-red-500' : ratio > 0.7 ? 'bg-orange-500' : 'bg-green-500';
 
   const vtNames = (floor.allowedVehicleTypes || [])
-    .map((id) => vehicleTypes.find((v) => v._id === id)?.name)
+    .map((item: any) => {
+      const typeId = typeof item === 'string' ? item : item._id;
+      return vehicleTypes.find((v) => v._id === typeId)?.name || item.name;
+    })
     .filter(Boolean)
     .join(', ');
 
@@ -75,11 +82,108 @@ function FloorCard({ floor, vehicleTypes, onEditMapping }: FloorCardProps) {
             </p>
           </div>
         </div>
-        {floor.status === 'active' ? (
-          <CheckCircle2 size={20} className="text-green-500 flex-shrink-0" />
-        ) : (
-          <Wrench size={20} className="text-orange-500 flex-shrink-0" />
-        )}
+        <div className="flex items-center gap-2">
+          {floor.status === 'active' ? (
+            <CheckCircle2 size={20} className="text-green-500 flex-shrink-0" />
+          ) : (
+            <Wrench size={20} className="text-orange-500 flex-shrink-0" />
+          )}
+          
+          <div className="relative">
+            {loading ? (
+              <div className="w-8 h-8 flex items-center justify-center">
+                <Loader2 size={16} className="animate-spin text-gray-400" />
+              </div>
+            ) : (
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <MoreVertical size={18} />
+              </button>
+            )}
+
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute right-0 top-9 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-20"
+                >
+                  <div className="fixed inset-0 z-[-1]" onClick={() => setMenuOpen(false)} />
+                  <button
+                    onClick={() => { onEdit(floor); setMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Edit size={14} /> Chỉnh sửa
+                  </button>
+                  <div className="h-px bg-gray-100 mx-2 my-1" />
+                  {floor.status === 'active' ? (
+                    <button
+                      onClick={async () => {
+                        setMenuOpen(false);
+                        setLoading(true);
+                        try {
+                          await floorService.update(floor._id, { status: 'inactive' });
+                          toast.success(`Đã ngừng hoạt động tầng ${floor.name}`);
+                          onRefresh();
+                        } catch (err: any) {
+                          toast.error(err.message || 'Thất bại');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2"
+                    >
+                      <PowerOff size={14} /> Vô hiệu hóa
+                    </button>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        setMenuOpen(false);
+                        setLoading(true);
+                        try {
+                          await floorService.update(floor._id, { status: 'active' });
+                          toast.success(`Đã kích hoạt tầng ${floor.name}`);
+                          onRefresh();
+                        } catch (err: any) {
+                          toast.error(err.message || 'Thất bại');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
+                    >
+                      <CheckCircle size={14} /> Kích hoạt lại
+                    </button>
+                  )}
+                  <div className="h-px bg-gray-100 mx-2 my-1" />
+                  <button
+                    onClick={async () => {
+                      setMenuOpen(false);
+                      if (!window.confirm(`Xóa tầng "${floor.name}"?`)) return;
+                      setLoading(true);
+                      try {
+                        await floorService.softDelete(floor._id);
+                        toast.success('Đã xóa tầng thành công');
+                        onRefresh();
+                      } catch (err: any) {
+                        toast.error(err.message || 'Xóa thất bại');
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    <Trash2 size={14} /> Xóa tầng
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
 
       {/* Capacity */}
@@ -106,10 +210,10 @@ function FloorCard({ floor, vehicleTypes, onEditMapping }: FloorCardProps) {
             <span className="text-sm text-gray-500">Standard</span>
           )}
           <button
-            onClick={() => onEditMapping(floor)}
+            onClick={() => document.getElementById('slot-editor')?.scrollIntoView({ behavior: 'smooth' })}
             className="text-sm font-medium text-[#060606] hover:underline"
           >
-            Edit Mapping &rarr;
+            Sơ đồ tầng &rarr;
           </button>
         </div>
       </div>
@@ -135,7 +239,7 @@ function SlotMappingEditor() {
   ];
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6">
+    <div id="slot-editor" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
         <div>
           <h2 className="text-lg font-bold text-[#060606]">
@@ -398,7 +502,8 @@ export default function FacilitiesPage() {
                   key={floor._id}
                   floor={floor}
                   vehicleTypes={vehicleTypes}
-                  onEditMapping={handleEditMapping}
+                  onEdit={handleEditMapping}
+                  onRefresh={fetchAll}
                 />
               ))}
             </div>

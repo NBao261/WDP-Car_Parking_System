@@ -101,18 +101,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <span className="font-bold text-xl tracking-tight">LYNC PARK</span>
         </div>
 
-        <div className="px-4 mb-4 shrink-0">
-          <div className="bg-white rounded-xl p-2 shadow-sm border border-gray-200 flex items-center gap-2">
-            <Building2 size={16} className="text-gray-500 ml-2 shrink-0" />
-            <select
-              className="bg-transparent border-none text-sm font-semibold text-brand focus:ring-0 cursor-pointer w-full py-1 pr-2 outline-none appearance-none"
-              aria-label="Select facility"
-            >
-              <option>All Facilities</option>
-            </select>
-          </div>
-        </div>
-
         <nav className="flex-1 px-4 pb-6 space-y-1.5 overflow-y-auto">
           {visibleNavItems.map((item) => (
             <NavLink

@@ -26,7 +26,10 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
       if (floor) {
         setName(floor.name);
         setTotalSlots(floor.totalSlots);
-        setSelectedVehicleTypes(floor.allowedVehicleTypes || []);
+        const mappedTypes = (floor.allowedVehicleTypes || []).map((vt: any) =>
+          typeof vt === 'string' ? vt : vt._id
+        );
+        setSelectedVehicleTypes(mappedTypes);
       } else {
         setName('');
         setTotalSlots(50);
