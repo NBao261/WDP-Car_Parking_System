@@ -28,10 +28,6 @@ paths:
                 password:
                   type: string
                   example: "smartparking123"
-                role:
-                  type: string
-                  enum: [admin, manager, staff, driver]
-                  example: "driver"
       responses:
         '201':
           description: User registered successfully

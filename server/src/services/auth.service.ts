@@ -30,6 +30,7 @@ export class AuthService {
 
     const newUser = new User({
       ...data,
+      role: UserRole.DRIVER,
       password: hashedPassword,
     });
 

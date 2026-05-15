@@ -14,10 +14,6 @@ export const registerSchema = z.object({
     password: z
       .string({ required_error: 'Password is required' })
       .min(6, 'Password must be at least 6 characters'),
-    role: z.nativeEnum(UserRole, { required_error: 'Role is required' }),
-    assignedFacilities: z
-      .array(z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid facility ID'))
-      .optional(),
   }),
 });
 
