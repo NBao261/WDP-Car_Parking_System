@@ -28,7 +28,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   // ── Admin ──
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
-  { path: '/admin/zones', label: 'Facilities & Zones', icon: Map, roles: [UserRole.ADMIN] },
+  { path: '/admin/facilities', label: 'Facilities', icon: Map, roles: [UserRole.ADMIN] },
   { path: '/admin/vehicles', label: 'Vehicles', icon: Car, roles: [UserRole.ADMIN] },
   { path: '/admin/billing', label: 'Pricing & Revenue', icon: Wallet, roles: [UserRole.ADMIN] },
   { path: '/admin/users', label: 'Users', icon: Users, roles: [UserRole.ADMIN] },

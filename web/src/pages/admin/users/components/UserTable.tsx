@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { 
-  MoreVertical, ShieldAlert, Shield, 
+import {
+  MoreVertical, ShieldAlert, Shield,
   User, Search, Edit, Lock, Unlock, KeyRound, Eye
 } from 'lucide-react';
 import { User as UserType, UserStatus } from '../../../../types/user.types';
@@ -101,28 +101,28 @@ export function UserTable({ users, isLoading, onEdit }: UserTableProps) {
                     {user.lastLogin ? new Date(user.lastLogin).toLocaleString('vi-VN') : 'Chưa đăng nhập'}
                   </td>
                   <td className="px-6 py-4 text-right relative">
-                    <button 
+                    <button
                       onClick={() => setActiveDropdown(activeDropdown === user._id ? null : user._id)}
                       className="text-gray-400 hover:text-[#060606] p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
                     >
                       <MoreVertical size={20} />
                     </button>
-                    
+
                     {/* Action Dropdown */}
                     <AnimatePresence>
                       {activeDropdown === user._id && (
-                        <motion.div 
+                        <motion.div
                           initial={{ opacity: 0, scale: 0.95, y: -10 }}
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95, y: -10 }}
                           transition={{ duration: 0.15 }}
                           className="absolute right-6 top-14 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-10"
                         >
-                          <div 
-                            className="fixed inset-0 z-[-1]" 
+                          <div
+                            className="fixed inset-0 z-[-1]"
                             onClick={() => setActiveDropdown(null)}
                           />
-                          <button 
+                          <button
                             onClick={() => {
                               onEdit(user);
                               setActiveDropdown(null);
