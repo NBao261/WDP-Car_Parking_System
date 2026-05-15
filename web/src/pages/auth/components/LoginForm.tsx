@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoginStep } from "./steps/LoginStep";
 import { ForgotStep } from "./steps/ForgotStep";

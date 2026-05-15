@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Lock } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import { useAuthStore } from "../../../../store";
 import { UserRole } from "../../../../../../shared/types";
+import { authService } from "../../../../services/auth.service";
 import { AuthInput } from "../AuthInput";
 import { SubmitButton, RequestStatus } from "../SubmitButton";
 import { ViewState } from "../LoginForm";
@@ -15,41 +16,57 @@ export function LoginStep({ changeView }: LoginStepProps) {
   const { setAuth } = useAuthStore();
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<RequestStatus>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) return setStatus("error");
+    if (!email || !password) {
+      setErrorMessage("Please enter both email and password.");
+      return setStatus("error");
+    }
 
     setStatus("loading");
-    setTimeout(() => {
-      if (username === "admin" && password === "password") {
-        setStatus("success");
-        setTimeout(() => {
-          setAuth(
-            { id: '1', name: 'Super Admin', email: 'admin@parkmaster.com', role: UserRole.ADMIN },
-            'mock-jwt-token'
-          );
+    setErrorMessage("");
+    
+    try {
+      const response = await authService.login(email, password);
+      setStatus("success");
+      
+      // Delay navigation slightly for success animation
+      setTimeout(() => {
+        const { user, tokens } = response.data;
+        setAuth(user, tokens.accessToken, tokens.refreshToken);
+        
+        // Redirect based on role
+        if (user.role === UserRole.ADMIN) {
           navigate('/admin');
-        }, 1000);
-      } else {
-        setStatus("error");
-      }
-    }, 1000);
+        } else if (user.role === UserRole.MANAGER) {
+          navigate('/manager');
+        } else if (user.role === UserRole.STAFF) {
+          navigate('/staff');
+        } else {
+          navigate('/unauthorized');
+        }
+      }, 800);
+    } catch (error: any) {
+      setStatus("error");
+      setErrorMessage(error.message || "Invalid email or password.");
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col">
       <AuthInput
-        label="Username"
-        type="text"
-        placeholder="Enter your username"
-        icon={<User size={16} />}
-        value={username}
+        label="Email"
+        type="email"
+        placeholder="Enter your email"
+        icon={<Mail size={16} />}
+        value={email}
         onChange={(e) => {
-          setUsername(e.target.value);
+          setEmail(e.target.value);
           if (status === "error") setStatus("idle");
         }}
         hasError={status === "error"}
@@ -72,7 +89,7 @@ export function LoginStep({ changeView }: LoginStepProps) {
 
       {status === "error" && (
         <p className="text-red-500 text-[11px] mb-[10px] text-center">
-          Incorrect username or password. (Hint: admin / password)
+          {errorMessage}
         </p>
       )}
 
