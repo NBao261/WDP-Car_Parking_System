@@ -1,14 +1,37 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { UserRole } from '../../../shared/types';
 import { ProtectedRoute, AuthRedirect } from '../components/ProtectedRoute';
 import MainLayout from '../layouts/MainLayout';
 
-// Pages
+// ── Auth Pages ──
 import LoginPage from '../pages/auth/LoginPage';
-import AdminDashboard from '../pages/admin/AdminDashboard';
+import UnauthorizedPage from '../pages/error/UnauthorizedPage';
+
+// ── Admin Pages ──
+import DashboardPage from '../pages/admin/dashboard/DashboardPage';
+const ZonesPage    = lazy(() => import('../pages/admin/zones/ZonesPage'));
+const VehiclesPage = lazy(() => import('../pages/admin/vehicles/VehiclesPage'));
+const BillingPage  = lazy(() => import('../pages/admin/billing/BillingPage'));
+const ConfigPage   = lazy(() => import('../pages/admin/config/ConfigPage'));
+const LogsPage     = lazy(() => import('../pages/admin/logs/LogsPage'));
+const UsersPage    = lazy(() => import('../pages/admin/users/UsersPage'));
+const UserDetailPage = lazy(() => import('../pages/admin/users/UserDetailPage'));
+const RolesPage    = lazy(() => import('../pages/admin/roles/RolesPage'));
+
+// ── Manager / Staff Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
 import StaffDashboard from '../pages/staff/StaffDashboard';
-import UnauthorizedPage from '../pages/error/UnauthorizedPage';
+
+const Loading = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="w-8 h-8 border-2 border-[#d7ee46] border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
+const S = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<Loading />}>{children}</Suspense>
+);
 
 export const router = createBrowserRouter([
   {
@@ -34,39 +57,42 @@ export const router = createBrowserRouter([
       {
         element: <MainLayout />,
         children: [
-          // Admin Routes
+          // ── Admin Routes ──────────────────────────────────
           {
             path: 'admin',
             element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
             children: [
-              {
-                index: true,
-                element: <AdminDashboard />,
-              },
+              { index: true,              element: <DashboardPage /> },
+              { path: 'zones',            element: <S><ZonesPage /></S> },
+              { path: 'vehicles',         element: <S><VehiclesPage /></S> },
+              { path: 'billing',          element: <S><BillingPage /></S> },
+              { path: 'config',           element: <S><ConfigPage /></S> },
+              { path: 'logs',             element: <S><LogsPage /></S> },
+              // FR-18: User Management
+              { path: 'users',            element: <S><UsersPage /></S> },
+              { path: 'users/:id',        element: <S><UserDetailPage /></S> },
+              // FR-19: Role & Permission Management
+              { path: 'roles',            element: <S><RolesPage /></S> },
             ],
           },
-          // Manager Routes
+
+          // ── Manager Routes ────────────────────────────────
           {
             path: 'manager',
             element: <ProtectedRoute allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]} />,
             children: [
-              {
-                index: true,
-                element: <ManagerDashboard />,
-              },
+              { index: true, element: <ManagerDashboard /> },
             ],
           },
-          // Staff Routes
+
+          // ── Staff Routes ──────────────────────────────────
           {
             path: 'staff',
             element: (
               <ProtectedRoute allowedRoles={[UserRole.STAFF, UserRole.MANAGER, UserRole.ADMIN]} />
             ),
             children: [
-              {
-                index: true,
-                element: <StaffDashboard />,
-              },
+              { index: true, element: <StaffDashboard /> },
             ],
           },
         ],
