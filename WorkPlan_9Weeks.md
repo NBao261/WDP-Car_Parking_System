@@ -265,8 +265,12 @@
   - Chuyển reservation → session khi Driver đến (BR-6.6)
 - [ ] API chính sách hủy (BR-6.5): tính phí hủy nếu < 2 giờ
 - [ ] 🔬 **[RQ3]** Implement Weighted Scoring Model cho API `suggest-floor` (FR-8.3):
+  - Thuật toán gốc: **TOPSIS + CRITIC** [P5], **CODAS** [P5], **COA** [P6]
+  - Phiên bản áp dụng: **WSM (Weighted Scoring Model)** — đơn giản hóa TOPSIS
   - `Score(slot) = W1×Distance + W2×FloorFillBalance + W3×DurationMatch + W4×FloorPreference`
-  - Ràng buộc cứng: vehicleType match + slot.status == 'Available'
+  - Ràng buộc cứng (từ MILP [P7]): vehicleType match + slot.status == 'Available'
+  - Zone Filtering (từ Contract Net Protocol [P1] + Differentiated Parking [P2])
+  - Greedy Matching (từ Hungarian Algorithm [P3] + Centralized Assignment [P4])
   - Trọng số mặc định: W1=0.25, W2=0.30, W3=0.25, W4=0.20 (cấu hình qua SystemConfig)
 
 #### BE2
@@ -278,7 +282,9 @@
   - Khung giờ cao điểm (FR-6.4): aggregate by hour
 - [ ] API Export báo cáo: xuất Excel (xlsx) / PDF
 - [ ] 🔬 **[RQ1]** API occupancy heatmap theo tầng + loại xe (FR-6.3 mở rộng)
+  - Thuật toán gốc: **Macroscopic Fundamental Diagram (MFD)** [P2] — tính Optimal Occupancy
 - [ ] 🔬 **[RQ1]** Tạo seed data 2 cấu hình: (A) phân tầng chuyên biệt, (B) tầng hỗn hợp
+  - Dựa trên mô hình Zone Differentiation [P2] và CNP Agent-based Zoning [P1]
 
 #### FE1
 
@@ -312,9 +318,12 @@
 - [ ] API Ngoại lệ nâng cao (FR-7): list exceptions for Manager, approve/reject
 - [ ] Optimize MongoDB queries: indexes cho licensePlate, sessionCode, slotCode
 - [ ] 🔬 **[RQ4]** Implement Load Balancing cho giờ cao điểm:
-  - Phát hiện tầng sắp đầy (occupancy ≥ 85%) → chuyển hướng xe đến tầng occupancy thấp nhất
-  - Tích hợp reservation data vào thuật toán (tính cả slot Reserved)
+  - Thuật toán gốc: **NSGA-II** (multi-objective demand allocation) [P8], **PCPT** (dynamic path tree) [P9]
+  - Phiên bản áp dụng: **Threshold-based Load Balancing** — phát hiện tầng sắp đầy (occupancy ≥ 85%) → chuyển hướng xe đến tầng occupancy thấp nhất
+  - Tích hợp Reservation-Aware Capacity [P10]: `effective_occupancy = (occupied + reserved) / total`
+  - Conflict Resolution (từ DCS [P9]): khi 2 xe hướng cùng slot → ưu tiên xe gần hơn
 - [ ] 🔬 **[RQ4]** Peak Hour Detection: xác định giờ cao điểm tự động từ dữ liệu lịch sử
+  - Hướng nâng cấp tương lai: **DRL (Deep Q-Network)** [P9] với reward function điều chỉnh được
 
 #### BE2
 
@@ -346,7 +355,7 @@
 - [ ] Màn hình Tài khoản: thông tin cá nhân, đổi mật khẩu, lịch sử
 - [ ] Nhận push notification
 
-**✅ Deliverable tuần 6–7:** Đặt chỗ trước, báo cáo thống kê, ngoại lệ nâng cao, phản hồi, realtime, push notification. **+ Thuật toán phân bổ slot (RQ3) và Load Balancing (RQ4).**
+**✅ Deliverable tuần 6–7:** Đặt chỗ trước, báo cáo thống kê, ngoại lệ nâng cao, phản hồi, realtime, push notification. **+ WSM scoring [P5,P6] và Threshold Load Balancing [P8,P9,P10].**
 
 ---
 
@@ -360,10 +369,10 @@
 - [ ] Stress test: 100 concurrent users
 - [ ] Hoàn thiện Swagger documentation
 - [ ] 🔬 **[RQ1–RQ4]** Chạy simulation A/B testing:
-  - Scenario 1: 500 sessions phân tầng chuyên biệt vs. hỗn hợp (RQ1)
-  - Scenario 2: 500 sessions auto-assign vs. manual (RQ2)
-  - Scenario 3: 500 sessions single-criteria vs. multi-criteria (RQ3)
-  - Scenario 4: 200 sessions giờ cao điểm với/không load balancing (RQ4)
+  - Scenario 1: 500 sessions phân tầng chuyên biệt vs. hỗn hợp (RQ1) — đo MFD [P2]
+  - Scenario 2: 500 sessions auto-assign (Greedy [P3]) vs. manual (RQ2) — đo search time
+  - Scenario 3: 500 sessions single-criteria vs. WSM multi-criteria [P5] (RQ3)
+  - Scenario 4: 200 sessions giờ cao điểm với/không Threshold Load Balancing [P8] (RQ4)
 - [ ] 🔬 Thu thập và phân tích metrics theo bảng chỉ số SRS Phần 5
 
 ### BE2
@@ -415,7 +424,9 @@
 - [ ] Viết tài liệu API hoàn chỉnh
 - [ ] 🔬 Tổng hợp Research Report:
   - Kết quả từng RQ: dữ liệu, phân tích, so sánh với giả thuyết
-  - Đề xuất cải tiến thuật toán + hạn chế nghiên cứu
+  - Mapping thuật toán gốc (TOPSIS, Hungarian, NSGA-II, MILP) → phiên bản đơn giản hóa (WSM, Greedy, Threshold LB)
+  - Đề xuất cải tiến: nâng cấp lên TOPSIS đầy đủ [P5], COA [P6], DQN [P9]
+  - Hạn chế nghiên cứu và đối chiếu với papers [P1]–[P10]
 
 ### BE2
 

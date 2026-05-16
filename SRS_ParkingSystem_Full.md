@@ -547,6 +547,15 @@ _Kết thúc Phần 2A – Tiếp theo: Phần 2B – Yêu cầu Chức năng: P
 | **Luồng chính** | 1. Sau khi xác nhận loại xe → 2. Hệ thống hiển thị danh sách tầng/khu vực có slot trống → 3. Staff chọn hoặc hệ thống tự gán tầng/khu vực → 4. Thông tin hiển thị trên thẻ xe/vé xe |
 | **Kết quả**     | Driver được hướng dẫn đến đúng khu vực đỗ xe                                                                                                                                        |
 
+**Thuật toán áp dụng (chi tiết tại `ResearchReferences_RQ.md`):**
+
+| Thuật toán | Mô tả | Paper tham chiếu |
+|-----------|-------|------------------|
+| **Weighted Scoring Model (WSM)** | `Score = W1×Distance + W2×FloorFillBalance + W3×DurationMatch + W4×FloorPreference`. Đơn giản hóa từ TOPSIS [P5] — thay khoảng cách Euclid bằng tổng có trọng số. | [P5] TOPSIS+CRITIC, [P6] COA |
+| **Greedy Matching** | Gán xe vào slot có Score cao nhất trong tập slot khả dụng. Đơn giản hóa từ Hungarian Algorithm [P3]. | [P3] Hungarian, [P4] Centralized Assignment |
+| **Zone Filtering** | Ràng buộc cứng: `vehicleType match` + `slot.status == Available`. Dựa trên Differentiated Parking [P2] và Contract Net Protocol [P1]. | [P1] CNP, [P2] MFD |
+| **Load Balancing (RQ4)** | Khi `effective_occupancy ≥ 85%` tại 1 tầng → redirect xe sang tầng có occupancy thấp nhất. Dựa trên NSGA-II demand allocation [P8] và Reservation-Aware Capacity [P10]. | [P8] NSGA-II, [P10] Reservation Model |
+
 ---
 
 ## FR-9: Tạo lượt gửi xe (Parking Session)
@@ -1450,12 +1459,12 @@ Các giải pháp từ nghiên cứu hiện đại (IEEE, Boston University, Res
 
 ## Tổng hợp: Research Questions ↔ Functional Requirements ↔ Business Rules
 
-| Research Question | FR liên quan | BR liên quan | Thuật toán / Phương pháp |
-|-------------------|-------------|-------------|------------------------|
-| **RQ1:** Phân tầng theo loại xe | FR-3.1, FR-3.2, FR-6.3, FR-8.3, FR-11.4 | BR-2.2, BR-2.3, BR-2.4 | Dynamic Zoning, A/B Testing |
-| **RQ2:** Auto-assign vs. Free-choice | FR-8.3, FR-9.1, FR-4.2 | BR-3.2, BR-3.4, BR-5.1 | Coordinated Assignment, Matching Algorithm |
-| **RQ3:** Tiêu chí ưu tiên phân bổ | FR-8.3, FR-6.3, FR-6.4 | BR-2.3, BR-3.2 | Weighted Scoring Model, MCDM (TOPSIS) |
-| **RQ4:** Cải thiện giờ cao điểm | FR-8.1, FR-8.3, FR-9.1, FR-6.3, FR-6.4, FR-14 | BR-3.3, BR-6.1 | MILP, Load Balancing, DRL |
+| Research Question | FR liên quan | BR liên quan | Thuật toán gốc (từ Paper) | Phiên bản áp dụng | Paper |
+|-------------------|-------------|-------------|--------------------------|-------------------|-------|
+| **RQ1:** Phân tầng theo loại xe | FR-3.1, FR-3.2, FR-6.3, FR-8.3, FR-11.4 | BR-2.2, BR-2.3, BR-2.4 | Contract Net Protocol, Macroscopic Fundamental Diagram | Rule-based Zone Filtering (vehicleType match) | [P1], [P2] |
+| **RQ2:** Auto-assign vs. Free-choice | FR-8.3, FR-9.1, FR-4.2 | BR-3.2, BR-3.4, BR-5.1 | Hungarian Algorithm (Kuhn-Munkres), LQR Centralized Control | Greedy Matching (nearest optimal slot) | [P3], [P4] |
+| **RQ3:** Tiêu chí ưu tiên phân bổ | FR-8.3, FR-6.3, FR-6.4 | BR-2.3, BR-3.2 | TOPSIS + CRITIC Weighting, CODAS, Cheetah Optimization (COA) | Weighted Scoring Model (WSM) 4 tiêu chí | [P5], [P6] |
+| **RQ4:** Cải thiện giờ cao điểm | FR-8.1, FR-8.3, FR-9.1, FR-6.3, FR-6.4, FR-14 | BR-3.3, BR-6.1 | MILP (Branch-and-Bound), NSGA-II, PCPT, DRL (DQN), Reservation-Aware Capacity | Threshold-based Load Balancing + Effective Occupancy | [P7], [P8], [P9], [P10] |
 
 ---
 
