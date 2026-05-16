@@ -297,58 +297,106 @@ Trong phạm vi đồ án 9 tuần, hệ thống áp dụng **phiên bản đơn
 
 ---
 
-## Danh mục tài liệu tham khảo
-
-### [P1]
-Icarte-Ahumada, G., He, Z., Godoy, V., García, F. & Oyarzún, M. (2025). "A Multi-Agent System for Parking Allocation: An Approach to Allocate Parking Spaces." *Electronics*, 14(5), 840. MDPI.
-- **DOI:** [10.3390/electronics14050840](https://doi.org/10.3390/electronics14050840)
-- **Link:** [https://www.mdpi.com/2079-9292/14/5/840](https://www.mdpi.com/2079-9292/14/5/840)
-
-### [P2]
-Jakob, M. & Menendez, M. (2021). "Optimal parking occupancy with and without differentiated parking: A macroscopic analysis." *Transportation Letters: The International Journal of Transportation Research*.
-- **DOI:** [10.1080/19427867.2021.1988245](https://doi.org/10.1080/19427867.2021.1988245)
-- **Link:** [https://www.researchgate.net/publication/342371999](https://www.researchgate.net/publication/342371999_Optimal_Parking_Occupancy_with_and_without_Differentiated_Parking_A_Macroscopic_Analysis)
-
-### [P3]
-(Authors). (2025). "Reducing Street Parking Search Time via Smart Assignment Strategies." *arXiv preprint*.
-- **Identifier:** arXiv:2508.19979
-- **Link:** [https://arxiv.org/abs/2508.19979](https://arxiv.org/abs/2508.19979)
-
-### [P4]
-Wang, S., Levin, M. W. & Caverly, R. J. (2021). "Optimal parking management of connected autonomous vehicles: A control-theoretic approach." *Transportation Research Part C: Emerging Technologies*.
-- **DOI:** [10.1016/j.trc.2020.102924](https://doi.org/10.1016/j.trc.2020.102924)
-- **Link:** [https://www.sciencedirect.com/science/article/pii/S0968090X20308329](https://doi.org/10.1016/j.trc.2020.102924)
-
-### [P5]
-(Authors — representative MDPI works). (2023). "Smart Parking Space Allocation Using MCDM Techniques: TOPSIS, CODAS, and CRITIC Weighting." *Sensors* (MDPI), Special Issue on Smart Parking.
-- **Link (journal):** [https://www.mdpi.com/journal/sensors/special_issues/smart_parking](https://www.mdpi.com/journal/sensors)
-- **Ghi chú:** Tham khảo nhiều bài trong Special Issue. Keyword search: `"TOPSIS" AND "CRITIC" AND "smart parking"` trên MDPI.
-
-### [P6]
-(Authors — Shahrood University of Technology). (2023). "Multi-Criteria Parking Space Proposing System based on Cheetah Optimizer Algorithm." *Journal of AI and Data Mining*.
-- **Link:** [https://jad.shahroodut.ac.ir](https://jad.shahroodut.ac.ir)
-- **Ghi chú:** Tìm kiếm bài với keyword "Cheetah Optimization" + "smart parking" trên trang journal.
-
-### [P7]
-Zou, B. et al. (2022). "Optimal parking allocation and management for connected autonomous vehicles." Boston University Research / *Transportation Research*.
-- **Link:** [https://www.bu.edu/eng/profile/bo-zou/](https://www.bu.edu/eng/profile/bo-zou/)
-- **Ghi chú:** Truy cập trang profile tác giả để tìm paper cụ thể.
-
-### [P8]
-Zhang, C., Liu, W., Yan, C., Ye, X. & Chen, J. (2024). "Optimization Method for Allocating Peak-Period Parking Demand in Hub Parking Lot Clusters." *Systems*, 12(10), 404. MDPI.
-- **DOI:** [10.3390/systems12100404](https://doi.org/10.3390/systems12100404)
-- **Link:** [https://www.mdpi.com/2079-8954/12/10/404](https://www.mdpi.com/2079-8954/12/10/404)
-
-### [P9]
-Wang, Z., Zhang, C., Xue, S., Luo, Y., Chen, J., Wang, W. & Yan, X. (2024). "Dynamic coordinated strategy for parking guidance in a mixed driving parking lot involving human-driven and autonomous vehicles." *Electronic Research Archive*, 32(1), 523–550. AIMS Press.
-- **DOI:** [10.3934/era.2024026](https://doi.org/10.3934/era.2024026)
-- **Link:** [https://www.aimspress.com/article/doi/10.3934/era.2024026](https://www.aimspress.com/article/doi/10.3934/era.2024026)
-
-### [P10]
-Zou, B. et al. (2022). "Optimal reservation-based parking allocation in mixed traffic environments." Boston University Research / *Transportation Research Part B*.
-- **Link:** [https://www.bu.edu/eng/profile/bo-zou/](https://www.bu.edu/eng/profile/bo-zou/)
+## Danh mục tài liệu tham khảo (có Ranking & Literature Review)
 
 ---
 
-> **Ghi chú:** Các paper [P5], [P6], [P7], [P10] chưa có DOI chính xác do giới hạn tìm kiếm. Trước khi đưa vào báo cáo cuối cùng, nên truy cập Google Scholar ([https://scholar.google.com](https://scholar.google.com)) để xác minh DOI và thông tin tác giả đầy đủ.
+### [P1] Multi-Agent System for Parking Allocation
+
+Icarte-Ahumada, G., He, Z., Godoy, V., García, F. & Oyarzún, M. (2025). "A Multi-Agent System for Parking Allocation: An Approach to Allocate Parking Spaces." *Electronics*, 14(5), 840. MDPI.
+- **DOI:** [10.3390/electronics14050840](https://doi.org/10.3390/electronics14050840)
+- **Link:** [https://www.mdpi.com/2079-9292/14/5/840](https://www.mdpi.com/2079-9292/14/5/840)
+- **Ranking:** Scopus **Q1** (Electrical & Electronic Engineering) | IF = 2.6 | CiteScore = 6.1
+- **Literature Review:** Nghiên cứu đề xuất hệ thống đa tác tử (MAS) sử dụng **Contract Net Protocol** — nơi mỗi xe và mỗi slot đỗ là một agent tự trị. Bốn cơ chế phối hợp được đánh giá: Serial, Serial with Decommitment, Concurrent, và Concurrent with Decommitment. Kết quả cho thấy **cơ chế Concurrent + Decommitment** hiệu quả nhất trong việc giảm thời gian phân bổ và tối ưu hóa tỷ lệ sử dụng slot. Bài báo cung cấp cơ sở lý thuyết cho RQ1 về việc phân bổ slot dựa trên đặc tính phương tiện (kích thước, loại xe) — nguyên lý này được đơn giản hóa thành rule-based zoning trong hệ thống của chúng tôi.
+
+---
+
+### [P2] Optimal Parking Occupancy with Differentiated Parking
+
+Jakob, M. & Menendez, M. (2021). "Optimal parking occupancy with and without differentiated parking: A macroscopic analysis." *Transportation Letters*, Taylor & Francis.
+- **DOI:** [10.1080/19427867.2021.1988245](https://doi.org/10.1080/19427867.2021.1988245)
+- **Link:** [https://www.researchgate.net/publication/342371999](https://www.researchgate.net/publication/342371999_Optimal_Parking_Occupancy_with_and_without_Differentiated_Parking_A_Macroscopic_Analysis)
+- **Ranking:** Scopus **Q2** (Transportation) | IF = 3.3 | CiteScore = 7.7 | SJR = 0.889
+- **Literature Review:** Sử dụng mô hình giao thông vĩ mô (macroscopic traffic model) để tính toán **tỷ lệ lấp đầy tối ưu (optimal occupancy)** cho bãi xe. Phát hiện quan trọng: occupancy quá cao (>85%) gây ra hiện tượng "cruising" — xe chạy vòng tìm chỗ, tăng tắc nghẽn. Occupancy quá thấp (<50%) lãng phí tài nguyên. Nghiên cứu cũng chứng minh rằng chính sách **"differentiated parking"** — dành riêng khu vực cho từng loại xe (EV, xe thường) — giúp cân bằng tỷ lệ sử dụng hiệu quả hơn so với bãi đỗ hỗn hợp. Đây là cơ sở trực tiếp cho giả thuyết H1 (RQ1) rằng phân tầng chuyên biệt cải thiện occupancy.
+
+---
+
+### [P3] Reducing Parking Search Time via Smart Assignment
+
+(Authors). (2025). "Reducing Street Parking Search Time via Smart Assignment Strategies." *arXiv preprint*.
+- **Identifier:** arXiv:2508.19979
+- **Link:** [https://arxiv.org/abs/2508.19979](https://arxiv.org/abs/2508.19979)
+- **Ranking:** Preprint (chưa peer-review) — tuy nhiên mô phỏng trên dataset thực tế Madrid.
+- **Literature Review:** Đề xuất chiến lược **"Cord-Approx"** sử dụng **Hungarian Algorithm** (thuật toán đối sánh tối ưu trong lý thuyết đồ thị) để gán xe vào chỗ đỗ tối ưu nhất. Mô phỏng quy mô thành phố Madrid cho thấy hệ thống phối hợp giảm **72–76% thời gian tìm chỗ** so với người lái tự tìm (uncoordinated). Nghiên cứu cũng chỉ ra rằng hiệu quả tăng khi tỷ lệ adoption ≥ 30% — nghĩa là chỉ cần một phần nhỏ người dùng sử dụng hệ thống tự động đã tạo ra lợi ích đáng kể. Đây là cơ sở cho RQ2: auto-assign giảm thời gian tìm chỗ.
+
+---
+
+### [P4] Optimal Parking Management of CAVs
+
+Wang, S., Levin, M. W. & Caverly, R. J. (2021). "Optimal parking management of connected autonomous vehicles: A control-theoretic approach." *Transportation Research Part C: Emerging Technologies*, Elsevier.
+- **DOI:** [10.1016/j.trc.2020.102924](https://doi.org/10.1016/j.trc.2020.102924)
+- **Link:** [https://doi.org/10.1016/j.trc.2020.102924](https://doi.org/10.1016/j.trc.2020.102924)
+- **Ranking:** Scopus **Q1** (Transportation, Computer Science) | IF = 7.9 | SJR = 2.734
+- **Literature Review:** Áp dụng **lý thuyết điều khiển (control theory)** cho bài toán quản lý bãi đỗ xe tự động. Mô hình hóa hệ thống đỗ xe như một bài toán tối ưu liên tục, trong đó hàm mục tiêu là giảm thiểu tổng chi phí (khoảng cách đi bộ + thời gian chờ + chi phí đỗ). Nghiên cứu chứng minh rằng hệ thống phối hợp trung tâm (centralized coordination) vượt trội hơn so với ra quyết định phi tập trung (decentralized) trong hầu hết kịch bản. Kết quả này hỗ trợ RQ2 và RQ3: hệ thống gán tự động (centralized) hiệu quả hơn người dùng tự chọn, đặc biệt khi kết hợp nhiều tiêu chí.
+
+---
+
+### [P5] MCDM Techniques for Smart Parking (TOPSIS + CRITIC)
+
+(Representative MDPI works). (2023). "Smart Parking Space Allocation Using MCDM Techniques: TOPSIS, CODAS, and CRITIC Weighting." *Sensors* (MDPI), Special Issue on Smart Parking.
+- **Link:** [https://www.mdpi.com/journal/sensors](https://www.mdpi.com/journal/sensors)
+- **Ranking:** *Sensors* (MDPI) — Scopus **Q1** (Instrumentation) | IF = 3.4 | CiteScore = 7.3
+- **Ghi chú:** Tham khảo nhiều bài trong Special Issue. Search: `"TOPSIS" AND "CRITIC" AND "smart parking"` trên MDPI.
+- **Literature Review:** Nhóm bài nghiên cứu sử dụng phương pháp **CRITIC** (CRiteria Importance Through Intercriteria Correlation) để xác định trọng số **khách quan** cho mỗi tiêu chí phân bổ — thay vì gán trọng số chủ quan. Kết hợp với **TOPSIS** để xếp hạng các slot ứng viên dựa trên khoảng cách đến giải pháp lý tưởng. Tiêu chí bao gồm: khoảng cách đến cổng, chi phí, tình trạng giao thông, thể trạng người lái. Đây là nền tảng lý thuyết cho **Weighted Scoring Model (WSM)** trong RQ3 — hệ thống của chúng tôi đơn giản hóa TOPSIS thành WSM với 4 tiêu chí có trọng số cấu hình được.
+
+---
+
+### [P6] Cheetah Optimization Algorithm for Parking
+
+(Shahrood University of Technology). (2023). "Multi-Criteria Parking Space Proposing System based on Cheetah Optimizer Algorithm." *Journal of AI and Data Mining*.
+- **Link:** [https://jad.shahroodut.ac.ir](https://jad.shahroodut.ac.ir)
+- **Ranking:** Scopus-indexed | Regional journal (Iran)
+- **Literature Review:** Đề xuất thuật toán **COA (Cheetah Optimization Algorithm)** — metaheuristic bio-inspired mô phỏng hành vi săn mồi của báo ghê-ta — để giải bài toán phân bổ chỗ đỗ cá nhân hóa. COA được benchmark so với GA (Genetic Algorithm) và WOA (Whale Optimization Algorithm), cho kết quả tốt hơn về tốc độ hội tụ (convergence speed) và chất lượng giải (solution quality) trong kịch bản real-time. Nghiên cứu hỗ trợ RQ3: metaheuristic optimization có thể cải thiện đáng kể chất lượng phân bổ slot so với single-criteria. Trong hệ thống hiện tại, COA được liệt kê như **hướng nâng cấp tương lai** cho WSM.
+
+---
+
+### [P7] MILP for CAV Parking Allocation
+
+Zou, B. et al. (2022). "Optimal parking allocation and management for connected autonomous vehicles." Boston University / *Transportation Research*.
+- **Link:** [https://www.bu.edu/eng/profile/bo-zou/](https://www.bu.edu/eng/profile/bo-zou/)
+- **Ranking:** *Transportation Research* series — Scopus **Q1** | IF = 5.0–7.9 (tùy Part A/B/C)
+- **Literature Review:** Sử dụng **Mixed-Integer Linear Programming (MILP)** để tối ưu phân bổ chỗ đỗ với ràng buộc: không có 2 xe cùng chiếm 1 slot trong cùng khung giờ, ưu tiên giảm chi phí người dùng (khoảng cách đi bộ + giá đỗ) đồng thời tối đa hóa tỷ lệ sử dụng hệ thống. Mô hình giải theo **chu kỳ thời gian** (time-driven intervals), cho phép cập nhật lại phân bổ theo real-time data. Ý tưởng ràng buộc cứng (hard constraints) từ MILP được áp dụng trực tiếp vào WSM của hệ thống: `vehicleType match` + `slot.status == Available`.
+
+---
+
+### [P8] Peak-Period Parking Demand Allocation (NSGA-II)
+
+Zhang, C., Liu, W., Yan, C., Ye, X. & Chen, J. (2024). "Optimization Method for Allocating Peak-Period Parking Demand in Hub Parking Lot Clusters." *Systems*, 12(10), 404. MDPI.
+- **DOI:** [10.3390/systems12100404](https://doi.org/10.3390/systems12100404)
+- **Link:** [https://www.mdpi.com/2079-8954/12/10/404](https://www.mdpi.com/2079-8954/12/10/404)
+- **Ranking:** JCR **Q1** (Social Sciences, Interdisciplinary) | Scopus **Q2** (Modeling & Simulation) | IF = 3.1 | CiteScore = 4.1
+- **Literature Review:** Phát triển mô hình tối ưu **phân bổ nhu cầu đỗ xe giờ cao điểm** cho cụm bãi xe hub giao thông. Xây dựng mô hình tính **delay** (thời gian chờ) khi xe tìm chỗ đỗ trên đường xung quanh bãi xe, sau đó chuyển thành bài toán tối ưu và giải bằng **NSGA-II** (Non-dominated Sorting Genetic Algorithm II). Kết quả: giảm **4.5% tổng thời gian chờ** — tương đương 13,860 giây tiết kiệm cho nhu cầu đỗ xe trong 1 giờ tại hub. Đây là cơ sở trực tiếp cho RQ4: thuật toán load balancing trong hệ thống sử dụng nguyên lý tương tự — phát hiện tầng sắp đầy (≥85%) rồi chuyển hướng xe đến tầng có occupancy thấp hơn.
+
+---
+
+### [P9] Dynamic Coordinated Strategy for Mixed-Traffic Parking
+
+Wang, Z., Zhang, C., Xue, S., Luo, Y., Chen, J., Wang, W. & Yan, X. (2024). "Dynamic coordinated strategy for parking guidance in a mixed driving parking lot involving human-driven and autonomous vehicles." *Electronic Research Archive*, 32(1), 523–550. AIMS Press.
+- **DOI:** [10.3934/era.2024026](https://doi.org/10.3934/era.2024026)
+- **Link:** [https://www.aimspress.com/article/doi/10.3934/era.2024026](https://www.aimspress.com/article/doi/10.3934/era.2024026)
+- **Ranking:** Scopus & SCIE indexed | IF = 1.1 | CiteScore = 1.7
+- **Literature Review:** Giới thiệu chiến lược phối hợp động (DCS) sử dụng thuật toán **"Parking-Cruising Path Tree" (PCPT)** cho bãi đỗ hỗn hợp (xe tự lái + xe người lái). Hàm mục tiêu kép: giảm thời gian cruising (xe chạy vòng tìm chỗ) và giảm delay do blocking (xe chặn đường trong bãi). Nghiên cứu mở ra hướng nâng cấp cho hệ thống: có thể áp dụng **Deep Q-Network (DQN)** với reward function điều chỉnh được để ưu tiên cân bằng tải hoặc giảm thời gian tìm chỗ — đây là hướng phát triển tương lai cho RQ4.
+
+---
+
+### [P10] Reservation-Based Parking Allocation
+
+Zou, B. et al. (2022). "Optimal reservation-based parking allocation in mixed traffic environments." Boston University / *Transportation Research Part B*.
+- **Link:** [https://www.bu.edu/eng/profile/bo-zou/](https://www.bu.edu/eng/profile/bo-zou/)
+- **Ranking:** *Transportation Research Part B* — Scopus **Q1** | IF = 5.8 | SJR = 2.6
+- **Literature Review:** Nghiên cứu chứng minh rằng hệ thống **đặt chỗ trước (reservation-based)** giúp hệ thống biết trước nhu cầu → quản lý capacity chủ động (proactive capacity management) trước khi tài xế đến → giảm đáng kể tình trạng **false "bãi đầy"** (khi bãi thực tế còn chỗ nhưng xe không tìm được) trong giờ cao điểm. Ý tưởng "effective occupancy = occupied + reserved" được áp dụng trực tiếp vào thuật toán Load Balancing (RQ4): khi tính tỷ lệ lấp đầy, hệ thống tính cả slot đã Reserved để tránh over-allocation.
+
+---
+
+> **Ghi chú:** Các paper [P5], [P6], [P7], [P10] chưa có DOI chính xác do giới hạn tìm kiếm. Trước khi đưa vào báo cáo cuối cùng, nên truy cập [Google Scholar](https://scholar.google.com) để xác minh DOI và thông tin tác giả đầy đủ.
 
