@@ -308,6 +308,10 @@ Icarte-Ahumada, G., He, Z., Godoy, V., García, F. & Oyarzún, M. (2025). "A Mul
 - **Link:** [https://www.mdpi.com/2079-9292/14/5/840](https://www.mdpi.com/2079-9292/14/5/840)
 - **Ranking:** Scopus **Q1** (Electrical & Electronic Engineering) | IF = 2.6 | CiteScore = 6.1
 - **Literature Review:** Nghiên cứu đề xuất hệ thống đa tác tử (MAS) sử dụng **Contract Net Protocol** — nơi mỗi xe và mỗi slot đỗ là một agent tự trị. Bốn cơ chế phối hợp được đánh giá: Serial, Serial with Decommitment, Concurrent, và Concurrent with Decommitment. Kết quả cho thấy **cơ chế Concurrent + Decommitment** hiệu quả nhất trong việc giảm thời gian phân bổ và tối ưu hóa tỷ lệ sử dụng slot. Bài báo cung cấp cơ sở lý thuyết cho RQ1 về việc phân bổ slot dựa trên đặc tính phương tiện (kích thước, loại xe) — nguyên lý này được đơn giản hóa thành rule-based zoning trong hệ thống của chúng tôi.
+- **Thuật toán sử dụng:**
+  - **Contract Net Protocol (CNP):** Agent xe gửi Call-for-Proposal → Agent slot đánh giá khả năng (vehicle size, type compatibility) → trả Bid → Agent xe chọn Bid tốt nhất → Award.
+  - **Decommitment Mechanism:** Cho phép hủy cam kết nếu tìm được slot tốt hơn, tránh lock-in sớm.
+  - **Concurrent Negotiation:** Nhiều xe đàm phán song song thay vì tuần tự → giảm latency phân bổ.
 
 ---
 
@@ -318,6 +322,10 @@ Jakob, M. & Menendez, M. (2021). "Optimal parking occupancy with and without dif
 - **Link:** [https://www.researchgate.net/publication/342371999](https://www.researchgate.net/publication/342371999_Optimal_Parking_Occupancy_with_and_without_Differentiated_Parking_A_Macroscopic_Analysis)
 - **Ranking:** Scopus **Q2** (Transportation) | IF = 3.3 | CiteScore = 7.7 | SJR = 0.889
 - **Literature Review:** Sử dụng mô hình giao thông vĩ mô (macroscopic traffic model) để tính toán **tỷ lệ lấp đầy tối ưu (optimal occupancy)** cho bãi xe. Phát hiện quan trọng: occupancy quá cao (>85%) gây ra hiện tượng "cruising" — xe chạy vòng tìm chỗ, tăng tắc nghẽn. Occupancy quá thấp (<50%) lãng phí tài nguyên. Nghiên cứu cũng chứng minh rằng chính sách **"differentiated parking"** — dành riêng khu vực cho từng loại xe (EV, xe thường) — giúp cân bằng tỷ lệ sử dụng hiệu quả hơn so với bãi đỗ hỗn hợp. Đây là cơ sở trực tiếp cho giả thuyết H1 (RQ1) rằng phân tầng chuyên biệt cải thiện occupancy.
+- **Thuật toán sử dụng:**
+  - **Macroscopic Fundamental Diagram (MFD):** Mô hình hóa mối quan hệ giữa mật độ xe, lưu lượng, và tốc độ trung bình trên toàn mạng lưới.
+  - **Optimal Occupancy Computation:** `O* = argmin_{O} [CruisingDelay(O) + UnderUtilizationCost(O)]` — tìm điểm cân bằng tối ưu.
+  - **Zone Differentiation Model:** Chia bãi xe thành zones theo loại xe → tính riêng O* cho mỗi zone → so sánh với bãi không phân zone.
 
 ---
 
@@ -328,6 +336,10 @@ Jakob, M. & Menendez, M. (2021). "Optimal parking occupancy with and without dif
 - **Link:** [https://arxiv.org/abs/2508.19979](https://arxiv.org/abs/2508.19979)
 - **Ranking:** Preprint (chưa peer-review) — tuy nhiên mô phỏng trên dataset thực tế Madrid.
 - **Literature Review:** Đề xuất chiến lược **"Cord-Approx"** sử dụng **Hungarian Algorithm** (thuật toán đối sánh tối ưu trong lý thuyết đồ thị) để gán xe vào chỗ đỗ tối ưu nhất. Mô phỏng quy mô thành phố Madrid cho thấy hệ thống phối hợp giảm **72–76% thời gian tìm chỗ** so với người lái tự tìm (uncoordinated). Nghiên cứu cũng chỉ ra rằng hiệu quả tăng khi tỷ lệ adoption ≥ 30% — nghĩa là chỉ cần một phần nhỏ người dùng sử dụng hệ thống tự động đã tạo ra lợi ích đáng kể. Đây là cơ sở cho RQ2: auto-assign giảm thời gian tìm chỗ.
+- **Thuật toán sử dụng:**
+  - **Hungarian Algorithm (Kuhn-Munkres):** Giải bài toán đối sánh hoàn hảo trọng số tối thiểu (minimum-weight bipartite matching). Đầu vào: ma trận cost `C[i][j]` = thời gian di chuyển từ xe `i` đến slot `j`. Đầu ra: phân bổ 1-1 tối ưu. Độ phức tạp: O(n³).
+  - **Cord-Approx Strategy:** Ước lượng hành vi xe không dùng hệ thống (non-users) → loại bỏ slot dự đoán sẽ bị chiếm → chạy Hungarian trên tập slot còn lại.
+  - **Unc-Agn Baseline:** Mô phỏng người lái tự tìm chỗ (chọn ngẫu nhiên hoặc gần nhất) — dùng làm đối chứng.
 
 ---
 
@@ -338,6 +350,10 @@ Wang, S., Levin, M. W. & Caverly, R. J. (2021). "Optimal parking management of c
 - **Link:** [https://doi.org/10.1016/j.trc.2020.102924](https://doi.org/10.1016/j.trc.2020.102924)
 - **Ranking:** Scopus **Q1** (Transportation, Computer Science) | IF = 7.9 | SJR = 2.734
 - **Literature Review:** Áp dụng **lý thuyết điều khiển (control theory)** cho bài toán quản lý bãi đỗ xe tự động. Mô hình hóa hệ thống đỗ xe như một bài toán tối ưu liên tục, trong đó hàm mục tiêu là giảm thiểu tổng chi phí (khoảng cách đi bộ + thời gian chờ + chi phí đỗ). Nghiên cứu chứng minh rằng hệ thống phối hợp trung tâm (centralized coordination) vượt trội hơn so với ra quyết định phi tập trung (decentralized) trong hầu hết kịch bản. Kết quả này hỗ trợ RQ2 và RQ3: hệ thống gán tự động (centralized) hiệu quả hơn người dùng tự chọn, đặc biệt khi kết hợp nhiều tiêu chí.
+- **Thuật toán sử dụng:**
+  - **LQR (Linear Quadratic Regulator):** Bộ điều khiển tối ưu tuyến tính — mô hình trạng thái `x(t)` = [số slot trống, tổng xe đang tìm, tốc độ lấp đầy] → hàm chi phí `J = ∫(x'Qx + u'Ru)dt` → tìm chính sách điều khiển `u*(t)` tối ưu.
+  - **Centralized Assignment:** Hệ thống trung tâm thu thập toàn bộ trạng thái bãi xe → giải bài toán assignment toàn cục thay vì mỗi xe tự quyết định.
+  - **Decentralized Baseline:** Mỗi xe tự tối ưu cục bộ (greedy nearest-first) — dùng làm đối chứng.
 
 ---
 
@@ -348,6 +364,10 @@ Wang, S., Levin, M. W. & Caverly, R. J. (2021). "Optimal parking management of c
 - **Ranking:** *Sensors* (MDPI) — Scopus **Q1** (Instrumentation) | IF = 3.4 | CiteScore = 7.3
 - **Ghi chú:** Tham khảo nhiều bài trong Special Issue. Search: `"TOPSIS" AND "CRITIC" AND "smart parking"` trên MDPI.
 - **Literature Review:** Nhóm bài nghiên cứu sử dụng phương pháp **CRITIC** (CRiteria Importance Through Intercriteria Correlation) để xác định trọng số **khách quan** cho mỗi tiêu chí phân bổ — thay vì gán trọng số chủ quan. Kết hợp với **TOPSIS** để xếp hạng các slot ứng viên dựa trên khoảng cách đến giải pháp lý tưởng. Tiêu chí bao gồm: khoảng cách đến cổng, chi phí, tình trạng giao thông, thể trạng người lái. Đây là nền tảng lý thuyết cho **Weighted Scoring Model (WSM)** trong RQ3 — hệ thống của chúng tôi đơn giản hóa TOPSIS thành WSM với 4 tiêu chí có trọng số cấu hình được.
+- **Thuật toán sử dụng:**
+  - **CRITIC Weighting:** `W_j = (σ_j × Σ(1 - r_jk)) / Σ_all` — trọng số tỷ lệ với độ lệch chuẩn (σ) và mức độ xung đột giữa các tiêu chí (1 - correlation).
+  - **TOPSIS:** (1) Normalize ma trận quyết định → (2) Nhân trọng số CRITIC → (3) Tìm Ideal Best A⁺ và Ideal Worst A⁻ → (4) Tính khoảng cách Euclid D⁺, D⁻ → (5) Xếp hạng: `C_i = D⁻ / (D⁺ + D⁻)`. Slot có C_i cao nhất → được chọn.
+  - **CODAS (Combinative Distance-based Assessment):** Phương pháp bổ sung — xếp hạng dựa trên cả Euclid distance và Taxicab distance đến giải pháp tối ưu.
 
 ---
 
@@ -357,6 +377,10 @@ Wang, S., Levin, M. W. & Caverly, R. J. (2021). "Optimal parking management of c
 - **Link:** [https://jad.shahroodut.ac.ir](https://jad.shahroodut.ac.ir)
 - **Ranking:** Scopus-indexed | Regional journal (Iran)
 - **Literature Review:** Đề xuất thuật toán **COA (Cheetah Optimization Algorithm)** — metaheuristic bio-inspired mô phỏng hành vi săn mồi của báo ghê-ta — để giải bài toán phân bổ chỗ đỗ cá nhân hóa. COA được benchmark so với GA (Genetic Algorithm) và WOA (Whale Optimization Algorithm), cho kết quả tốt hơn về tốc độ hội tụ (convergence speed) và chất lượng giải (solution quality) trong kịch bản real-time. Nghiên cứu hỗ trợ RQ3: metaheuristic optimization có thể cải thiện đáng kể chất lượng phân bổ slot so với single-criteria. Trong hệ thống hiện tại, COA được liệt kê như **hướng nâng cấp tương lai** cho WSM.
+- **Thuật toán sử dụng:**
+  - **COA (Cheetah Optimization Algorithm):** 3 pha: (1) **Search** — quét không gian giải rộng (exploration), (2) **Sit-and-Wait** — khai thác vùng lân cận giải tốt (exploitation), (3) **Attack** — hội tụ nhanh về giải tối ưu. Hàm fitness: `f(x) = α×distance + β×cost + γ×availability`.
+  - **GA Baseline:** Genetic Algorithm chuẩn (crossover + mutation) — dùng làm đối chứng.
+  - **WOA Baseline:** Whale Optimization Algorithm — đối chứng thứ 2.
 
 ---
 
@@ -366,6 +390,9 @@ Zou, B. et al. (2022). "Optimal parking allocation and management for connected 
 - **Link:** [https://www.bu.edu/eng/profile/bo-zou/](https://www.bu.edu/eng/profile/bo-zou/)
 - **Ranking:** *Transportation Research* series — Scopus **Q1** | IF = 5.0–7.9 (tùy Part A/B/C)
 - **Literature Review:** Sử dụng **Mixed-Integer Linear Programming (MILP)** để tối ưu phân bổ chỗ đỗ với ràng buộc: không có 2 xe cùng chiếm 1 slot trong cùng khung giờ, ưu tiên giảm chi phí người dùng (khoảng cách đi bộ + giá đỗ) đồng thời tối đa hóa tỷ lệ sử dụng hệ thống. Mô hình giải theo **chu kỳ thời gian** (time-driven intervals), cho phép cập nhật lại phân bổ theo real-time data. Ý tưởng ràng buộc cứng (hard constraints) từ MILP được áp dụng trực tiếp vào WSM của hệ thống: `vehicleType match` + `slot.status == Available`.
+- **Thuật toán sử dụng:**
+  - **MILP:** `min Σ(c_ij × x_ij)` s.t. `Σ_j(x_ij) = 1 ∀i` (mỗi xe được gán đúng 1 slot), `Σ_i(x_ij) ≤ 1 ∀j` (mỗi slot tối đa 1 xe), `x_ij ∈ {0,1}`. `c_ij` = chi phí tổng hợp (walking distance + parking fee). Giải bằng Branch-and-Bound hoặc CPLEX solver.
+  - **Time-Driven Rolling Horizon:** Chia thời gian thành intervals (ví dụ 15 phút) → giải MILP cho mỗi interval → cập nhật assignment khi có xe mới đến.
 
 ---
 
@@ -376,6 +403,10 @@ Zhang, C., Liu, W., Yan, C., Ye, X. & Chen, J. (2024). "Optimization Method for 
 - **Link:** [https://www.mdpi.com/2079-8954/12/10/404](https://www.mdpi.com/2079-8954/12/10/404)
 - **Ranking:** JCR **Q1** (Social Sciences, Interdisciplinary) | Scopus **Q2** (Modeling & Simulation) | IF = 3.1 | CiteScore = 4.1
 - **Literature Review:** Phát triển mô hình tối ưu **phân bổ nhu cầu đỗ xe giờ cao điểm** cho cụm bãi xe hub giao thông. Xây dựng mô hình tính **delay** (thời gian chờ) khi xe tìm chỗ đỗ trên đường xung quanh bãi xe, sau đó chuyển thành bài toán tối ưu và giải bằng **NSGA-II** (Non-dominated Sorting Genetic Algorithm II). Kết quả: giảm **4.5% tổng thời gian chờ** — tương đương 13,860 giây tiết kiệm cho nhu cầu đỗ xe trong 1 giờ tại hub. Đây là cơ sở trực tiếp cho RQ4: thuật toán load balancing trong hệ thống sử dụng nguyên lý tương tự — phát hiện tầng sắp đầy (≥85%) rồi chuyển hướng xe đến tầng có occupancy thấp hơn.
+- **Thuật toán sử dụng:**
+  - **NSGA-II (Non-dominated Sorting GA II):** Multi-objective: `min F1(x) = TotalDelay` và `min F2(x) = LoadImbalance`. Sử dụng non-dominated sorting + crowding distance để duy trì Pareto front đa dạng. Toán tử: SBX crossover + polynomial mutation.
+  - **Delay Calculation Model:** `D_k = f(demand_k, capacity_k, road_speed_k)` — tính delay cho mỗi bãi xe k dựa trên nhu cầu, capacity, và tốc độ đường dẫn vào.
+  - **Demand Allocation Variables:** `x_ik` = tỷ lệ nhu cầu từ nguồn i được phân bổ cho bãi k, `Σ_k(x_ik) = 1`.
 
 ---
 
@@ -386,6 +417,10 @@ Wang, Z., Zhang, C., Xue, S., Luo, Y., Chen, J., Wang, W. & Yan, X. (2024). "Dyn
 - **Link:** [https://www.aimspress.com/article/doi/10.3934/era.2024026](https://www.aimspress.com/article/doi/10.3934/era.2024026)
 - **Ranking:** Scopus & SCIE indexed | IF = 1.1 | CiteScore = 1.7
 - **Literature Review:** Giới thiệu chiến lược phối hợp động (DCS) sử dụng thuật toán **"Parking-Cruising Path Tree" (PCPT)** cho bãi đỗ hỗn hợp (xe tự lái + xe người lái). Hàm mục tiêu kép: giảm thời gian cruising (xe chạy vòng tìm chỗ) và giảm delay do blocking (xe chặn đường trong bãi). Nghiên cứu mở ra hướng nâng cấp cho hệ thống: có thể áp dụng **Deep Q-Network (DQN)** với reward function điều chỉnh được để ưu tiên cân bằng tải hoặc giảm thời gian tìm chỗ — đây là hướng phát triển tương lai cho RQ4.
+- **Thuật toán sử dụng:**
+  - **PCPT (Parking-Cruising Path Tree):** Xây dựng cây đường đi từ cổng vào đến từng slot → tính weight cho mỗi nhánh = `cruising_time + blocking_probability` → chọn nhánh có tổng weight nhỏ nhất.
+  - **DCS (Dynamic Coordinated Strategy):** Cập nhật PCPT theo real-time khi slot thay đổi trạng thái → tái phân bổ đường đi cho xe đang trong bãi.
+  - **Conflict Resolution:** Khi 2 xe hướng đến cùng slot → ưu tiên xe gần hơn, xe còn lại được chuyển sang slot tối ưu tiếp theo.
 
 ---
 
@@ -395,6 +430,10 @@ Zou, B. et al. (2022). "Optimal reservation-based parking allocation in mixed tr
 - **Link:** [https://www.bu.edu/eng/profile/bo-zou/](https://www.bu.edu/eng/profile/bo-zou/)
 - **Ranking:** *Transportation Research Part B* — Scopus **Q1** | IF = 5.8 | SJR = 2.6
 - **Literature Review:** Nghiên cứu chứng minh rằng hệ thống **đặt chỗ trước (reservation-based)** giúp hệ thống biết trước nhu cầu → quản lý capacity chủ động (proactive capacity management) trước khi tài xế đến → giảm đáng kể tình trạng **false "bãi đầy"** (khi bãi thực tế còn chỗ nhưng xe không tìm được) trong giờ cao điểm. Ý tưởng "effective occupancy = occupied + reserved" được áp dụng trực tiếp vào thuật toán Load Balancing (RQ4): khi tính tỷ lệ lấp đầy, hệ thống tính cả slot đã Reserved để tránh over-allocation.
+- **Thuật toán sử dụng:**
+  - **Reservation-Aware Capacity Model:** `effective_occupancy = (count_occupied + count_reserved) / total_slots` — tính cả slot Reserved khi đánh giá capacity, tránh over-booking.
+  - **Proactive Demand Forecasting:** Dùng reservation data để dự đoán nhu cầu trước 30–60 phút → điều chỉnh phân bổ chủ động.
+  - **No-Show Penalty:** Nếu xe không đến sau thời gian reservation → tự động release slot + tính phí hủy.
 
 ---
 
