@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -12,24 +13,10 @@ import { vehicleTypeService, VehicleType } from '../../../services/vehicleType.s
 import { FacilityFormModal } from './components/FacilityFormModal';
 import { FloorFormModal } from './components/FloorFormModal';
 import { FacilityCard } from './components/FacilityCard';
+import { SlotGrid } from '../../../components/ui/SlotGrid';
+import { slotService, type ParkingSlot } from '../../../services/slot.service';
 
-// ── Slot type ───────────────────────────────────────────
-type SlotType = 'ev' | 'standard' | 'reserved' | 'wall';
-interface SlotState { type: SlotType }
 
-const SLOT_DEFAULTS: SlotState[] = Array.from({ length: 40 }, (_, i) => {
-  if (i < 12) return { type: 'ev' };
-  if (i === 12 || i === 13) return { type: 'reserved' };
-  if (i === 24 || i === 25) return { type: 'wall' };
-  return { type: 'standard' };
-});
-
-const slotClass: Record<SlotType, string> = {
-  ev: 'bg-[#d7ee46] border border-[#b5cc32] text-[#556314]',
-  standard: 'bg-white border border-gray-200 text-gray-400 hover:bg-gray-50',
-  reserved: 'bg-blue-100 border border-blue-200 text-blue-700',
-  wall: 'bg-gray-300 border-none text-transparent',
-};
 
 // ── Floor Card ───────────────────────────────────────────
 interface FloorCardProps {
@@ -37,9 +24,10 @@ interface FloorCardProps {
   vehicleTypes: VehicleType[];
   onEdit: (floor: Floor) => void;
   onRefresh: () => void;
+  onViewMap: (floor: Floor) => void;
 }
 
-function FloorCard({ floor, vehicleTypes, onEdit, onRefresh }: FloorCardProps) {
+function FloorCard({ floor, vehicleTypes, onEdit, onRefresh, onViewMap }: FloorCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const used = 0; // real-time occupancy → future integration
@@ -78,7 +66,7 @@ function FloorCard({ floor, vehicleTypes, onEdit, onRefresh }: FloorCardProps) {
           <div>
             <h3 className="font-bold text-lg text-[#060606] leading-tight">{floor.name}</h3>
             <p className="text-sm text-gray-500">
-              Floor: {floor.name} • {vtNames || 'Chưa gán loại xe'}
+              Floor: {floor.name} • {vtNames || 'No vehicle types assigned'}
             </p>
           </div>
         </div>
@@ -117,7 +105,7 @@ function FloorCard({ floor, vehicleTypes, onEdit, onRefresh }: FloorCardProps) {
                     onClick={() => { onEdit(floor); setMenuOpen(false); }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                   >
-                    <Edit size={14} /> Chỉnh sửa
+                    <Edit size={14} /> Edit
                   </button>
                   <div className="h-px bg-gray-100 mx-2 my-1" />
                   {floor.status === 'active' ? (
@@ -127,17 +115,17 @@ function FloorCard({ floor, vehicleTypes, onEdit, onRefresh }: FloorCardProps) {
                         setLoading(true);
                         try {
                           await floorService.update(floor._id, { status: 'inactive' });
-                          toast.success(`Đã ngừng hoạt động tầng ${floor.name}`);
+                          toast.success(`Deactivated floor ${floor.name}`);
                           onRefresh();
                         } catch (err: any) {
-                          toast.error(err.message || 'Thất bại');
+                          toast.error(err.message || 'Failed');
                         } finally {
                           setLoading(false);
                         }
                       }}
                       className="w-full text-left px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2"
                     >
-                      <PowerOff size={14} /> Vô hiệu hóa
+                      <PowerOff size={14} /> Deactivate
                     </button>
                   ) : (
                     <button
@@ -146,38 +134,38 @@ function FloorCard({ floor, vehicleTypes, onEdit, onRefresh }: FloorCardProps) {
                         setLoading(true);
                         try {
                           await floorService.update(floor._id, { status: 'active' });
-                          toast.success(`Đã kích hoạt tầng ${floor.name}`);
+                          toast.success(`Activated floor ${floor.name}`);
                           onRefresh();
                         } catch (err: any) {
-                          toast.error(err.message || 'Thất bại');
+                          toast.error(err.message || 'Failed');
                         } finally {
                           setLoading(false);
                         }
                       }}
                       className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
                     >
-                      <CheckCircle size={14} /> Kích hoạt lại
+                      <CheckCircle size={14} /> Reactivate
                     </button>
                   )}
                   <div className="h-px bg-gray-100 mx-2 my-1" />
                   <button
                     onClick={async () => {
                       setMenuOpen(false);
-                      if (!window.confirm(`Xóa tầng "${floor.name}"?`)) return;
+                      if (!window.confirm(`Delete floor "${floor.name}"?`)) return;
                       setLoading(true);
                       try {
                         await floorService.softDelete(floor._id);
-                        toast.success('Đã xóa tầng thành công');
+                        toast.success('Floor deleted successfully');
                         onRefresh();
                       } catch (err: any) {
-                        toast.error(err.message || 'Xóa thất bại');
+                        toast.error(err.message || 'Deletion failed');
                       } finally {
                         setLoading(false);
                       }
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                   >
-                    <Trash2 size={14} /> Xóa tầng
+                    <Trash2 size={14} /> Delete Floor
                   </button>
                 </motion.div>
               )}
@@ -210,10 +198,10 @@ function FloorCard({ floor, vehicleTypes, onEdit, onRefresh }: FloorCardProps) {
             <span className="text-sm text-gray-500">Standard</span>
           )}
           <button
-            onClick={() => document.getElementById('slot-editor')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => onViewMap(floor)}
             className="text-sm font-medium text-[#060606] hover:underline"
           >
-            Sơ đồ tầng &rarr;
+            Floor Map &rarr;
           </button>
         </div>
       </div>
@@ -221,103 +209,29 @@ function FloorCard({ floor, vehicleTypes, onEdit, onRefresh }: FloorCardProps) {
   );
 }
 
-// ── Slot Mapping Editor ─────────────────────────────────
-function SlotMappingEditor() {
-  const [slots, setSlots] = useState<SlotState[]>(SLOT_DEFAULTS);
-  const [dragType, setDragType] = useState<SlotType | null>(null);
-
-  const paintSlot = (i: number) => {
-    if (!dragType) return;
-    setSlots((prev) => prev.map((s, idx) => (idx === i ? { type: dragType } : s)));
-  };
-
-  const tools: { type: SlotType; label: string; cls: string }[] = [
-    { type: 'standard', label: 'Standard Slot', cls: 'bg-white border border-gray-200' },
-    { type: 'ev', label: 'EV Slot', cls: 'bg-[#d7ee46]/10 border border-[#b5cc32]/50' },
-    { type: 'reserved', label: 'Reserved', cls: 'bg-blue-50 border border-blue-200' },
-    { type: 'wall', label: 'Wall/Pillar', cls: 'bg-gray-200 border border-gray-300' },
-  ];
+function SlotMappingEditorView({ floor, slots, vtMap, loading }: { floor: Floor | null; slots: ParkingSlot[]; vtMap: Record<string, string>; loading: boolean }) {
+  if (!floor) return null;
 
   return (
     <div id="slot-editor" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-[#060606]">
-            Slot Mapping Editor (Drag &amp; Drop)
+            Floor Map: {floor.name}
           </h2>
           <p className="text-sm text-gray-500">
-            Facility Manager View: Configure physical layout for staff app.
+            View current slot layout for this floor. Manage slots in Slot Manager.
           </p>
         </div>
-        <button
-          onClick={() => toast.success('Layout saved!')}
-          className="mt-3 sm:mt-0 text-sm border border-gray-200 bg-gray-50 px-4 py-2 rounded-xl hover:bg-gray-100 font-medium transition-colors"
+        <Link 
+          to="/admin/slots"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#d7ee46] text-[#060606] font-bold text-sm rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm"
         >
-          Save Layout
-        </button>
+          Go to Slot Manager &rarr;
+        </Link>
       </div>
-
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Palette */}
-        <div className="w-full lg:w-48 bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-3 flex-shrink-0">
-          <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Elements</h4>
-          {tools.map((tool) => (
-            <button
-              key={tool.type}
-              onMouseDown={() => setDragType(tool.type)}
-              onMouseUp={() => setDragType(null)}
-              className={`w-full ${tool.cls} p-2.5 rounded-xl text-sm flex items-center gap-2 cursor-grab active:cursor-grabbing hover:shadow-sm transition-all text-left font-medium ${
-                dragType === tool.type ? 'ring-2 ring-[#d7ee46] scale-[1.02]' : ''
-              }`}
-            >
-              <GripHorizontal size={14} className="text-gray-400 flex-shrink-0" />
-              {tool.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Canvas */}
-        <div
-          className="flex-1 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50 p-6 overflow-x-auto"
-          onMouseLeave={() => setDragType(null)}
-        >
-          <div className="min-w-[600px]">
-            {/* Legend */}
-            <div className="flex gap-5 mb-5 text-sm text-gray-600 flex-wrap">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-white border border-gray-200" /> Empty
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-[#d7ee46] border border-[#b5cc32]" /> EV Charger
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-blue-100 border border-blue-200" /> Reserved
-              </div>
-            </div>
-
-            {/* Grid */}
-            <div
-              className="grid gap-3"
-              style={{ gridTemplateColumns: 'repeat(10, minmax(0, 1fr))' }}
-            >
-              {slots.map((slot, i) => (
-                <div
-                  key={i}
-                  onMouseDown={() => { paintSlot(i); }}
-                  onMouseEnter={() => dragType && paintSlot(i)}
-                  onMouseUp={() => setDragType(null)}
-                  title={slot.type === 'wall' ? 'Wall/Pillar' : `Slot ${i + 1}`}
-                  className={`aspect-square rounded-xl flex items-center justify-center text-xs font-semibold cursor-pointer select-none transition-colors ${slotClass[slot.type]}`}
-                >
-                  {slot.type !== 'wall'
-                    ? i + 1 < 10 ? `E0${i + 1}` : `E${i + 1}`
-                    : ''}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+      
+      <SlotGrid slots={slots} vehicleTypeMap={vtMap} readOnly isLoading={loading} />
     </div>
   );
 }
@@ -337,6 +251,11 @@ export default function FacilitiesPage() {
   const [isFloorModalOpen, setIsFloorModalOpen] = useState(false);
   const [editingFloor, setEditingFloor] = useState<Floor | undefined>();
 
+  const [mapFloor, setMapFloor] = useState<Floor | null>(null);
+  const [mapSlots, setMapSlots] = useState<ParkingSlot[]>([]);
+  const [mapLoading, setMapLoading] = useState(false);
+  const vtMap = Object.fromEntries(vehicleTypes.map((v) => [v._id, v.name]));
+
   const fetchAll = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -349,7 +268,7 @@ export default function FacilitiesPage() {
       setFloors(flRes.data);
       setVehicleTypes(vtRes.data);
     } catch (err: any) {
-      toast.error(err.message || 'Không thể tải dữ liệu');
+      toast.error(err.message || 'Failed to load data');
     } finally {
       setIsLoading(false);
     }
@@ -368,12 +287,29 @@ export default function FacilitiesPage() {
 
   const handleViewFloors = (facility: Facility) => {
     setViewFacility(facility);
+    setMapFloor(null);
   };
 
   const handleEditMapping = (floor: Floor) => {
     setEditingFloor(floor);
     setIsFloorModalOpen(true);
   };
+
+  const handleViewMap = useCallback(async (floor: Floor) => {
+    setMapFloor(floor);
+    setMapLoading(true);
+    try {
+      const res = await slotService.getByFloor(floor._id);
+      setMapSlots(res.data);
+      setTimeout(() => {
+        document.getElementById('slot-editor')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } catch (err: any) {
+      toast.error('Failed to load slots');
+    } finally {
+      setMapLoading(false);
+    }
+  }, []);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -390,7 +326,7 @@ export default function FacilitiesPage() {
             <div>
               <h1 className="text-2xl font-bold text-[#060606]">Facilities</h1>
               <p className="text-gray-500 text-sm">
-                Quản lý các tòa nhà và bãi đỗ xe trong hệ thống
+                Manage buildings and parking facilities in the system
               </p>
             </div>
             <button
@@ -404,8 +340,8 @@ export default function FacilitiesPage() {
 
           {/* Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 4 }).map((_, i) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Array.from({ length: 2 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 animate-pulse h-48">
                   <div className="h-4 bg-gray-100 rounded w-2/3" />
                   <div className="h-3 bg-gray-100 rounded w-1/2" />
@@ -417,10 +353,10 @@ export default function FacilitiesPage() {
               <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Building2 size={28} className="text-gray-300" />
               </div>
-              <p className="text-gray-500 font-medium">Chưa có Facility nào.</p>
+              <p className="text-gray-500 font-medium">No Facilities found.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {facilities.map((facility) => (
                 <FacilityCard
                   key={facility._id}
@@ -458,7 +394,7 @@ export default function FacilitiesPage() {
                   {viewFacility.name}
                 </h1>
                 <p className="text-gray-500 text-sm">
-                  Quản lý các tầng (floors) thuộc bãi xe này
+                  Manage floors for this facility
                 </p>
               </div>
             </div>
@@ -473,8 +409,8 @@ export default function FacilitiesPage() {
 
           {/* Floor Cards */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 3 }).map((_, i) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Array.from({ length: 2 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 animate-pulse h-52">
                   <div className="h-4 bg-gray-100 rounded w-2/3" />
                   <div className="h-3 bg-gray-100 rounded w-1/2" />
@@ -487,7 +423,7 @@ export default function FacilitiesPage() {
               <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MapPin size={28} className="text-gray-300" />
               </div>
-              <p className="text-gray-500 font-medium">Chưa có tầng (floor) nào cho bãi xe này.</p>
+              <p className="text-gray-500 font-medium">No floors found for this facility.</p>
               <button
                 onClick={() => { setEditingFloor(undefined); setIsFloorModalOpen(true); }}
                 className="mt-4 bg-[#060606] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-black/80 transition-colors inline-flex items-center gap-2"
@@ -496,7 +432,7 @@ export default function FacilitiesPage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredFloors.map((floor) => (
                 <FloorCard
                   key={floor._id}
@@ -504,13 +440,19 @@ export default function FacilitiesPage() {
                   vehicleTypes={vehicleTypes}
                   onEdit={handleEditMapping}
                   onRefresh={fetchAll}
+                  onViewMap={handleViewMap}
                 />
               ))}
             </div>
           )}
 
-          {/* Slot Mapping Editor */}
-          <SlotMappingEditor />
+          {/* Slot Mapping View */}
+          <SlotMappingEditorView
+            floor={mapFloor}
+            slots={mapSlots}
+            vtMap={vtMap}
+            loading={mapLoading}
+          />
         </motion.div>
       )}
 

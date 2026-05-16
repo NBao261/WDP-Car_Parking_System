@@ -40,7 +40,7 @@ function SlotCell({ slot, onStatusChange, readOnly }: SlotCellProps) {
       whileHover={{ scale: readOnly ? 1 : 1.05 }}
       whileTap={{ scale: readOnly ? 1 : 0.97 }}
       className={cn(
-        'relative aspect-square rounded-xl border-2 flex flex-col items-center justify-center gap-0.5 cursor-pointer select-none transition-colors',
+        'relative aspect-square rounded-xl border flex flex-col items-center justify-center gap-0.5 cursor-pointer select-none transition-colors',
         bg,
         readOnly && 'cursor-default',
       )}
@@ -49,8 +49,7 @@ function SlotCell({ slot, onStatusChange, readOnly }: SlotCellProps) {
       onClick={() => !readOnly && onStatusChange?.(slot)}
       title={`${slot.code} — ${cfg.fullLabel}`}
     >
-      {STATUS_ICON[slot.status]}
-      <span className="text-[10px] font-bold leading-none">{slot.code}</span>
+      <span className="text-xs font-semibold leading-none">{slot.code}</span>
 
       {/* Tooltip on hover */}
       {hovered && !readOnly && (
@@ -105,7 +104,7 @@ export function SlotGrid({
   columns,
   isLoading = false,
 }: SlotGridProps) {
-  const cols = columns ?? Math.min(Math.ceil(Math.sqrt(slots.length)), 12);
+  const cols = columns ?? 10;
 
   if (isLoading) {
     return (
@@ -145,6 +144,10 @@ export function SlotGrid({
     {} as Record<SlotStatus, number>,
   );
 
+  const sortedSlots = [...slots].sort((a, b) => 
+    a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
+  );
+
   return (
     <div className="space-y-4">
       {/* Stats */}
@@ -175,10 +178,10 @@ export function SlotGrid({
 
       {/* Grid */}
       <div
-        className="grid gap-2"
+        className="grid gap-3"
         style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
       >
-        {slots.map((slot) => (
+        {sortedSlots.map((slot) => (
           <SlotCell
             key={slot._id}
             slot={slot}

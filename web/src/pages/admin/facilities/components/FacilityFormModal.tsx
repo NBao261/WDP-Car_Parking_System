@@ -48,15 +48,15 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
     try {
       if (isEdit && facility) {
         await facilityService.update(facility._id, form);
-        toast.success('Cập nhật bãi xe thành công');
+        toast.success('Facility updated successfully');
       } else {
         await facilityService.create(form);
-        toast.success('Tạo bãi xe thành công');
+        toast.success('Facility created successfully');
       }
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.message || 'Đã có lỗi xảy ra');
+      toast.error(err.message || 'An error occurred');
     } finally {
       setIsSubmitting(false);
     }
@@ -85,10 +85,10 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div>
               <h2 className="text-lg font-bold text-[#060606]">
-                {isEdit ? 'Chỉnh sửa bãi xe' : 'Thêm bãi xe mới'}
+                {isEdit ? 'Edit Facility' : 'Add New Facility'}
               </h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                {isEdit ? 'Cập nhật thông tin cơ sở bãi đỗ xe' : 'Tạo mới một tòa nhà / bãi đỗ xe'}
+                {isEdit ? 'Update facility information' : 'Create a new building / parking facility'}
               </p>
             </div>
             <button
@@ -101,10 +101,10 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-4">
-            {/* Tên bãi xe */}
+            {/* Facility Name */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Tên bãi xe <span className="text-red-500">*</span>
+                Facility Name <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -114,15 +114,15 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
-                  placeholder="VD: Tòa nhà Vincom Center"
+                  placeholder="Ex: Vincom Center"
                 />
               </div>
             </div>
 
-            {/* Địa chỉ */}
+            {/* Address */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Địa chỉ <span className="text-red-500">*</span>
+                Address <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <MapPin size={16} className="absolute left-3 top-3 text-gray-400" />
@@ -132,15 +132,15 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                   className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all resize-none"
-                  placeholder="VD: 72 Lê Thánh Tôn, Quận 1, TP.HCM"
+                  placeholder="Ex: 72 Le Thanh Ton, District 1, HCMC"
                 />
               </div>
             </div>
 
-            {/* Số tầng */}
+            {/* Total Floors */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Số tầng đỗ xe <span className="text-red-500">*</span>
+                Total Floors <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Layers size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -149,17 +149,17 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                   required
                   min={1}
                   max={50}
-                  value={form.totalFloors}
-                  onChange={(e) => setForm({ ...form, totalFloors: Number(e.target.value) })}
+                  value={form.totalFloors || ''}
+                  onChange={(e) => setForm({ ...form, totalFloors: parseInt(e.target.value || '0', 10) })}
                   className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
                 />
               </div>
             </div>
 
-            {/* Giờ hoạt động */}
+            {/* Operating Hours */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Giờ hoạt động <span className="text-red-500">*</span>
+                Operating Hours <span className="text-red-500">*</span>
               </label>
               <div className="flex gap-3 items-center">
                 <div className="relative flex-1">
@@ -172,7 +172,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                     className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
                   />
                 </div>
-                <span className="text-gray-400 font-medium text-sm">đến</span>
+                <span className="text-gray-400 font-medium text-sm">to</span>
                 <div className="relative flex-1">
                   <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
@@ -186,9 +186,9 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
               </div>
             </div>
 
-            {/* Mô tả */}
+            {/* Description */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mô tả</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
               <div className="relative">
                 <FileText size={16} className="absolute left-3 top-3 text-gray-400" />
                 <textarea
@@ -196,7 +196,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all resize-none"
-                  placeholder="Mô tả ngắn về bãi xe..."
+                  placeholder="Short description about the facility..."
                 />
               </div>
             </div>
@@ -209,7 +209,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                 disabled={isSubmitting}
                 className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-60"
               >
-                Hủy bỏ
+                Cancel
               </button>
               <button
                 type="submit"
@@ -217,7 +217,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                 className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
               >
                 {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                {isEdit ? 'Lưu thay đổi' : 'Tạo bãi xe'}
+                {isEdit ? 'Save Changes' : 'Create Facility'}
               </button>
             </div>
           </form>
