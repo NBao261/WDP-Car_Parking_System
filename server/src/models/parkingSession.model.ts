@@ -24,6 +24,7 @@ export interface IParkingSession extends Document {
   driverId: mongoose.Types.ObjectId | null;
   reservationId: mongoose.Types.ObjectId | null;
   totalFee: number;
+  assignmentMode: 'auto' | 'manual'; // RQ-ready: ghi nhận cách phân bổ slot
   status: SessionStatus;
   cardCode: string;
   createdAt: Date;
@@ -48,6 +49,7 @@ const parkingSessionSchema = new Schema<IParkingSession>(
     driverId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     reservationId: { type: Schema.Types.ObjectId, ref: 'Reservation', default: null },
     totalFee: { type: Number, default: 0, min: 0 },
+    assignmentMode: { type: String, enum: ['auto', 'manual'], default: 'manual' }, // RQ-ready
     status: { type: String, enum: Object.values(SessionStatus), default: SessionStatus.ACTIVE },
     cardCode: { type: String, required: true, unique: true },
   },
