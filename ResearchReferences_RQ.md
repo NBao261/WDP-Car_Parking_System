@@ -300,35 +300,55 @@ Trong phạm vi đồ án 9 tuần, hệ thống áp dụng **phiên bản đơn
 ## Danh mục tài liệu tham khảo
 
 ### [P1]
-Fernández-Rodríguez, S. et al. (2025). "A Multi-Agent System for Parking Allocation: An Approach to Allocate Parking Spaces." *Applied Sciences*, 15(4). MDPI. Available at: https://www.mdpi.com/journal/applsci
+Icarte-Ahumada, G., He, Z., Godoy, V., García, F. & Oyarzún, M. (2025). "A Multi-Agent System for Parking Allocation: An Approach to Allocate Parking Spaces." *Electronics*, 14(5), 840. MDPI.
+- **DOI:** [10.3390/electronics14050840](https://doi.org/10.3390/electronics14050840)
+- **Link:** [https://www.mdpi.com/2079-9292/14/5/840](https://www.mdpi.com/2079-9292/14/5/840)
 
 ### [P2]
-Jakob, M. & Menendez, M. (2021). "Optimal parking occupancy with and without differentiated parking: A macroscopic analysis." *Transportation Letters: The International Journal of Transportation Research*. DOI: 10.1080/19427867.2021.1988245
+Jakob, M. & Menendez, M. (2021). "Optimal parking occupancy with and without differentiated parking: A macroscopic analysis." *Transportation Letters: The International Journal of Transportation Research*.
+- **DOI:** [10.1080/19427867.2021.1988245](https://doi.org/10.1080/19427867.2021.1988245)
+- **Link:** [https://www.researchgate.net/publication/342371999](https://www.researchgate.net/publication/342371999_Optimal_Parking_Occupancy_with_and_without_Differentiated_Parking_A_Macroscopic_Analysis)
 
 ### [P3]
-(Authors). (2025). "Reducing Street Parking Search Time via Smart Assignment Strategies." *arXiv preprint*. arXiv:2508.19979. Available at: https://arxiv.org/abs/2508.19979
+(Authors). (2025). "Reducing Street Parking Search Time via Smart Assignment Strategies." *arXiv preprint*.
+- **Identifier:** arXiv:2508.19979
+- **Link:** [https://arxiv.org/abs/2508.19979](https://arxiv.org/abs/2508.19979)
 
 ### [P4]
-Cao, J. & Menendez, M. (2022). "The value of parking information: Optimal parking assignment strategies and cruising reduction." *Transportation Research Part C: Emerging Technologies*. Elsevier.
+Wang, S., Levin, M. W. & Caverly, R. J. (2021). "Optimal parking management of connected autonomous vehicles: A control-theoretic approach." *Transportation Research Part C: Emerging Technologies*.
+- **DOI:** [10.1016/j.trc.2020.102924](https://doi.org/10.1016/j.trc.2020.102924)
+- **Link:** [https://www.sciencedirect.com/science/article/pii/S0968090X20308329](https://doi.org/10.1016/j.trc.2020.102924)
 
 ### [P5]
-(Authors). (2023). "Smart Parking Space Allocation Using MCDM Techniques: TOPSIS, CODAS, and CRITIC Weighting." *Sensors* (MDPI), Special Issue on Smart Parking Systems. Available at: https://www.mdpi.com/journal/sensors
+(Authors — representative MDPI works). (2023). "Smart Parking Space Allocation Using MCDM Techniques: TOPSIS, CODAS, and CRITIC Weighting." *Sensors* (MDPI), Special Issue on Smart Parking.
+- **Link (journal):** [https://www.mdpi.com/journal/sensors/special_issues/smart_parking](https://www.mdpi.com/journal/sensors)
+- **Ghi chú:** Tham khảo nhiều bài trong Special Issue. Keyword search: `"TOPSIS" AND "CRITIC" AND "smart parking"` trên MDPI.
 
 ### [P6]
-(Authors from Shahrood University of Technology). (2023). "Personalized Smart Parking Recommendation Using Cheetah Optimization Algorithm." *Journal of AI and Data Mining*. Shahrood University of Technology.
+(Authors — Shahrood University of Technology). (2023). "Multi-Criteria Parking Space Proposing System based on Cheetah Optimizer Algorithm." *Journal of AI and Data Mining*.
+- **Link:** [https://jad.shahroodut.ac.ir](https://jad.shahroodut.ac.ir)
+- **Ghi chú:** Tìm kiếm bài với keyword "Cheetah Optimization" + "smart parking" trên trang journal.
 
 ### [P7]
-Zou, B. et al. (2022). "Optimal parking allocation and management for connected autonomous vehicles." Boston University Research / *Transportation Research*. Available at: https://www.bu.edu/
+Zou, B. et al. (2022). "Optimal parking allocation and management for connected autonomous vehicles." Boston University Research / *Transportation Research*.
+- **Link:** [https://www.bu.edu/eng/profile/bo-zou/](https://www.bu.edu/eng/profile/bo-zou/)
+- **Ghi chú:** Truy cập trang profile tác giả để tìm paper cụ thể.
 
 ### [P8]
-Zhang, C., Liu, W., Yan, C., Ye, X. & Chen, J. (2024). "Optimization Method for Allocating Peak-Period Parking Demand in Hub Parking Lot Clusters." *Systems*, 12(10), 404. MDPI. DOI: 10.3390/systems12100404
+Zhang, C., Liu, W., Yan, C., Ye, X. & Chen, J. (2024). "Optimization Method for Allocating Peak-Period Parking Demand in Hub Parking Lot Clusters." *Systems*, 12(10), 404. MDPI.
+- **DOI:** [10.3390/systems12100404](https://doi.org/10.3390/systems12100404)
+- **Link:** [https://www.mdpi.com/2079-8954/12/10/404](https://www.mdpi.com/2079-8954/12/10/404)
 
 ### [P9]
-Chen, X. et al. (2024). "Dynamic Coordinated Strategy for Parking Guidance in Mixed-Traffic Environments." *Mathematical Biosciences and Engineering*. AIMS Press.
+Wang, Z., Zhang, C., Xue, S., Luo, Y., Chen, J., Wang, W. & Yan, X. (2024). "Dynamic coordinated strategy for parking guidance in a mixed driving parking lot involving human-driven and autonomous vehicles." *Electronic Research Archive*, 32(1), 523–550. AIMS Press.
+- **DOI:** [10.3934/era.2024026](https://doi.org/10.3934/era.2024026)
+- **Link:** [https://www.aimspress.com/article/doi/10.3934/era.2024026](https://www.aimspress.com/article/doi/10.3934/era.2024026)
 
 ### [P10]
-Zou, B. et al. (2022). "Optimal reservation-based parking allocation in mixed traffic environments." Boston University Research / *Transportation Research Part B*. Available at: https://www.bu.edu/
+Zou, B. et al. (2022). "Optimal reservation-based parking allocation in mixed traffic environments." Boston University Research / *Transportation Research Part B*.
+- **Link:** [https://www.bu.edu/eng/profile/bo-zou/](https://www.bu.edu/eng/profile/bo-zou/)
 
 ---
 
-> **Ghi chú:** Một số DOI được đánh dấu *(cần xác minh)* do thông tin trích xuất từ web search có thể chưa chính xác 100%. Nên truy cập trực tiếp vào IEEE Xplore, MDPI, ScienceDirect, hoặc Google Scholar để xác nhận DOI chính thức trước khi đưa vào báo cáo cuối cùng.
+> **Ghi chú:** Các paper [P5], [P6], [P7], [P10] chưa có DOI chính xác do giới hạn tìm kiếm. Trước khi đưa vào báo cáo cuối cùng, nên truy cập Google Scholar ([https://scholar.google.com](https://scholar.google.com)) để xác minh DOI và thông tin tác giả đầy đủ.
+
