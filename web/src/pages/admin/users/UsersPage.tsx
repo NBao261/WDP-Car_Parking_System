@@ -12,25 +12,73 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
+    transition: { staggerChildren: 0.1 },
+  },
 };
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
-    transition: { type: "spring" as const, stiffness: 300, damping: 24 }
-  }
+    transition: { type: 'spring' as const, stiffness: 300, damping: 24 },
+  },
 };
 
 // Fallback mock data in case API is down during development
 const mockUsers: UserType[] = [
-  { _id: '1', name: 'Super Admin', email: 'admin@parkmaster.com', phone: '0987654321', role: UserRole.ADMIN, status: 'active', assignedFacilities: [], customPermissions: [], lastLogin: new Date().toISOString(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { _id: '2', name: 'Trần Quản Lý', email: 'manager01@parkmaster.com', phone: '0987654322', role: UserRole.MANAGER, status: 'active', assignedFacilities: [], customPermissions: [], lastLogin: new Date(Date.now() - 3600000).toISOString(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { _id: '3', name: 'Lê Nhân Viên', email: 'staff01@parkmaster.com', phone: '0987654323', role: UserRole.STAFF, status: 'active', assignedFacilities: [], customPermissions: [], lastLogin: new Date(Date.now() - 86400000).toISOString(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { _id: '4', name: 'Nguyễn Tạm Khóa', email: 'staff02@parkmaster.com', phone: '0987654324', role: UserRole.STAFF, status: 'locked', assignedFacilities: [], customPermissions: [], lastLogin: new Date(Date.now() - 604800000).toISOString(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  {
+    _id: '1',
+    name: 'Super Admin',
+    email: 'admin@parkmaster.com',
+    phone: '0987654321',
+    role: UserRole.ADMIN,
+    status: 'active',
+    assignedFacilities: [],
+    customPermissions: [],
+    lastLogin: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    _id: '2',
+    name: 'Trần Quản Lý',
+    email: 'manager01@parkmaster.com',
+    phone: '0987654322',
+    role: UserRole.MANAGER,
+    status: 'active',
+    assignedFacilities: [],
+    customPermissions: [],
+    lastLogin: new Date(Date.now() - 3600000).toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    _id: '3',
+    name: 'Lê Nhân Viên',
+    email: 'staff01@parkmaster.com',
+    phone: '0987654323',
+    role: UserRole.STAFF,
+    status: 'active',
+    assignedFacilities: [],
+    customPermissions: [],
+    lastLogin: new Date(Date.now() - 86400000).toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    _id: '4',
+    name: 'Nguyễn Tạm Khóa',
+    email: 'staff02@parkmaster.com',
+    phone: '0987654324',
+    role: UserRole.STAFF,
+    status: 'locked',
+    assignedFacilities: [],
+    customPermissions: [],
+    lastLogin: new Date(Date.now() - 604800000).toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
 ];
 
 export default function UserListPage() {
@@ -38,7 +86,7 @@ export default function UserListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
-  
+
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserType | undefined>(undefined);
@@ -49,7 +97,7 @@ export default function UserListPage() {
         const response = await userService.getAllUsers();
         setUsers(response.data);
       } catch (error) {
-        console.error("Failed to fetch users, using mock data", error);
+        console.error('Failed to fetch users, using mock data', error);
         setUsers(mockUsers);
       } finally {
         setIsLoading(false);
@@ -58,9 +106,10 @@ export default function UserListPage() {
     fetchUsers();
   }, []);
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === 'ALL' || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -71,19 +120,24 @@ export default function UserListPage() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="space-y-6 max-w-[1400px] mx-auto pb-12"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
       {/* Header Section */}
-      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <motion.div
+        variants={itemVariants}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      >
         <div>
           <h1 className="text-2xl font-bold text-[#060606]">Users & Roles</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage accounts and role-based access control (RBAC)</p>
+          <p className="text-gray-500 text-sm mt-1">
+            Manage accounts and role-based access control (RBAC)
+          </p>
         </div>
-        <button 
+        <button
           onClick={() => {
             setSelectedUser(undefined);
             setIsModalOpen(true);
@@ -97,11 +151,11 @@ export default function UserListPage() {
 
       {/* Filters Section */}
       <motion.div variants={itemVariants}>
-        <UserFilterBar 
-          searchTerm={searchTerm} 
-          onSearchChange={setSearchTerm} 
-          roleFilter={roleFilter} 
-          onRoleFilterChange={setRoleFilter} 
+        <UserFilterBar
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          roleFilter={roleFilter}
+          onRoleFilterChange={setRoleFilter}
         />
       </motion.div>
 
@@ -117,32 +171,41 @@ export default function UserListPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-[#d7ee46]/50 transition-colors">
               <div className="font-bold text-[#060606] flex items-center gap-2 mb-2">
-                <ShieldAlert size={18} className="text-red-500"/> System Admin
+                <ShieldAlert size={18} className="text-red-500" /> System Admin
               </div>
-              <p className="text-gray-500 text-sm leading-relaxed">Toàn quyền hệ thống. Quản lý tài khoản, cấu hình bãi xe, và nhật ký kiểm toán (Audit Logs).</p>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Toàn quyền hệ thống. Quản lý tài khoản, cấu hình bãi xe, và nhật ký kiểm toán (Audit
+                Logs).
+              </p>
             </div>
             <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-[#d7ee46]/50 transition-colors">
               <div className="font-bold text-[#060606] flex items-center gap-2 mb-2">
-                <Shield size={18} className="text-blue-500"/> Facility Manager
+                <Shield size={18} className="text-blue-500" /> Facility Manager
               </div>
-              <p className="text-gray-500 text-sm leading-relaxed">Quản lý bãi đỗ cụ thể, xem báo cáo doanh thu, gán slot cho thẻ tháng.</p>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Quản lý bãi đỗ cụ thể, xem báo cáo doanh thu, gán slot cho thẻ tháng.
+              </p>
             </div>
             <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-[#d7ee46]/50 transition-colors sm:col-span-2">
               <div className="font-bold text-[#060606] flex items-center gap-2 mb-2">
-                <User size={18} className="text-green-500"/> Parking Staff
+                <User size={18} className="text-green-500" /> Parking Staff
               </div>
-              <p className="text-gray-500 text-sm leading-relaxed">Vận hành trực tiếp: Quét biển số, check-in/out, thu phí tiền mặt và xử lý ngoại lệ tại cổng.</p>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Vận hành trực tiếp: Quét biển số, check-in/out, thu phí tiền mặt và xử lý ngoại lệ
+                tại cổng.
+              </p>
             </div>
           </div>
         </div>
-        
+
         <div className="bg-[#060606] p-6 rounded-2xl shadow-sm text-white flex flex-col justify-center">
           <div className="w-12 h-12 bg-[#d7ee46]/20 rounded-xl flex items-center justify-center mb-4">
             <AlertCircle size={24} className="text-[#d7ee46]" />
           </div>
           <h3 className="font-bold text-lg mb-2">Bảo mật tài khoản</h3>
           <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-            Hệ thống yêu cầu các tài khoản Staff mới phải đổi mật khẩu ở lần đăng nhập đầu tiên (Must Change Password).
+            Hệ thống yêu cầu các tài khoản Staff mới phải đổi mật khẩu ở lần đăng nhập đầu tiên
+            (Must Change Password).
           </p>
           <button className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors w-full">
             Cấu hình bảo mật
@@ -151,10 +214,10 @@ export default function UserListPage() {
       </motion.div>
 
       {/* User Form Modal */}
-      <UserFormModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        user={selectedUser} 
+      <UserFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        user={selectedUser}
       />
     </motion.div>
   );
