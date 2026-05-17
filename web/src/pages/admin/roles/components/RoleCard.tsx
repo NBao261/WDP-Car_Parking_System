@@ -3,8 +3,9 @@ import { motion } from 'framer-motion';
 import { roleService } from '../../../../services/role.service';
 import { Role } from '../../../../types/role.types';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
+import { RoleIcon } from '../../../../components/ui/RoleIcon';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Shield, ShieldAlert, User, MoreVertical, Key, Trash2 } from 'lucide-react';
+import { MoreVertical, Key, Trash2 } from 'lucide-react';
 
 interface RoleCardProps {
   role: Role;
@@ -21,12 +22,6 @@ const itemVariants = {
   },
 };
 
-export const RoleIcon = ({ code }: { code: string }) => {
-  if (code === 'ROLE_ADMIN' || code === 'admin') return <ShieldAlert size={24} className="text-red-500" />;
-  if (code === 'ROLE_MANAGER' || code === 'manager') return <Shield size={24} className="text-blue-500" />;
-  if (code === 'ROLE_STAFF' || code === 'staff') return <User size={24} className="text-green-500" />;
-  return <Shield size={24} className="text-gray-500" />;
-};
 
 export function RoleCard({ role, onConfigPerms, onDeleted }: RoleCardProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -56,7 +51,7 @@ export function RoleCard({ role, onConfigPerms, onDeleted }: RoleCardProps) {
         <div className="p-6 border-b border-gray-50 flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <RoleIcon code={role.code} />
+              <RoleIcon role={role.code} size={24} />
             </div>
             <div>
               <h3 className="font-bold text-[#060606] text-lg leading-tight">{role.name}</h3>

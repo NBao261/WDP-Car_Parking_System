@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import { Role, UserPermissions, AssignRolePayload } from '../types/role.types';
+import { Role, UserPermissions, AssignRolePayload, CreateRolePayload } from '../types/role.types';
 
 export const roleService = {
   getAllRoles: async (): Promise<{ success: boolean; data: Role[] }> => {
@@ -8,6 +8,10 @@ export const roleService = {
 
   getRoleById: async (id: string): Promise<{ success: boolean; data: Role }> => {
     return apiClient.get(`/roles/${id}`);
+  },
+
+  createRole: async (payload: CreateRolePayload): Promise<{ success: boolean; data: Role }> => {
+    return apiClient.post('/roles', payload);
   },
 
   deleteRole: async (id: string): Promise<{ success: boolean }> => {

@@ -28,6 +28,7 @@ export default function RoleListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
+
   // Permission Matrix modal
   const [isPermModalOpen, setIsPermModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
@@ -49,7 +50,6 @@ export default function RoleListPage() {
     fetchRoles();
   }, [fetchRoles]);
 
-  // After a card deletes a role, remove it from local state (no full refetch needed)
   const handleRoleDeleted = useCallback((roleId: string) => {
     setRoles((prev) => prev.filter((r) => r._id !== roleId));
   }, []);
@@ -65,6 +65,9 @@ export default function RoleListPage() {
       role.code.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  const defaultRoles = filteredRoles.filter((r) => r.isDefault);
+  const customRoles = filteredRoles.filter((r) => !r.isDefault);
+
   return (
     <motion.div
       className="space-y-6 max-w-[1400px] mx-auto pb-12"
@@ -77,15 +80,10 @@ export default function RoleListPage() {
         <div>
           <h1 className="text-2xl font-bold text-[#060606]">Phân quyền hệ thống</h1>
           <p className="text-gray-500 text-sm mt-1">
-            Quản lý quyền hạn của các vai trò trong hệ thống. Có{' '}
-            <span className="font-semibold text-[#060606]">{roles.length}</span> vai trò đang hoạt động.
+            Quản lý vai trò và quyền hạn. Có{' '}
+            <span className="font-semibold text-[#060606]">{roles.length}</span> vai trò (
+            {defaultRoles.length} mặc định, {customRoles.length} tùy chỉnh).
           </p>
-        </div>
-
-        {/* Info badge — thay thế nút "Tạo Role Mới" */}
-        <div className="flex items-center gap-2 bg-[#d7ee46]/10 border border-[#d7ee46]/30 text-[#5a6b00] text-xs font-semibold px-4 py-2.5 rounded-xl whitespace-nowrap">
-          <span className="w-2 h-2 rounded-full bg-[#96a827] inline-block" />
-          4 System Roles — Cố định
         </div>
       </motion.div>
 
@@ -107,26 +105,58 @@ export default function RoleListPage() {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
           <div className="w-8 h-8 border-4 border-[#d7ee46] border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-gray-500 font-medium">Đang tải danh sách phân quyền...</p>
+          <p className="text-gray-500 font-medium">Đang tải danh sách vai trò...</p>
         </div>
       ) : (
-        <motion.div variants={containerVariants} className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-6">
-          {filteredRoles.map((role) => (
-            <RoleCard
-              key={role._id}
-              role={role}
-              onConfigPerms={handleConfigPerms}
-              onDeleted={handleRoleDeleted}
-            />
-          ))}
+        <motion.div variants={containerVariants} className="space-y-6">
+          {/* Default Roles Section */}
+          {defaultRoles.length > 0 && (
+            <div>
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">
+                Vai trò hệ thống mặc định ({defaultRoles.length})
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {defaultRoles.map((role) => (
+                  <RoleCard
+                    key={role._id}
+                    role={role}
+                    onConfigPerms={handleConfigPerms}
+                    onDeleted={handleRoleDeleted}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
-          {filteredRoles.length === 0 && !isLoading && (
-            <div className="col-span-full py-12 text-center text-gray-400 bg-white rounded-2xl border border-gray-100 border-dashed">
-              Không tìm thấy vai trò nào phù hợp với "{searchTerm}".
+          {/* Custom Roles Section */}
+          {customRoles.length > 0 && (
+            <div>
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">
+                Vai trò tùy chỉnh ({customRoles.length})
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {customRoles.map((role) => (
+                  <RoleCard
+                    key={role._id}
+                    role={role}
+                    onConfigPerms={handleConfigPerms}
+                    onDeleted={handleRoleDeleted}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {filteredRoles.length === 0 && (
+            <div className="py-12 text-center text-gray-400 bg-white rounded-2xl border border-gray-100 border-dashed">
+              {searchTerm
+                ? `Không tìm thấy vai trò nào phù hợp với "${searchTerm}".`
+                : 'Chưa có vai trò nào.'}
             </div>
           )}
         </motion.div>
       )}
+
 
       {/* Permission Matrix Modal */}
       <PermissionMatrixModal
