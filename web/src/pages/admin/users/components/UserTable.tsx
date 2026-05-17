@@ -1,118 +1,33 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import {
-  MoreVertical, ShieldAlert, Shield,
-  User, Search, Edit, Lock, Unlock, KeyRound, Eye, Trash2
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { User as UserType, UserStatus } from '../../../../types/user.types';
-import { UserRole } from '../../../../../../shared/types';
+import { MoreVertical, Search, Edit, Lock, Unlock, KeyRound, Trash2 } from 'lucide-react';
+import { User as UserType } from '../../../../types/user.types';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
-import { userService } from '../../../../services/user.service';
+import { RoleIcon } from '../../../../components/ui/RoleIcon';
+import { StatusBadge } from '../../../../components/ui/StatusBadge';
+import { useUserActions } from '../hooks/useUserActions';
 
 interface UserTableProps {
   users: UserType[];
   isLoading: boolean;
   onEdit: (user: UserType) => void;
-  onRefresh: () => void; // Callback to re-fetch the list
+  onRefresh: () => void;
 }
 
-const RoleIcon = ({ role }: { role: UserRole | string }) => {
-  switch (role) {
-    case UserRole.ADMIN: return <ShieldAlert size={16} className="text-red-500" />;
-    case UserRole.MANAGER: return <Shield size={16} className="text-blue-500" />;
-    case UserRole.STAFF: return <User size={16} className="text-green-500" />;
-    case UserRole.DRIVER: return <Eye size={16} className="text-gray-500" />;
-    default: return <User size={16} className="text-gray-400" />;
-  }
-};
-
-const StatusBadge = ({ status }: { status: UserStatus | string }) => {
-  switch (status) {
-    case 'active':
-      return <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 border border-green-200/50">Active</span>;
-    case 'inactive':
-      return <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">Inactive</span>;
-    case 'locked':
-      return <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-200/50">Locked</span>;
-    default:
-      return <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700">{status}</span>;
-  }
-};
-
 export function UserTable({ users, isLoading, onEdit, onRefresh }: UserTableProps) {
-  const [confirmState, setConfirmState] = useState<{
-    isOpen: boolean;
-    type: 'lock' | 'unlock' | 'reset' | 'delete' | null;
-    user: UserType | null;
-  }>({
-    isOpen: false,
-    type: null,
-    user: null,
-  });
-  const [isActionLoading, setIsActionLoading] = useState(false);
-  const [actionError, setActionError] = useState('');
-
-  const handleOpenConfirm = (type: 'lock' | 'unlock' | 'reset' | 'delete', user: UserType) => {
-    setActionError('');
-    setConfirmState({ isOpen: true, type, user });
-  };
-
-  const handleCloseConfirm = () => {
-    if (isActionLoading) return; // prevent close while processing
-    setConfirmState({ isOpen: false, type: null, user: null });
-    setActionError('');
-  };
-
-  const handleConfirmAction = () => {
-    if (!confirmState.user || !confirmState.type) return;
-
-    setIsActionLoading(true);
-    setActionError('');
-
-    const { type, user } = confirmState;
-    let actionPromise: Promise<any>;
-
-    if (type === 'lock') {
-      actionPromise = userService.lockUser(user._id);
-    } else if (type === 'unlock') {
-      actionPromise = userService.unlockUser(user._id);
-    } else if (type === 'reset') {
-      // Build a random password dynamically to avoid GitGuardian hardcoded secret detection
-      const randomStr = Math.random().toString(36).slice(-6);
-      const tempPassword = ['T', 'e', 'm', 'p', '@', randomStr, '!'].join('');
-      actionPromise = userService.resetPassword(user._id, tempPassword);
-    } else if (type === 'delete') {
-      actionPromise = userService.deleteUser(user._id);
-    } else {
-      setIsActionLoading(false);
-      return;
-    }
-
-    toast.promise(actionPromise, {
-      loading: 'Đang xử lý thao tác... ⏳',
-      success: () => {
-        setTimeout(() => setConfirmState({ isOpen: false, type: null, user: null }), 200);
-        onRefresh();
-
-        if (type === 'lock') return `Đã khóa tài khoản "${user.name}"`;
-        if (type === 'unlock') return `Đã mở khóa tài khoản "${user.name}"`;
-        if (type === 'reset') return `Đã đặt lại mật khẩu cho "${user.name}"`;
-        if (type === 'delete') return `Tạm biệt "${user.name}" (Đã xóa)`;
-        return 'Thành công! ';
-      },
-      error: (err: any) => {
-        setActionError(err.message || 'Đã xảy ra lỗi. Vui lòng thử lại.');
-        return 'Thao tác không thành công ❌';
-      }
-    });
-
-    actionPromise.finally(() => {
-      setIsActionLoading(false);
-    });
-  };
+  const {
+    confirmState,
+    isActionLoading,
+    actionError,
+    handleOpenConfirm,
+    handleCloseConfirm,
+    handleConfirmAction,
+    confirmTitle,
+    confirmMessage,
+    confirmText,
+    confirmVariant,
+  } = useUserActions(onRefresh);
 
   return (
     <>
@@ -176,7 +91,9 @@ export function UserTable({ users, isLoading, onEdit, onRefresh }: UserTableProp
                       <StatusBadge status={user.status} />
                     </td>
                     <td className="px-6 py-4 text-gray-500 text-xs">
-                      {user.lastLogin ? new Date(user.lastLogin).toLocaleString('vi-VN') : 'Chưa đăng nhập'}
+                      {user.lastLogin
+                        ? new Date(user.lastLogin).toLocaleString('vi-VN')
+                        : 'Chưa đăng nhập'}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <DropdownMenu.Root>
@@ -185,7 +102,6 @@ export function UserTable({ users, isLoading, onEdit, onRefresh }: UserTableProp
                             <MoreVertical size={20} />
                           </button>
                         </DropdownMenu.Trigger>
-
                         <DropdownMenu.Portal>
                           <DropdownMenu.Content
                             align="end"
@@ -204,9 +120,7 @@ export function UserTable({ users, isLoading, onEdit, onRefresh }: UserTableProp
                             >
                               <KeyRound size={16} /> Đặt lại mật khẩu
                             </DropdownMenu.Item>
-
                             <DropdownMenu.Separator className="h-px bg-gray-100 my-1" />
-
                             {user.status === 'locked' ? (
                               <DropdownMenu.Item
                                 onClick={() => handleOpenConfirm('unlock', user)}
@@ -222,7 +136,6 @@ export function UserTable({ users, isLoading, onEdit, onRefresh }: UserTableProp
                                 <Lock size={16} /> Khóa tài khoản
                               </DropdownMenu.Item>
                             )}
-
                             <DropdownMenu.Separator className="h-px bg-gray-100 my-1" />
                             <DropdownMenu.Item
                               onClick={() => handleOpenConfirm('delete', user)}
@@ -248,32 +161,10 @@ export function UserTable({ users, isLoading, onEdit, onRefresh }: UserTableProp
         onConfirm={handleConfirmAction}
         isLoading={isActionLoading}
         error={actionError}
-        title={
-          confirmState.type === 'lock' ? 'Khóa tài khoản' :
-            confirmState.type === 'unlock' ? 'Mở khóa tài khoản' :
-              confirmState.type === 'delete' ? 'Xóa tài khoản' :
-                'Đặt lại mật khẩu'
-        }
-        message={
-          confirmState.type === 'lock'
-            ? `Bạn có chắc chắn muốn khóa tài khoản "${confirmState.user?.name}"? Người dùng này sẽ không thể đăng nhập vào hệ thống.`
-            : confirmState.type === 'unlock'
-              ? `Bạn có chắc chắn muốn mở khóa tài khoản "${confirmState.user?.name}"?`
-              : confirmState.type === 'delete'
-                ? `Bạn có chắc chắn muốn xóa tài khoản "${confirmState.user?.name}"? Thao tác này sẽ vô hiệu hóa người dùng trên hệ thống (Soft Delete).`
-                : `Bạn có chắc chắn muốn đặt lại mật khẩu cho tài khoản "${confirmState.user?.name}"? Người dùng sẽ bắt buộc đổi mật khẩu ở lần đăng nhập tiếp theo.`
-        }
-        confirmText={
-          confirmState.type === 'lock' ? 'Khóa tài khoản' :
-            confirmState.type === 'unlock' ? 'Mở khóa' :
-              confirmState.type === 'delete' ? 'Xóa' :
-                'Đặt lại mật khẩu'
-        }
-        variant={
-          confirmState.type === 'delete' ? 'danger' :
-          confirmState.type === 'lock' || confirmState.type === 'reset' ? 'warning' :
-          'primary'
-        }
+        title={confirmTitle}
+        message={confirmMessage}
+        confirmText={confirmText}
+        variant={confirmVariant}
       />
     </>
   );
