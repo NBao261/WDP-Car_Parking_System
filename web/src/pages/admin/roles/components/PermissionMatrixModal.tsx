@@ -67,8 +67,6 @@ export function PermissionMatrixModal({ isOpen, onClose, role, onSuccess }: Perm
     }
   }, [role, isOpen]);
 
-  if (!isOpen || !role) return null;
-
   const handleToggle = (permId: string) => {
     const newPerms = new Set(selectedPerms);
     if (newPerms.has(permId)) {
@@ -105,8 +103,9 @@ export function PermissionMatrixModal({ isOpen, onClose, role, onSuccess }: Perm
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-        <motion.div 
+      {isOpen && role && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -178,7 +177,7 @@ export function PermissionMatrixModal({ isOpen, onClose, role, onSuccess }: Perm
                     return (
                       <label 
                         key={perm.id} 
-                        className="flex items-center justify-between px-4 py-3 hover:bg-gray-50/50 cursor-pointer group transition-colors"
+                        className="relative flex items-center justify-between px-4 py-3 hover:bg-gray-50/50 cursor-pointer group transition-colors"
                       >
                         <div className="flex flex-col">
                           <span className="text-sm font-medium text-gray-700 group-hover:text-[#060606] transition-colors">{perm.label}</span>
@@ -224,8 +223,9 @@ export function PermissionMatrixModal({ isOpen, onClose, role, onSuccess }: Perm
               Lưu thay đổi
             </button>
           </div>
-        </motion.div>
-      </div>
+          </motion.div>
+        </div>
+      )}
     </AnimatePresence>
   );
 }
