@@ -6,6 +6,14 @@ export const roleService = {
     return apiClient.get('/roles');
   },
 
+  getRoleById: async (id: string): Promise<{ success: boolean; data: Role }> => {
+    return apiClient.get(`/roles/${id}`);
+  },
+
+  deleteRole: async (id: string): Promise<{ success: boolean }> => {
+    return apiClient.delete(`/roles/${id}`);
+  },
+
   updatePermissions: async (id: string, permissions: string[]): Promise<{ success: boolean; data: Role }> => {
     return apiClient.put(`/roles/${id}/permissions`, { permissions });
   },

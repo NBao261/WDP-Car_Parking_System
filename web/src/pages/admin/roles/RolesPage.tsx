@@ -1,110 +1,101 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { roleService } from '../../../services/role.service';
 import { Role } from '../../../types/role.types';
 import { PermissionMatrixModal } from './components/PermissionMatrixModal';
-import { RoleFormModal } from './components/RoleFormModal';
 import { RoleCard } from './components/RoleCard';
 
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
+    transition: { staggerChildren: 0.08 },
+  },
 };
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
-    transition: { type: "spring" as const, stiffness: 300, damping: 24 }
-  }
+    transition: { type: 'spring' as const, stiffness: 300, damping: 24 },
+  },
 };
-
-// Fallback mock data if API is down
-const mockRoles: Role[] = [
-  { _id: '1', code: 'ROLE_ADMIN', name: 'System Admin', description: 'Toàn quyền kiểm soát hệ thống, thiết lập bãi xe, xem mọi báo cáo và quản lý tài khoản.', permissions: ['users:read', 'users:write', 'users:delete', 'roles:manage', 'facilities:read', 'facilities:write', 'zones:read', 'zones:write', 'vehicles:read', 'vehicles:write', 'checkin:manage', 'gates:control', 'billing:read', 'billing:export', 'pricing:manage'], isDefault: true },
-  { _id: '2', code: 'ROLE_MANAGER', name: 'Facility Manager', description: 'Quản lý doanh thu, xem báo cáo, cấu hình khu vực bên trong bãi xe được phân công.', permissions: ['users:read', 'facilities:read', 'zones:read', 'zones:write', 'vehicles:read', 'vehicles:write', 'billing:read', 'billing:export'], isDefault: true },
-  { _id: '3', code: 'ROLE_STAFF', name: 'Parking Staff', description: 'Vận hành trực tiếp tại cổng, check-in, check-out, và thu tiền mặt.', permissions: ['vehicles:read', 'checkin:manage', 'gates:control'], isDefault: true },
-];
 
 export default function RoleListPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Modals state
+
+  // Permission Matrix modal
   const [isPermModalOpen, setIsPermModalOpen] = useState(false);
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
 
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await roleService.getAllRoles();
       setRoles(response.data);
     } catch (error) {
-      console.error("Failed to fetch roles, using mock data", error);
-      setRoles(mockRoles);
+      console.error('Failed to fetch roles', error);
+      setRoles([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchRoles();
+  }, [fetchRoles]);
+
+  // After a card deletes a role, remove it from local state (no full refetch needed)
+  const handleRoleDeleted = useCallback((roleId: string) => {
+    setRoles((prev) => prev.filter((r) => r._id !== roleId));
   }, []);
 
-  const filteredRoles = roles.filter(role => 
-    role.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    role.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleEditRole = (role: Role) => {
-    setSelectedRole(role);
-    setIsFormModalOpen(true);
-  };
-
-  const handleConfigPerms = (role: Role) => {
+  const handleConfigPerms = useCallback((role: Role) => {
     setSelectedRole(role);
     setIsPermModalOpen(true);
-  };
+  }, []);
+
+  const filteredRoles = roles.filter(
+    (role) =>
+      role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      role.code.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   return (
-    <motion.div 
+    <motion.div
       className="space-y-6 max-w-[1400px] mx-auto pb-12"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
-      {/* Header Section */}
-      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header */}
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#060606]">Phân quyền (Roles & Permissions)</h1>
-          <p className="text-gray-500 text-sm mt-1">Quản lý các nhóm quyền hạn truy cập hệ thống</p>
+          <h1 className="text-2xl font-bold text-[#060606]">Phân quyền hệ thống</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Quản lý quyền hạn của các vai trò trong hệ thống. Có{' '}
+            <span className="font-semibold text-[#060606]">{roles.length}</span> vai trò đang hoạt động.
+          </p>
         </div>
-        <button 
-          onClick={() => {
-            setSelectedRole(null);
-            setIsFormModalOpen(true);
-          }}
-          className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm"
-        >
-          <Plus size={20} strokeWidth={3} />
-          Tạo Role Mới
-        </button>
+
+        {/* Info badge — thay thế nút "Tạo Role Mới" */}
+        <div className="flex items-center gap-2 bg-[#d7ee46]/10 border border-[#d7ee46]/30 text-[#5a6b00] text-xs font-semibold px-4 py-2.5 rounded-xl whitespace-nowrap">
+          <span className="w-2 h-2 rounded-full bg-[#96a827] inline-block" />
+          4 System Roles — Cố định
+        </div>
       </motion.div>
 
-      {/* Search Bar */}
+      {/* Search */}
       <motion.div variants={itemVariants} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
         <div className="relative">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Tìm kiếm Role theo tên hoặc mã..." 
+          <input
+            type="text"
+            placeholder="Tìm kiếm vai trò theo tên hoặc mã..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:border-transparent transition-all"
@@ -119,35 +110,29 @@ export default function RoleListPage() {
           <p className="text-gray-500 font-medium">Đang tải danh sách phân quyền...</p>
         </div>
       ) : (
-        <motion.div variants={containerVariants} className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredRoles.map(role => (
-            <RoleCard 
-              key={role._id} 
-              role={role} 
-              onEdit={handleEditRole}
+        <motion.div variants={containerVariants} className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+          {filteredRoles.map((role) => (
+            <RoleCard
+              key={role._id}
+              role={role}
               onConfigPerms={handleConfigPerms}
+              onDeleted={handleRoleDeleted}
             />
           ))}
-          
-          {filteredRoles.length === 0 && (
+
+          {filteredRoles.length === 0 && !isLoading && (
             <div className="col-span-full py-12 text-center text-gray-400 bg-white rounded-2xl border border-gray-100 border-dashed">
-              Không tìm thấy role nào phù hợp.
+              Không tìm thấy vai trò nào phù hợp với "{searchTerm}".
             </div>
           )}
         </motion.div>
       )}
 
-      <PermissionMatrixModal 
-        isOpen={isPermModalOpen} 
+      {/* Permission Matrix Modal */}
+      <PermissionMatrixModal
+        isOpen={isPermModalOpen}
         onClose={() => setIsPermModalOpen(false)}
         role={selectedRole}
-        onSuccess={fetchRoles}
-      />
-
-      <RoleFormModal 
-        isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
-        role={selectedRole || undefined}
         onSuccess={fetchRoles}
       />
     </motion.div>
