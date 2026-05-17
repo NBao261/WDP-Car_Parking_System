@@ -1,18 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { UserPlus, ShieldAlert, Shield, User, Users } from 'lucide-react';
-import { userService } from '../../../services/user.service';
-import { User as UserType, PaginationMeta } from '../../../types/user.types';
+import { User as UserType } from '../../../types/user.types';
 import { UserFormModal } from './components/UserFormModal';
 import { UserTable } from './components/UserTable';
 import { UserFilterBar } from './components/UserFilterBar';
+import { Pagination } from '../../../components/ui/Pagination';
+import { useUserList } from './hooks/useUserList';
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
 const itemVariants = {
@@ -24,53 +22,23 @@ const itemVariants = {
   },
 };
 
-const PAGE_LIMIT = 10;
-
 export default function UserListPage() {
-  const [users, setUsers] = useState<UserType[]>([]);
-  const [pagination, setPagination] = useState<PaginationMeta>({ total: 0, page: 1, limit: PAGE_LIMIT, pages: 1 });
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('ALL');
-  const [currentPage, setCurrentPage] = useState(1);
+  const {
+    users,
+    pagination,
+    isLoading,
+    searchTerm,
+    setSearchTerm,
+    roleFilter,
+    setRoleFilter,
+    currentPage,
+    setCurrentPage,
+    fetchUsers,
+    PAGE_LIMIT,
+  } = useUserList();
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserType | undefined>(undefined);
-
-  const fetchUsers = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const params: any = { page: currentPage, limit: PAGE_LIMIT };
-      if (roleFilter !== 'ALL') params.role = roleFilter;
-      // Note: backend currently doesn't support search param, filter client-side for now
-      const response = await userService.getAllUsers(params);
-      setUsers(response.data);
-      setPagination(response.pagination);
-    } catch (error) {
-      console.error('Failed to fetch users', error);
-      setUsers([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentPage, roleFilter]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  // Reset to page 1 when filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [roleFilter]);
-
-  // Client-side search filter (on top of server-filtered data)
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
 
   const handleEditUser = (user: UserType) => {
     setSelectedUser(user);
@@ -89,10 +57,10 @@ export default function UserListPage() {
       animate="visible"
       variants={containerVariants}
     >
-      {/* Header Section */}
+      {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#060606]">Users & Roles</h1>
+          <h1 className="text-2xl font-bold text-[#060606]">Users &amp; Roles</h1>
           <p className="text-gray-500 text-sm mt-1">Manage accounts and role-based access control (RBAC)</p>
         </div>
         <button
@@ -104,7 +72,7 @@ export default function UserListPage() {
         </button>
       </motion.div>
 
-      {/* Filters Section */}
+      {/* Filters */}
       <motion.div variants={itemVariants}>
         <UserFilterBar
           searchTerm={searchTerm}
@@ -114,10 +82,10 @@ export default function UserListPage() {
         />
       </motion.div>
 
-      {/* Table Section */}
+      {/* Table */}
       <motion.div variants={itemVariants}>
         <UserTable
-          users={filteredUsers}
+          users={users}
           isLoading={isLoading}
           onEdit={handleEditUser}
           onRefresh={fetchUsers}
@@ -125,57 +93,20 @@ export default function UserListPage() {
       </motion.div>
 
       {/* Pagination */}
-      {!isLoading && pagination.pages > 1 && (
-        <motion.div variants={itemVariants} className="flex items-center justify-between px-1">
-          <p className="text-sm text-gray-500">
-            Hiển thị{' '}
-            <span className="font-semibold text-[#060606]">
-              {(currentPage - 1) * PAGE_LIMIT + 1}–{Math.min(currentPage * PAGE_LIMIT, pagination.total)}
-            </span>{' '}
-            / <span className="font-semibold text-[#060606]">{pagination.total}</span> người dùng
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-2 text-sm font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              ← Trước
-            </button>
-            {Array.from({ length: pagination.pages }, (_, i) => i + 1)
-              .filter((p) => p === 1 || p === pagination.pages || Math.abs(p - currentPage) <= 1)
-              .map((page, idx, arr) => (
-                <>
-                  {idx > 0 && arr[idx - 1] !== page - 1 && (
-                    <span key={`ellipsis-${page}`} className="text-gray-400 px-1">
-                      ...
-                    </span>
-                  )}
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-9 h-9 text-sm font-semibold rounded-xl transition-colors ${
-                      page === currentPage
-                        ? 'bg-[#d7ee46] text-[#060606]'
-                        : 'border border-gray-200 hover:bg-gray-50 text-gray-600'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                </>
-              ))}
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(pagination.pages, p + 1))}
-              disabled={currentPage === pagination.pages}
-              className="px-3 py-2 text-sm font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Sau →
-            </button>
-          </div>
+      {!isLoading && (
+        <motion.div variants={itemVariants}>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={pagination.pages}
+            totalItems={pagination.total}
+            pageLimit={PAGE_LIMIT}
+            onPageChange={setCurrentPage}
+            itemLabel="người dùng"
+          />
         </motion.div>
       )}
 
-      {/* Info Cards */}
+      {/* RBAC Info Cards */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-2">
           <h3 className="font-bold text-lg mb-4 text-[#060606]">Phân quyền hệ thống (RBAC)</h3>
@@ -217,7 +148,6 @@ export default function UserListPage() {
               Quản lý tập trung toàn bộ tài khoản, vai trò và hoạt động đăng nhập trên hệ thống.
             </p>
           </div>
-
           <div className="mt-6">
             <div className="bg-[#d7ee46]/10 border border-[#d7ee46]/20 rounded-xl p-5 flex items-center justify-between">
               <div>
