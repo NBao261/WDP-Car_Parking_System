@@ -5,10 +5,11 @@ interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   icon: React.ReactNode;
   hasError?: boolean;
+  errorMessage?: string;
   className?: string;
 }
 
-export function AuthInput({ label, icon, hasError, type, className, ...props }: AuthInputProps) {
+export function AuthInput({ label, icon, hasError, errorMessage, type, className, ...props }: AuthInputProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -58,6 +59,11 @@ export function AuthInput({ label, icon, hasError, type, className, ...props }: 
           </button>
         )}
       </div>
+      {hasError && errorMessage && (
+        <span className="text-red-500 text-[11px] mt-1 ml-1 animate-in fade-in slide-in-from-top-1">
+          {errorMessage}
+        </span>
+      )}
     </div>
   );
 }

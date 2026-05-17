@@ -36,8 +36,13 @@ apiClient.interceptors.response.use(
 
     // Handle Unauthorized errors (401)
     if (error.response?.status === 401 && !originalRequest._retry) {
-      useAuthStore.getState().logout();
-      window.location.href = '/login';
+      // Do not redirect if the error is from the login endpoint itself
+      if (!originalRequest.url?.includes('/auth/login')) {
+        useAuthStore.getState().logout();
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
     }
 
     // Format the error message
