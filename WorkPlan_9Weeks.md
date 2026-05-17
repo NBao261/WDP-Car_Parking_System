@@ -108,10 +108,10 @@
 
 #### FE1
 
-- [ ] Trang Login / Quên mật khẩu
-- [ ] Layout Admin Panel hoàn chỉnh
-- [ ] Trang Quản lý Tài khoản (FR-18): danh sách, tạo/sửa/khóa, filter
-- [ ] Trang Phân quyền (FR-19): gán vai trò, xem quyền
+- [x] Trang Login / Quên mật khẩu
+- [x] Layout Admin Panel hoàn chỉnh
+- [x] Trang Quản lý Tài khoản (FR-18): danh sách, tạo/sửa/khóa, filter
+- [x] Trang Phân quyền (FR-19): gán vai trò, xem quyền
 
 #### FE2
 

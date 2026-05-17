@@ -42,7 +42,7 @@ export interface AuthResponse {
     role: UserRole;
   };
   tokens: {
-    access: string;
-    refresh: string;
+    accessToken: string;
+    refreshToken: string;
   };
 }

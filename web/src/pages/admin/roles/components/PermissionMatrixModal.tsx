@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Shield, Save, RefreshCw, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import { Role } from '../../../../types/role.types';
 import { roleService } from '../../../../services/role.service';
 
@@ -66,10 +67,7 @@ export function PermissionMatrixModal({ isOpen, onClose, role, onSuccess }: Perm
     }
   }, [role, isOpen]);
 
-  if (!isOpen || !role) return null;
-
   const handleToggle = (permId: string) => {
-    if (role.isDefault) return; // Cannot edit default roles (or we can, depending on logic, let's assume we can for now, just show a warning)
     const newPerms = new Set(selectedPerms);
     if (newPerms.has(permId)) {
       newPerms.delete(permId);
@@ -79,24 +77,35 @@ export function PermissionMatrixModal({ isOpen, onClose, role, onSuccess }: Perm
     setSelectedPerms(newPerms);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     setIsSaving(true);
     setError('');
-    try {
-      await roleService.updatePermissions(role._id, Array.from(selectedPerms));
-      onSuccess();
-      onClose();
-    } catch (err: any) {
-      setError(err.message || 'Lỗi khi lưu quyền');
-    } finally {
+    
+    const savePromise = roleService.updatePermissions(role._id, Array.from(selectedPerms));
+
+    toast.promise(savePromise, {
+      loading: 'Đang lưu cấu hình phân quyền...',
+      success: () => {
+        onSuccess();
+        setTimeout(() => onClose(), 200);
+        return `Đã lưu cấu hình phân quyền cho "${role.name}".`;
+      },
+      error: (err: any) => {
+        setError(err.message || 'Đã xảy ra lỗi khi lưu quyền.');
+        return 'Thao tác không thành công.';
+      }
+    });
+
+    savePromise.finally(() => {
       setIsSaving(false);
-    }
+    });
   };
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-        <motion.div 
+      {isOpen && role && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -132,9 +141,10 @@ export function PermissionMatrixModal({ isOpen, onClose, role, onSuccess }: Perm
 
           {/* Warning for Default Roles */}
           {role.isDefault && (
-            <div className="bg-yellow-50 px-6 py-3 border-b border-yellow-100">
-              <p className="text-xs text-yellow-800 font-medium">
-                ⚠️ Đây là Role hệ thống. Việc sửa đổi quyền có thể ảnh hưởng đến vận hành.
+            <div className="bg-yellow-50 px-6 py-3 border-b border-yellow-100 flex items-start gap-2">
+              <span className="text-yellow-600 mt-0.5">⚠️</span>
+              <p className="text-xs text-yellow-800 font-medium leading-relaxed">
+                Đây là nhóm quyền hệ thống. Việc thay đổi cấu hình tại đây sẽ <strong>áp dụng ngay lập tức cho toàn bộ người dùng</strong> đang giữ chức vụ này. Hãy cẩn trọng!
               </p>
             </div>
           )}
@@ -167,7 +177,7 @@ export function PermissionMatrixModal({ isOpen, onClose, role, onSuccess }: Perm
                     return (
                       <label 
                         key={perm.id} 
-                        className="flex items-center justify-between px-4 py-3 hover:bg-gray-50/50 cursor-pointer group transition-colors"
+                        className="relative flex items-center justify-between px-4 py-3 hover:bg-gray-50/50 cursor-pointer group transition-colors"
                       >
                         <div className="flex flex-col">
                           <span className="text-sm font-medium text-gray-700 group-hover:text-[#060606] transition-colors">{perm.label}</span>
@@ -213,8 +223,9 @@ export function PermissionMatrixModal({ isOpen, onClose, role, onSuccess }: Perm
               Lưu thay đổi
             </button>
           </div>
-        </motion.div>
-      </div>
+          </motion.div>
+        </div>
+      )}
     </AnimatePresence>
   );
 }
