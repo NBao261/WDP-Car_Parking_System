@@ -35,24 +35,25 @@ paths:
               vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c01"
       responses:
         '200':
-          description: Kết quả kiểm tra điều kiện
+          description: Kết quả kiểm tra điều kiện (eligible true hoặc false)
           content:
             application/json:
-              example:
-                success: true
-                data:
-                  eligible: true
-                  availableSlotCount: 42
-        '200_not_eligible':
-          description: Không đủ điều kiện
-          content:
-            application/json:
-              example:
-                success: true
-                data:
-                  eligible: false
-                  reason: "Bãi đầy cho loại xe \"Xe Máy\""
-                  availableSlotCount: 0
+              examples:
+                eligible:
+                  summary: Còn chỗ, đủ điều kiện
+                  value:
+                    success: true
+                    data:
+                      eligible: true
+                      availableSlotCount: 42
+                not_eligible:
+                  summary: Không đủ điều kiện (bãi đầy, sai giờ, v.v.)
+                  value:
+                    success: true
+                    data:
+                      eligible: false
+                      reason: "Bãi đầy cho loại xe \"Xe Máy\""
+                      availableSlotCount: 0
         '403':
           description: Staff không được phân công tại bãi này
           content:
@@ -60,46 +61,6 @@ paths:
               example:
                 success: false
                 message: "Bạn không được phân công tại bãi xe này"
-
-  /sessions/check-in:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [facilityId, vehicleTypeId]
-              properties:
-                facilityId:
-                  type: string
-                  description: MongoDB ObjectId của bãi xe
-                  example: "683f1a2b3c4d5e6f7a8b9c0d"
-                vehicleTypeId:
-                  type: string
-                  description: MongoDB ObjectId của loại phương tiện
-                  example: "683f1a2b3c4d5e6f7a8b9c01"
-            example:
-              facilityId: "683f1a2b3c4d5e6f7a8b9c0d"
-              vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c01"
-      responses:
-        '200':
-          description: Kết quả kiểm tra điều kiện
-          content:
-            application/json:
-              example:
-                success: true
-                data:
-                  eligible: true
-                  availableSlotCount: 42
-        '200_not_eligible':
-          description: Không đủ điều kiện
-          content:
-            application/json:
-              example:
-                success: true
-                data:
-                  eligible: false
-                  reason: "Bãi đầy cho loại xe \"Xe Máy\""
-                  availableSlotCount: 0
 
   /sessions/check-in:
     post:
@@ -110,7 +71,11 @@ paths:
         - Sinh mã thẻ xe (CARD-XXXX-XXXX) + mã lượt gửi (PS-YYYYMMDD-XXXX)
         - Cập nhật slot → Occupied
         - Chỉ Staff mới được tạo (SRS 3.4)
+
+        **Security (FR-18.6):** Staff chỉ được check-in tại bãi mình được phân công.
       tags: [Sessions]
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -218,6 +183,8 @@ paths:
         Trả về danh sách tầng có slot trống cho loại xe, sorted theo số slot available giảm dần.
         Dùng để Staff hướng dẫn Driver đỗ xe đúng khu vực.
       tags: [Sessions]
+      security:
+        - bearerAuth: []
       parameters:
         - name: facilityId
           in: query
@@ -257,6 +224,8 @@ paths:
         Lấy danh sách các session đang active.
         Hỗ trợ phân trang, lọc theo bãi xe, tầng, loại xe, biển số, và sắp xếp.
       tags: [Sessions]
+      security:
+        - bearerAuth: []
       parameters:
         - name: page
           in: query
@@ -340,6 +309,8 @@ paths:
         - Mã lượt gửi (code)
         Cần ít nhất 1 tham số.
       tags: [Sessions]
+      security:
+        - bearerAuth: []
       parameters:
         - name: cardCode
           in: query
@@ -420,7 +391,11 @@ paths:
       description: |
         Tính toán phí gửi xe tạm tính hoặc phí lúc check-out dựa trên bảng giá áp dụng.
         Hỗ trợ làm tròn giờ, tính phí qua đêm, phí quá giờ.
+
+        **Security (FR-18.6):** Staff chỉ được tính phí session thuộc facility mình được phân công.
       tags: [Sessions]
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -445,13 +420,6 @@ paths:
                     overtimeFee: 0
                     pricingPlanName: "Xe Máy - Theo giờ"
                     daysDiff: 0
-        '404':
-          description: Không tìm thấy lượt gửi xe
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Session không tồn tại"
         '403':
           description: Staff không được phân công tại bãi của session này
           content:
@@ -459,6 +427,13 @@ paths:
               example:
                 success: false
                 message: "Bạn không được phân công tại bãi xe này"
+        '404':
+          description: Không tìm thấy session
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Session không tồn tại"
 
   /sessions/{id}/check-out:
     post:
@@ -469,7 +444,12 @@ paths:
         - Cập nhật thời gian check-out, cổng ra, nhân viên thu phí
         - Chuyển trạng thái session -> "completed"
         - Cập nhật trạng thái slot tương ứng -> "available"
+
+        **Security (FR-18.6):** Staff chỉ được check-out session thuộc facility mình được phân công.
+        Staff khác ca (nhưng cùng bãi) vẫn được phép checkout xe của ca trước.
       tags: [Sessions]
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -507,6 +487,10 @@ paths:
                   checkOutTime: "2026-05-14T10:30:00.000Z"
                   gateOut: "GATE-B"
                   totalFee: 15000
+                  staffOutId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c98"
+                    name: "Staff B (Ca Chiều)"
+                    email: "staffb@smartparking.com"
         '400':
           description: Lượt gửi xe đã kết thúc trước đó
           content:
@@ -521,3 +505,10 @@ paths:
               example:
                 success: false
                 message: "Bạn không được phân công tại bãi xe này"
+        '404':
+          description: Không tìm thấy session
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Session không tồn tại"
