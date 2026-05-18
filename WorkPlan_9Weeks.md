@@ -219,12 +219,12 @@
 
 #### BE2
 
-- [ ] API Exception CRUD (FR-11):
+- [x] API Exception CRUD (FR-11):
   - Mất thẻ (FR-11.1): tìm session theo biển số, phụ phí mất thẻ
   - Sai biển số (FR-11.2): tạo exception, cần Manager duyệt
   - Quá hạn (FR-11.3): auto-detect, cảnh báo
   - Sai khu vực (FR-11.4): cập nhật slot thực tế
-- [ ] API cập nhật trạng thái slot bởi Staff (FR-11.5): giới hạn quyền
+- [x] API cập nhật trạng thái slot bởi Staff (FR-11.5): giới hạn quyền
 
 #### FE1
 

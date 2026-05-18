@@ -1,0 +1,214 @@
+import mongoose from 'mongoose';
+import { Exception, ExceptionStatus, ExceptionType, IException } from '../models/exception.model';
+import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
+import { ParkingSlot, SlotStatus } from '../models/parkingSlot.model';
+import { AppError } from '../middlewares/error.middleware';
+
+interface CreateExceptionDto {
+  sessionId: string;
+  type: ExceptionType;
+  description: string;
+  staffId: string;
+  surcharge?: number;
+}
+
+interface ResolveExceptionDto {
+  managerId: string;
+  status: ExceptionStatus;
+  managerNote: string;
+  newLicensePlate?: string; // For WRONG_PLATE
+  newSlotId?: string;       // For WRONG_ZONE
+}
+
+export class ExceptionService {
+  /**
+   * Tạo ngoại lệ mới (Staff)
+   */
+  static async createException(data: CreateExceptionDto): Promise<IException> {
+    const session = await ParkingSession.findById(data.sessionId);
+    if (!session) {
+      throw new AppError('Lượt gửi xe không tồn tại', 404);
+    }
+    if (session.status === SessionStatus.COMPLETED) {
+      throw new AppError('Không thể tạo ngoại lệ cho lượt gửi đã kết thúc', 400);
+    }
+
+    const exception = new Exception({
+      sessionId: new mongoose.Types.ObjectId(data.sessionId),
+      type: data.type,
+      description: data.description,
+      staffId: new mongoose.Types.ObjectId(data.staffId),
+      surcharge: data.surcharge || 0,
+      status: ExceptionStatus.NEW,
+    });
+
+    await exception.save();
+    return exception;
+  }
+
+  /**
+   * Lấy danh sách ngoại lệ
+   */
+  static async getExceptions(query: any): Promise<{ data: IException[], total: number, page: number, totalPages: number }> {
+    const { page = 1, limit = 10, status, type, sessionId, sortBy = 'createdAt', sortOrder = 'desc' } = query;
+    const filter: any = {};
+
+    if (status) filter.status = status;
+    if (type) filter.type = type;
+    if (sessionId) filter.sessionId = sessionId;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const sort: any = { [sortBy as string]: sortOrder === 'asc' ? 1 : -1 };
+
+    const [data, total] = await Promise.all([
+      Exception.find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(Number(limit))
+        .populate('staffId', 'name email')
+        .populate('managerId', 'name email')
+        .populate({
+          path: 'sessionId',
+          populate: [
+            { path: 'vehicleTypeId', select: 'name code' },
+            { path: 'slotId', select: 'code' },
+            { path: 'floorId', select: 'name' }
+          ]
+        }),
+      Exception.countDocuments(filter)
+    ]);
+
+    return {
+      data,
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / Number(limit))
+    };
+  }
+
+  /**
+   * Manager xử lý / duyệt ngoại lệ
+   */
+  static async resolveException(exceptionId: string, data: ResolveExceptionDto): Promise<IException> {
+    const exception = await Exception.findById(exceptionId);
+    if (!exception) {
+      throw new AppError('Không tìm thấy ngoại lệ', 404);
+    }
+
+    if (exception.status === ExceptionStatus.RESOLVED || exception.status === ExceptionStatus.REJECTED) {
+      throw new AppError('Ngoại lệ đã được xử lý trước đó', 400);
+    }
+
+    if (data.status !== ExceptionStatus.RESOLVED && data.status !== ExceptionStatus.REJECTED) {
+      throw new AppError('Trạng thái không hợp lệ', 400);
+    }
+
+    exception.managerId = new mongoose.Types.ObjectId(data.managerId);
+    exception.managerNote = data.managerNote || '';
+    exception.status = data.status;
+
+    // Nếu duyệt xử lý, thực hiện các hành động tương ứng với loại ngoại lệ
+    if (data.status === ExceptionStatus.RESOLVED) {
+      const session = await ParkingSession.findById(exception.sessionId);
+      if (!session) throw new AppError('Lượt gửi xe liên quan không tồn tại', 404);
+
+      if (exception.type === ExceptionType.WRONG_PLATE && data.newLicensePlate) {
+        // Cập nhật lại biển số đúng
+        session.licensePlate = data.newLicensePlate.toUpperCase();
+        await session.save();
+      } 
+      else if (exception.type === ExceptionType.WRONG_ZONE && data.newSlotId) {
+        // Cập nhật lại slot thực tế
+        const newSlot = await ParkingSlot.findById(data.newSlotId);
+        if (!newSlot) throw new AppError('Slot mới không tồn tại', 404);
+        
+        // 1. Chỉ được đổi những slot thực sự còn trống (AVAILABLE)
+        if (newSlot.status !== SlotStatus.AVAILABLE) {
+          throw new AppError('Slot mới không còn trống hoặc không khả dụng', 400);
+        }
+
+        // 2. Không được đổi sang tòa khác (cùng facilityId)
+        if (newSlot.facilityId.toString() !== session.facilityId.toString()) {
+          throw new AppError('Slot mới phải thuộc cùng một tòa nhà/bãi xe', 400);
+        }
+
+        const oldSlotId = session.slotId;
+        
+        // Cập nhật session
+        session.slotId = newSlot._id as mongoose.Types.ObjectId;
+        session.floorId = newSlot.floorId;
+        await session.save();
+
+        // Cập nhật slot mới -> Occupied
+        newSlot.status = SlotStatus.OCCUPIED;
+        newSlot.currentSessionId = session._id as mongoose.Types.ObjectId;
+        await newSlot.save();
+
+        // Giải phóng slot cũ
+        if (oldSlotId) {
+          const oldSlot = await ParkingSlot.findById(oldSlotId);
+          if (oldSlot) {
+            oldSlot.status = SlotStatus.AVAILABLE;
+            oldSlot.currentSessionId = null;
+            await oldSlot.save();
+          }
+        }
+      }
+    }
+
+    await exception.save();
+
+    // Lấy lại dữ liệu đã populate
+    const updatedException = await Exception.findById(exception._id)
+      .populate('staffId', 'name email')
+      .populate('managerId', 'name email')
+      .populate('sessionId');
+
+    return updatedException!;
+  }
+
+  /**
+   * Tự động phát hiện xe quá hạn (quá 24h) và tạo cảnh báo (Exception OVERTIME)
+   */
+  static async detectOverdueSessions(): Promise<number> {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    // Tìm các session đang active và gửi quá 24h
+    const overdueSessions = await ParkingSession.find({
+      status: SessionStatus.ACTIVE,
+      checkInTime: { $lt: twentyFourHoursAgo }
+    });
+
+    let detectedCount = 0;
+
+    for (const session of overdueSessions) {
+      // Kiểm tra xem đã có ngoại lệ OVERTIME nào chưa (chưa giải quyết)
+      const existingException = await Exception.findOne({
+        sessionId: session._id,
+        type: ExceptionType.OVERTIME,
+        status: { $in: [ExceptionStatus.NEW, ExceptionStatus.PROCESSING] }
+      });
+
+      if (!existingException) {
+        // Lấy admin user ảo để làm staffId (hoặc cấu hình system user)
+        // Ở đây giả lập lấy 1 user Admin hoặc Staff bất kỳ, hoặc có thể thay staffId thành optional trong trường hợp system auto
+        // Để giữ schema không đổi, lấy user có role admin đầu tiên
+        const mongooseUser = mongoose.model('User');
+        const adminUser = await mongooseUser.findOne({ role: 'admin' });
+        
+        if (adminUser) {
+          await Exception.create({
+            sessionId: session._id,
+            type: ExceptionType.OVERTIME,
+            description: 'Phát hiện xe đỗ quá 24h liên tục tự động bởi hệ thống.',
+            staffId: adminUser._id,
+            status: ExceptionStatus.NEW
+          });
+          detectedCount++;
+        }
+      }
+    }
+
+    return detectedCount;
+  }
+}

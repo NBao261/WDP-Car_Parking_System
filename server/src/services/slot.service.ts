@@ -49,10 +49,19 @@ export class SlotService {
     return createdSlots;
   }
 
-  static async updateSlotStatus(id: string, status: string, reason?: string): Promise<IParkingSlot | null> {
+  static async updateSlotStatus(id: string, status: string, reason?: string, userRole?: string): Promise<IParkingSlot | null> {
     const slot = await ParkingSlot.findById(id);
     if (!slot) {
       throw new AppError('Slot not found', 404);
+    }
+
+    if (userRole === 'staff') {
+      if (status !== 'maintenance' && status !== 'available') {
+        throw new AppError('Nhân viên chỉ có quyền cập nhật trạng thái bảo trì hoặc trống', 403);
+      }
+      if (slot.status === 'occupied') {
+        throw new AppError('Không thể thay đổi trạng thái slot đang có xe đỗ', 400);
+      }
     }
 
     // Business Logic: Prevent transition if slot is occupied (unless transitioning to available via checkout)

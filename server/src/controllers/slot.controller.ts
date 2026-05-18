@@ -25,7 +25,8 @@ export class SlotController {
     try {
       const id = req.params.id as string;
       const { status, reason } = req.body;
-      const slot = await SlotService.updateSlotStatus(id, status, reason);
+      const userRole = req.user?.role;
+      const slot = await SlotService.updateSlotStatus(id, status, reason, userRole);
       res.status(200).json({ success: true, data: slot });
     } catch (error) {
       next(error);

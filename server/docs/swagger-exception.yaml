@@ -1,0 +1,203 @@
+components:
+  schemas:
+    Exception:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Mã ngoại lệ
+        sessionId:
+          type: string
+          description: ID của lượt gửi xe (hoặc object đầy đủ nếu populated)
+        type:
+          type: string
+          enum: [lost_card, wrong_plate, overtime, wrong_zone, unpaid, other]
+          description: Loại ngoại lệ
+        description:
+          type: string
+          description: Mô tả chi tiết
+        staffId:
+          type: string
+          description: ID nhân viên báo cáo (hoặc object đầy đủ)
+        managerId:
+          type: string
+          description: ID quản lý đã duyệt (hoặc object đầy đủ)
+        managerNote:
+          type: string
+          description: Ghi chú của quản lý
+        surcharge:
+          type: number
+          description: Phụ phí phạt
+        status:
+          type: string
+          enum: [new, processing, resolved, rejected]
+          description: Trạng thái xử lý
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+paths:
+  /exceptions:
+    get:
+      summary: Lấy danh sách ngoại lệ
+      tags: [Exceptions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Số trang
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: Số lượng / trang
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [new, processing, resolved, rejected]
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [lost_card, wrong_plate, overtime, wrong_zone, unpaid, other]
+        - in: query
+          name: sessionId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Exception'
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      totalPages:
+                        type: integer
+
+    post:
+      summary: Tạo ngoại lệ mới (Staff)
+      tags: [Exceptions]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sessionId
+                - type
+                - description
+              properties:
+                sessionId:
+                  type: string
+                type:
+                  type: string
+                  enum: [lost_card, wrong_plate, overtime, wrong_zone, unpaid, other]
+                description:
+                  type: string
+                surcharge:
+                  type: number
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Exception'
+
+  /exceptions/{id}/resolve:
+    patch:
+      summary: Duyệt / Xử lý ngoại lệ (Manager)
+      tags: [Exceptions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [resolved, rejected]
+                managerNote:
+                  type: string
+                newLicensePlate:
+                  type: string
+                  description: 'Biển số mới (nếu type = wrong_plate)'
+                newSlotId:
+                  type: string
+                  description: 'ID slot thực tế (nếu type = wrong_zone)'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Exception'
+
+  /exceptions/detect-overdue:
+    post:
+      summary: Kích hoạt quét tự động xe quá hạn
+      tags: [Exceptions]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
