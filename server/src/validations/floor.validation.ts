@@ -15,12 +15,13 @@ export const updateFloorSchema = z.object({
   body: z.object({
     name: z.string().min(1).optional(),
     status: z.enum(['active', 'inactive']).optional(),
+    totalSlots: z.number().min(0).optional(),
   }),
 });
 
 export const assignVehicleTypesSchema = z.object({
   body: z.object({
-    vehicleTypeIds: z.array(
+    allowedVehicleTypes: z.array(
       z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid vehicle type ID format')
     ),
   }),

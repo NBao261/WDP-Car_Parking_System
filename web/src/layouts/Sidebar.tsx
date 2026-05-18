@@ -4,12 +4,12 @@ import {
   LayoutDashboard,
   Map,
   Car,
+  Layers,
   Wallet,
   Users,
   Settings,
   ScrollText,
   LogOut,
-  Building2,
   ClipboardList,
   ScanLine,
   Shield,
@@ -29,9 +29,10 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   // ── Admin ──
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
-  { path: '/admin/zones', label: 'Facilities & Zones', icon: Map, roles: [UserRole.ADMIN] },
+  { path: '/admin/facilities', label: 'Facilities', icon: Map, roles: [UserRole.ADMIN] },
   { path: '/admin/vehicles', label: 'Vehicles', icon: Car, roles: [UserRole.ADMIN] },
-  { path: '/admin/billing', label: 'Pricing & Revenue', icon: Wallet, roles: [UserRole.ADMIN] },
+  { path: '/admin/slots', label: 'Slot Management', icon: Layers, roles: [UserRole.ADMIN] },
+  { path: '/admin/pricing', label: 'Pricing & Revenue', icon: Wallet, roles: [UserRole.ADMIN] },
   { path: '/admin/users', label: 'Users', icon: Users, roles: [UserRole.ADMIN] },
   { path: '/admin/roles', label: 'Roles & Permissions', icon: Shield, roles: [UserRole.ADMIN] },
   { path: '/admin/config', label: 'System Config', icon: Settings, roles: [UserRole.ADMIN] },
@@ -101,18 +102,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <img src="/Logo.png" alt="ParkMaster Logo" className="w-full h-full object-contain" />
           </div>
           <span className="font-bold text-xl tracking-tight">LYNC PARK</span>
-        </div>
-
-        <div className="px-4 mb-4 shrink-0">
-          <div className="bg-white rounded-xl p-2 shadow-sm border border-gray-200 flex items-center gap-2">
-            <Building2 size={16} className="text-gray-500 ml-2 shrink-0" />
-            <select
-              className="bg-transparent border-none text-sm font-semibold text-brand focus:ring-0 cursor-pointer w-full py-1 pr-2 outline-none appearance-none"
-              aria-label="Select facility"
-            >
-              <option>All Facilities</option>
-            </select>
-          </div>
         </div>
 
         <nav className="flex-1 px-4 pb-6 space-y-1.5 overflow-y-auto">

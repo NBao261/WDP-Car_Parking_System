@@ -111,12 +111,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           </div>
         )}
 
-        {/* ─── Scrollable Step Content ──────────────────────────────────────────
-            flex-1 + min-h-0 is CRITICAL:
-            Without min-h-0, flex children won't shrink below their content size,
-            causing overflow. overflow-y-auto enables scrolling when content
-            exceeds the available space.
-        ─────────────────────────────────────────────────────────────────── */}
+        {/* Scrollable Step Content */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="p-6">
             <AnimatePresence mode="wait" initial={false}>
