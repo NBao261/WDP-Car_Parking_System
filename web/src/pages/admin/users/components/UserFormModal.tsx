@@ -25,6 +25,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
     selectedRole,
     setSelectedRole,
     customPerms,
+    basePerms,
     handleTogglePerm,
     isLoadingPerms,
     isSubmitting,
@@ -160,6 +161,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                 >
                   <UserPermissionsStep
                     customPerms={customPerms}
+                    basePerms={basePerms}
                     onToggle={handleTogglePerm}
                     isLoading={isLoadingPerms}
                   />
