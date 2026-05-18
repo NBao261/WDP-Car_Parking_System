@@ -124,7 +124,7 @@ export class SessionService {
       throw new AppError(`Xe biển số "${data.licensePlate}" đang có lượt gửi chưa kết thúc (${existingSession.code})`, 400);
     }
 
-    // 3. Tìm bảng giá active
+    // 4. Tìm bảng giá active
     const pricingPlan = await PricingPlan.findOne({
       facilityId: data.facilityId,
       vehicleTypeId: data.vehicleTypeId,
@@ -136,7 +136,7 @@ export class SessionService {
       throw new AppError('Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này', 400);
     }
 
-    // 4. Tìm slot — nếu user chọn cụ thể thì validate, nếu không thì auto-assign
+    // 5. Tìm slot — nếu user chọn cụ thể thì validate, nếu không thì auto-assign
     let slot;
 
     if (data.slotId) {
