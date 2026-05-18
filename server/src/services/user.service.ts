@@ -41,11 +41,38 @@ export class UserService {
   }
 
   static async getUserById(userId: string): Promise<IUser | null> {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId)
+      .populate('assignedFacilities', 'name address status openTime closeTime');
     if (!user) {
       throw new AppError('User not found', 404);
     }
     return user;
+  }
+
+  /** GET /users/me — Lấy profile của chính mình (Staff dùng để lấy danh sách facility) */
+  static async getMe(userId: string): Promise<IUser | null> {
+    const user = await User.findById(userId)
+      .select('-password -customPermissions -failedLoginAttempts -lockedUntil')
+      .populate('assignedFacilities', 'name address status openTime closeTime');
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+    return user;
+  }
+
+  /** PATCH /users/:id/assign-facilities — Manager phân công tòa nhà cho Staff */
+  static async assignFacilities(targetUserId: string, facilityIds: string[]): Promise<IUser | null> {
+    const user = await User.findById(targetUserId);
+    if (!user) throw new AppError('User not found', 404);
+    if (user.isDeleted) throw new AppError('User has been deleted', 400);
+
+    const updated = await User.findByIdAndUpdate(
+      targetUserId,
+      { assignedFacilities: facilityIds },
+      { new: true, runValidators: true }
+    ).populate('assignedFacilities', 'name address status openTime closeTime');
+
+    return updated;
   }
 
   static async getAllUsers(filters: any = {}, skip = 0, limit = 10): Promise<{ users: IUser[]; total: number }> {

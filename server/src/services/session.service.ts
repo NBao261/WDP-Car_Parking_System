@@ -5,6 +5,7 @@ import { ParkingFacility } from '../models/parkingFacility.model';
 import { VehicleType } from '../models/vehicleType.model';
 import { Floor } from '../models/floor.model';
 import { PricingPlan } from '../models/pricingPlan.model';
+import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 import { generateSessionCode, generateCardCode } from '../utils/codeGenerator';
 import { getIO } from '../config/socket';
@@ -101,7 +102,19 @@ export class SessionService {
       throw new AppError(conditions.reason || 'Không đủ điều kiện vào bãi', 400);
     }
 
-    // 2. Kiểm tra xe đang có session active (biển số trùng)
+    // 2. Validate staff được phân công tại facility này (FR-18.6)
+    const staffUser = await User.findById(data.staffInId).select('assignedFacilities role');
+    if (!staffUser) {
+      throw new AppError('Staff user not found', 404);
+    }
+    const isAssigned = staffUser.assignedFacilities.some(
+      (fId) => fId.toString() === data.facilityId
+    );
+    if (!isAssigned) {
+      throw new AppError('Bạn không được phân công tại bãi xe này', 403);
+    }
+
+    // 3. Kiểm tra xe đang có session active (biển số trùng)
     const existingSession = await ParkingSession.findOne({
       licensePlate: data.licensePlate.toUpperCase(),
       status: SessionStatus.ACTIVE,
