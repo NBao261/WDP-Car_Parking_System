@@ -22,7 +22,11 @@ const RolesPage      = lazy(() => import('../pages/admin/roles/RolesPage'));
 
 // ── Manager / Staff Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
-import StaffDashboard from '../pages/staff/StaffDashboard';
+// Staff Pages ──
+import DashboardStaffPage from '../pages/staff/dashboardStaff/DashboardStaffPage';
+const VehicleCheckPage = lazy(() => import('../pages/staff/vehicleCheck/VehicleCheckPage'));
+const ActiveSessionsPage = lazy(() => import('../pages/staff/activeSessions/ActiveSessionsPage'));
+const ExceptionsStaffPage = lazy(() => import('../pages/staff/exceptionsStaff/ExceptionsStaffPage'));
 
 const Loading = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
@@ -94,7 +98,12 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute allowedRoles={[UserRole.STAFF, UserRole.MANAGER, UserRole.ADMIN]} />
             ),
-            children: [{ index: true, element: <StaffDashboard /> }],
+            children: [
+              { index: true, element: <DashboardStaffPage /> },
+              { path: 'vehicle-check', element: <S><VehicleCheckPage /></S> },
+              { path: 'active-sessions', element: <S><ActiveSessionsPage /></S> },
+              { path: 'exceptions', element: <S><ExceptionsStaffPage /></S> },
+            ],
           },
         ],
       },

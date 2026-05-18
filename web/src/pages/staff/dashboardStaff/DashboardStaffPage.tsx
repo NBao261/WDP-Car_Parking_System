@@ -1,6 +1,6 @@
 import React from 'react';
 
-const StaffDashboard: React.FC = () => {
+const DashboardStaffPage: React.FC = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Staff Portal</h1>
@@ -9,4 +9,4 @@ const StaffDashboard: React.FC = () => {
   );
 };
 
-export default StaffDashboard;
+export default DashboardStaffPage;

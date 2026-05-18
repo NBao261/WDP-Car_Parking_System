@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
-import { MoreVertical, Edit, Trash2, Loader2, Eye } from 'lucide-react';
-import { vehicleTypeService, VehicleType } from '../../../../services/vehicleType.service';
+import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
+import { VehicleType } from '../../../../services/vehicleType.service';
 import { SLOT_SIZE_LABELS } from './constants';
 
 interface VehicleRowProps {

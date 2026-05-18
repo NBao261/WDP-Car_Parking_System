@@ -10,11 +10,11 @@ import {
   Settings,
   ScrollText,
   LogOut,
-  Building2,
   ClipboardList,
   ScanLine,
   Shield,
   type LucideIcon,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuthStore } from '../store';
 import { UserRole } from '../../../shared/types';
@@ -46,8 +46,9 @@ const NAV_ITEMS: NavItem[] = [
 
   // ── Staff ──
   { path: '/staff', label: 'Dashboard', icon: LayoutDashboard, roles: [UserRole.STAFF] },
-  { path: '/staff/check-in', label: 'Check-in / out', icon: ScanLine, roles: [UserRole.STAFF] },
-  { path: '/staff/vehicles', label: 'Vehicles', icon: Car, roles: [UserRole.STAFF] },
+  { path: '/staff/vehicle-check', label: 'Check-in / out', icon: ScanLine, roles: [UserRole.STAFF] },
+  { path: '/staff/active-sessions', label: 'Active Sessions', icon: Car, roles: [UserRole.STAFF] },
+  { path: '/staff/exceptions', label: 'Exceptions', icon: AlertTriangle, roles: [UserRole.STAFF] },
 ];
 
 function getInitials(name: string): string {

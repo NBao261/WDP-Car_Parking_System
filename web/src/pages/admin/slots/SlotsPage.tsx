@@ -25,7 +25,7 @@ export default function SlotsPage() {
   const [floorDropOpen, setFloorDropOpen] = useState(false);
 
   const [pageLoading, setPageLoading] = useState(true);
-  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [, setSlotsLoading] = useState(false);
 
   const [statusSlot, setStatusSlot] = useState<ParkingSlot | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -260,7 +260,6 @@ export default function SlotsPage() {
                 <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
                   {filteredSlots.map((slot) => {
                     const vtName = (slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object') ? slot.vehicleTypeId.name : (slot.vehicleTypeId ? (vtMap[slot.vehicleTypeId] ?? '') : '');
-                    const isEV = vtName.toLowerCase().includes('ev') || vtName.toLowerCase().includes('điện');
                     
                     let bgClass = '';
                     if (slot.status === 'occupied') {
