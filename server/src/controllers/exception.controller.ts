@@ -12,10 +12,7 @@ export class ExceptionController {
         staffId: req.user?.userId,
       };
       const exception = await ExceptionService.createException(data);
-      res.status(201).json({
-        status: 'success',
-        data: exception,
-      });
+      res.status(201).json({ success: true, data: exception });
     } catch (error) {
       next(error);
     }
@@ -28,9 +25,9 @@ export class ExceptionController {
     try {
       const result = await ExceptionService.getExceptions(req.query);
       res.status(200).json({
-        status: 'success',
+        success: true,
         data: result.data,
-        meta: {
+        pagination: {
           total: result.total,
           page: result.page,
           totalPages: result.totalPages,
@@ -53,10 +50,7 @@ export class ExceptionController {
       };
 
       const exception = await ExceptionService.resolveException(exceptionId, data);
-      res.status(200).json({
-        status: 'success',
-        data: exception,
-      });
+      res.status(200).json({ success: true, data: exception });
     } catch (error) {
       next(error);
     }
@@ -69,9 +63,9 @@ export class ExceptionController {
     try {
       const count = await ExceptionService.detectOverdueSessions();
       res.status(200).json({
-        status: 'success',
+        success: true,
         message: `Đã quét và phát hiện ${count} lượt gửi xe quá hạn.`,
-        data: { count }
+        data: { count },
       });
     } catch (error) {
       next(error);
