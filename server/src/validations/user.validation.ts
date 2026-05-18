@@ -53,3 +53,16 @@ export const userIdParamSchema = z.object({
     id: z.string().regex(objectIdRegex, 'Invalid user ID format'),
   }),
 });
+
+// FR-18.6: Manager phân công tòa nhà cho Staff
+export const assignFacilitiesSchema = z.object({
+  params: z.object({
+    id: z.string().regex(objectIdRegex, 'Invalid user ID format'),
+  }),
+  body: z.object({
+    facilityIds: z
+      .array(z.string().regex(objectIdRegex, 'Invalid facility ID'))
+      .min(0, 'facilityIds must be an array (can be empty to unassign all)'),
+  }),
+});
+

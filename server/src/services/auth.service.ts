@@ -76,11 +76,14 @@ export class AuthService {
 
     const tokens = this.generateTokens(user);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...userWithoutPassword } = user.toObject();
+    // Populate assignedFacilities để Staff thấy ngay danh sách bãi xe sau login
+    const populatedUser = await User.findById(user._id)
+      .select('-password')
+      .populate('assignedFacilities', 'name address status openTime closeTime');
 
-    return { user: userWithoutPassword, tokens };
+    return { user: populatedUser!.toObject(), tokens };
   }
+
 
   static async refreshToken(token: string): Promise<{ accessToken: string; refreshToken: string }> {
     try {

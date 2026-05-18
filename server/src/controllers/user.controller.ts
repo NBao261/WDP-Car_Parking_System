@@ -2,6 +2,16 @@ import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/user.service';
 
 export class UserController {
+  /** GET /users/me — Profile của user hiện tại (mọi role, Staff dùng lấy assigned facilities) */
+  static async getMe(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = await UserService.getMe(req.user!.userId);
+      res.status(200).json({ success: true, data: user });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async createUser(req: Request, res: Response, next: NextFunction) {
     try {
       const user = await UserService.createUser(req.body);
@@ -90,6 +100,18 @@ export class UserController {
       const id = req.params.id as string;
       const { newPassword } = req.body;
       const user = await UserService.resetPassword(id, newPassword);
+      res.status(200).json({ success: true, data: user });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** PATCH /users/:id/assign-facilities — Manager phân công tòa nhà cho Staff */
+  static async assignFacilities(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = req.params.id as string;
+      const { facilityIds } = req.body;
+      const user = await UserService.assignFacilities(id, facilityIds);
       res.status(200).json({ success: true, data: user });
     } catch (error) {
       next(error);
