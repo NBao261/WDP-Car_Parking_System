@@ -488,6 +488,16 @@ export class SessionService {
       throw new AppError('Lượt gửi xe đã kết thúc', 400);
     }
 
+    // Validate staff được phân công tại facility của session này (FR-18.6)
+    const staffUser = await User.findById(data.staffOutId).select('assignedFacilities');
+    if (!staffUser) throw new AppError('Staff user not found', 404);
+    const isAssigned = staffUser.assignedFacilities.some(
+      (fId) => fId.toString() === session.facilityId.toString()
+    );
+    if (!isAssigned) {
+      throw new AppError('Bạn không được phân công tại bãi xe này', 403);
+    }
+
     const checkOutTime = new Date();
     const feeResult = await this.calculateFee(data.sessionId, checkOutTime);
 
