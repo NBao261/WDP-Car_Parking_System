@@ -29,6 +29,7 @@ const seed = async () => {
             'manager@smartparking.com',
             'staff1@smartparking.com',
             'staff2@smartparking.com',
+            'staff@smartparking.com',
           ],
         },
       }),
@@ -111,8 +112,9 @@ const seed = async () => {
         mustChangePassword: false,
       },
       {
-        name: 'Nguyễn Văn Staff A',
-        email: 'staff1@smartparking.com',
+        _id: '683f1a2b3c4d5e6f7a8b9c99',
+        name: 'Staff Nguyen',
+        email: 'staff@smartparking.com',
         phone: '0900000002',
         password: hashedPassword,
         role: UserRole.STAFF,
@@ -137,6 +139,7 @@ const seed = async () => {
     logger.info('🏍️ Seeding vehicle types...');
     const [motoType, car4Type, car7Type, bikeType, truckType] = await VehicleType.insertMany([
       {
+        _id: '683f1a2b3c4d5e6f7a8b9c01',
         name: 'Xe Máy',
         code: 'MOTO',
         slotSize: SlotSize.SMALL,
@@ -144,6 +147,7 @@ const seed = async () => {
         icon: '🏍️',
       },
       {
+        _id: '683f1a2b3c4d5e6f7a8b9c02',
         name: 'Ô tô 4-5 chỗ',
         code: 'CAR4',
         slotSize: SlotSize.MEDIUM,
@@ -158,6 +162,7 @@ const seed = async () => {
         icon: '🚙',
       },
       {
+        _id: '683f1a2b3c4d5e6f7a8b9c03',
         name: 'Xe Đạp',
         code: 'BIKE',
         slotSize: SlotSize.SMALL,
@@ -179,6 +184,7 @@ const seed = async () => {
     // ═══════════════════════════════════════════════════
     logger.info('🏢 Seeding facilities...');
     const facility1 = await ParkingFacility.create({
+      _id: '683f1a2b3c4d5e6f7a8b9c0d',
       name: 'Central Hub Parking',
       address: '123 Main Street, District 1, HCMC',
       totalFloors: 3,

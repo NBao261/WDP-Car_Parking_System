@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Wrench, Car, BookMarked, CircleDot } from 'lucide-react';
+import { Car } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { ParkingSlot, SlotStatus } from '../../services/slot.service';
 import { STATUS_CONFIG } from './SlotStatusBadge';
@@ -11,15 +11,6 @@ interface SlotCellProps {
   onStatusChange?: (slot: ParkingSlot) => void;
   readOnly?: boolean;
 }
-
-/** Icon per status for the cell overlay */
-const STATUS_ICON: Record<SlotStatus, React.ReactNode> = {
-  available: <CircleDot size={14} />,
-  occupied: <Car size={14} />,
-  reserved: <BookMarked size={14} />,
-  maintenance: <Wrench size={14} />,
-  locked: <Lock size={14} />,
-};
 
 /** Background + border colour for each cell */
 const CELL_BG: Record<SlotStatus, string> = {
