@@ -10,14 +10,15 @@ import UnauthorizedPage from '../pages/error/UnauthorizedPage';
 
 // ── Admin Pages ──
 import DashboardPage from '../pages/admin/dashboard/DashboardPage';
-const ZonesPage = lazy(() => import('../pages/admin/zones/ZonesPage'));
-const VehiclesPage = lazy(() => import('../pages/admin/vehicles/VehiclesPage'));
-const BillingPage = lazy(() => import('../pages/admin/billing/BillingPage'));
-const ConfigPage = lazy(() => import('../pages/admin/config/ConfigPage'));
-// const LogsPage = lazy(() => import('../pages/admin/logs/LogsPage'));
-const UsersPage = lazy(() => import('../pages/admin/users/UsersPage'));
+const FacilitiesPage = lazy(() => import('../pages/admin/facilities/FacilitiesPage'));
+const VehiclesPage   = lazy(() => import('../pages/admin/vehicles/VehiclesPage'));
+const SlotsPage      = lazy(() => import('../pages/admin/slots/SlotsPage'));
+const PricingPage    = lazy(() => import('../pages/admin/pricing/PricingPage'));
+const ConfigPage     = lazy(() => import('../pages/admin/config/ConfigPage'));
+// const LogsPage    = lazy(() => import('../pages/admin/logs/LogsPage'));
+const UsersPage      = lazy(() => import('../pages/admin/users/UsersPage'));
 const UserDetailPage = lazy(() => import('../pages/admin/users/UserDetailPage'));
-const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
+const RolesPage      = lazy(() => import('../pages/admin/roles/RolesPage'));
 
 // ── Manager / Staff Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
@@ -63,72 +64,19 @@ export const router = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
             children: [
               { index: true, element: <DashboardPage /> },
-              {
-                path: 'zones',
-                element: (
-                  <S>
-                    <ZonesPage />
-                  </S>
-                ),
-              },
-              {
-                path: 'vehicles',
-                element: (
-                  <S>
-                    <VehiclesPage />
-                  </S>
-                ),
-              },
-              {
-                path: 'billing',
-                element: (
-                  <S>
-                    <BillingPage />
-                  </S>
-                ),
-              },
-              {
-                path: 'config',
-                element: (
-                  <S>
-                    <ConfigPage />
-                  </S>
-                ),
-              },
-              // {
-              //   path: 'logs',
-              //   element: (
-              //     <S>
-              //       <LogsPage />
-              //     </S>
-              //   ),
-              // },
+              { path: 'facilities', element: <S><FacilitiesPage /></S> },
+              { path: 'vehicles', element: <S><VehiclesPage /></S> },
+              // FR-4: Quản lý Slot đỗ xe
+              { path: 'slots', element: <S><SlotsPage /></S> },
+              // FR-5: Quản lý Bảng giá
+              { path: 'pricing', element: <S><PricingPage /></S> },
+              { path: 'config', element: <S><ConfigPage /></S> },
+              // { path: 'logs', element: <S><LogsPage /></S> },
               // FR-18: User Management
-              {
-                path: 'users',
-                element: (
-                  <S>
-                    <UsersPage />
-                  </S>
-                ),
-              },
-              {
-                path: 'users/:id',
-                element: (
-                  <S>
-                    <UserDetailPage />
-                  </S>
-                ),
-              },
+              { path: 'users', element: <S><UsersPage /></S> },
+              { path: 'users/:id', element: <S><UserDetailPage /></S> },
               // FR-19: Role & Permission Management
-              {
-                path: 'roles',
-                element: (
-                  <S>
-                    <RolesPage />
-                  </S>
-                ),
-              },
+              { path: 'roles', element: <S><RolesPage /></S> },
             ],
           },
 
