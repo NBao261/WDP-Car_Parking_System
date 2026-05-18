@@ -4,7 +4,7 @@ import { useAuthStore } from '../../../store';
 
 const quickLinks = [
   { path: '/admin/users', label: 'Users & Roles', icon: Users, desc: 'Quản lý tài khoản Manager & Staff' },
-  { path: '/admin/zones', label: 'Facilities & Zones', icon: Map, desc: 'Quản lý bãi xe, tầng, slot' },
+  { path: '/admin/facilities', label: 'Facilities', icon: Map, desc: 'Quản lý bãi xe, tầng, slot' },
   { path: '/admin/vehicles', label: 'Vehicles', icon: Car, desc: 'Loại phương tiện' },
   { path: '/admin/billing', label: 'Pricing & Revenue', icon: Wallet, desc: 'Bảng giá & doanh thu' },
   { path: '/admin/config', label: 'System Config', icon: Settings, desc: 'Cấu hình hệ thống' },

@@ -35,7 +35,7 @@ export interface CreateUserPayload {
   email: string;
   phone: string;
   password?: string;
-  role: UserRole.MANAGER | UserRole.STAFF; // Admin chỉ tạo manager/staff
+  role: UserRole;
   assignedFacilities?: string[];
 }
 

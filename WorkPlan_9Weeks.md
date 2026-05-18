@@ -39,11 +39,11 @@
 - [x] Thiết kế toàn bộ Mongoose Schema:
   - `User` (name, email, phone, password, role, assignedFacilities, status)
   - `ParkingFacility` (name, address, floors, openTime, closeTime, status)
-  - `Floor` (facilityId, name, allowedVehicleTypes, status)
+  - `Floor` (facilityId, name, allowedVehicleTypes, status, **distanceToGate** ← _RQ-ready_)
   - `VehicleType` (name, code, slotSize, icon)
   - `ParkingSlot` (code, floorId, facilityId, vehicleType, status, currentSessionId)
   - `PricingPlan` (name, vehicleType, facilityId, feeType, rates, surcharges, status)
-  - `ParkingSession` (code, licensePlate, vehicleType, checkInTime, checkOutTime, slotId, staffIn, staffOut, fee, status, paymentStatus)
+  - `ParkingSession` (code, licensePlate, vehicleType, checkInTime, checkOutTime, slotId, staffIn, staffOut, fee, status, paymentStatus, **assignmentMode** ← _RQ-ready_)
   - `Reservation` (userId, vehicleType, facilityId, slotId, startTime, endTime, status)
   - `Payment` (sessionId, amount, method, staffId, status, transactionCode)
   - `Exception` (sessionId, type, description, staffId, status, managerNote)
@@ -108,10 +108,10 @@
 
 #### FE1
 
-- [ ] Trang Login / Quên mật khẩu
-- [ ] Layout Admin Panel hoàn chỉnh
-- [ ] Trang Quản lý Tài khoản (FR-18): danh sách, tạo/sửa/khóa, filter
-- [ ] Trang Phân quyền (FR-19): gán vai trò, xem quyền
+- [x] Trang Login / Quên mật khẩu
+- [x] Layout Admin Panel hoàn chỉnh
+- [x] Trang Quản lý Tài khoản (FR-18): danh sách, tạo/sửa/khóa, filter
+- [x] Trang Phân quyền (FR-19): gán vai trò, xem quyền
 
 #### FE2
 
@@ -143,9 +143,9 @@
 
 #### FE1
 
-- [ ] Trang Quản lý Tòa nhà (FR-1): CRUD + trạng thái
-- [ ] Trang Quản lý Loại xe (FR-2): CRUD
-- [ ] Trang Phân tầng (FR-3): gán loại xe cho tầng, sơ đồ tầng
+- [x] Trang Quản lý Tòa nhà (FR-1): CRUD + trạng thái
+- [x] Trang Quản lý Loại xe (FR-2): CRUD
+- [x] Trang Phân tầng (FR-3): gán loại xe cho tầng, sơ đồ tầng
 - [ ] Trang Cấu hình Hệ thống (FR-20): form cấu hình chung
 
 #### FE2
@@ -264,6 +264,14 @@
   - Auto-cancel sau 30 phút (BR-6.4) – sử dụng cron job / agenda
   - Chuyển reservation → session khi Driver đến (BR-6.6)
 - [ ] API chính sách hủy (BR-6.5): tính phí hủy nếu < 2 giờ
+- [ ] 🔬 **[RQ3]** Implement Weighted Scoring Model cho API `suggest-floor` (FR-8.3):
+  - Thuật toán gốc: **TOPSIS + CRITIC** [P5], **CODAS** [P5], **COA** [P6]
+  - Phiên bản áp dụng: **WSM (Weighted Scoring Model)** — đơn giản hóa TOPSIS
+  - `Score(slot) = W1×Distance + W2×FloorFillBalance + W3×DurationMatch + W4×FloorPreference`
+  - Ràng buộc cứng (từ MILP [P7]): vehicleType match + slot.status == 'Available'
+  - Zone Filtering (từ Contract Net Protocol [P1] + Differentiated Parking [P2])
+  - Greedy Matching (từ Hungarian Algorithm [P3] + Centralized Assignment [P4])
+  - Trọng số mặc định: W1=0.25, W2=0.30, W3=0.25, W4=0.20 (cấu hình qua SystemConfig)
 
 #### BE2
 
@@ -273,6 +281,10 @@
   - Tỷ lệ lấp đầy (FR-6.3): calculate occupied/total per floor
   - Khung giờ cao điểm (FR-6.4): aggregate by hour
 - [ ] API Export báo cáo: xuất Excel (xlsx) / PDF
+- [ ] 🔬 **[RQ1]** API occupancy heatmap theo tầng + loại xe (FR-6.3 mở rộng)
+  - Thuật toán gốc: **Macroscopic Fundamental Diagram (MFD)** [P2] — tính Optimal Occupancy
+- [ ] 🔬 **[RQ1]** Tạo seed data 2 cấu hình: (A) phân tầng chuyên biệt, (B) tầng hỗn hợp
+  - Dựa trên mô hình Zone Differentiation [P2] và CNP Agent-based Zoning [P1]
 
 #### FE1
 
@@ -305,6 +317,13 @@
 - [ ] Push notification service: đặt chỗ thành công, nhắc thanh toán, hết hạn giữ chỗ
 - [ ] API Ngoại lệ nâng cao (FR-7): list exceptions for Manager, approve/reject
 - [ ] Optimize MongoDB queries: indexes cho licensePlate, sessionCode, slotCode
+- [ ] 🔬 **[RQ4]** Implement Load Balancing cho giờ cao điểm:
+  - Thuật toán gốc: **NSGA-II** (multi-objective demand allocation) [P8], **PCPT** (dynamic path tree) [P9]
+  - Phiên bản áp dụng: **Threshold-based Load Balancing** — phát hiện tầng sắp đầy (occupancy ≥ 85%) → chuyển hướng xe đến tầng occupancy thấp nhất
+  - Tích hợp Reservation-Aware Capacity [P10]: `effective_occupancy = (occupied + reserved) / total`
+  - Conflict Resolution (từ DCS [P9]): khi 2 xe hướng cùng slot → ưu tiên xe gần hơn
+- [ ] 🔬 **[RQ4]** Peak Hour Detection: xác định giờ cao điểm tự động từ dữ liệu lịch sử
+  - Hướng nâng cấp tương lai: **DRL (Deep Q-Network)** [P9] với reward function điều chỉnh được
 
 #### BE2
 
@@ -314,6 +333,8 @@
   - `reservation:expired` – thông báo
 - [ ] API Backup config (FR-20.5): trigger backup, list backups
 - [ ] Integration test cho các flow chính (check-in → check-out → payment)
+- [ ] 🔬 **[RQ4]** API Load Imbalance Index: `(max - min) / avg` occupancy giữa các tầng
+- [ ] 🔬 **[RQ3]** API cho phép Manager điều chỉnh trọng số thuật toán (W1–W4) qua SystemConfig
 
 #### FE1
 
@@ -334,7 +355,7 @@
 - [ ] Màn hình Tài khoản: thông tin cá nhân, đổi mật khẩu, lịch sử
 - [ ] Nhận push notification
 
-**✅ Deliverable tuần 6–7:** Đặt chỗ trước, báo cáo thống kê, ngoại lệ nâng cao, phản hồi, realtime, push notification.
+**✅ Deliverable tuần 6–7:** Đặt chỗ trước, báo cáo thống kê, ngoại lệ nâng cao, phản hồi, realtime, push notification. **+ WSM scoring [P5,P6] và Threshold Load Balancing [P8,P9,P10].**
 
 ---
 
@@ -347,6 +368,12 @@
 - [ ] API rate limiting, input sanitization (chống NoSQL Injection)
 - [ ] Stress test: 100 concurrent users
 - [ ] Hoàn thiện Swagger documentation
+- [ ] 🔬 **[RQ1–RQ4]** Chạy simulation A/B testing:
+  - Scenario 1: 500 sessions phân tầng chuyên biệt vs. hỗn hợp (RQ1) — đo MFD [P2]
+  - Scenario 2: 500 sessions auto-assign (Greedy [P3]) vs. manual (RQ2) — đo search time
+  - Scenario 3: 500 sessions single-criteria vs. WSM multi-criteria [P5] (RQ3)
+  - Scenario 4: 200 sessions giờ cao điểm với/không Threshold Load Balancing [P8] (RQ4)
+- [ ] 🔬 Thu thập và phân tích metrics theo bảng chỉ số SRS Phần 5
 
 ### BE2
 
@@ -355,6 +382,9 @@
 - [ ] Test MongoDB transactions (replica set)
 - [ ] Test Socket.IO events dưới tải
 - [ ] Security audit: JWT expiry, RBAC bypass, data leaks
+- [ ] 🔬 Script tự động tạo simulation data cho giờ cao điểm (50–100 sessions/2 giờ)
+- [ ] 🔬 Export báo cáo RQ: bảng metrics + biểu đồ so sánh (Excel/PDF)
+- [ ] 🔬 Đánh giá giả thuyết H1–H4: so sánh kết quả với mục tiêu đề ra
 
 ### FE1
 
@@ -379,7 +409,7 @@
 - [ ] Optimize performance: lazy loading, image optimization
 - [ ] Fix bugs & UI polish
 
-**✅ Deliverable tuần 8:** Hệ thống ổn định, test coverage đạt yêu cầu, không còn bug blocking.
+**✅ Deliverable tuần 8:** Hệ thống ổn định, test coverage đạt yêu cầu, không còn bug blocking. **+ Kết quả simulation RQ1–RQ4 với metrics.**
 
 ---
 
@@ -392,6 +422,11 @@
 - [ ] Setup CI/CD pipeline
 - [ ] Cấu hình environment: dev, staging, production
 - [ ] Viết tài liệu API hoàn chỉnh
+- [ ] 🔬 Tổng hợp Research Report:
+  - Kết quả từng RQ: dữ liệu, phân tích, so sánh với giả thuyết
+  - Mapping thuật toán gốc (TOPSIS, Hungarian, NSGA-II, MILP) → phiên bản đơn giản hóa (WSM, Greedy, Threshold LB)
+  - Đề xuất cải tiến: nâng cấp lên TOPSIS đầy đủ [P5], COA [P6], DQN [P9]
+  - Hạn chế nghiên cứu và đối chiếu với papers [P1]–[P10]
 
 ### BE2
 
@@ -399,6 +434,7 @@
 - [ ] Setup automated backup (daily)
 - [ ] Seed production data (admin account, default config)
 - [ ] Viết tài liệu hướng dẫn triển khai
+- [ ] 🔬 Chuẩn bị slide trình bày kết quả nghiên cứu RQ trong buổi demo
 
 ### FE1
 
@@ -421,7 +457,7 @@
 - [ ] Viết User Guide cho Driver
 - [ ] Hỗ trợ chuẩn bị demo
 
-**✅ Deliverable tuần 9:** Hệ thống deploy hoàn chỉnh, tài liệu đầy đủ, sẵn sàng demo.
+**✅ Deliverable tuần 9:** Hệ thống deploy hoàn chỉnh, tài liệu đầy đủ, sẵn sàng demo. **+ Research Report RQ1–RQ4.**
 
 ---
 
@@ -474,6 +510,26 @@ Tuần 9: Deploy ───────────────┘── Mileston
 
 ---
 
+## 📊 BẢNG TỔNG HỢP MODULE ↔ NGƯỜI PHỤ TRÁCH
+
+| Module                   | Backend | Frontend Web | Mobile |
+| ------------------------ | :-----: | :----------: | :----: |
+| Auth & User Management   |   BE1   |     FE1      |  FE3   |
+| Tòa nhà / Tầng / Loại xe |   BE2   |     FE1      |   –    |
+| Slot đỗ xe               |   BE1   |   FE1+FE2    |   –    |
+| Bảng giá                 |   BE1   |   FE1+FE2    |  FE3   |
+| Parking Session (vào/ra) | BE1+BE2 |     FE2      |  FE3   |
+| Thanh toán               |   BE1   |     FE2      |  FE3   |
+| Ngoại lệ                 |   BE2   |   FE1+FE2    |   –    |
+| Đặt chỗ trước            |   BE1   |      –       |  FE3   |
+| Báo cáo & Thống kê       |   BE2   |     FE1      |   –    |
+| Phản hồi                 |   BE2   |     FE1      |  FE3   |
+| Quản trị hệ thống        |   BE2   |     FE1      |   –    |
+| Realtime (Socket.IO)     |   BE2   |   FE1+FE2    |  FE3   |
+| **Research Questions**   | **BE1+BE2** |    –     |   –    |
+
+---
+
 ## ⚠️ QUY TẮC LÀM VIỆC
 
 | #   | Quy tắc                      | Chi tiết                                               |
@@ -485,3 +541,5 @@ Tuần 9: Deploy ───────────────┘── Mileston
 | 5   | Sprint review cuối mỗi phase | Demo deliverable, retrospective                        |
 | 6   | Git commit convention        | `feat:`, `fix:`, `docs:`, `refactor:`, `test:`         |
 | 7   | Shared types                 | Tạo package `shared/types` dùng chung BE + FE + Mobile |
+| 8   | Research tracking            | Mỗi session phải ghi nhận `assignmentMode` để phục vụ phân tích RQ |
+

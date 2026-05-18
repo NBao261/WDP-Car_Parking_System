@@ -29,8 +29,6 @@ const seed = async () => {
             'manager@smartparking.com',
             'staff1@smartparking.com',
             'staff2@smartparking.com',
-            'driver1@smartparking.com',
-            'driver2@smartparking.com',
           ],
         },
       }),
@@ -80,20 +78,14 @@ const seed = async () => {
         permissions: DEFAULT_PERMISSIONS[UserRole.STAFF],
         isDefault: true,
       },
-      {
-        code: UserRole.DRIVER,
-        name: 'Parking User / Driver',
-        description: 'Người sử dụng dịch vụ gửi xe: xem thông tin, gửi xe, đặt chỗ, thanh toán',
-        permissions: DEFAULT_PERMISSIONS[UserRole.DRIVER],
-        isDefault: true,
-      },
+
     ];
 
     await Role.insertMany(roleDefs);
     logger.info(`✅ ${roleDefs.length} default roles created`);
 
     // ═══════════════════════════════════════════════════
-    // 3. Seed Users (5 users: 1 admin, 1 manager, 2 staff, 1 driver)
+    // 3. Seed Users (4 users: 1 admin, 1 manager, 2 staff)
     // ═══════════════════════════════════════════════════
     logger.info('👤 Seeding users...');
     const defaultPassword = process.env.SEED_DEFAULT_PASSWORD || 'smartparking123';
@@ -133,15 +125,6 @@ const seed = async () => {
         phone: '0900000003',
         password: hashedPassword,
         role: UserRole.STAFF,
-        status: UserStatus.ACTIVE,
-        mustChangePassword: false,
-      },
-      {
-        name: 'Phạm Minh Driver',
-        email: 'driver1@smartparking.com',
-        phone: '0900000004',
-        password: hashedPassword,
-        role: UserRole.DRIVER,
         status: UserStatus.ACTIVE,
         mustChangePassword: false,
       },
@@ -366,8 +349,8 @@ const seed = async () => {
     logger.info('🎉 Database seeding completed successfully!');
     logger.info('────────────────────────────────────────');
     logger.info('📊 Summary:');
-    logger.info('  • 4 Roles (admin, manager, staff, driver)');
-    logger.info('  • 5 Users (admin, manager, 2 staff, 1 driver)');
+    logger.info('  • 3 Roles (admin, manager, staff)');
+    logger.info('  • 4 Users (admin, manager, 2 staff)');
     logger.info('  • 5 Vehicle Types (moto, car4, car7, bike, truck)');
     logger.info('  • 2 Facilities');
     logger.info('  • 5 Floors');
