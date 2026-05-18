@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { SessionService } from '../services/session.service';
 import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
+import { ParkingSession } from '../models/parkingSession.model';
 
 export class SessionController {
   /**
@@ -108,17 +109,32 @@ export class SessionController {
   /**
    * GET /sessions/:id/fee
    * FR-10.2: Tính phí tự động
+   * Guard: Staff chỉ được tính phí session thuộc facility mình được phân công
    */
   static async calculateFee(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
+
+      // Lấy session để biết facilityId trước khi tính phí
+      const session = await ParkingSession.findById(id).select('facilityId status');
+      if (!session) return next(new AppError('Session không tồn tại', 404));
+
+      // Validate staff thuộc facility của session
+      const staffUser = await User.findById(req.user!.userId).select('assignedFacilities');
+      if (!staffUser) return next(new AppError('User not found', 404));
+      const isAssigned = staffUser.assignedFacilities.some(
+        (fId) => fId.toString() === session.facilityId.toString()
+      );
+      if (!isAssigned) {
+        return next(new AppError('Bạn không được phân công tại bãi xe này', 403));
+      }
+
       const result = await SessionService.calculateFee(id as string);
       res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
   }
-
   /**
    * POST /sessions/:id/check-out
    * FR-10.3: Thu phí gửi xe và check-out
