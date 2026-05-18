@@ -186,9 +186,9 @@ export function SlotGrid({
             key={slot._id}
             slot={slot}
             vehicleTypeName={
-              typeof slot.vehicleTypeId === 'object'
+              (slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object')
                 ? slot.vehicleTypeId.name
-                : vehicleTypeMap[slot.vehicleTypeId]
+                : (slot.vehicleTypeId ? vehicleTypeMap[slot.vehicleTypeId] : '')
             }
             onStatusChange={onSlotClick}
             readOnly={readOnly}

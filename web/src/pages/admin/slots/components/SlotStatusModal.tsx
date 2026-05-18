@@ -75,7 +75,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
             <h2 className="text-lg font-bold text-[#060606]">Manage Slot</h2>
             <p className="text-sm text-gray-500">Slot Code: <span className="font-semibold">{slot.code}</span></p>
             <p className="text-sm text-gray-500">Vehicle Type: <span className="font-semibold">
-              {typeof slot.vehicleTypeId === 'object' ? `${slot.vehicleTypeId.icon} ${slot.vehicleTypeId.name}` : slot.vehicleTypeId}
+              {(slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object') ? `${slot.vehicleTypeId.icon ?? ''} ${slot.vehicleTypeId.name ?? ''}` : (slot.vehicleTypeId ?? '')}
             </span></p>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors">

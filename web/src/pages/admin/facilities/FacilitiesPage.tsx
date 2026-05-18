@@ -331,7 +331,7 @@ export default function FacilitiesPage() {
             </div>
             <button
               onClick={() => { setEditingFacility(undefined); setIsFacilityModalOpen(true); }}
-              className="bg-[#060606] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-black/80 transition-colors flex items-center gap-2"
+              className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-medium hover:bg-[#c4dc32] transition-colors flex items-center gap-2"
             >
               <Plus size={18} />
               Add New Facility

@@ -259,7 +259,7 @@ export default function SlotsPage() {
                 </div>
                 <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
                   {filteredSlots.map((slot) => {
-                    const vtName = typeof slot.vehicleTypeId === 'object' ? slot.vehicleTypeId.name : (vtMap[slot.vehicleTypeId] ?? '');
+                    const vtName = (slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object') ? slot.vehicleTypeId.name : (slot.vehicleTypeId ? (vtMap[slot.vehicleTypeId] ?? '') : '');
                     const isEV = vtName.toLowerCase().includes('ev') || vtName.toLowerCase().includes('điện');
                     
                     let bgClass = '';
