@@ -19,3 +19,10 @@ export interface AssignRolePayload {
   roleCode: string;
   customPermissions?: string[];
 }
+
+export interface CreateRolePayload {
+  code: string;
+  name: string;
+  description?: string;
+  permissions?: string[];
+}

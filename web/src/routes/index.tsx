@@ -14,7 +14,7 @@ const ZonesPage = lazy(() => import('../pages/admin/zones/ZonesPage'));
 const VehiclesPage = lazy(() => import('../pages/admin/vehicles/VehiclesPage'));
 const BillingPage = lazy(() => import('../pages/admin/billing/BillingPage'));
 const ConfigPage = lazy(() => import('../pages/admin/config/ConfigPage'));
-// Sconst UsersPage    = lazy(() => import('../pages/admin/users/UsersPage'));
+const UsersPage = lazy(() => import('../pages/admin/users/UsersPage'));
 const UserDetailPage = lazy(() => import('../pages/admin/users/UserDetailPage'));
 const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
 
@@ -66,15 +66,72 @@ export const router = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
             children: [
               { index: true, element: <DashboardPage /> },
-              { path: 'zones', element: <S><ZonesPage /></S> },
-              { path: 'vehicles', element: <S><VehiclesPage /></S> },
-              { path: 'billing', element: <S><BillingPage /></S> },
-              { path: 'config', element: <S><ConfigPage /></S> },
-              // { path: 'logs',             element: <S><LogsPage /></S> },
-              // // FR-18: User Management
-              // { path: 'users', element: <S><UsersPage /></S> },
-              { path: 'users/:id', element: <S><UserDetailPage /></S> },
-              // FR-19: Role & Permission Management{ path: 'roles', element: <S><RolesPage /></S> },
+              {
+                path: 'zones',
+                element: (
+                  <S>
+                    <ZonesPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'vehicles',
+                element: (
+                  <S>
+                    <VehiclesPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'billing',
+                element: (
+                  <S>
+                    <BillingPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'config',
+                element: (
+                  <S>
+                    <ConfigPage />
+                  </S>
+                ),
+              },
+              // {
+              //   path: 'logs',
+              //   element: (
+              //     <S>
+              //       <LogsPage />
+              //     </S>
+              //   ),
+              // },
+              // FR-18: User Management
+              {
+                path: 'users',
+                element: (
+                  <S>
+                    <UsersPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'users/:id',
+                element: (
+                  <S>
+                    <UserDetailPage />
+                  </S>
+                ),
+              },
+              // FR-19: Role & Permission Management
+              {
+                path: 'roles',
+                element: (
+                  <S>
+                    <RolesPage />
+                  </S>
+                ),
+              },
             ],
           },
 
@@ -82,9 +139,7 @@ export const router = createBrowserRouter([
           {
             path: 'manager',
             element: <ProtectedRoute allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]} />,
-            children: [
-              { index: true, element: <ManagerDashboard /> },
-            ],
+            children: [{ index: true, element: <ManagerDashboard /> }],
           },
 
           // ── Staff Routes ──────────────────────────────────

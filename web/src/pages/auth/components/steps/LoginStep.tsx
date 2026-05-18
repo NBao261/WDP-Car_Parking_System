@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock } from "lucide-react";
+import { z } from "zod";
 import { useAuthStore } from "../../../../store";
 import { UserRole } from "../../../../../../shared/types";
 import { authService } from "../../../../services/auth.service";
@@ -12,6 +13,11 @@ interface LoginStepProps {
   changeView: (view: ViewState) => void;
 }
 
+const loginSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required").min(6, "Password must be at least 6 characters"),
+});
+
 export function LoginStep({ changeView }: LoginStepProps) {
   const { setAuth } = useAuthStore();
   const navigate = useNavigate();
@@ -20,14 +26,24 @@ export function LoginStep({ changeView }: LoginStepProps) {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<RequestStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      setErrorMessage("Please enter both email and password.");
-      return setStatus("error");
+    
+    // Validate inputs
+    const validationResult = loginSchema.safeParse({ email, password });
+    if (!validationResult.success) {
+      const errors = validationResult.error.flatten().fieldErrors;
+      setFieldErrors({
+        email: errors.email?.[0],
+        password: errors.password?.[0]
+      });
+      setStatus("idle");
+      return;
     }
 
+    setFieldErrors({});
     setStatus("loading");
     setErrorMessage("");
     
@@ -67,9 +83,11 @@ export function LoginStep({ changeView }: LoginStepProps) {
         value={email}
         onChange={(e) => {
           setEmail(e.target.value);
+          if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: undefined });
           if (status === "error") setStatus("idle");
         }}
-        hasError={status === "error"}
+        hasError={!!fieldErrors.email || status === "error"}
+        errorMessage={fieldErrors.email}
         className="mb-[16px]"
       />
 
@@ -81,14 +99,16 @@ export function LoginStep({ changeView }: LoginStepProps) {
         value={password}
         onChange={(e) => {
           setPassword(e.target.value);
+          if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: undefined });
           if (status === "error") setStatus("idle");
         }}
-        hasError={status === "error"}
+        hasError={!!fieldErrors.password || status === "error"}
+        errorMessage={fieldErrors.password}
         className="mb-[10px]"
       />
 
       {status === "error" && (
-        <p className="text-red-500 text-[11px] mb-[10px] text-center">
+        <p className="text-red-500 text-[11px] mb-[10px] text-center animate-in fade-in slide-in-from-top-1">
           {errorMessage}
         </p>
       )}
