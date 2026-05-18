@@ -84,9 +84,7 @@ export const router = createBrowserRouter([
           {
             path: 'manager',
             element: <ProtectedRoute allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]} />,
-            children: [
-              { index: true, element: <ManagerDashboard /> },
-            ],
+            children: [{ index: true, element: <ManagerDashboard /> }],
           },
 
           // ── Staff Routes ──────────────────────────────────
@@ -95,9 +93,7 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute allowedRoles={[UserRole.STAFF, UserRole.MANAGER, UserRole.ADMIN]} />
             ),
-            children: [
-              { index: true, element: <StaffDashboard /> },
-            ],
+            children: [{ index: true, element: <StaffDashboard /> }],
           },
         ],
       },
