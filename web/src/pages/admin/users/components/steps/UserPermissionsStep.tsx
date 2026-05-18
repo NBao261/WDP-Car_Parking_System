@@ -3,6 +3,7 @@ import { PermissionGroupList } from '../../../../../components/ui/PermissionGrou
 
 interface UserPermissionsStepProps {
   customPerms: Set<string>;
+  basePerms: Set<string>;
   onToggle: (permId: string) => void;
   isLoading: boolean;
 }
@@ -12,7 +13,7 @@ interface UserPermissionsStepProps {
  * Animation is handled by the parent UserFormModal — no motion.div here
  * to avoid double-animation and layout conflicts.
  */
-export function UserPermissionsStep({ customPerms, onToggle, isLoading }: UserPermissionsStepProps) {
+export function UserPermissionsStep({ customPerms, basePerms, onToggle, isLoading }: UserPermissionsStepProps) {
   return (
     <div>
       <div className="mb-4">
@@ -30,6 +31,7 @@ export function UserPermissionsStep({ customPerms, onToggle, isLoading }: UserPe
 
       <PermissionGroupList
         selectedPerms={customPerms}
+        basePerms={basePerms}
         onToggle={onToggle}
         isLoading={isLoading}
         allowGroupToggle={false}

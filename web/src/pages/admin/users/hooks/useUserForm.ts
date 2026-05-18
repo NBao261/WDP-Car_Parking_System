@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { UserRole } from '@shared/types';
 import { User as UserType } from '@/types/user.types';
@@ -35,6 +35,7 @@ export function useUserForm(
   });
 
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.STAFF);
+  const [roles, setRoles] = useState<any[]>([]);
   const [customPerms, setCustomPerms] = useState<Set<string>>(new Set());
   const [isLoadingPerms, setIsLoadingPerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,6 +52,17 @@ export function useUserForm(
       setIsLoadingPerms(false);
     }
   }, []);
+
+  // Fetch all roles to dynamically compute base permissions
+  useEffect(() => {
+    roleService.getAllRoles().then((res) => setRoles(res.data || [])).catch(() => {});
+  }, []);
+
+  // Dynamically compute base permissions based on the currently selected role in the form
+  const basePerms = useMemo(() => {
+    const roleObj = roles.find((r) => r.code === selectedRole);
+    return new Set<string>(roleObj?.permissions || []);
+  }, [roles, selectedRole]);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -141,6 +153,7 @@ export function useUserForm(
     selectedRole,
     setSelectedRole,
     customPerms,
+    basePerms,
     handleTogglePerm,
     isLoadingPerms,
     isSubmitting,

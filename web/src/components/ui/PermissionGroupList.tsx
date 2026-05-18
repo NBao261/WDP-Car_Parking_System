@@ -15,6 +15,8 @@ interface PermissionGroupListProps {
   allowGroupToggle?: boolean;
   /** Callback when a whole group is toggled (used with allowGroupToggle). */
   onToggleGroup?: (permIds: string[]) => void;
+  /** Set of permissions inherited from the user's base role (cannot be toggled here) */
+  basePerms?: Set<string>;
 }
 
 /**
@@ -32,6 +34,7 @@ export function PermissionGroupList({
   isLoading = false,
   allowGroupToggle = false,
   onToggleGroup,
+  basePerms = new Set(),
 }: PermissionGroupListProps) {
   if (isLoading) {
     return (
@@ -46,7 +49,7 @@ export function PermissionGroupList({
     <div className="space-y-3">
       {PERMISSION_GROUPS.map((group) => {
         const groupIds = group.permissions.map((p) => p.id);
-        const checkedCount = groupIds.filter((id) => selectedPerms.has(id)).length;
+        const checkedCount = groupIds.filter((id) => selectedPerms.has(id) || basePerms.has(id)).length;
         const allChecked = checkedCount === groupIds.length;
         const someChecked = checkedCount > 0 && !allChecked;
 
@@ -102,21 +105,29 @@ export function PermissionGroupList({
             {/* Permission Items */}
             <div className="divide-y divide-gray-50">
               {group.permissions.map((perm) => {
-                const isChecked = selectedPerms.has(perm.id);
+                const isBase = basePerms.has(perm.id);
+                const isCustom = selectedPerms.has(perm.id);
+                const isChecked = isBase || isCustom;
+                
                 return (
                   <div
                     key={perm.id}
                     role="checkbox"
                     aria-checked={isChecked}
-                    tabIndex={0}
-                    onClick={() => onToggle(perm.id)}
+                    tabIndex={isBase ? -1 : 0}
+                    onClick={() => {
+                      if (!isBase) onToggle(perm.id);
+                    }}
                     onKeyDown={(e) => {
+                      if (isBase) return;
                       if (e.key === ' ' || e.key === 'Enter') {
                         e.preventDefault();
                         onToggle(perm.id);
                       }
                     }}
-                    className="flex items-center justify-between px-4 py-3 hover:bg-gray-50/80 cursor-pointer group transition-colors select-none"
+                    className={`flex items-center justify-between px-4 py-3 transition-colors select-none ${
+                      isBase ? 'bg-gray-50/50 opacity-80 cursor-not-allowed' : 'hover:bg-gray-50/80 cursor-pointer group'
+                    }`}
                   >
                     <div className="flex flex-col flex-1 min-w-0 pr-4">
                       <span className="text-sm font-medium text-gray-700 group-hover:text-[#060606] transition-colors leading-snug">
@@ -130,14 +141,16 @@ export function PermissionGroupList({
                       className={`
                         w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0
                         ${
-                          isChecked
-                            ? 'bg-[#d7ee46] border-[#c4dc32]'
-                            : 'bg-white border-gray-300 group-hover:border-gray-400'
+                          isBase
+                            ? 'bg-gray-200 border-gray-300 text-gray-500'
+                            : isCustom
+                            ? 'bg-[#d7ee46] border-[#c4dc32] text-[#060606]'
+                            : 'bg-white border-gray-300 group-hover:border-gray-400 text-transparent'
                         }
                       `}
                     >
                       {isChecked && (
-                        <Check size={12} className="text-[#060606]" strokeWidth={3} />
+                        <Check size={12} className="currentColor" strokeWidth={3} />
                       )}
                     </div>
                   </div>
