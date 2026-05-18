@@ -9,8 +9,59 @@ paths:
       description: |
         Kiểm tra xe có đủ điều kiện vào bãi hay không:
         (1) Bãi xe active, (2) Trong giờ hoạt động, (3) Loại xe được phục vụ, (4) Còn slot trống
+
+        **Security (FR-18.6):** Staff chỉ được check điều kiện tại bãi mình được phân công. Trả về 403 nếu không thuộc bãi.
       tags: [Sessions]
+      security:
+        - bearerAuth: []
       requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [facilityId, vehicleTypeId]
+              properties:
+                facilityId:
+                  type: string
+                  description: MongoDB ObjectId của bãi xe
+                  example: "683f1a2b3c4d5e6f7a8b9c0d"
+                vehicleTypeId:
+                  type: string
+                  description: MongoDB ObjectId của loại phương tiện
+                  example: "683f1a2b3c4d5e6f7a8b9c01"
+            example:
+              facilityId: "683f1a2b3c4d5e6f7a8b9c0d"
+              vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c01"
+      responses:
+        '200':
+          description: Kết quả kiểm tra điều kiện
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  eligible: true
+                  availableSlotCount: 42
+        '200_not_eligible':
+          description: Không đủ điều kiện
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  eligible: false
+                  reason: "Bãi đầy cho loại xe \"Xe Máy\""
+                  availableSlotCount: 0
+        '403':
+          description: Staff không được phân công tại bãi này
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không được phân công tại bãi xe này"
+
+  /sessions/check-in:
         required: true
         content:
           application/json:
@@ -152,6 +203,13 @@ paths:
                   value:
                     success: false
                     message: "Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này"
+        '403':
+          description: Staff không được phân công tại bãi này
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không được phân công tại bãi xe này"
 
   /sessions/suggest-floor:
     get:
@@ -394,6 +452,13 @@ paths:
               example:
                 success: false
                 message: "Session không tồn tại"
+        '403':
+          description: Staff không được phân công tại bãi của session này
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không được phân công tại bãi xe này"
 
   /sessions/{id}/check-out:
     post:
@@ -449,3 +514,10 @@ paths:
               example:
                 success: false
                 message: "Lượt gửi xe đã kết thúc"
+        '403':
+          description: Staff không được phân công tại bãi của session này
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không được phân công tại bãi xe này"

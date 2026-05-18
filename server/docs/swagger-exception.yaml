@@ -51,11 +51,13 @@ paths:
           name: page
           schema:
             type: integer
+            default: 1
           description: Số trang
         - in: query
           name: limit
           schema:
             type: integer
+            default: 10
           description: Số lượng / trang
         - in: query
           name: status
@@ -76,24 +78,26 @@ paths:
           description: OK
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Exception'
-                  meta:
-                    type: object
-                    properties:
-                      total:
-                        type: integer
-                      page:
-                        type: integer
-                      totalPages:
-                        type: integer
+              example:
+                success: true
+                data:
+                  - _id: "683f1a2b3c4d5e6f7a8b9c20"
+                    sessionId:
+                      _id: "683f1a2b3c4d5e6f7a8b9c10"
+                      code: "PS-20260514-A1B2"
+                      licensePlate: "59A-12345"
+                    type: "lost_card"
+                    description: "Khách làm mất thẻ xe"
+                    staffId:
+                      _id: "683f1a2b3c4d5e6f7a8b9c99"
+                      name: "Staff Nguyen"
+                    surcharge: 50000
+                    status: "new"
+                    createdAt: "2026-05-14T08:00:00.000Z"
+                pagination:
+                  total: 1
+                  page: 1
+                  totalPages: 1
 
     post:
       summary: Tạo ngoại lệ mới (Staff)
@@ -113,25 +117,38 @@ paths:
               properties:
                 sessionId:
                   type: string
+                  example: "683f1a2b3c4d5e6f7a8b9c10"
                 type:
                   type: string
                   enum: [lost_card, wrong_plate, overtime, wrong_zone, unpaid, other]
+                  example: "lost_card"
                 description:
                   type: string
+                  example: "Khách làm mất thẻ xe"
                 surcharge:
                   type: number
+                  example: 50000
+            example:
+              sessionId: "683f1a2b3c4d5e6f7a8b9c10"
+              type: "lost_card"
+              description: "Khách làm mất thẻ xe"
+              surcharge: 50000
       responses:
         '201':
-          description: Created
+          description: Tạo ngoại lệ thành công
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  data:
-                    $ref: '#/components/schemas/Exception'
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c20"
+                  sessionId: "683f1a2b3c4d5e6f7a8b9c10"
+                  type: "lost_card"
+                  description: "Khách làm mất thẻ xe"
+                  staffId: "683f1a2b3c4d5e6f7a8b9c99"
+                  surcharge: 50000
+                  status: "new"
+                  createdAt: "2026-05-14T08:00:00.000Z"
 
   /exceptions/{id}/resolve:
     patch:
@@ -145,6 +162,7 @@ paths:
           required: true
           schema:
             type: string
+            example: "683f1a2b3c4d5e6f7a8b9c20"
       requestBody:
         required: true
         content:
@@ -157,47 +175,59 @@ paths:
                 status:
                   type: string
                   enum: [resolved, rejected]
+                  example: "resolved"
                 managerNote:
                   type: string
+                  example: "Đã thu phụ phí 50,000 VND"
                 newLicensePlate:
                   type: string
                   description: 'Biển số mới (nếu type = wrong_plate)'
+                  example: "59A-99999"
                 newSlotId:
                   type: string
                   description: 'ID slot thực tế (nếu type = wrong_zone)'
+                  example: "683f1a2b3c4d5e6f7a8b9c03"
+            example:
+              status: "resolved"
+              managerNote: "Đã thu phụ phí 50,000 VND"
       responses:
         '200':
-          description: OK
+          description: Xử lý ngoại lệ thành công
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  data:
-                    $ref: '#/components/schemas/Exception'
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c20"
+                  type: "lost_card"
+                  status: "resolved"
+                  managerNote: "Đã thu phụ phí 50,000 VND"
+                  managerId: "683f1a2b3c4d5e6f7a8b9c88"
+                  surcharge: 50000
+        '404':
+          description: Không tìm thấy ngoại lệ
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Exception không tồn tại"
 
   /exceptions/detect-overdue:
     post:
-      summary: Kích hoạt quét tự động xe quá hạn
+      summary: Kích hoạt quét tự động xe quá hạn (Admin/System)
+      description: |
+        Quét toàn bộ session active để phát hiện xe quá hạn (vượt quá 24h).
+        Tự động tạo exception với type = "overtime" cho các session vi phạm.
       tags: [Exceptions]
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          description: Quét hoàn tất
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      count:
-                        type: integer
+              example:
+                success: true
+                message: "Đã quét và phát hiện 3 lượt gửi xe quá hạn."
+                data:
+                  count: 3
