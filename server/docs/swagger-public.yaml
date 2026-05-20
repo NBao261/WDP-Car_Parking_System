@@ -1,0 +1,130 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - Public
+  version: 1.0.0
+paths:
+  /public/facilities:
+    get:
+      summary: Get public facilities list
+      description: |
+        API công khai (không cần auth). Trả về danh sách bãi xe đang active
+        cho khách hàng xem trước khi gửi xe.
+      tags: [Public]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "60b9b0b9e6b3f3b3b4f3b3b4"
+                    name: "Central Hub Parking"
+                    address: "123 Main Street, District 1, HCMC"
+                    openTime: "00:00"
+                    closeTime: "23:59"
+                    status: "active"
+                    totalFloors: 5
+                pagination:
+                  total: 2
+                  page: 1
+                  limit: 10
+                  pages: 1
+
+  /public/facilities/{facilityId}/pricing:
+    get:
+      summary: Get public pricing for a facility
+      description: |
+        API công khai. Trả về bảng giá đang active của bãi xe cụ thể.
+        Khách hàng dùng để xem giá trước khi gửi xe.
+      tags: [Public]
+      parameters:
+        - in: path
+          name: facilityId
+          required: true
+          schema:
+            type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b4"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "64c1d2e3f4a5b6c7d8e9f0a1"
+                    name: "Gói xe máy theo lượt"
+                    vehicleTypeId:
+                      _id: "60b9b0b9e6b3f3b3b4f3b3b6"
+                      name: "Xe Máy"
+                      code: "MOTO"
+                    feeType: "per_turn"
+                    rates:
+                      - label: "Phí gửi"
+                        amount: 5000
+                        unit: "lượt"
+                    overnightFee: 10000
+                  - _id: "64c1d2e3f4a5b6c7d8e9f0a2"
+                    name: "Gói ô tô theo giờ"
+                    vehicleTypeId:
+                      _id: "60b9b0b9e6b3f3b3b4f3b3b7"
+                      name: "Ô tô 4 chỗ"
+                      code: "CAR4"
+                    feeType: "hourly"
+                    rates:
+                      - label: "Giờ đầu"
+                        amount: 10000
+                        unit: "giờ"
+                      - label: "Giờ tiếp theo"
+                        amount: 5000
+                        unit: "giờ"
+                    overnightFee: 30000
+
+  /public/facilities/{facilityId}/available-slots:
+    get:
+      summary: Get available slots count for a facility
+      description: |
+        API công khai. Trả về thông tin slot trống theo từng tầng/loại xe
+        để khách hàng biết bãi xe còn chỗ trống không.
+      tags: [Public]
+      parameters:
+        - in: path
+          name: facilityId
+          required: true
+          schema:
+            type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b4"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - floorId: "64a1b2c3d4e5f6a7b8c9d0e1"
+                    floorName: "Tầng 1 - Ô tô 4 chỗ"
+                    totalSlots: 5
+                    availableSlots: 3
+                    vehicleTypes:
+                      - name: "Ô tô 4 chỗ"
+                        code: "CAR4"
+                  - floorId: "64a1b2c3d4e5f6a7b8c9d0e3"
+                    floorName: "Tầng 3 - Xe máy"
+                    totalSlots: 5
+                    availableSlots: 5
+                    vehicleTypes:
+                      - name: "Xe Máy"
+                        code: "MOTO"

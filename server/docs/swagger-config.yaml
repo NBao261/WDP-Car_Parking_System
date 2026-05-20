@@ -1,0 +1,177 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - System Config
+  version: 1.0.0
+paths:
+  /config:
+    get:
+      summary: Get all system configs
+      description: Lấy toàn bộ cấu hình hệ thống. Chỉ Admin.
+      tags: [Config]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "64d1e2f3a4b5c6d7e8f9a0b1"
+                    key: "MAX_PARKING_HOURS"
+                    value: 24
+                    description: "Số giờ tối đa cho 1 lượt gửi"
+                    updatedBy: "60b9b0b9e6b3f3b3b4f3b3b3"
+                  - _id: "64d1e2f3a4b5c6d7e8f9a0b2"
+                    key: "OVERDUE_THRESHOLD_HOURS"
+                    value: 48
+                    description: "Ngưỡng giờ coi là quá hạn"
+
+  /config/logs:
+    get:
+      summary: Get audit logs
+      description: Xem lịch sử thay đổi hệ thống (audit trail). Chỉ Admin.
+      tags: [Config]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: action
+          schema:
+            type: string
+          description: Lọc theo hành động (VD create, update, delete)
+        - in: query
+          name: entity
+          schema:
+            type: string
+          description: Lọc theo entity (VD User, ParkingSession, SystemConfig)
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "64e1f2a3b4c5d6e7f8a9b0c1"
+                    action: "update"
+                    entity: "SystemConfig"
+                    entityId: "64d1e2f3a4b5c6d7e8f9a0b1"
+                    changes:
+                      key: "MAX_PARKING_HOURS"
+                      oldValue: 12
+                      newValue: 24
+                    performedBy: "60b9b0b9e6b3f3b3b4f3b3b3"
+                    createdAt: "2026-05-20T05:00:00.000Z"
+                pagination:
+                  total: 50
+                  page: 1
+                  limit: 50
+                  pages: 1
+
+  /config/{key}:
+    get:
+      summary: Get config by key
+      description: Lấy 1 cấu hình theo key. Chỉ Admin.
+      tags: [Config]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+            example: "MAX_PARKING_HOURS"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64d1e2f3a4b5c6d7e8f9a0b1"
+                  key: "MAX_PARKING_HOURS"
+                  value: 24
+                  description: "Số giờ tối đa cho 1 lượt gửi"
+                  updatedBy: "60b9b0b9e6b3f3b3b4f3b3b3"
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Config not found"
+    put:
+      summary: Update config value
+      description: Cập nhật giá trị cấu hình. Tự động ghi audit log. Chỉ Admin.
+      tags: [Config]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+            example: "MAX_PARKING_HOURS"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value]
+              properties:
+                value:
+                  description: Giá trị mới (any type)
+                  example: 48
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64d1e2f3a4b5c6d7e8f9a0b1"
+                  key: "MAX_PARKING_HOURS"
+                  value: 48
+                  description: "Số giờ tối đa cho 1 lượt gửi"
+                  updatedBy: "60b9b0b9e6b3f3b3b4f3b3b3"
+
+components:
+  schemas:
+    SystemConfig:
+      type: object
+      properties:
+        _id:
+          type: string
+        key:
+          type: string
+          description: Khóa cấu hình (unique)
+        value:
+          description: Giá trị cấu hình (any type)
+        description:
+          type: string
+        updatedBy:
+          type: string
+          description: ObjectId user cập nhật lần cuối
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
