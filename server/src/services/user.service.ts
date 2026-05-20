@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { User, IUser, UserStatus } from '../models/user.model';
+import { ParkingFacility } from '../models/parkingFacility.model';
 import { AppError } from '../middlewares/error.middleware';
 
 export class UserService {
@@ -24,6 +25,15 @@ export class UserService {
     });
 
     await newUser.save();
+
+    // Two-way sync: thêm user._id vào ParkingFacility.assignedUsers[] cho mỗi facility
+    if (data.assignedFacilities && data.assignedFacilities.length > 0) {
+      await ParkingFacility.updateMany(
+        { _id: { $in: data.assignedFacilities } },
+        { $addToSet: { assignedUsers: newUser._id } }
+      );
+    }
+
     return newUser;
   }
 
@@ -66,11 +76,34 @@ export class UserService {
     if (!user) throw new AppError('User not found', 404);
     if (user.isDeleted) throw new AppError('User has been deleted', 400);
 
+    const oldIds = user.assignedFacilities.map((fId) => fId.toString());
+    const newIds = facilityIds;
+
+    // Xác định facility bị xóa và thêm mới
+    const removedIds = oldIds.filter((fId) => !newIds.includes(fId));
+    const addedIds = newIds.filter((fId) => !oldIds.includes(fId));
+
     const updated = await User.findByIdAndUpdate(
       targetUserId,
       { assignedFacilities: facilityIds },
       { new: true, runValidators: true }
     ).populate('assignedFacilities', 'name address status openTime closeTime');
+
+    // Two-way sync: xóa user._id khỏi ParkingFacility.assignedUsers[] cho các facility bị loại bỏ
+    if (removedIds.length > 0) {
+      await ParkingFacility.updateMany(
+        { _id: { $in: removedIds } },
+        { $pull: { assignedUsers: user._id } }
+      );
+    }
+
+    // Two-way sync: thêm user._id vào ParkingFacility.assignedUsers[] cho các facility mới
+    if (addedIds.length > 0) {
+      await ParkingFacility.updateMany(
+        { _id: { $in: addedIds } },
+        { $addToSet: { assignedUsers: user._id } }
+      );
+    }
 
     return updated;
   }
@@ -103,6 +136,15 @@ export class UserService {
     if (!user) {
       throw new AppError('User not found', 404);
     }
+
+    // Two-way sync: xóa user._id khỏi ParkingFacility.assignedUsers[] cho tất cả facility liên quan
+    if (user.assignedFacilities && user.assignedFacilities.length > 0) {
+      await ParkingFacility.updateMany(
+        { _id: { $in: user.assignedFacilities } },
+        { $pull: { assignedUsers: user._id } }
+      );
+    }
+
     return user;
   }
 

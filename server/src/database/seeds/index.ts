@@ -245,6 +245,18 @@ const seed = async () => {
     });
     logger.info(`✅ 5 floors created`);
 
+    // Two-way sync: cập nhật VehicleType.floors[] cho từng vehicleType
+    logger.info('🔗 Syncing two-way refs: VehicleType.floors...');
+    // car4Type → floor1, floor5
+    await VehicleType.findByIdAndUpdate(car4Type._id, { $addToSet: { floors: { $each: [floor1._id, floor5._id] } } });
+    // car7Type → floor2, floor5
+    await VehicleType.findByIdAndUpdate(car7Type._id, { $addToSet: { floors: { $each: [floor2._id, floor5._id] } } });
+    // motoType → floor3, floor4
+    await VehicleType.findByIdAndUpdate(motoType._id, { $addToSet: { floors: { $each: [floor3._id, floor4._id] } } });
+    // bikeType → floor3, floor4
+    await VehicleType.findByIdAndUpdate(bikeType._id, { $addToSet: { floors: { $each: [floor3._id, floor4._id] } } });
+    logger.info('✅ VehicleType.floors synced');
+
     // ═══════════════════════════════════════════════════
     // 7. Seed Parking Slots (5 slot mỗi tầng = 25 tổng)
     // ═══════════════════════════════════════════════════
@@ -349,6 +361,26 @@ const seed = async () => {
     logger.info(`✅ 5 pricing plans created`);
 
     // ═══════════════════════════════════════════════════
+    // 9. Two-way sync: Assign staff to facilities + sync ParkingFacility.assignedUsers
+    // ═══════════════════════════════════════════════════
+    logger.info('🔗 Assigning staff to facilities and syncing two-way refs...');
+    const staffUser1 = users[2]; // staff@smartparking.com
+    const staffUser2 = users[3]; // staff2@smartparking.com
+
+    // Staff 1 → facility1, Staff 2 → facility1 + facility2
+    await User.findByIdAndUpdate(staffUser1._id, { assignedFacilities: [facility1._id] });
+    await User.findByIdAndUpdate(staffUser2._id, { assignedFacilities: [facility1._id, facility2._id] });
+
+    // Two-way sync: ParkingFacility.assignedUsers[]
+    await ParkingFacility.findByIdAndUpdate(facility1._id, {
+      $addToSet: { assignedUsers: { $each: [staffUser1._id, staffUser2._id] } }
+    });
+    await ParkingFacility.findByIdAndUpdate(facility2._id, {
+      $addToSet: { assignedUsers: staffUser2._id }
+    });
+    logger.info('✅ Staff assigned to facilities (two-way synced)');
+
+    // ═══════════════════════════════════════════════════
     // Done
     // ═══════════════════════════════════════════════════
     logger.info('');
@@ -362,6 +394,7 @@ const seed = async () => {
     logger.info('  • 5 Floors');
     logger.info('  • 25 Slots (5 per floor)');
     logger.info('  • 5 Pricing Plans');
+    logger.info('  • Two-way refs: VehicleType↔Floor, User↔ParkingFacility');
     logger.info('────────────────────────────────────────');
     logger.info(`🔐 Login credentials: any email / ${defaultPassword}`);
     logger.info('');

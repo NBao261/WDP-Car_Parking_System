@@ -1,6 +1,7 @@
 import { ParkingFacility, IParkingFacility } from '../models/parkingFacility.model';
 import { Floor } from '../models/floor.model';
 import { ParkingSlot } from '../models/parkingSlot.model';
+import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 
 export class FacilityService {
@@ -47,6 +48,18 @@ export class FacilityService {
     // Optional: Cascade deactivate floors and slots
     await Floor.updateMany({ facilityId: id }, { status: 'inactive' });
     await ParkingSlot.updateMany({ facilityId: id, status: 'available' }, { status: 'maintenance' });
+
+    // Two-way sync: xóa facility._id khỏi User.assignedFacilities[] cho tất cả user liên quan
+    if (facility.assignedUsers && facility.assignedUsers.length > 0) {
+      await User.updateMany(
+        { _id: { $in: facility.assignedUsers } },
+        { $pull: { assignedFacilities: facility._id } }
+      );
+
+      // Xóa assignedUsers của facility
+      facility.assignedUsers = [];
+      await facility.save();
+    }
 
     return facility;
   }

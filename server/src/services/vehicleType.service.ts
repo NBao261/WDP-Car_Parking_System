@@ -37,6 +37,17 @@ export class VehicleTypeService {
     if (!vehicleType) {
       throw new AppError('Vehicle type not found', 404);
     }
+
+    // Two-way sync: xóa vehicleType._id khỏi Floor.allowedVehicleTypes[] cho tất cả floor liên quan
+    await Floor.updateMany(
+      { allowedVehicleTypes: id },
+      { $pull: { allowedVehicleTypes: vehicleType._id } }
+    );
+
+    // Two-way sync: xóa floors[] của vehicleType
+    vehicleType.floors = [];
+    await vehicleType.save();
+
     return vehicleType;
   }
 
