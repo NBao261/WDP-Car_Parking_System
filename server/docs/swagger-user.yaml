@@ -303,10 +303,11 @@ paths:
 
   /users/{id}/assign-facilities:
     patch:
-      summary: Manager phân công tòa nhà cho Staff (FR-18.6)
+      summary: Phân công tòa nhà cho Manager / Staff (FR-18.6)
       description: |
-        Cho phép Admin hoặc Manager gán danh sách bãi xe vào tài khoản Staff.
-        Sau khi phân công, Staff chỉ có thể check-in/check-out tại các bãi đã được phân công.
+        Cho phép Admin phân công bãi xe cho Manager hoặc Staff. 
+        Đồng thời cho phép Manager phân công bãi xe cho Staff.
+        Sau khi phân công, Manager/Staff chỉ có thể thao tác với các bãi đã được phân công.
         Gửi mảng rỗng `[]` để xóa tất cả phân công.
 
         **Business rules:**
@@ -329,7 +330,7 @@ paths:
           schema:
             type: string
             example: "60b9b0b9e6b3f3b3b4f3b3b5"
-          description: MongoDB ObjectId của Staff
+          description: MongoDB ObjectId của Manager hoặc Staff cần được phân công
       requestBody:
         required: true
         content:
@@ -372,12 +373,12 @@ paths:
                       address: "456 Le Van Sy, District 3, HCMC"
                       status: "active"
         '400':
-          description: Target không phải Staff hoặc facilityIds không hợp lệ
+          description: Target không hợp lệ (ví dụ Manager gán cho Manager khác) hoặc facilityIds không hợp lệ
           content:
             application/json:
               example:
                 success: false
-                message: "Can only assign facilities to Staff users"
+                message: "Admin can only assign to Manager/Staff, Manager can only assign to Staff"
         '403':
           description: Manager cố assign facility ngoài phạm vi
           content:
