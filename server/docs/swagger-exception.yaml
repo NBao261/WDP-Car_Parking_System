@@ -101,6 +101,7 @@ paths:
 
     post:
       summary: Tạo ngoại lệ mới (Staff)
+      description: 'Tạo một ngoại lệ cho lượt gửi xe. Lưu ý: Khi tạo ngoại lệ loại `lost_card` hoặc `wrong_plate`, hệ thống sẽ tự động khoá lượt gửi xe (chuyển sang trạng thái `EXCEPTION`) và chặn checkout cho đến khi Manager giải quyết.'
       tags: [Exceptions]
       security:
         - bearerAuth: []
@@ -153,6 +154,7 @@ paths:
   /exceptions/{id}/resolve:
     patch:
       summary: Duyệt / Xử lý ngoại lệ (Manager)
+      description: 'Manager duyệt và xử lý ngoại lệ. <br> - Với `wrong_plate`, **bắt buộc** truyền `newLicensePlate`. <br> - Với `wrong_zone`, **bắt buộc** truyền `newSlotId`. Slot mới phải là `AVAILABLE` hoặc `LOCKED` và đúng loại xe. Slot cũ của xe sẽ bị khóa (`LOCKED`). <br> - Khi resolve thành công `lost_card` hoặc `wrong_plate`, hệ thống sẽ mở khóa session về lại `ACTIVE` để cho phép checkout.'
       tags: [Exceptions]
       security:
         - bearerAuth: []
@@ -181,11 +183,11 @@ paths:
                   example: "Đã thu phụ phí 50,000 VND"
                 newLicensePlate:
                   type: string
-                  description: 'Biển số mới (nếu type = wrong_plate)'
+                  description: 'Biển số mới (**bắt buộc** nếu type = wrong_plate)'
                   example: "59A-99999"
                 newSlotId:
                   type: string
-                  description: 'ID slot thực tế (nếu type = wrong_zone)'
+                  description: 'ID slot thực tế mới (**bắt buộc** nếu type = wrong_zone). Slot mới này phải đang `AVAILABLE` hoặc `LOCKED`.'
                   example: "683f1a2b3c4d5e6f7a8b9c03"
             example:
               status: "resolved"

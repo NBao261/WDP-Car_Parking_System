@@ -7,6 +7,7 @@ import { Floor } from '../models/floor.model';
 import { PricingPlan } from '../models/pricingPlan.model';
 import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
+import { Exception, ExceptionStatus, ExceptionType } from '../models/exception.model';
 import { generateSessionCode, generateCardCode } from '../utils/codeGenerator';
 import { getIO } from '../config/socket';
 
@@ -463,7 +464,23 @@ export class SessionService {
       overtimeFee = (durationHours - 24) * pricingPlan.overtimeFeePerHour;
     }
 
-    totalFee = baseFee + overnightFee + overtimeFee;
+    // Cộng phí từ exception đã resolved (surcharge + lostCardFee)
+    let exceptionSurcharge = 0;
+    let lostCardFeeTotal = 0;
+
+    const resolvedExceptions = await Exception.find({
+      sessionId: sessionId,
+      status: ExceptionStatus.RESOLVED,
+    });
+
+    for (const exc of resolvedExceptions) {
+      exceptionSurcharge += exc.surcharge || 0;
+      if (exc.type === ExceptionType.LOST_CARD) {
+        lostCardFeeTotal += pricingPlan.lostCardFee || 0;
+      }
+    }
+
+    totalFee = baseFee + overnightFee + overtimeFee + exceptionSurcharge + lostCardFeeTotal;
 
     return {
       totalFee,
@@ -472,6 +489,8 @@ export class SessionService {
         baseFee,
         overnightFee,
         overtimeFee,
+        exceptionSurcharge,
+        lostCardFee: lostCardFeeTotal,
         pricingPlanName: pricingPlan.name,
         daysDiff
       }
@@ -486,6 +505,9 @@ export class SessionService {
     if (!session) throw new AppError('Session không tồn tại', 404);
     if (session.status === SessionStatus.COMPLETED) {
       throw new AppError('Lượt gửi xe đã kết thúc', 400);
+    }
+    if (session.status === SessionStatus.EXCEPTION) {
+      throw new AppError('Lượt gửi xe đang có ngoại lệ chưa được xử lý. Vui lòng giải quyết ngoại lệ trước khi checkout.', 400);
     }
 
     // Validate staff được phân công tại facility của session này (FR-18.6)
