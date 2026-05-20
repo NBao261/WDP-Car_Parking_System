@@ -265,6 +265,9 @@ paths:
         Cho phép Admin hoặc Manager gán danh sách bãi xe vào tài khoản Staff.
         Sau khi phân công, Staff chỉ có thể check-in/check-out tại các bãi đã được phân công.
         Gửi mảng rỗng `[]` để xóa tất cả phân công.
+
+        **Two-way sync:** Khi gán/xóa facility cho user, hệ thống tự động đồng bộ
+        `ParkingFacility.assignedUsers[]` ↔ `User.assignedFacilities[]` cả 2 chiều.
       tags: [Users]
       security:
         - bearerAuth: []
