@@ -5,6 +5,8 @@ import { z } from "zod";
 import { useAuthStore } from "../../../../store";
 import { UserRole } from "../../../../../../shared/types";
 import { authService } from "../../../../services/auth.service";
+import { userService } from "../../../../services/user.service";
+import { AssignedFacility } from "../../../../types/user.types";
 import { AuthInput } from "../AuthInput";
 import { SubmitButton, RequestStatus } from "../SubmitButton";
 import { ViewState } from "../LoginForm";
@@ -19,7 +21,7 @@ const loginSchema = z.object({
 });
 
 export function LoginStep({ changeView }: LoginStepProps) {
-  const { setAuth } = useAuthStore();
+  const { setAuth, setAssignedFacilities } = useAuthStore();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -31,7 +33,6 @@ export function LoginStep({ changeView }: LoginStepProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate inputs
     const validationResult = loginSchema.safeParse({ email, password });
     if (!validationResult.success) {
       const errors = validationResult.error.flatten().fieldErrors;
@@ -49,14 +50,29 @@ export function LoginStep({ changeView }: LoginStepProps) {
     
     try {
       const response = await authService.login(email, password);
+      const { user, tokens } = response.data;
+
+      // 1. Lưu auth vào store (không có assignedFacilities chưa)
+      setAuth(
+        { ...user, assignedFacilities: [] },
+        tokens.accessToken,
+        tokens.refreshToken
+      );
+
+      // 2. Fetch profile đầy đủ để lấy assignedFacilities populated
+      //    Không block navigation nếu thất bại — sẽ có fallback trong useCheckinFlow
+      try {
+        const profileRes = await userService.getMe();
+        const facilities = (profileRes.data.assignedFacilities ?? []) as AssignedFacility[];
+        setAssignedFacilities(facilities);
+      } catch {
+        // Không critical — Staff flow có thể retry sau
+      }
+
       setStatus("success");
-      
-      // Delay navigation slightly for success animation
+
+      // 3. Điều hướng sau animation success
       setTimeout(() => {
-        const { user, tokens } = response.data;
-        setAuth(user, tokens.accessToken, tokens.refreshToken);
-        
-        // Redirect based on role
         if (user.role === UserRole.ADMIN) {
           navigate('/admin');
         } else if (user.role === UserRole.MANAGER) {
@@ -72,6 +88,7 @@ export function LoginStep({ changeView }: LoginStepProps) {
       setErrorMessage(error.message || "Invalid email or password.");
     }
   };
+
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col">

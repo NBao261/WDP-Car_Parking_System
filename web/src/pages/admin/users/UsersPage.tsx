@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { UserPlus, ShieldAlert, Shield, User, Users } from 'lucide-react';
 import { User as UserType } from '../../../types/user.types';
 import { UserFormModal } from './components/UserFormModal';
+import { AdminAssignFacilityModal } from './components/AdminAssignFacilityModal';
 import { UserTable } from './components/UserTable';
 import { UserFilterBar } from './components/UserFilterBar';
 import { Pagination } from '../../../components/ui/Pagination';
@@ -39,6 +40,7 @@ export default function UserListPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserType | undefined>(undefined);
+  const [assignTarget, setAssignTarget] = useState<UserType | null>(null);
 
   const handleEditUser = (user: UserType) => {
     setSelectedUser(user);
@@ -48,6 +50,10 @@ export default function UserListPage() {
   const handleCreateUser = () => {
     setSelectedUser(undefined);
     setIsModalOpen(true);
+  };
+
+  const handleAssignFacility = (user: UserType) => {
+    setAssignTarget(user);
   };
 
   return (
@@ -89,6 +95,7 @@ export default function UserListPage() {
           isLoading={isLoading}
           onEdit={handleEditUser}
           onRefresh={fetchUsers}
+          onAssignFacility={handleAssignFacility}
         />
       </motion.div>
 
@@ -169,6 +176,15 @@ export default function UserListPage() {
         user={selectedUser}
         onSuccess={fetchUsers}
       />
+
+      {/* Admin Quick Assign Facility Modal */}
+      {assignTarget && (
+        <AdminAssignFacilityModal
+          user={assignTarget}
+          onClose={() => setAssignTarget(null)}
+          onSuccess={fetchUsers}
+        />
+      )}
     </motion.div>
   );
 }

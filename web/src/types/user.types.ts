@@ -2,6 +2,20 @@ import { UserRole } from '../../../shared/types';
 
 export type UserStatus = 'active' | 'inactive' | 'locked';
 
+/**
+ * Facility object after population from BE (GET /users/me returns populated data).
+ * The raw assignedFacilities array on User contains ObjectId strings,
+ * but /users/me populates them into full objects.
+ */
+export interface AssignedFacility {
+  _id: string;
+  name: string;
+  address: string;
+  status: 'active' | 'inactive';
+  openTime: string;
+  closeTime: string;
+}
+
 export interface User {
   _id: string;
   name: string;
@@ -9,7 +23,8 @@ export interface User {
   phone: string;
   role: UserRole;
   status: UserStatus;
-  assignedFacilities: string[];
+  /** Raw IDs when fetching user list; populated objects when fetching /users/me */
+  assignedFacilities: AssignedFacility[] | string[];
   customPermissions: string[];
   mustChangePassword?: boolean;
   lastLogin: string | null;
@@ -42,4 +57,8 @@ export interface CreateUserPayload {
 export interface UpdateUserPayload {
   name?: string;
   phone?: string;
+}
+
+export interface AssignFacilitiesPayload {
+  facilityIds: string[];
 }

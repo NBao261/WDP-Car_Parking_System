@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { UserRole } from '@shared/types';
-import { User as UserType } from '@/types/user.types';
+import { User as UserType, AssignedFacility } from '@/types/user.types';
 import { userService } from '@/services/user.service';
 import { roleService } from '@/services/role.service';
 
@@ -12,7 +12,10 @@ interface BasicData {
   password: string;
 }
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
+
+/** Roles được phép phân công facility */
+const ASSIGNABLE_ROLES: string[] = [UserRole.MANAGER, UserRole.STAFF];
 
 /**
  * Manages all state and logic for the multi-step UserFormModal.
@@ -35,6 +38,7 @@ export function useUserForm(
   });
 
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.STAFF);
+  const [selectedFacilityIds, setSelectedFacilityIds] = useState<string[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [customPerms, setCustomPerms] = useState<Set<string>>(new Set());
   const [isLoadingPerms, setIsLoadingPerms] = useState(false);
@@ -73,10 +77,16 @@ export function useUserForm(
         setBasicData({ name: user.name, email: user.email, phone: user.phone, password: '' });
         setSelectedRole(user.role as UserRole);
         loadUserPermissions(user._id);
+        // Pre-fill selected facilities — user.assignedFacilities có thể là string[] hoặc AssignedFacility[]
+        const ids = (user.assignedFacilities ?? []).map((f) =>
+          typeof f === 'string' ? f : (f as AssignedFacility)._id
+        );
+        setSelectedFacilityIds(ids);
       } else {
         setBasicData({ name: '', email: '', phone: '', password: '' });
         setSelectedRole(UserRole.STAFF);
         setCustomPerms(new Set());
+        setSelectedFacilityIds([]);
       }
     }
   }, [isOpen, user, loadUserPermissions]);
@@ -92,6 +102,8 @@ export function useUserForm(
     setIsSubmitting(true);
     setError('');
     try {
+      let savedUserId: string;
+
       if (isEdit && user) {
         await userService.updateUser(user._id, {
           name: basicData.name,
@@ -102,17 +114,26 @@ export function useUserForm(
           roleCode: selectedRole,
           customPermissions: Array.from(customPerms),
         });
+        savedUserId = user._id;
         toast.success(`Cập nhật tài khoản "${basicData.name}" thành công.`);
       } else {
-        await userService.createUser({
+        const createRes = await userService.createUser({
           name: basicData.name,
           email: basicData.email,
           phone: basicData.phone,
           password: basicData.password,
           role: selectedRole,
         });
+        savedUserId = createRes.data._id;
         toast.success(`Tạo tài khoản "${basicData.name}" thành công.`);
       }
+
+      // Phân công tòa nhà (chỉ áp dụng khi TẠO MỚI và admin có chọn tòa nhà).
+      // Khi CHỈNH SỬA: dùng Quick-Action "Phân công Tòa nhà" trực tiếp từ bảng User.
+      if (!isEdit && ASSIGNABLE_ROLES.includes(selectedRole) && savedUserId && selectedFacilityIds.length > 0) {
+        await userService.assignFacilities(savedUserId, selectedFacilityIds);
+      }
+
       onSuccess();
       setTimeout(() => onClose(), 200);
     } catch (err: any) {
@@ -131,7 +152,13 @@ export function useUserForm(
     return true;
   };
 
-  const totalSteps = isEdit ? 3 : 2;
+  /**
+   * Step structure:
+   * - Create: [1] Thông tin → [2] Vai trò → [3*] Phân công Tòa nhà (nếu Manager/Staff, tùy chọn)
+   * - Edit:   [1] Thông tin → [2] Vai trò → [3] Quyền bổ sung
+   *           (Phân công Tòa nhà khi Edit → dùng Quick-Action từ bảng User)
+   */
+  const showFacilityStep = !isEdit && ASSIGNABLE_ROLES.includes(selectedRole);
 
   const steps = isEdit
     ? [
@@ -142,7 +169,10 @@ export function useUserForm(
     : [
         { id: 1, label: 'Thông tin' },
         { id: 2, label: 'Vai trò' },
+        ...(showFacilityStep ? [{ id: 3, label: 'Tòa nhà (Tùy chọn)' }] : []),
       ];
+
+  const totalSteps = steps.length;
 
   return {
     isEdit,
@@ -152,6 +182,8 @@ export function useUserForm(
     setBasicData,
     selectedRole,
     setSelectedRole,
+    selectedFacilityIds,
+    setSelectedFacilityIds,
     customPerms,
     basePerms,
     handleTogglePerm,
@@ -162,5 +194,6 @@ export function useUserForm(
     canGoNext,
     totalSteps,
     steps,
+    showFacilityStep,
   };
 }
