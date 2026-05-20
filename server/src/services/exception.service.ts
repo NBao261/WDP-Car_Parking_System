@@ -43,6 +43,13 @@ export class ExceptionService {
     });
 
     await exception.save();
+
+    // Nếu là LOST_CARD hoặc WRONG_PLATE, khoá session (không cho checkout cho đến khi exception được resolve)
+    if (data.type === ExceptionType.LOST_CARD || data.type === ExceptionType.WRONG_PLATE) {
+      session.status = SessionStatus.EXCEPTION;
+      await session.save();
+    }
+
     return exception;
   }
 
@@ -112,18 +119,26 @@ export class ExceptionService {
       const session = await ParkingSession.findById(exception.sessionId);
       if (!session) throw new AppError('Lượt gửi xe liên quan không tồn tại', 404);
 
-      if (exception.type === ExceptionType.WRONG_PLATE && data.newLicensePlate) {
-        // Cập nhật lại biển số đúng
+      if (exception.type === ExceptionType.WRONG_PLATE) {
+        if (!data.newLicensePlate) {
+          throw new AppError('Vui lòng cung cấp biển số mới khi xử lý ngoại lệ sai biển số', 400);
+        }
+        // Cập nhật lại biển số đúng + mở khoá session
         session.licensePlate = data.newLicensePlate.toUpperCase();
+        session.status = SessionStatus.ACTIVE;
         await session.save();
       } 
-      else if (exception.type === ExceptionType.WRONG_ZONE && data.newSlotId) {
+      else if (exception.type === ExceptionType.WRONG_ZONE) {
+        if (!data.newSlotId) {
+          throw new AppError('Vui lòng chọn slot mới khi xử lý ngoại lệ sai khu vực', 400);
+        }
+
         // Cập nhật lại slot thực tế
         const newSlot = await ParkingSlot.findById(data.newSlotId);
         if (!newSlot) throw new AppError('Slot mới không tồn tại', 404);
         
-        // 1. Chỉ được đổi những slot thực sự còn trống (AVAILABLE)
-        if (newSlot.status !== SlotStatus.AVAILABLE) {
+        // 1. Chỉ được đổi những slot thực sự còn trống (AVAILABLE) hoặc đang khóa tạm (LOCKED)
+        if (newSlot.status !== SlotStatus.AVAILABLE && newSlot.status !== SlotStatus.LOCKED) {
           throw new AppError('Slot mới không còn trống hoặc không khả dụng', 400);
         }
 
@@ -132,9 +147,14 @@ export class ExceptionService {
           throw new AppError('Slot mới phải thuộc cùng một tòa nhà/bãi xe', 400);
         }
 
+        // 3. Phải cùng loại xe (không cho ô tô đổi sang slot xe máy)
+        if (newSlot.vehicleTypeId.toString() !== session.vehicleTypeId.toString()) {
+          throw new AppError('Slot mới phải phù hợp với loại xe của lượt gửi', 400);
+        }
+
         const oldSlotId = session.slotId;
         
-        // Cập nhật session
+        // Cập nhật session (giữ nguyên mọi thông tin, chỉ đổi slot + floor)
         session.slotId = newSlot._id as mongoose.Types.ObjectId;
         session.floorId = newSlot.floorId;
         await session.save();
@@ -144,15 +164,21 @@ export class ExceptionService {
         newSlot.currentSessionId = session._id as mongoose.Types.ObjectId;
         await newSlot.save();
 
-        // Giải phóng slot cũ
+        // Khóa slot cũ → LOCKED (để staff kiểm tra xe lạ đang đậu trái phép)
         if (oldSlotId) {
           const oldSlot = await ParkingSlot.findById(oldSlotId);
           if (oldSlot) {
-            oldSlot.status = SlotStatus.AVAILABLE;
+            oldSlot.status = SlotStatus.LOCKED;
+            oldSlot.maintenanceReason = 'Đang có xe đậu sai chỗ, chờ xác minh';
             oldSlot.currentSessionId = null;
             await oldSlot.save();
           }
         }
+      }
+      else if (exception.type === ExceptionType.LOST_CARD) {
+        // Mở khoá session khi exception lost card được resolve → cho phép checkout
+        session.status = SessionStatus.ACTIVE;
+        await session.save();
       }
     }
 
