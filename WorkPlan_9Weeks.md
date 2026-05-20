@@ -97,6 +97,7 @@
 - [x] API Authentication: Register, Login, Refresh Token (JWT)
 - [x] Middleware Auth: verifyToken, checkRole (RBAC)
 - [x] API User CRUD (FR-18): create, update, lock/unlock, resetPassword, list
+- [x] API Assign Facility (FR-18.6): phân công bãi xe (Two-way Reference, Scope Guard)
 - [x] API Role & Permission (FR-19): getAll roles, assignRole, updatePermissions
 
 #### BE2
