@@ -82,9 +82,9 @@ export class UserService {
     if (!user) throw new AppError('User not found', 404);
     if (user.isDeleted) throw new AppError('User has been deleted', 400);
 
-    // Guard: Only Admin can assign facilities to Managers. Managers can only assign to Staff.
-    if (user.role === 'admin') {
-      throw new AppError('Cannot assign facilities to Admin users', 400);
+    // Guard: chỉ cho phép gán facility cho Manager hoặc Staff
+    if (user.role !== 'manager' && user.role !== 'staff') {
+      throw new AppError('Can only assign facilities to Manager or Staff users', 400);
     }
     if (callerRole === 'manager' && user.role !== 'staff') {
       throw new AppError('Manager can only assign facilities to Staff users', 403);
