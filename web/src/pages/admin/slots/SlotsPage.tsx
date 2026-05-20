@@ -109,14 +109,6 @@ export default function SlotsPage() {
           <h1 className="text-2xl font-bold text-[#060606]">Slot Management</h1>
           <p className="text-gray-500 text-sm">Interactive map and slot management</p>
         </div>
-        {selectedFloor && (
-          <button
-            onClick={() => setBulkOpen(true)}
-            className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-semibold hover:bg-[#c5db3d] transition-colors flex items-center gap-2 shadow-sm hover:shadow-md"
-          >
-            <Plus size={18} /> Create Slots
-          </button>
-        )}
       </div>
 
       {/* Selectors */}
@@ -206,15 +198,6 @@ export default function SlotsPage() {
             </button>
           ))}
         </div>
-
-        {/* Refresh */}
-        <button
-          onClick={loadSlots}
-          className="ml-auto p-2.5 border border-gray-200 rounded-xl text-gray-500 hover:bg-gray-50 transition-colors"
-          title="Refresh"
-        >
-          <RotateCcw size={16} />
-        </button>
       </div>
 
 
@@ -225,9 +208,24 @@ export default function SlotsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div>
               <h2 className="text-lg font-bold text-[#060606]">Slot Mapping Editor (Drag & Drop)</h2>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={loadSlots}
+                className="p-2.5 border border-gray-200 rounded-xl text-gray-500 hover:bg-gray-50 transition-colors flex items-center justify-center"
+                title="Refresh"
+              >
+                <RotateCcw size={16} />
+              </button>
+              <button
+                onClick={() => setBulkOpen(true)}
+                className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-semibold hover:bg-[#c5db3d] transition-colors flex items-center gap-2 shadow-sm hover:shadow-md"
+              >
+                <Plus size={18} /> Create Slots
+              </button>
             </div>
           </div>
           
@@ -304,7 +302,13 @@ export default function SlotsPage() {
           <SlotFormModal
             facilityId={selectedFacility._id}
             floorId={selectedFloor._id}
-            vehicleTypes={vehicleTypes}
+            vehicleTypes={vehicleTypes.filter(vt => 
+              (selectedFloor.allowedVehicleTypes || []).some((allowed: any) => 
+                (typeof allowed === 'string' ? allowed : allowed._id) === vt._id
+              )
+            )}
+            totalSlots={selectedFloor.totalSlots}
+            currentSlotCount={slots.length}
             onClose={() => setBulkOpen(false)}
             onSuccess={loadSlots}
           />

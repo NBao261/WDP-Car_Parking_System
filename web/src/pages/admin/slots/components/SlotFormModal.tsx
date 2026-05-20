@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { X, Loader2, Plus, Copy } from 'lucide-react';
+import { X, Loader2, Plus, Copy, Check } from 'lucide-react';
 import { slotService } from '../../../../services/slot.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 
@@ -9,24 +9,41 @@ interface SlotFormModalProps {
   facilityId: string;
   floorId: string;
   vehicleTypes: VehicleType[];
+  totalSlots: number;
+  currentSlotCount: number;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export function SlotFormModal({ facilityId, floorId, vehicleTypes, onClose, onSuccess }: SlotFormModalProps) {
+export function SlotFormModal({ facilityId, floorId, vehicleTypes, totalSlots, currentSlotCount, onClose, onSuccess }: SlotFormModalProps) {
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
   const [loading, setLoading] = useState(false);
   const [vehicleType, setVehicleType] = useState(vehicleTypes[0]?._id ?? '');
+
+  useEffect(() => {
+    if (vehicleTypes.length > 0 && !vehicleTypes.some(vt => vt._id === vehicleType)) {
+      setVehicleType(vehicleTypes[0]._id);
+    }
+  }, [vehicleTypes, vehicleType]);
 
   // Single
   const [code, setCode] = useState('');
 
   // Bulk
-  const [prefix, setPrefix] = useState('A');
-  const [startNumber, setStartNumber] = useState(1);
-  const [count, setCount] = useState(10);
+  const [prefix, setPrefix] = useState('');
+  const [startNumber, setStartNumber] = useState<number | string>('');
+  const [count, setCount] = useState<number | string>('');
+
+  const remainingSlots = Math.max(0, totalSlots - currentSlotCount);
+  const isFull = remainingSlots === 0;
 
   const handleSubmit = async () => {
+    if (!vehicleType) { toast.error('Select a vehicle type'); return; }
+    if (isFull) { toast.error(`Tầng đã đạt giới hạn ${totalSlots} slots`); return; }
+    if (mode === 'bulk' && Number(count) > remainingSlots) {
+      toast.error(`Chỉ còn ${remainingSlots} slot trống. Vui lòng giảm số lượng.`);
+      return;
+    }
     if (!vehicleType) { toast.error('Select a vehicle type'); return; }
     setLoading(true);
     try {
@@ -35,8 +52,10 @@ export function SlotFormModal({ facilityId, floorId, vehicleTypes, onClose, onSu
         await slotService.create({ facilityId, floorId, vehicleTypeId: vehicleType, code: code.toUpperCase() });
         toast.success(`Slot ${code} created`);
       } else {
-        const res = await slotService.createBulk({ facilityId, floorId, vehicleType, prefix, startNumber, count });
-        toast.success(`Created ${(res as any).data.length ?? count} slots`);
+        const numStart = Number(startNumber) || 1;
+        const numCount = Number(count) || 10;
+        const res = await slotService.createBulk({ facilityId, floorId, vehicleType, prefix: prefix || 'A', startNumber: numStart, count: numCount });
+        toast.success(`Created ${(res as any).data.length ?? numCount} slots`);
       }
       onSuccess();
       onClose();
@@ -60,6 +79,18 @@ export function SlotFormModal({ facilityId, floorId, vehicleTypes, onClose, onSu
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors"><X size={18} /></button>
         </div>
 
+        {/* Capacity indicator */}
+        <div className={`flex items-center justify-between text-xs px-3 py-2 rounded-xl border mb-1 ${
+          isFull
+            ? 'bg-red-50 border-red-200 text-red-600'
+            : remainingSlots <= 5
+            ? 'bg-amber-50 border-amber-200 text-amber-700'
+            : 'bg-gray-50 border-gray-200 text-gray-500'
+        }`}>
+          <span>Sức chứa tầng</span>
+          <span className="font-semibold">{currentSlotCount} / {totalSlots} slots {isFull ? '— Đã đầy' : `(còn ${remainingSlots})`}</span>
+        </div>
+
         {/* Tabs */}
         <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
           <button onClick={() => setMode('single')} className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors ${mode === 'single' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>Single Slot</button>
@@ -67,16 +98,34 @@ export function SlotFormModal({ facilityId, floorId, vehicleTypes, onClose, onSu
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700 block mb-1">Vehicle Type</label>
-          <select
-            value={vehicleType}
-            onChange={(e) => setVehicleType(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] bg-white"
-          >
-            {vehicleTypes.map((vt) => (
-              <option key={vt._id} value={vt._id}>{vt.icon} {vt.name}</option>
-            ))}
-          </select>
+          <label className="text-sm font-semibold text-gray-700 block mb-2">Vehicle Type <span className="text-red-500">*</span></label>
+          {vehicleTypes.length === 0 ? (
+            <p className="text-xs text-red-500 bg-red-50 p-3 rounded-xl border border-red-100">
+              Tầng này chưa được cấu hình loại xe cho phép. Vui lòng cấu hình ở phần chỉnh sửa tầng trước.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2 p-1">
+              {vehicleTypes.map((vt) => {
+                const isSelected = vehicleType === vt._id;
+                return (
+                  <button
+                    key={vt._id}
+                    type="button"
+                    onClick={() => setVehicleType(vt._id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${
+                      isSelected
+                        ? 'bg-[#d7ee46] text-[#060606] border-[#c4dc32] scale-[1.03]'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span>{vt.icon || '🚗'}</span>
+                    {vt.name}
+                    {isSelected && <Check size={13} />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {mode === 'single' ? (
@@ -92,13 +141,14 @@ export function SlotFormModal({ facilityId, floorId, vehicleTypes, onClose, onSu
         ) : (
           <div className="space-y-4">
             <p className="text-xs text-gray-500 bg-gray-50 rounded-xl p-3">
-              Generated pattern: <span className="font-mono font-semibold">{prefix}{startNumber}</span>, <span className="font-mono font-semibold">{prefix}{startNumber + 1}</span>, … (<span className="font-semibold">{count}</span> slots)
+              Generated pattern: <span className="font-mono font-semibold">{prefix || 'A'}{Number(startNumber) || 1}</span>, <span className="font-mono font-semibold">{prefix || 'A'}{(Number(startNumber) || 1) + 1}</span>, … (<span className="font-semibold">{Number(count) || 10}</span> slots)
             </p>
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">Prefix</label>
                 <input
                   value={prefix}
+                  placeholder="A"
                   onChange={(e) => setPrefix(e.target.value.toUpperCase())}
                   maxLength={4}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46]"
@@ -109,21 +159,39 @@ export function SlotFormModal({ facilityId, floorId, vehicleTypes, onClose, onSu
                 <input
                   type="number"
                   min={1}
+                  placeholder="1"
                   value={startNumber}
-                  onChange={(e) => setStartNumber(Number(e.target.value))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setStartNumber(val === '' ? '' : Number(val));
+                  }}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46]"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Count</label>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Count <span className="text-gray-400">(tối đa {remainingSlots})</span></label>
                 <input
                   type="number"
                   min={1}
-                  max={200}
+                  max={remainingSlots}
+                  placeholder="10"
                   value={count}
-                  onChange={(e) => setCount(Number(e.target.value))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46]"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setCount('');
+                    } else {
+                      const num = Number(val);
+                      setCount(num > remainingSlots ? remainingSlots : num);
+                    }
+                  }}
+                  className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] ${
+                    Number(count) > remainingSlots ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                  }`}
                 />
+                {Number(count) > remainingSlots && (
+                  <p className="text-xs text-red-500 mt-1">Vượt quá số slot còn lại ({remainingSlots})</p>
+                )}
               </div>
             </div>
           </div>
@@ -132,9 +200,9 @@ export function SlotFormModal({ facilityId, floorId, vehicleTypes, onClose, onSu
         <div className="flex gap-3 pt-2 mt-4">
           <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">Cancel</button>
           <button
-            disabled={loading}
+            disabled={loading || isFull || (mode === 'bulk' && Number(count) > remainingSlots)}
             onClick={handleSubmit}
-            className="flex-1 py-2.5 bg-[#060606] text-white rounded-xl text-sm font-medium hover:bg-black/80 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex-1 py-2.5 bg-[#060606] text-white rounded-xl text-sm font-medium hover:bg-black/80 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 size={15} className="animate-spin" /> : (mode === 'single' ? <Plus size={15} /> : <Copy size={15} />)}
             {mode === 'single' ? 'Create Slot' : 'Bulk Create'}
