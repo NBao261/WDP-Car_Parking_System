@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { MoreVertical, Search, Edit, Lock, Unlock, KeyRound, Trash2 } from 'lucide-react';
+import { MoreVertical, Search, Edit, Lock, Unlock, KeyRound, Trash2, Building2 } from 'lucide-react';
 import { User as UserType } from '../../../../types/user.types';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
 import { RoleIcon } from '../../../../components/ui/RoleIcon';
@@ -13,9 +13,10 @@ interface UserTableProps {
   isLoading: boolean;
   onEdit: (user: UserType) => void;
   onRefresh: () => void;
+  onAssignFacility: (user: UserType) => void;
 }
 
-export function UserTable({ users, isLoading, onEdit, onRefresh }: UserTableProps) {
+export function UserTable({ users, isLoading, onEdit, onRefresh, onAssignFacility }: UserTableProps) {
   const {
     confirmState,
     isActionLoading,
@@ -38,6 +39,7 @@ export function UserTable({ users, isLoading, onEdit, onRefresh }: UserTableProp
               <tr>
                 <th className="px-6 py-4 rounded-tl-2xl">Thông tin User</th>
                 <th className="px-6 py-4">Vai trò</th>
+                <th className="px-6 py-4 text-center">Phân công</th>
                 <th className="px-6 py-4">Trạng thái</th>
                 <th className="px-6 py-4">Đăng nhập lần cuối</th>
                 <th className="px-6 py-4 text-right rounded-tr-2xl">Thao tác</th>
@@ -46,14 +48,14 @@ export function UserTable({ users, isLoading, onEdit, onRefresh }: UserTableProp
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
                     <div className="w-6 h-6 border-2 border-[#d7ee46] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
                     <div className="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Search size={24} className="text-gray-300" />
                     </div>
@@ -87,6 +89,23 @@ export function UserTable({ users, isLoading, onEdit, onRefresh }: UserTableProp
                         <span className="font-medium capitalize">{user.role}</span>
                       </div>
                     </td>
+                    {/* Phân công Tòa nhà — chỉ áp dụng cho Manager và Staff */}
+                    <td className="px-6 py-4 text-center">
+                      {user.role === 'manager' || user.role === 'staff' ? (
+                        user.assignedFacilities && user.assignedFacilities.length > 0 ? (
+                          <span className="inline-flex items-center gap-1 bg-[#f0f9dc] text-[#5e6b18] font-bold text-xs px-3 py-1 rounded-full border border-[#d7ee46]/60">
+                            <span className="text-sm leading-none">{user.assignedFacilities.length}</span>
+                            <span className="font-normal text-[10px] text-[#7a8a1e]">Tòa Nhà</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center bg-orange-50 text-orange-500 font-semibold text-[10px] px-2.5 py-1 rounded-full border border-orange-100">
+                            Chưa phân công
+                          </span>
+                        )
+                      ) : (
+                        <span className="text-gray-300 text-xs">—</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
                       <StatusBadge status={user.status} />
                     </td>
@@ -114,6 +133,14 @@ export function UserTable({ users, isLoading, onEdit, onRefresh }: UserTableProp
                             >
                               <Edit size={16} /> Chỉnh sửa
                             </DropdownMenu.Item>
+                            {(user.role === 'manager' || user.role === 'staff') && (
+                              <DropdownMenu.Item
+                                onClick={() => onAssignFacility(user)}
+                                className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2 cursor-pointer outline-none focus:bg-blue-50"
+                              >
+                                <Building2 size={16} /> Phân công Tòa nhà
+                              </DropdownMenu.Item>
+                            )}
                             <DropdownMenu.Item
                               onClick={() => handleOpenConfirm('reset', user)}
                               className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer outline-none focus:bg-gray-50"
