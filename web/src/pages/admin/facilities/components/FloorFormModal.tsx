@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { X, Check, Loader2, Search } from 'lucide-react';
+import { X, Check, Loader2, Search, AlertTriangle } from 'lucide-react';
 import { floorService, Floor } from '../../../../services/floor.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 
@@ -12,17 +12,30 @@ interface FloorModalProps {
   facilityId: string;
   vehicleTypes: VehicleType[];
   onSuccess: () => void;
+  currentFloorCount?: number;
+  maxFloors?: number;
 }
 
-export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleTypes, onSuccess }: FloorModalProps) {
+export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleTypes, onSuccess, currentFloorCount, maxFloors }: FloorModalProps) {
   const isEdit = !!floor;
   const [name, setName] = useState('');
-  const [totalSlots, setTotalSlots] = useState(50);
+  const [totalSlots, setTotalSlots] = useState<number | string>('');
   const [selectedVehicleTypes, setSelectedVehicleTypes] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const filteredTypes = vehicleTypes.filter(vt => 
+  const getInputClass = (fieldName: string) => {
+    const base = "w-full px-4 py-2.5 bg-gray-50 rounded-xl text-sm focus:outline-none transition-all disabled:opacity-50";
+    if (errors[fieldName]) {
+      return `${base} border border-red-500 focus:ring-2 focus:ring-red-200 bg-red-50/10`;
+    }
+    return `${base} border border-gray-200 focus:ring-2 focus:ring-[#d7ee46] focus:bg-white`;
+  };
+
+  const isFull = !isEdit && currentFloorCount !== undefined && maxFloors !== undefined && currentFloorCount >= maxFloors;
+
+  const filteredTypes = vehicleTypes.filter(vt =>
     vt.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -37,9 +50,10 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
         setSelectedVehicleTypes(mappedTypes);
       } else {
         setName('');
-        setTotalSlots(50);
+        setTotalSlots('');
         setSelectedVehicleTypes([]);
       }
+      setErrors({});
     }
   }, [isOpen, floor]);
 
@@ -51,25 +65,42 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedVehicleTypes.length === 0) {
-      toast.error('Please select at least one vehicle type');
+
+    const newErrors: Record<string, string> = {};
+    if (!name.trim()) newErrors.name = 'Vui lòng nhập tên tầng';
+    if (!totalSlots) newErrors.totalSlots = 'Vui lòng nhập tổng số slot';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+    setErrors({});
+
+    if (selectedVehicleTypes.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một loại xe');
+      return;
+    }
+
+    if (isFull) {
+      toast.error(`Không thể thêm tầng. Cơ sở này chỉ cho phép tối đa ${maxFloors} tầng.`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (isEdit && floor) {
-        await floorService.update(floor._id, { name, totalSlots });
+        await floorService.update(floor._id, { name, totalSlots: Number(totalSlots) });
         await floorService.assignVehicleTypes(floor._id, selectedVehicleTypes);
-        toast.success('Floor updated successfully');
+        toast.success('Cập nhật tầng thành công');
       } else {
-        const created = await floorService.create({ facilityId, name, totalSlots });
+        const created = await floorService.create({ facilityId, name, totalSlots: Number(totalSlots) });
         await floorService.assignVehicleTypes(created.data._id, selectedVehicleTypes);
-        toast.success('Floor created successfully');
+        toast.success('Tạo tầng thành công');
       }
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.message || 'An error occurred');
+      toast.error(err.message || 'Đã xảy ra lỗi');
     } finally {
       setIsSubmitting(false);
     }
@@ -88,49 +119,69 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
         >
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div>
-              <h2 className="text-lg font-bold text-[#060606]">{isEdit ? 'Edit Floor' : 'Add New Floor'}</h2>
-              <p className="text-xs text-gray-500 mt-0.5">{isEdit ? 'Update info & vehicle types' : 'Create floor and assign vehicle types'}</p>
+              <h2 className="text-lg font-bold text-[#060606]">{isEdit ? 'Sửa tầng' : 'Thêm tầng mới'}</h2>
+              <p className="text-xs text-gray-500 mt-0.5">{isEdit ? 'Cập nhật thông tin & loại xe' : 'Tạo tầng và gán loại xe'}</p>
             </div>
             <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
               <X size={20} />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 space-y-4">
+            {isFull && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-xl flex items-start gap-2 text-sm">
+                <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Đã đạt giới hạn</p>
+                  <p>Cơ sở này chỉ cho phép tối đa {maxFloors} tầng. Bạn không thể thêm tầng mới.</p>
+                </div>
+              </div>
+            )}
+
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Floor Name <span className="text-red-500">*</span></label>
-              <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tên tầng <span className="text-red-500">*</span></label>
+              <input type="text" value={name} disabled={isFull}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (errors.name) setErrors({ ...errors, name: '' });
+                }}
+                className={getInputClass('name')}
                 placeholder="Ex: Floor B1, Floor 1, Zone A..."
               />
+              {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Total Slots <span className="text-red-500">*</span></label>
-              <input type="number" required min={1} max={999} value={totalSlots || ''}
-                onChange={(e) => setTotalSlots(parseInt(e.target.value || '0', 10))}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tổng slot <span className="text-red-500">*</span></label>
+              <input type="number" min={1} max={999} placeholder="Ex: 50" value={totalSlots} disabled={isFull}
+                onChange={(e) => {
+                  setTotalSlots(e.target.value === '' ? '' : parseInt(e.target.value, 10));
+                  if (errors.totalSlots) setErrors({ ...errors, totalSlots: '' });
+                }}
+                className={getInputClass('totalSlots')}
               />
+              {errors.totalSlots && <p className="text-xs text-red-500 mt-1">{errors.totalSlots}</p>}
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-semibold text-gray-700">
-                  Allowed Vehicle Types <span className="text-red-500">*</span>
-                  <span className="text-gray-400 font-normal ml-1">({selectedVehicleTypes.length} selected)</span>
+                  Các loại xe cho phép <span className="text-red-500">*</span>
+                  <span className="text-gray-400 font-normal ml-1">({selectedVehicleTypes.length} đã chọn)</span>
                 </label>
               </div>
-              
+
               <div className="relative mb-3">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search size={14} className="text-gray-400" />
                 </div>
                 <input
                   type="text"
-                  placeholder="Search vehicle types..."
+                  placeholder="Tìm loại xe..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
+                  disabled={isFull}
+                  className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all disabled:opacity-50"
                 />
               </div>
 
@@ -139,11 +190,11 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
                   const isSelected = selectedVehicleTypes.includes(vt._id);
                   return (
                     <button key={vt._id} type="button" onClick={() => toggleVehicle(vt._id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${
-                        isSelected
+                      disabled={isFull}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${isSelected
                           ? 'bg-[#d7ee46] text-[#060606] border-[#c4dc32] scale-[1.03]'
                           : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                      }`}
+                        }`}
                     >
                       <span>{vt.icon || '🚗'}</span>
                       {vt.name}
@@ -152,7 +203,7 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
                   );
                 })}
                 {filteredTypes.length === 0 && (
-                  <p className="text-xs text-gray-400 py-2">No vehicle types found matching "{searchQuery}".</p>
+                  <p className="text-xs text-gray-400 py-2">Không tìm thấy loại xe phù hợp với "{searchQuery}".</p>
                 )}
               </div>
             </div>
@@ -160,12 +211,12 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
             <div className="pt-2 flex justify-end gap-3 border-t border-gray-100">
               <button type="button" onClick={onClose} disabled={isSubmitting}
                 className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-60">
-                Cancel
+                Hủy
               </button>
-              <button type="submit" disabled={isSubmitting}
+              <button type="submit" disabled={isSubmitting || isFull}
                 className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2">
                 {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                {isEdit ? 'Save Changes' : 'Create Floor'}
+                {isEdit ? 'Lưu thay đổi' : 'Tạo tầng'}
               </button>
             </div>
           </form>

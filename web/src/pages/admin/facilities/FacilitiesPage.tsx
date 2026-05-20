@@ -1,250 +1,84 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  MapPin, Plus, BatteryCharging, Wrench, CheckCircle2,
-  Building2, ChevronLeft, MoreVertical, Edit, PowerOff, CheckCircle, Trash2, Loader2
+  MapPin, Plus, Building2, ChevronLeft,
+  Clock, Layers,
 } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
 import { facilityService, Facility } from '../../../services/facility.service';
 import { floorService, Floor } from '../../../services/floor.service';
 import { vehicleTypeService, VehicleType } from '../../../services/vehicleType.service';
 import { FacilityFormModal } from './components/FacilityFormModal';
 import { FloorFormModal } from './components/FloorFormModal';
 import { FacilityCard } from './components/FacilityCard';
-import { SlotGrid } from '../../../components/ui/SlotGrid';
+import { FloorGrid, type FloorSlotStats } from './components/FloorCard';
+import { SlotMappingEditorView } from './components/SlotMappingEditorView';
 import { slotService, type ParkingSlot } from '../../../services/slot.service';
 
 
 
-// ── Floor Card ───────────────────────────────────────────
-interface FloorCardProps {
-  floor: Floor;
-  vehicleTypes: VehicleType[];
-  onEdit: (floor: Floor) => void;
-  onRefresh: () => void;
-  onViewMap: (floor: Floor) => void;
-}
-
-function FloorCard({ floor, vehicleTypes, onEdit, onRefresh, onViewMap }: FloorCardProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const used = 0; // real-time occupancy → future integration
-  const total = floor.totalSlots || 1;
-  const ratio = used / total;
-  const barColor = ratio > 0.9 ? 'bg-red-500' : ratio > 0.7 ? 'bg-orange-500' : 'bg-green-500';
-
-  const vtNames = (floor.allowedVehicleTypes || [])
-    .map((item: any) => {
-      const typeId = typeof item === 'string' ? item : item._id;
-      return vehicleTypes.find((v) => v._id === typeId)?.name || item.name;
-    })
-    .filter(Boolean)
-    .join(', ');
-
-  const isEV =
-    vtNames.toLowerCase().includes('ev') || vtNames.toLowerCase().includes('điện');
-
+// ── Skeleton Card (stable reference, no re-creation on parent render) ────────
+function SkeletonFacilityCard() {
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col h-full hover:shadow-md transition-shadow"
-    >
-      {/* Header */}
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              isEV ? 'bg-[#d7ee46]/20 text-[#7a8c17]' : 'bg-gray-100 text-gray-700'
-            }`}
-          >
-            <MapPin size={24} />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-[#060606] leading-tight">{floor.name}</h3>
-            <p className="text-sm text-gray-500">
-              Floor: {floor.name} • {vtNames || 'No vehicle types assigned'}
-            </p>
-          </div>
+    <div className="bg-white rounded-2xl border border-[#e8eae8] p-5 space-y-3 animate-pulse h-52">
+      <div className="flex justify-between">
+        <div className="space-y-2 flex-1">
+          <div className="h-3.5 bg-gray-100 rounded w-2/3" />
+          <div className="h-3 bg-gray-100 rounded w-1/2" />
         </div>
-        <div className="flex items-center gap-2">
-          {floor.status === 'active' ? (
-            <CheckCircle2 size={20} className="text-green-500 flex-shrink-0" />
-          ) : (
-            <Wrench size={20} className="text-orange-500 flex-shrink-0" />
-          )}
-          
-          <div className="relative">
-            {loading ? (
-              <div className="w-8 h-8 flex items-center justify-center">
-                <Loader2 size={16} className="animate-spin text-gray-400" />
-              </div>
-            ) : (
-              <button
-                onClick={() => setMenuOpen((v) => !v)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <MoreVertical size={18} />
-              </button>
-            )}
-
-            <AnimatePresence>
-              {menuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -8 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -8 }}
-                  transition={{ duration: 0.12 }}
-                  className="absolute right-0 top-9 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-20"
-                >
-                  <div className="fixed inset-0 z-[-1]" onClick={() => setMenuOpen(false)} />
-                  <button
-                    onClick={() => { onEdit(floor); setMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <Edit size={14} /> Edit
-                  </button>
-                  <div className="h-px bg-gray-100 mx-2 my-1" />
-                  {floor.status === 'active' ? (
-                    <button
-                      onClick={async () => {
-                        setMenuOpen(false);
-                        setLoading(true);
-                        try {
-                          await floorService.update(floor._id, { status: 'inactive' });
-                          toast.success(`Deactivated floor ${floor.name}`);
-                          onRefresh();
-                        } catch (err: any) {
-                          toast.error(err.message || 'Failed');
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2"
-                    >
-                      <PowerOff size={14} /> Deactivate
-                    </button>
-                  ) : (
-                    <button
-                      onClick={async () => {
-                        setMenuOpen(false);
-                        setLoading(true);
-                        try {
-                          await floorService.update(floor._id, { status: 'active' });
-                          toast.success(`Activated floor ${floor.name}`);
-                          onRefresh();
-                        } catch (err: any) {
-                          toast.error(err.message || 'Failed');
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
-                    >
-                      <CheckCircle size={14} /> Reactivate
-                    </button>
-                  )}
-                  <div className="h-px bg-gray-100 mx-2 my-1" />
-                  <button
-                    onClick={async () => {
-                      setMenuOpen(false);
-                      if (!window.confirm(`Delete floor "${floor.name}"?`)) return;
-                      setLoading(true);
-                      try {
-                        await floorService.softDelete(floor._id);
-                        toast.success('Floor deleted successfully');
-                        onRefresh();
-                      } catch (err: any) {
-                        toast.error(err.message || 'Deletion failed');
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                  >
-                    <Trash2 size={14} /> Delete Floor
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+        <div className="w-9 h-9 bg-gray-100 rounded-xl" />
       </div>
-
-      {/* Capacity */}
-      <div className="mt-auto">
-        <div className="flex justify-between text-sm mb-2">
-          <span className="text-gray-500">Capacity</span>
-          <span className="font-semibold text-[#060606]">{used} / {total}</span>
-        </div>
-        <div className="bg-gray-100 h-2.5 rounded-full overflow-hidden mb-4">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-            style={{ width: `${Math.max(ratio * 100, 0)}%` }}
-          />
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between border-t border-gray-100 pt-4">
-          {isEV ? (
-            <div className="flex items-center gap-1.5 text-sm text-gray-600">
-              <BatteryCharging size={16} className="text-[#96a827]" />
-              <span>{total} Chargers</span>
-            </div>
-          ) : (
-            <span className="text-sm text-gray-500">Standard</span>
-          )}
-          <button
-            onClick={() => onViewMap(floor)}
-            className="text-sm font-medium text-[#060606] hover:underline"
-          >
-            Floor Map &rarr;
-          </button>
-        </div>
+      <div className="grid grid-cols-3 gap-2">
+        {[0, 1, 2].map(i => <div key={i} className="h-12 bg-gray-100 rounded-xl" />)}
       </div>
-    </motion.div>
-  );
-}
-
-function SlotMappingEditorView({ floor, slots, vtMap, loading }: { floor: Floor | null; slots: ParkingSlot[]; vtMap: Record<string, string>; loading: boolean }) {
-  if (!floor) return null;
-
-  return (
-    <div id="slot-editor" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6">
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-[#060606]">
-            Floor Map: {floor.name}
-          </h2>
-          <p className="text-sm text-gray-500">
-            View current slot layout for this floor. Manage slots in Slot Manager.
-          </p>
-        </div>
-        <Link 
-          to="/admin/slots"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#d7ee46] text-[#060606] font-bold text-sm rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm"
-        >
-          Go to Slot Manager &rarr;
-        </Link>
-      </div>
-      
-      <SlotGrid slots={slots} vehicleTypeMap={vtMap} readOnly isLoading={loading} />
+      <div className="h-1.5 bg-gray-100 rounded-full" />
     </div>
   );
 }
 
-// ── Main Page ───────────────────────────────────────────
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
 export default function FacilitiesPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
+  const [allSlots, setAllSlots] = useState<ParkingSlot[]>([]); 
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Controls the drill-down view: null means show all facilities, otherwise show floors for this facility
   const [viewFacility, setViewFacility] = useState<Facility | null>(null);
+
+  // ── Slot stats derived from real slot data ────────────────────────────────
+  // Map: floorId → { total, occupied, fillRate }
+  const slotStatsByFloor = useMemo<Record<string, FloorSlotStats>>(() => {
+    const map: Record<string, FloorSlotStats> = {};
+    // Group slots by floorId
+    const byFloor: Record<string, ParkingSlot[]> = {};
+    for (const slot of allSlots) {
+      if (!byFloor[slot.floorId]) byFloor[slot.floorId] = [];
+      byFloor[slot.floorId].push(slot);
+    }
+    // Calculate per-floor stats
+    for (const floor of floors) {
+      const floorSlots = byFloor[floor._id] ?? [];
+      const total = floor.totalSlots ?? floorSlots.length;
+      const occupied = floorSlots.filter(s => s.status === 'occupied').length;
+      const fillRate = total > 0 ? Math.round((occupied / total) * 100) : 0;
+      map[floor._id] = { total, occupied, fillRate };
+    }
+    return map;
+  }, [allSlots, floors]);
+
+  // ── Per-facility aggregate (sum over its floors) ──────────────────────────
+  const facilityStats = useMemo<Record<string, { totalSlots: number; occupied: number; fillRate: number }>>(() => {
+    const map: Record<string, { totalSlots: number; occupied: number; fillRate: number }> = {};
+    for (const facility of facilities) {
+      const facilityFloors = floors.filter(f => f.facilityId === facility._id);
+      const totalSlots = facilityFloors.reduce((sum, f) => sum + (slotStatsByFloor[f._id]?.total ?? f.totalSlots ?? 0), 0);
+      const occupied = facilityFloors.reduce((sum, f) => sum + (slotStatsByFloor[f._id]?.occupied ?? 0), 0);
+      const fillRate = totalSlots > 0 ? Math.round((occupied / totalSlots) * 100) : 0;
+      map[facility._id] = { totalSlots, occupied, fillRate };
+    }
+    return map;
+  }, [facilities, floors, slotStatsByFloor]);
 
   const [isFacilityModalOpen, setIsFacilityModalOpen] = useState(false);
   const [editingFacility, setEditingFacility] = useState<Facility | undefined>();
@@ -259,16 +93,35 @@ export default function FacilitiesPage() {
   const fetchAll = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Fetch facilities, floors, vehicleTypes in parallel;
+      // slots are fetched per-floor lazily (or all at once if API supports it)
       const [fRes, flRes, vtRes] = await Promise.all([
         facilityService.getAll({ limit: 100 }),
         floorService.getAll({ limit: 100 }),
         vehicleTypeService.getAll({ limit: 100 }),
       ]);
+      const fetchedFloors = flRes.data;
       setFacilities(fRes.data);
-      setFloors(flRes.data);
+      setFloors(fetchedFloors);
       setVehicleTypes(vtRes.data);
+
+      // Fetch slots for ALL floors in parallel to compute real occupancy
+      if (fetchedFloors.length > 0) {
+        try {
+          const slotResults = await Promise.all(
+            fetchedFloors.map((fl: Floor) => slotService.getByFloor(fl._id).catch(() => ({ data: [] as ParkingSlot[] })))
+          );
+          const slots = slotResults.flatMap((r: { data: ParkingSlot[] }) => r.data);
+          setAllSlots(slots);
+        } catch {
+          // Slot fetch failure is non-critical — stats will show 0
+          setAllSlots([]);
+        }
+      } else {
+        setAllSlots([]);
+      }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to load data');
+      toast.error(err.message || 'Lỗi tải dữ liệu');
     } finally {
       setIsLoading(false);
     }
@@ -276,44 +129,65 @@ export default function FacilitiesPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  // ── Optimistic updaters (no re-fetch needed) ─────────────────────────────
+  const updateFacilityLocal = useCallback((updated: Facility) => {
+    setFacilities(prev => prev.map(f => f._id === updated._id ? updated : f));
+    // Keep viewFacility in sync
+    setViewFacility(prev => prev && prev._id === updated._id ? updated : prev);
+  }, []);
+
+  const removeFacilityLocal = useCallback((id: string) => {
+    setFacilities(prev => prev.filter(f => f._id !== id));
+    setFloors(prev => prev.filter(f => f.facilityId !== id));
+    setViewFacility(prev => prev && prev._id === id ? null : prev);
+  }, []);
+
+  const updateFloorLocal = useCallback((updated: Floor) => {
+    setFloors(prev => prev.map(f => f._id === updated._id ? updated : f));
+  }, []);
+
+  const removeFloorLocal = useCallback((id: string) => {
+    setFloors(prev => prev.filter(f => f._id !== id));
+    setAllSlots(prev => prev.filter(s => s.floorId !== id));
+    setMapFloor(prev => prev && prev._id === id ? null : prev);
+  }, []);
+
   const filteredFloors = viewFacility
     ? floors.filter((f) => f.facilityId === viewFacility._id)
     : [];
 
-  const handleEditFacility = (facility: Facility) => {
-    setEditingFacility(facility);
-    setIsFacilityModalOpen(true);
-  };
-
-  const handleViewFloors = (facility: Facility) => {
+  const handleViewFloors = useCallback((facility: Facility) => {
     setViewFacility(facility);
     setMapFloor(null);
-  };
+  }, []);
 
-  const handleEditMapping = (floor: Floor) => {
+  const handleEditMapping = useCallback((floor: Floor) => {
     setEditingFloor(floor);
     setIsFloorModalOpen(true);
-  };
+  }, []);
 
   const handleViewMap = useCallback(async (floor: Floor) => {
     setMapFloor(floor);
     setMapLoading(true);
     try {
       const res = await slotService.getByFloor(floor._id);
-      setMapSlots(res.data);
+      const sorted = res.data.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }));
+      setMapSlots(sorted);
       setTimeout(() => {
         document.getElementById('slot-editor')?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
-    } catch (err: any) {
-      toast.error('Failed to load slots');
+    } catch {
+      toast.error('Lỗi tải dữ liệu slot');
     } finally {
       setMapLoading(false);
     }
   }, []);
 
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* ── View 1: List of Facilities ── */}
+    <div className="space-y-6 pb-12">
+
+      {/* ══ View 1: Facility List ══ */}
       {!viewFacility && (
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -324,46 +198,54 @@ export default function FacilitiesPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-[#060606]">Facilities</h1>
-              <p className="text-gray-500 text-sm">
-                Manage buildings and parking facilities in the system
+              <h1 className="text-2xl font-bold text-[#060606]">Tòa nhà & Bãi đỗ</h1>
+              <p className="text-gray-400 text-sm">
+                Quản lý các tòa nhà và bãi đỗ xe trong hệ thống
               </p>
             </div>
             <button
               onClick={() => { setEditingFacility(undefined); setIsFacilityModalOpen(true); }}
-              className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-medium hover:bg-[#c4dc32] transition-colors flex items-center gap-2"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90 self-start sm:self-auto"
+              style={{ background: '#d7ee46', color: '#1a1a0a' }}
             >
-              <Plus size={18} />
-              Add New Facility
+              <Plus size={16} /> Thêm cơ sở mới
             </button>
           </div>
 
           {/* Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 animate-pulse h-48">
-                  <div className="h-4 bg-gray-100 rounded w-2/3" />
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
-                </div>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+              {Array.from({ length: 3 }).map((_, i) => <SkeletonFacilityCard key={i} />)}
             </div>
           ) : facilities.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 py-20 text-center">
-              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Building2 size={28} className="text-gray-300" />
+            <div className="bg-white rounded-2xl border border-[#e8eae8] py-20 flex flex-col items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                style={{ background: '#EAF3DE' }}>
+                <Building2 size={28} style={{ color: '#3B6D11' }} />
               </div>
-              <p className="text-gray-500 font-medium">No Facilities found.</p>
+              <div className="text-center">
+                <p className="text-sm font-semibold text-[#060606]">Không tìm thấy cơ sở nào</p>
+                <p className="text-xs text-gray-400 mt-1">Thêm cơ sở đỗ xe đầu tiên để bắt đầu</p>
+              </div>
+              <button
+                onClick={() => { setEditingFacility(undefined); setIsFacilityModalOpen(true); }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
+                style={{ background: '#d7ee46', color: '#1a1a0a' }}
+              >
+                <Plus size={16} /> Thêm cơ sở mới
+              </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
               {facilities.map((facility) => (
                 <FacilityCard
                   key={facility._id}
                   facility={facility}
-                  onEdit={handleEditFacility}
+                  stats={facilityStats[facility._id]}
+                  onEdit={(f) => { setEditingFacility(f); setIsFacilityModalOpen(true); }}
                   onViewFloors={handleViewFloors}
-                  onRefresh={fetchAll}
+                  onUpdate={updateFacilityLocal}
+                  onRemove={removeFacilityLocal}
                 />
               ))}
             </div>
@@ -371,87 +253,93 @@ export default function FacilitiesPage() {
         </motion.div>
       )}
 
-      {/* ── View 2: Floors (Zones) in a specific Facility ── */}
+      {/* ══ View 2: Floor List for a Facility ══ */}
       {viewFacility && (
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 20 }}
-          className="space-y-6"
+          className="space-y-5"
         >
-          {/* Header */}
+          {/* Page header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
+              {/* Back button — ghost green border */}
               <button
                 onClick={() => setViewFacility(null)}
-                className="p-2 bg-white border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition-colors"
+                className="w-7 h-7 rounded-lg border flex items-center justify-center transition-colors hover:bg-[#f0f5e8]"
+                style={{ borderColor: '#b8cc30', color: '#3B6D11' }}
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={15} />
               </button>
               <div>
                 <h1 className="text-2xl font-bold text-[#060606] flex items-center gap-2">
-                  <Building2 size={24} className="text-gray-400" />
+                  <Building2 size={20} style={{ color: '#3B6D11' }} />
                   {viewFacility.name}
                 </h1>
-                <p className="text-gray-500 text-sm">
-                  Manage floors for this facility
+                <p className="text-gray-400 text-sm flex items-center gap-1 mt-0.5">
+                  <MapPin size={11} /> {viewFacility.address}
                 </p>
               </div>
             </div>
             <button
               onClick={() => { setEditingFloor(undefined); setIsFloorModalOpen(true); }}
-              className="bg-[#060606] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-black/80 transition-colors flex items-center gap-2"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90 self-start sm:self-auto"
+              style={{ background: '#d7ee46', color: '#1a1a0a' }}
             >
-              <Plus size={18} />
-              Add Floor
+              <Plus size={16} /> Thêm tầng
             </button>
           </div>
 
-          {/* Floor Cards */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 animate-pulse h-52">
-                  <div className="h-4 bg-gray-100 rounded w-2/3" />
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
-                  <div className="h-2.5 bg-gray-100 rounded-full mt-auto" />
-                </div>
-              ))}
+          {/* Facility summary strip */}
+          <div className="bg-white rounded-2xl border border-[#e8eae8] px-5 py-3.5 flex flex-wrap items-center gap-5">
+            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <Clock size={13} /> {viewFacility.openTime} – {viewFacility.closeTime}
             </div>
-          ) : filteredFloors.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 py-20 text-center">
-              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin size={28} className="text-gray-300" />
-              </div>
-              <p className="text-gray-500 font-medium">No floors found for this facility.</p>
-              <button
-                onClick={() => { setEditingFloor(undefined); setIsFloorModalOpen(true); }}
-                className="mt-4 bg-[#060606] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-black/80 transition-colors inline-flex items-center gap-2"
-              >
-                <Plus size={18} /> Add Floor
-              </button>
+            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <Layers size={13} /> {filteredFloors.length} tầng
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredFloors.map((floor) => (
-                <FloorCard
-                  key={floor._id}
-                  floor={floor}
-                  vehicleTypes={vehicleTypes}
-                  onEdit={handleEditMapping}
-                  onRefresh={fetchAll}
-                  onViewMap={handleViewMap}
-                />
-              ))}
-            </div>
-          )}
+          </div>
 
-          {/* Slot Mapping View */}
+          {/* Floor cards */}
+          <FloorGrid
+            isLoading={isLoading}
+            floors={filteredFloors}
+            vehicleTypes={vehicleTypes}
+            slotStats={slotStatsByFloor}
+            onAddFloor={() => { setEditingFloor(undefined); setIsFloorModalOpen(true); }}
+            onEditFloor={handleEditMapping}
+            onUpdate={updateFloorLocal}
+            onRemove={removeFloorLocal}
+            onRefresh={fetchAll}
+            onViewMap={handleViewMap}
+          />
+
+          {/* Slot map panel */}
           <SlotMappingEditorView
             floor={mapFloor}
             slots={mapSlots}
             vtMap={vtMap}
+            vehicleTypes={vehicleTypes}
             loading={mapLoading}
+            onRefreshSlots={async () => {
+              if (!mapFloor) return;
+              setMapLoading(true);
+              try {
+                const res = await slotService.getByFloor(mapFloor._id);
+                const sorted = res.data.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }));
+                setMapSlots(sorted);
+                // Patch global slot state for this floor only (no fetchAll needed)
+                setAllSlots(prev => [
+                  ...prev.filter(s => s.floorId !== mapFloor._id),
+                  ...sorted,
+                ]);
+              } catch {
+                toast.error('Lỗi tải dữ liệu slot');
+              } finally {
+                setMapLoading(false);
+              }
+            }}
           />
         </motion.div>
       )}
@@ -472,6 +360,8 @@ export default function FacilitiesPage() {
           facilityId={viewFacility._id}
           vehicleTypes={vehicleTypes}
           onSuccess={fetchAll}
+          currentFloorCount={filteredFloors.length}
+          maxFloors={viewFacility.totalFloors}
         />
       )}
     </div>

@@ -36,7 +36,7 @@ app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 2000, // Increased from 100 to 2000 to prevent 429 in development/dashboard navigation
     standardHeaders: true,
     legacyHeaders: false,
   })
