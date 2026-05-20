@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { Maximize, Minimize, Zap } from "lucide-react";
+import { Maximize, Minimize, Zap, AlertTriangle, X } from "lucide-react";
 import CheckinStaffPage from "./checkinStaff/CheckinStaffPage";
 import CheckoutStaffPage from "./checkoutStaff/CheckoutStaffPage";
 
+import ExceptionForm from "./components/ExceptionForm";
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function VehicleCheckPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isExceptionModalOpen, setIsExceptionModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const toggleFullscreen = () => {
@@ -25,20 +29,27 @@ export default function VehicleCheckPage() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
+      // Guard: only fire if user is not typing in a form field
+      const tag = (e.target as HTMLElement).tagName;
+      const isFormField = ["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(tag);
+      if (e.key === "Enter" && !isExceptionModalOpen && !isFormField) {
         e.preventDefault();
         alert("Action Logged: Manual Emergency Barrier Open triggered by Staff at " + new Date().toLocaleTimeString());
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [isExceptionModalOpen]);
+
+  const handleFlagException = () => setIsExceptionModalOpen(true);
+  const handleCloseException = () => setIsExceptionModalOpen(false);
 
   return (
     <div
       ref={containerRef}
-      className={`flex flex-col h-full bg-[#f4f5f4] transition-all duration-300 ${isFullscreen ? 'p-6 fixed inset-0 z-50 overflow-y-auto' : 'pb-10 max-w-[1400px] mx-auto'
-        }`}
+      className={`flex flex-col h-full bg-[#f4f5f4] transition-all duration-300 relative ${
+        isFullscreen ? "p-6 fixed inset-0 z-50 overflow-y-auto" : "pb-10 max-w-[1400px] mx-auto"
+      }`}
     >
       {/* Top Header Controls */}
       <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
@@ -51,7 +62,11 @@ export default function VehicleCheckPage() {
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-[#060606]/60 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
             <Zap className="w-3.5 h-3.5 text-[#d7ee46] fill-[#d7ee46]" />
-            Press <kbd className="font-mono bg-white border border-gray-300 rounded px-1.5 py-0.5 text-[10px] text-[#060606]">Enter</kbd> to quick-open barrier
+            Press{" "}
+            <kbd className="font-mono bg-white border border-gray-300 rounded px-1.5 py-0.5 text-[10px] text-[#060606]">
+              Enter
+            </kbd>{" "}
+            to quick-open barrier
           </div>
           <button
             onClick={toggleFullscreen}
@@ -63,18 +78,41 @@ export default function VehicleCheckPage() {
         </div>
       </div>
 
-      {/* Split Screen Side-by-Side Content */}
+      {/* Split Screen Side-by-Side */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0">
-        {/* Left Side: Check-in */}
         <div className="flex flex-col h-full">
-          <CheckinStaffPage />
+          <CheckinStaffPage onFlagException={handleFlagException} />
         </div>
-
-        {/* Right Side: Check-out */}
         <div className="flex flex-col h-full">
-          <CheckoutStaffPage />
+          <CheckoutStaffPage onFlagException={handleFlagException} />
         </div>
       </div>
+
+      {/* Exception Slide-over Modal */}
+      {isExceptionModalOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex justify-end bg-black/20 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) handleCloseException(); }}
+        >
+          <div className="w-full max-w-md h-full bg-white shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-lg font-bold flex items-center gap-2 text-red-600">
+                <AlertTriangle className="w-5 h-5" /> Ghi nhận Ngoại lệ
+              </h2>
+              <button
+                onClick={handleCloseException}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Đóng"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-6 flex-1 overflow-y-auto">
+              <ExceptionForm onClose={handleCloseException} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
