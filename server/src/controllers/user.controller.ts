@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/user.service';
+import { UserRole } from '../models/user.model';
 
 export class UserController {
   /** GET /users/me — Profile của user hiện tại (mọi role, Staff dùng lấy assigned facilities) */
@@ -46,7 +47,14 @@ export class UserController {
       const { role, status, page = 1, limit = 10 } = req.query;
       const skip = (Number(page) - 1) * Number(limit);
       const filters: any = {};
-      if (role) filters.role = role;
+      
+      // Nếu là Manager gọi API này, CHỈ cho phép lấy danh sách Staff
+      if (req.user?.role === UserRole.MANAGER) {
+        filters.role = UserRole.STAFF;
+      } else if (role) {
+        filters.role = role;
+      }
+
       if (status) filters.status = status;
 
       const { users, total } = await UserService.getAllUsers(filters, skip, Number(limit));
