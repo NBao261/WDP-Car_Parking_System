@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { Search, AlertTriangle, RefreshCw, CheckCircle, DollarSign } from "lucide-react";
 import { apiClient } from "../../../../services/api";
 
-export default function CheckoutStaffPage() {
+export default function CheckoutStaffPage({ onFlagException }: { onFlagException?: () => void }) {
   const [plate, setPlate] = useState("");
   const [session, setSession] = useState<any>(null);
   const [fee, setFee] = useState<any>(null);
+  const [gateOut, setGateOut] = useState("GATE-A");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"search" | "bill" | "success">("search");
   const [error, setError] = useState("");
@@ -13,68 +14,56 @@ export default function CheckoutStaffPage() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!plate.trim()) return;
+
     setLoading(true);
     setError("");
+
     try {
-      let searchRes: any;
-      try {
-        searchRes = await apiClient.get("/sessions/search", {
-          params: { licensePlate: plate }
-        });
-      } catch (err: any) {
-        if (err.response?.status === 404 || err.response?.data?.message) {
-          throw new Error(err.response?.data?.message || "Không tìm thấy lượt gửi xe");
-        }
-        // Offline fallback - check if entered plate matches a valid mock pattern
-        const cleanPlate = plate.toUpperCase().replace(/[\.\s-]/g, "");
-        const validMocks = ["29A12345", "59A12345", "30G12345", "CAR", "MOTO"];
-        if (validMocks.includes(cleanPlate)) {
-          searchRes = {
-            data: {
-              _id: "mock-session-id-123",
-              licensePlate: plate,
-              code: "PS-20260514-MOCK"
-            }
-          };
-        } else {
-          throw new Error("Không tìm thấy lượt gửi xe hoạt động cho biển số này");
-        }
-      }
+      // Tìm kiếm session theo biển số — không có offline mock
+      const searchRes: any = await apiClient.get("/sessions/search", {
+        params: { licensePlate: plate },
+      });
 
       const sess = searchRes.data;
       setSession(sess);
 
-      const feeRes: any = await apiClient.get(`/sessions/${sess._id}/fee`).catch(() => ({
-        data: {
-          totalFee: 15000,
-          details: {
-            pricingPlanName: "Xe Máy - Theo giờ",
-            durationHours: 4
-          }
-        }
-      }));
-      
+      // Tính phí tạm tính
+      const feeRes: any = await apiClient.get(`/sessions/${sess._id}/fee`);
       setFee(feeRes.data);
       setStep("bill");
     } catch (err: any) {
-      setError(err.message || "Không tìm thấy lượt gửi hoạt động");
+      // Xử lý lỗi chi tiết từ BE
+      const msg = err.message || "";
+      if (msg.includes("không tìm thấy") || msg.includes("not found") || err?.status === 404) {
+        setError("Không tìm thấy lượt gửi xe đang hoạt động cho biển số này.");
+      } else if (err?.status === 403 || msg.toLowerCase().includes("forbidden") || msg.toLowerCase().includes("không được phân công")) {
+        setError("Bạn không có quyền xem session này. Kiểm tra lại bãi xe được phân công.");
+      } else {
+        setError(msg || "Lỗi kết nối. Vui lòng thử lại.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleConfirmCheckout = async () => {
+    if (!session?._id) return;
+
     setLoading(true);
     setError("");
+
     try {
-      await apiClient.post(`/sessions/${session._id}/check-out`, {
-        gateOut: "GATE-B"
-      }).catch(() => ({
-        success: true
-      }));
+      await apiClient.post(`/sessions/${session._id}/check-out`, { gateOut });
       setStep("success");
     } catch (err: any) {
-      setError(err.message || "Thanh toán thất bại");
+      const msg = err.message || "";
+      if (msg.includes("đã kết thúc") || msg.includes("completed")) {
+        setError("Lượt gửi xe này đã được check-out trước đó.");
+      } else if (msg.toLowerCase().includes("forbidden") || msg.toLowerCase().includes("không được phân công")) {
+        setError("Bạn không có quyền thực hiện check-out này.");
+      } else {
+        setError(msg || "Thanh toán thất bại. Vui lòng thử lại.");
+      }
     } finally {
       setLoading(false);
     }
@@ -85,6 +74,7 @@ export default function CheckoutStaffPage() {
     setSession(null);
     setFee(null);
     setStep("search");
+    setError("");
   };
 
   return (
@@ -94,12 +84,14 @@ export default function CheckoutStaffPage() {
           <h2 className="text-lg font-bold text-[#060606]">Check-out (Exit)</h2>
         </div>
 
+        {/* Error Banner */}
         {error && (
-          <div className="p-3.5 mb-5 rounded-xl text-xs font-semibold bg-red-50 text-red-700 border border-red-200 font-medium">
+          <div className="p-3.5 mb-5 rounded-xl text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
             {error}
           </div>
         )}
 
+        {/* Step: Search */}
         {step === "search" && (
           <form onSubmit={handleSearch} className="space-y-6">
             <div className="flex flex-col items-center justify-center space-y-2 py-4">
@@ -130,44 +122,67 @@ export default function CheckoutStaffPage() {
           </form>
         )}
 
+        {/* Step: Bill Review */}
         {step === "bill" && session && fee && (
           <div className="space-y-6">
+            {/* Session info */}
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2.5">
               <div className="flex justify-between text-xs">
                 <span className="text-gray-400 font-semibold">PLATE</span>
                 <span className="font-mono font-bold text-gray-800">{session.licensePlate}</span>
               </div>
               <div className="flex justify-between text-xs">
+                <span className="text-gray-400 font-semibold">SESSION</span>
+                <span className="font-mono font-bold text-gray-600">{session.code}</span>
+              </div>
+              {session.floorId && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-400 font-semibold">FLOOR</span>
+                  <span className="font-bold text-gray-800">{session.floorId?.name ?? "—"}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-xs">
                 <span className="text-gray-400 font-semibold">PLAN</span>
                 <span className="font-bold text-gray-800">{fee.details?.pricingPlanName || "Standard Plan"}</span>
               </div>
               <div className="flex justify-between text-xs border-t pt-2 border-gray-200">
                 <span className="text-gray-400 font-semibold">DURATION</span>
-                <span className="font-bold text-gray-800">{fee.details?.durationHours || 0} Hours</span>
+                <span className="font-bold text-gray-800">{fee.details?.durationHours ?? 0} Hours</span>
               </div>
             </div>
 
+            {/* Gate Out: hidden — single gate facility, value sent silently */}
+
+            {/* Total fee */}
             <div className="bg-[#060606] rounded-xl p-5 border border-gray-800 shadow-md">
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-[#d7ee46] uppercase">Amount Due</span>
                 <div className="text-2xl font-bold text-[#d7ee46] flex items-center gap-0.5 font-mono">
                   <DollarSign className="w-5 h-5 shrink-0" />
-                  <span>{fee.totalFee?.toLocaleString()} ₫</span>
+                  <span>{fee.totalFee?.toLocaleString("vi-VN")} ₫</span>
                 </div>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <button onClick={handleReset} className="w-1/3 py-3 border border-gray-300 rounded-xl text-xs font-bold hover:bg-gray-50">
+              <button
+                onClick={handleReset}
+                className="w-1/3 py-3 border border-gray-300 rounded-xl text-xs font-bold hover:bg-gray-50 transition-colors"
+              >
                 Cancel
               </button>
-              <button onClick={handleConfirmCheckout} disabled={loading} className="w-2/3 py-3 bg-[#d7ee46] text-[#060606] font-bold rounded-xl text-xs flex items-center justify-center gap-2">
+              <button
+                onClick={handleConfirmCheckout}
+                disabled={loading}
+                className="w-2/3 py-3 bg-[#d7ee46] text-[#060606] font-bold rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-[#c4dc32] transition-colors disabled:opacity-50"
+              >
                 {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Confirm & Check-out"}
               </button>
             </div>
           </div>
         )}
 
+        {/* Step: Success */}
         {step === "success" && (
           <div className="space-y-6 text-center py-6">
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
@@ -176,19 +191,33 @@ export default function CheckoutStaffPage() {
             <div>
               <h3 className="text-base font-bold">Gate Released!</h3>
               <p className="text-xs text-gray-500 mt-1">Vehicle cleared successfully</p>
+              {fee && (
+                <p className="text-xs text-gray-600 mt-1 font-semibold">
+                  Collected: {fee.totalFee?.toLocaleString("vi-VN")} ₫
+                </p>
+              )}
             </div>
-            <button onClick={handleReset} className="w-full py-4 bg-[#060606] text-white font-bold rounded-2xl hover:bg-gray-800 transition">
+            <button
+              onClick={handleReset}
+              className="w-full py-4 bg-[#060606] text-white font-bold rounded-2xl hover:bg-gray-800 transition"
+            >
               Ready for Next
             </button>
           </div>
         )}
       </div>
 
-      <div className="flex justify-center mt-6">
-        <button onClick={() => alert("Exception flagged")} className="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1.5 transition-colors">
-          <AlertTriangle className="w-4 h-4" /> Flag Exception
-        </button>
-      </div>
+      {/* Flag Exception */}
+      {step !== "success" && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={onFlagException || (() => alert("Exception flagged"))}
+            className="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1.5 transition-colors"
+          >
+            <AlertTriangle className="w-4 h-4" /> Flag Exception
+          </button>
+        </div>
+      )}
     </div>
   );
 }
