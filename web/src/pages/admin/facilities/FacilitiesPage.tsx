@@ -17,13 +17,32 @@ import { slotService, type ParkingSlot } from '../../../services/slot.service';
 
 
 
+// ── Skeleton Card (stable reference, no re-creation on parent render) ────────
+function SkeletonFacilityCard() {
+  return (
+    <div className="bg-white rounded-2xl border border-[#e8eae8] p-5 space-y-3 animate-pulse h-52">
+      <div className="flex justify-between">
+        <div className="space-y-2 flex-1">
+          <div className="h-3.5 bg-gray-100 rounded w-2/3" />
+          <div className="h-3 bg-gray-100 rounded w-1/2" />
+        </div>
+        <div className="w-9 h-9 bg-gray-100 rounded-xl" />
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {[0, 1, 2].map(i => <div key={i} className="h-12 bg-gray-100 rounded-xl" />)}
+      </div>
+      <div className="h-1.5 bg-gray-100 rounded-full" />
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function FacilitiesPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
-  const [allSlots, setAllSlots] = useState<ParkingSlot[]>([]);
+  const [allSlots, setAllSlots] = useState<ParkingSlot[]>([]); 
   const [isLoading, setIsLoading] = useState(true);
   const [viewFacility, setViewFacility] = useState<Facility | null>(null);
 
@@ -110,6 +129,29 @@ export default function FacilitiesPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  // ── Optimistic updaters (no re-fetch needed) ─────────────────────────────
+  const updateFacilityLocal = useCallback((updated: Facility) => {
+    setFacilities(prev => prev.map(f => f._id === updated._id ? updated : f));
+    // Keep viewFacility in sync
+    setViewFacility(prev => prev && prev._id === updated._id ? updated : prev);
+  }, []);
+
+  const removeFacilityLocal = useCallback((id: string) => {
+    setFacilities(prev => prev.filter(f => f._id !== id));
+    setFloors(prev => prev.filter(f => f.facilityId !== id));
+    setViewFacility(prev => prev && prev._id === id ? null : prev);
+  }, []);
+
+  const updateFloorLocal = useCallback((updated: Floor) => {
+    setFloors(prev => prev.map(f => f._id === updated._id ? updated : f));
+  }, []);
+
+  const removeFloorLocal = useCallback((id: string) => {
+    setFloors(prev => prev.filter(f => f._id !== id));
+    setAllSlots(prev => prev.filter(s => s.floorId !== id));
+    setMapFloor(prev => prev && prev._id === id ? null : prev);
+  }, []);
+
   const filteredFloors = viewFacility
     ? floors.filter((f) => f.facilityId === viewFacility._id)
     : [];
@@ -141,22 +183,6 @@ export default function FacilitiesPage() {
     }
   }, []);
 
-  // Skeleton card
-  const SkeletonCard = () => (
-    <div className="bg-white rounded-2xl border border-[#e8eae8] p-5 space-y-3 animate-pulse h-52">
-      <div className="flex justify-between">
-        <div className="space-y-2 flex-1">
-          <div className="h-3.5 bg-gray-100 rounded w-2/3" />
-          <div className="h-3 bg-gray-100 rounded w-1/2" />
-        </div>
-        <div className="w-9 h-9 bg-gray-100 rounded-xl" />
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {[0, 1, 2].map(i => <div key={i} className="h-12 bg-gray-100 rounded-xl" />)}
-      </div>
-      <div className="h-1.5 bg-gray-100 rounded-full" />
-    </div>
-  );
 
   return (
     <div className="space-y-6 pb-12">
@@ -189,7 +215,7 @@ export default function FacilitiesPage() {
           {/* Grid */}
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-              {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
+              {Array.from({ length: 3 }).map((_, i) => <SkeletonFacilityCard key={i} />)}
             </div>
           ) : facilities.length === 0 ? (
             <div className="bg-white rounded-2xl border border-[#e8eae8] py-20 flex flex-col items-center gap-4">
@@ -218,7 +244,8 @@ export default function FacilitiesPage() {
                   stats={facilityStats[facility._id]}
                   onEdit={(f) => { setEditingFacility(f); setIsFacilityModalOpen(true); }}
                   onViewFloors={handleViewFloors}
-                  onRefresh={fetchAll}
+                  onUpdate={updateFacilityLocal}
+                  onRemove={removeFacilityLocal}
                 />
               ))}
             </div>
@@ -282,6 +309,8 @@ export default function FacilitiesPage() {
             slotStats={slotStatsByFloor}
             onAddFloor={() => { setEditingFloor(undefined); setIsFloorModalOpen(true); }}
             onEditFloor={handleEditMapping}
+            onUpdate={updateFloorLocal}
+            onRemove={removeFloorLocal}
             onRefresh={fetchAll}
             onViewMap={handleViewMap}
           />
@@ -294,21 +323,22 @@ export default function FacilitiesPage() {
             vehicleTypes={vehicleTypes}
             loading={mapLoading}
             onRefreshSlots={async () => {
-              if (mapFloor) {
-                // Refresh slot grid
-                setMapLoading(true);
-                try {
-                  const res = await slotService.getByFloor(mapFloor._id);
-                  const sorted = res.data.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }));
-                  setMapSlots(sorted);
-                } catch {
-                  toast.error('Lỗi tải dữ liệu slot');
-                } finally {
-                  setMapLoading(false);
-                }
+              if (!mapFloor) return;
+              setMapLoading(true);
+              try {
+                const res = await slotService.getByFloor(mapFloor._id);
+                const sorted = res.data.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }));
+                setMapSlots(sorted);
+                // Patch global slot state for this floor only (no fetchAll needed)
+                setAllSlots(prev => [
+                  ...prev.filter(s => s.floorId !== mapFloor._id),
+                  ...sorted,
+                ]);
+              } catch {
+                toast.error('Lỗi tải dữ liệu slot');
+              } finally {
+                setMapLoading(false);
               }
-              // Also refresh facility-wide slot occupancy counts
-              fetchAll();
             }}
           />
         </motion.div>
@@ -330,6 +360,8 @@ export default function FacilitiesPage() {
           facilityId={viewFacility._id}
           vehicleTypes={vehicleTypes}
           onSuccess={fetchAll}
+          currentFloorCount={filteredFloors.length}
+          maxFloors={viewFacility.totalFloors}
         />
       )}
     </div>

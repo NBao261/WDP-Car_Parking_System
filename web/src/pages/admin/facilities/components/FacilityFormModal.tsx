@@ -20,10 +20,54 @@ const DEFAULT_FORM: CreateFacilityPayload = {
   description: '',
 };
 
+// ── Reusable field wrapper ───────────────────────────────────────────────────
+function FormField({
+  label,
+  required = false,
+  error,
+  icon: Icon,
+  iconAlign = 'center',
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  error?: string;
+  icon: React.ElementType;
+  iconAlign?: 'center' | 'top';
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className="relative">
+        <Icon
+          size={16}
+          className={`absolute left-3 text-gray-400 ${
+            iconAlign === 'top' ? 'top-3' : 'top-1/2 -translate-y-1/2'
+          }`}
+        />
+        {children}
+      </div>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
+  );
+}
+
 export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: FacilityFormModalProps) {
   const isEdit = !!facility;
   const [form, setForm] = useState(DEFAULT_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const getInputClass = (fieldName: string, extra = '') => {
+    const base = `w-full pl-9 pr-4 py-2.5 bg-gray-50 rounded-xl text-sm focus:outline-none transition-all ${extra}`;
+    if (errors[fieldName]) {
+      return `${base} border border-red-500 focus:ring-2 focus:ring-red-200 bg-red-50/10`;
+    }
+    return `${base} border border-gray-200 focus:ring-2 focus:ring-[#d7ee46] focus:bg-white`;
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -39,11 +83,26 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
       } else {
         setForm(DEFAULT_FORM);
       }
+      setErrors({});
     }
   }, [isOpen, facility]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const newErrors: Record<string, string> = {};
+    if (!form.name.trim()) newErrors.name = 'Vui lòng nhập tên cơ sở';
+    if (!form.address.trim()) newErrors.address = 'Vui lòng nhập địa chỉ';
+    if (!form.totalFloors) newErrors.totalFloors = 'Vui lòng nhập tổng số tầng';
+    if (!form.openTime) newErrors.openTime = 'Vui lòng chọn giờ mở cửa';
+    if (!form.closeTime) newErrors.closeTime = 'Vui lòng chọn giờ đóng cửa';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setErrors({});
+
     setIsSubmitting(true);
     try {
       if (isEdit && facility) {
@@ -100,89 +159,87 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 space-y-4">
             {/* Facility Name */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Tên cơ sở <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
-                  placeholder="Ex: Vincom Center"
-                />
-              </div>
-            </div>
+            <FormField label="Tên cơ sở" required icon={Building2} error={errors.name}>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => {
+                  setForm({ ...form, name: e.target.value });
+                  if (errors.name) setErrors({ ...errors, name: '' });
+                }}
+                className={getInputClass('name')}
+                placeholder="Ex: Vincom Center"
+              />
+            </FormField>
 
             {/* Address */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Địa chỉ <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <MapPin size={16} className="absolute left-3 top-3 text-gray-400" />
-                <textarea
-                  required
-                  rows={2}
-                  value={form.address}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all resize-none"
-                  placeholder="Ex: 72 Le Thanh Ton, District 1, HCMC"
-                />
-              </div>
-            </div>
+            <FormField label="Địa chỉ" required icon={MapPin} iconAlign="top" error={errors.address}>
+              <textarea
+                rows={2}
+                value={form.address}
+                onChange={(e) => {
+                  setForm({ ...form, address: e.target.value });
+                  if (errors.address) setErrors({ ...errors, address: '' });
+                }}
+                className={getInputClass('address', 'resize-none')}
+                placeholder="Ex: 72 Le Thanh Ton, District 1, HCMC"
+              />
+            </FormField>
 
             {/* Total Floors */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Tổng số tầng <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Layers size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="number"
-                  required
-                  min={1}
-                  max={50}
-                  placeholder="Ex: 5"
-                  value={form.totalFloors}
-                  onChange={(e) => setForm({ ...form, totalFloors: e.target.value === '' ? ('' as any) : parseInt(e.target.value, 10) })}
-                  className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
-                />
-              </div>
-            </div>
+            <FormField label="Tổng số tầng" required icon={Layers} error={errors.totalFloors}>
+              <input
+                type="number"
+                min={1}
+                max={50}
+                placeholder="Ex: 5"
+                value={form.totalFloors}
+                onChange={(e) => {
+                  setForm({ ...form, totalFloors: e.target.value === '' ? ('' as any) : parseInt(e.target.value, 10) });
+                  if (errors.totalFloors) setErrors({ ...errors, totalFloors: '' });
+                }}
+                className={getInputClass('totalFloors')}
+              />
+            </FormField>
 
             {/* Operating Hours */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 Giờ hoạt động <span className="text-red-500">*</span>
               </label>
-              <div className="flex gap-3 items-center">
-                <div className="relative flex-1">
-                  <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="time"
-                    required
-                    value={form.openTime}
-                    onChange={(e) => setForm({ ...form, openTime: e.target.value })}
-                    className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
-                  />
+              <div className="flex gap-3 items-start">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="time"
+                      value={form.openTime}
+                      onChange={(e) => {
+                        setForm({ ...form, openTime: e.target.value });
+                        if (errors.openTime) setErrors({ ...errors, openTime: '' });
+                      }}
+                      className={getInputClass('openTime')}
+                    />
+                  </div>
+                  {errors.openTime && <p className="text-xs text-red-500 mt-1">{errors.openTime}</p>}
                 </div>
-                <span className="text-gray-400 font-medium text-sm">đến</span>
-                <div className="relative flex-1">
-                  <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="time"
-                    required
-                    value={form.closeTime}
-                    onChange={(e) => setForm({ ...form, closeTime: e.target.value })}
-                    className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
-                  />
+                <span className="text-gray-400 font-medium text-sm mt-2.5">đến</span>
+                <div className="flex-1">
+                  <div className="relative">
+                    <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="time"
+                      value={form.closeTime}
+                      onChange={(e) => {
+                        setForm({ ...form, closeTime: e.target.value });
+                        if (errors.closeTime) setErrors({ ...errors, closeTime: '' });
+                      }}
+                      className={getInputClass('closeTime')}
+                    />
+                  </div>
+                  {errors.closeTime && <p className="text-xs text-red-500 mt-1">{errors.closeTime}</p>}
                 </div>
               </div>
             </div>

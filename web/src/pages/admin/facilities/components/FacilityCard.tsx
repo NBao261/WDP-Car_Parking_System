@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   Building2, MapPin, Clock, Layers, MoreVertical,
-  Edit, PowerOff, CheckCircle, Loader2,
+  Edit, PowerOff, CheckCircle, Loader2, Trash2,
 } from 'lucide-react';
 import { Facility, facilityService } from '../../../../services/facility.service';
+import { ConfirmModal } from '../../../../components/ConfirmModal';
 
 interface FacilityStats {
   totalSlots: number;
@@ -15,10 +16,11 @@ interface FacilityStats {
 
 interface FacilityCardProps {
   facility: Facility;
-  stats?: FacilityStats;           // real aggregated slot data from parent
+  stats?: FacilityStats;
   onEdit: (f: Facility) => void;
   onViewFloors: (f: Facility) => void;
-  onRefresh: () => void;
+  onUpdate: (updated: Facility) => void;
+  onRemove: (id: string) => void;
 }
 
 function getBarColor(pct: number) {
@@ -27,37 +29,57 @@ function getBarColor(pct: number) {
   return '#3B6D11';
 }
 
-export function FacilityCard({ facility, stats, onEdit, onViewFloors, onRefresh }: FacilityCardProps) {
+export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, onRemove }: FacilityCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'deactivate' | 'delete'>('deactivate');
   const isActive = facility.status === 'active';
 
-  // Use real stats from parent (computed from actual slot data)
   const totalSlots = stats?.totalSlots ?? 0;
-  const inUse      = stats?.occupied   ?? 0;
-  const fillRate   = stats?.fillRate   ?? 0;
-  const barColor      = getBarColor(fillRate);
+  const inUse = stats?.occupied ?? 0;
+  const fillRate = stats?.fillRate ?? 0;
+  const barColor = getBarColor(fillRate);
   const fillTextColor = fillRate > 85 ? '#E24B4A' : fillRate >= 60 ? '#BA7517' : '#3B6D11';
 
-  const handleDeactivate = async () => {
-    setMenuOpen(false);
-    if (!window.confirm(`Vô hiệu hóa cơ sở "${facility.name}"?\nCác slot trống sẽ được đặt thành bảo trì.`)) return;
+  const handleConfirm = async () => {
     setLoading(true);
     try {
-      await facilityService.deactivate(facility._id);
-      toast.success(`Đã vô hiệu hóa "${facility.name}"`);
-      onRefresh();
+      if (confirmAction === 'deactivate') {
+        const res = await facilityService.deactivate(facility._id);
+        toast.success(`Đã vô hiệu hóa "${facility.name}"`);
+        onUpdate(res.data);
+      } else {
+        await facilityService.deleteFacility(facility._id);
+        toast.success(`Đã xóa cơ sở "${facility.name}"`);
+        onRemove(facility._id);
+      }
     } catch (err: any) { toast.error(err.message || 'Thao tác thất bại'); }
-    finally { setLoading(false); }
+    finally { 
+      setLoading(false); 
+      setConfirmOpen(false);
+    }
+  };
+
+  const handleDeactivate = () => {
+    setMenuOpen(false);
+    setConfirmAction('deactivate');
+    setConfirmOpen(true);
+  };
+
+  const handleDelete = () => {
+    setMenuOpen(false);
+    setConfirmAction('delete');
+    setConfirmOpen(true);
   };
 
   const handleReactivate = async () => {
     setMenuOpen(false);
     setLoading(true);
     try {
-      await facilityService.update(facility._id, { status: 'active' });
+      const res = await facilityService.update(facility._id, { status: 'active' });
       toast.success(`Đã kích hoạt lại "${facility.name}"`);
-      onRefresh();
+      onUpdate(res.data);
     } catch (err: any) { toast.error(err.message || 'Thao tác thất bại'); }
     finally { setLoading(false); }
   };
@@ -68,7 +90,7 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onRefresh 
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
-      onClick={() => onViewFloors(facility)}
+      onClick={() => { if (!confirmOpen) onViewFloors(facility); }}
       style={{ borderTop: `3px solid ${isActive ? '#3B6D11' : '#9ca3af'}` }}
       className={`cursor-pointer bg-white rounded-2xl border border-[#e8eae8] shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden ${!isActive ? 'opacity-60' : ''}`}
     >
@@ -137,7 +159,7 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onRefresh 
                   <div className="h-px bg-gray-100 mx-2 my-1" />
                   {isActive ? (
                     <button onClick={handleDeactivate}
-                      className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                      className="w-full text-left px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2">
                       <PowerOff size={14} /> Vô hiệu hóa
                     </button>
                   ) : (
@@ -147,6 +169,13 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onRefresh 
                       <CheckCircle size={14} /> Kích hoạt lại
                     </button>
                   )}
+                  <div className="h-px bg-gray-100 mx-2 my-1" />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    <Trash2 size={14} /> Xóa cơ sở
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -208,9 +237,24 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onRefresh 
           className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors hover:bg-[#f0f5e8]"
           style={{ borderColor: '#b8cc30', color: '#3B6D11' }}
         >
-          Xem các tầng →
+          <Layers size={11} /> Xem các tầng →
         </button>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleConfirm}
+        title={confirmAction === 'delete' ? 'Xóa cơ sở' : 'Vô hiệu hóa cơ sở'}
+        message={
+          confirmAction === 'delete'
+            ? `Bạn có chắc muốn xóa cơ sở "${facility.name}"? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn và không thể khôi phục.`
+            : `Bạn có chắc muốn vô hiệu hóa cơ sở "${facility.name}"? Các slot trống sẽ được đặt thành bảo trì.`
+        }
+        confirmText={confirmAction === 'delete' ? 'Xóa vĩnh viễn' : 'Vô hiệu hóa'}
+        variant="danger"
+        isLoading={loading}
+      />
     </motion.div>
   );
 }

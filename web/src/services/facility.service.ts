@@ -70,6 +70,10 @@ export const facilityService = {
   },
 
   deactivate: async (id: string): Promise<{ success: boolean; data: Facility }> => {
+    return apiClient.patch(`/facilities/${id}`, { status: 'inactive' });
+  },
+
+  deleteFacility: async (id: string): Promise<{ success: boolean }> => {
     return apiClient.delete(`/facilities/${id}`);
   },
 };

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { floorService, Floor } from '../../../../services/floor.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
+import { ConfirmModal } from '../../../../components/ConfirmModal';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -21,7 +22,8 @@ interface FloorCardProps {
   vehicleTypes: VehicleType[];
   slotStats?: FloorSlotStats;
   onEdit: (floor: Floor) => void;
-  onRefresh: () => void;
+  onUpdate: (updated: Floor) => void;
+  onRemove: (id: string) => void;
   onViewMap: (floor: Floor) => void;
 }
 
@@ -32,7 +34,9 @@ interface FloorGridProps {
   slotStats: Record<string, FloorSlotStats>;
   onAddFloor: () => void;
   onEditFloor: (floor: Floor) => void;
-  onRefresh: () => void;
+  onUpdate: (updated: Floor) => void;
+  onRemove: (id: string) => void;
+  onRefresh: () => void;   // only needed for create/edit
   onViewMap: (floor: Floor) => void;
 }
 
@@ -78,11 +82,48 @@ export const FloorCard = React.memo(function FloorCard({
   vehicleTypes,
   slotStats,
   onEdit,
-  onRefresh,
+  onUpdate,
+  onRemove,
   onViewMap,
 }: FloorCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'delete' | 'deactivate' | null>(null);
+
+  const handleConfirm = async () => {
+    if (!confirmAction) return;
+    setLoading(true);
+    try {
+      if (confirmAction === 'delete') {
+        await floorService.softDelete(floor._id);
+        toast.success('Xóa tầng thành công');
+        onRemove(floor._id);
+      } else {
+        const res = await floorService.update(floor._id, { status: 'inactive' });
+        toast.success(`Đã vô hiệu hóa tầng ${floor.name}`);
+        onUpdate(res.data);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Thao tác thất bại');
+    } finally {
+      setLoading(false);
+      setConfirmAction(null);
+    }
+  };
+
+  const handleReactivate = async () => {
+    setMenuOpen(false);
+    setLoading(true);
+    try {
+      const res = await floorService.update(floor._id, { status: 'active' });
+      toast.success(`Đã kích hoạt tầng ${floor.name}`);
+      onUpdate(res.data);
+    } catch (err: any) {
+      toast.error(err.message || 'Kích hoạt thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const total = slotStats?.total ?? floor.totalSlots ?? 0;
   const occupied = slotStats?.occupied ?? 0;
@@ -117,13 +158,19 @@ export const FloorCard = React.memo(function FloorCard({
           <h3 className="text-base font-bold text-[#060606] leading-tight truncate mb-2" title={floor.name}>
             {floor.name}
           </h3>
-          <div className="flex flex-wrap gap-1.5">
+          <div 
+            className="flex flex-nowrap gap-1.5 overflow-x-auto pb-1 -mb-1"
+            style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+          >
+            <style>{`
+              .vehicle-pills::-webkit-scrollbar { display: none; }
+            `}</style>
             {vtNames.length === 0 ? (
-              <span className="text-xs text-gray-400 italic">No vehicle types</span>
+              <span className="text-xs text-gray-400 italic">Không có loại xe</span>
             ) : vtNames.map(name => (
               <span
                 key={name}
-                className="px-2 py-0.5 rounded-full text-[11px] font-medium"
+                className="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium"
                 style={{ background: '#EAF3DE', color: '#27500A' }}
               >
                 {name}
@@ -136,11 +183,11 @@ export const FloorCard = React.memo(function FloorCard({
           {isActive ? (
             <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium"
               style={{ background: '#EAF3DE', color: '#27500A' }}>
-              Active
+              Hoạt động
             </span>
           ) : (
             <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-[#BA7517] flex items-center gap-1">
-              <AlertTriangle size={10} /> Maintenance
+              <AlertTriangle size={10} /> Bảo trì
             </span>
           )}
 
@@ -170,52 +217,32 @@ export const FloorCard = React.memo(function FloorCard({
                   <div className="fixed inset-0 z-[-1]" onClick={() => setMenuOpen(false)} />
                   {isActive ? (
                     <button
-                      onClick={async () => {
-                        setMenuOpen(false); setLoading(true);
-                        try {
-                          await floorService.update(floor._id, { status: 'inactive' });
-                          toast.success(`Deactivated floor ${floor.name}`);
-                          onRefresh();
-                        } catch (err: any) { toast.error(err.message || 'Failed'); }
-                        finally { setLoading(false); }
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setConfirmAction('deactivate');
                       }}
                       className="w-full text-left px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2"
                     >
-                      <PowerOff size={13} /> Deactivate
+                      <PowerOff size={13} /> Vô hiệu hóa
                     </button>
                   ) : (
                     <button
-                      onClick={async () => {
-                        setMenuOpen(false); setLoading(true);
-                        try {
-                          await floorService.update(floor._id, { status: 'active' });
-                          toast.success(`Activated floor ${floor.name}`);
-                          onRefresh();
-                        } catch (err: any) { toast.error(err.message || 'Failed'); }
-                        finally { setLoading(false); }
-                      }}
+                      onClick={handleReactivate}
                       className="w-full text-left px-4 py-2 text-sm flex items-center gap-2"
                       style={{ color: '#27500A' }}
                     >
-                      <CheckCircle size={13} /> Reactivate
+                      <CheckCircle size={13} /> Kích hoạt lại
                     </button>
                   )}
                   <div className="h-px bg-gray-100 mx-2 my-1" />
                   <button
-                    onClick={async () => {
+                    onClick={() => {
                       setMenuOpen(false);
-                      if (!window.confirm(`Delete floor "${floor.name}"?`)) return;
-                      setLoading(true);
-                      try {
-                        await floorService.softDelete(floor._id);
-                        toast.success('Floor deleted successfully');
-                        onRefresh();
-                      } catch (err: any) { toast.error(err.message || 'Deletion failed'); }
-                      finally { setLoading(false); }
+                      setConfirmAction('delete');
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                   >
-                    <Trash2 size={13} /> Delete Floor
+                    <Trash2 size={13} /> Xóa tầng
                   </button>
                 </motion.div>
               )}
@@ -229,11 +256,11 @@ export const FloorCard = React.memo(function FloorCard({
         <div className="grid grid-cols-2 gap-2 text-center">
           <div className="bg-[#f7f8f7] rounded-xl py-2.5">
             <div className="text-sm font-semibold text-[#060606] tabular-nums">{total}</div>
-            <div className="text-[10px] text-gray-400 mt-0.5">Capacity</div>
+            <div className="text-[10px] text-gray-400 mt-0.5">Sức chứa</div>
           </div>
           <div className="bg-[#f7f8f7] rounded-xl py-2.5">
             <div className="text-sm font-semibold text-[#060606] tabular-nums">{occupied}</div>
-            <div className="text-[10px] text-gray-400 mt-0.5">In use</div>
+            <div className="text-[10px] text-gray-400 mt-0.5">Đang dùng</div>
           </div>
         </div>
       </div>
@@ -241,7 +268,7 @@ export const FloorCard = React.memo(function FloorCard({
       {/* Occupancy bar */}
       <div className="px-5 pb-4">
         <div className="flex items-center justify-between text-xs mb-1.5">
-          <span className="text-gray-400">Occupancy</span>
+          <span className="text-gray-400">Công suất</span>
           <span className="tabular-nums" style={{ color: fillColor }}>{fillRate}%</span>
         </div>
         <div className="bg-[#eff0ef] h-1.5 rounded-full overflow-hidden">
@@ -256,22 +283,37 @@ export const FloorCard = React.memo(function FloorCard({
       </div>
 
       {/* Footer */}
-      <div className="px-5 py-3 border-t border-[#e8eae8] flex items-center justify-between">
+      <div className="px-5 py-3 border-t border-[#e8eae8] flex items-center gap-2">
         <button
           onClick={() => onEdit(floor)}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors hover:bg-[#f0f5e8]"
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border transition-colors hover:bg-[#f0f5e8]"
           style={{ borderColor: '#b8cc30', color: '#3B6D11' }}
         >
-          <Pencil size={11} /> Edit
+          <Pencil size={13} /> Sửa
         </button>
         <button
           onClick={() => onViewMap(floor)}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors hover:bg-[#f0f5e8]"
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border transition-colors hover:bg-[#f0f5e8]"
           style={{ borderColor: '#b8cc30', color: '#3B6D11' }}
         >
-          <Map size={11} /> Floor Map
+          <Map size={13} /> Sơ đồ slot
         </button>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmAction !== null}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={handleConfirm}
+        title={confirmAction === 'delete' ? 'Xóa tầng' : 'Vô hiệu hóa tầng'}
+        message={
+          confirmAction === 'delete'
+            ? `Bạn có chắc muốn xóa tầng "${floor.name}"? Thao tác này không thể hoàn tác.`
+            : `Bạn có chắc muốn vô hiệu hóa tầng "${floor.name}"? Các slot trong tầng sẽ không khả dụng.`
+        }
+        confirmText={confirmAction === 'delete' ? 'Xóa' : 'Vô hiệu hóa'}
+        variant="danger"
+        isLoading={loading}
+      />
     </motion.div>
   );
 });
@@ -285,7 +327,8 @@ export function FloorGrid({
   slotStats,
   onAddFloor,
   onEditFloor,
-  onRefresh,
+  onUpdate,
+  onRemove,
   onViewMap,
 }: FloorGridProps) {
   if (isLoading) {
@@ -308,15 +351,15 @@ export function FloorGrid({
           <Layers size={24} style={{ color: '#3B6D11' }} />
         </div>
         <div className="text-center">
-          <p className="text-sm font-semibold text-[#060606]">No floors found for this facility</p>
-          <p className="text-xs text-gray-400 mt-1">Add your first floor to start managing parking slots</p>
+          <p className="text-sm font-semibold text-[#060606]">Không có tầng nào trong cơ sở này</p>
+          <p className="text-xs text-gray-400 mt-1">Thêm tầng đầu tiên để bắt đầu quản lý chỗ đỗ xe</p>
         </div>
         <button
           onClick={onAddFloor}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
           style={{ background: '#d7ee46', color: '#1a1a0a' }}
         >
-          <Plus size={16} /> Add Floor
+          <Plus size={16} /> Thêm tầng
         </button>
       </div>
     );
@@ -331,7 +374,8 @@ export function FloorGrid({
           vehicleTypes={vehicleTypes}
           slotStats={slotStats[floor._id]}
           onEdit={onEditFloor}
-          onRefresh={onRefresh}
+          onUpdate={onUpdate}
+          onRemove={onRemove}
           onViewMap={onViewMap}
         />
       ))}
