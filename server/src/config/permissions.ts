@@ -10,6 +10,7 @@ export const PERMISSIONS = {
   FACILITY_UPDATE: 'facility:update',
   FACILITY_DELETE: 'facility:delete',
   FLOOR_MANAGE: 'floor:manage',
+  VEHICLE_TYPE_READ: 'vehicle_type:read',
   VEHICLE_TYPE_MANAGE: 'vehicle_type:manage',
 
   // ── 3.2 Module Quản lý Slot đỗ xe ──
@@ -74,6 +75,7 @@ export const DEFAULT_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.FACILITY_UPDATE,
     PERMISSIONS.FACILITY_DELETE,
     PERMISSIONS.FLOOR_MANAGE,
+    PERMISSIONS.VEHICLE_TYPE_READ,
     PERMISSIONS.VEHICLE_TYPE_MANAGE,
     // Slot
     PERMISSIONS.SLOT_READ,
@@ -115,6 +117,7 @@ export const DEFAULT_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.FACILITY_UPDATE,
     PERMISSIONS.FACILITY_DELETE,
     PERMISSIONS.FLOOR_MANAGE,
+    PERMISSIONS.VEHICLE_TYPE_READ,
     PERMISSIONS.VEHICLE_TYPE_MANAGE,
     // Slot (full CRUD)
     PERMISSIONS.SLOT_READ,
@@ -148,6 +151,8 @@ export const DEFAULT_PERMISSIONS: Record<string, string[]> = {
   staff: [
     // Tòa nhà (chỉ xem)
     PERMISSIONS.FACILITY_READ,
+    // Loại xe (chỉ xem)
+    PERMISSIONS.VEHICLE_TYPE_READ,
     // Slot (xem + cập nhật trạng thái giới hạn)
     PERMISSIONS.SLOT_READ,
     PERMISSIONS.SLOT_UPDATE_STATUS, // giới hạn: chỉ chuyển sang maintenance
@@ -169,6 +174,8 @@ export const DEFAULT_PERMISSIONS: Record<string, string[]> = {
   driver: [
     // Tòa nhà (xem giới hạn — qua public API)
     PERMISSIONS.FACILITY_READ,
+    // Loại xe (chỉ xem)
+    PERMISSIONS.VEHICLE_TYPE_READ,
     // Slot (xem số lượng trống + đặt chỗ)
     PERMISSIONS.SLOT_READ,
     PERMISSIONS.SLOT_RESERVE,

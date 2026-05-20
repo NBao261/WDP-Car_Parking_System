@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Shield, Key, ChevronRight, ChevronLeft, Check, RefreshCw, AlertCircle } from 'lucide-react';
+import { X, User, Shield, Key, ChevronRight, ChevronLeft, Check, RefreshCw, AlertCircle, Building2 } from 'lucide-react';
 import { User as UserType } from '../../../../types/user.types';
 import { useUserForm } from '../hooks/useUserForm';
 import { UserBasicInfoStep } from './steps/UserBasicInfoStep';
 import { UserRoleStep } from './steps/UserRoleStep';
 import { UserPermissionsStep } from './steps/UserPermissionsStep';
+import { UserAssignFacilitiesStep } from './steps/UserAssignFacilitiesStep';
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -13,7 +14,7 @@ interface UserFormModalProps {
   onSuccess: () => void;
 }
 
-const STEP_ICONS = { 1: User, 2: Shield, 3: Key } as const;
+const STEP_ICONS = { 1: User, 2: Shield, 3: Key, 4: Building2 } as const;
 
 export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModalProps) {
   const {
@@ -24,6 +25,8 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
     setBasicData,
     selectedRole,
     setSelectedRole,
+    selectedFacilityIds,
+    setSelectedFacilityIds,
     customPerms,
     basePerms,
     handleTogglePerm,
@@ -34,9 +37,14 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
     canGoNext,
     totalSteps,
     steps,
+    showFacilityStep,
   } = useUserForm(isOpen, user, onSuccess, onClose);
 
   if (!isOpen) return null;
+
+  // Xác định step ID của bước Assign Facilities
+  const facilityStepId = isEdit ? 4 : 3;
+  const isOnFacilityStep = showFacilityStep && currentStep === facilityStepId;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -58,7 +66,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
         className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl flex flex-col"
         style={{ maxHeight: 'min(92vh, 700px)' }}
       >
-        {/* Header — shrink-0 keeps it always visible */}
+        {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0 rounded-t-2xl">
           <div>
             <h2 className="text-lg font-bold text-[#060606]">
@@ -77,11 +85,12 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           </button>
         </div>
 
-        {/* Step Indicator — shrink-0 */}
+        {/* Step Indicator */}
         <div className="px-6 py-3 border-b border-gray-100 bg-gray-50/30 shrink-0">
           <div className="flex items-center gap-1">
             {steps.map((step, idx) => {
-              const Icon = STEP_ICONS[step.id as keyof typeof STEP_ICONS];
+              const stepId = step.id as keyof typeof STEP_ICONS;
+              const Icon = STEP_ICONS[stepId] ?? User;
               const isActive = currentStep === step.id;
               const isDone = currentStep > step.id;
               return (
@@ -103,7 +112,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           </div>
         </div>
 
-        {/* Error Banner — shrink-0, conditional */}
+        {/* Error Banner */}
         {error && (
           <div className="mx-6 mt-3 flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 shrink-0">
             <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
@@ -123,11 +132,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <UserBasicInfoStep
-                    isEdit={isEdit}
-                    basicData={basicData}
-                    onChange={setBasicData}
-                  />
+                  <UserBasicInfoStep isEdit={isEdit} basicData={basicData} onChange={setBasicData} />
                 </motion.div>
               )}
               {currentStep === 2 && (
@@ -146,6 +151,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                   />
                 </motion.div>
               )}
+              {/* Step Quyền bổ sung — chỉ khi Edit */}
               {currentStep === 3 && isEdit && (
                 <motion.div
                   key="step-3"
@@ -162,17 +168,32 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                   />
                 </motion.div>
               )}
+              {/* Step Phân công bãi xe — khi Create (step 3) hoặc Edit (step 4) */}
+              {currentStep === facilityStepId && showFacilityStep && (
+                <motion.div
+                  key={`step-facility`}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <UserAssignFacilitiesStep
+                    selectedFacilityIds={selectedFacilityIds}
+                    onChange={setSelectedFacilityIds}
+                  />
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         </div>
 
-        {/* Footer — shrink-0 always at bottom */}
+        {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 flex justify-between items-center gap-3 bg-gray-50/50 shrink-0 rounded-b-2xl">
           <div>
             {currentStep > 1 && (
               <button
                 type="button"
-                onClick={() => setCurrentStep((s) => (s - 1) as 1 | 2 | 3)}
+                onClick={() => setCurrentStep((s) => (s - 1) as 1 | 2 | 3 | 4)}
                 disabled={isSubmitting}
                 className="px-4 py-2.5 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-1.5 disabled:opacity-50"
               >
@@ -193,7 +214,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
             {currentStep < totalSteps ? (
               <button
                 type="button"
-                onClick={() => setCurrentStep((s) => (s + 1) as 1 | 2 | 3)}
+                onClick={() => setCurrentStep((s) => (s + 1) as 1 | 2 | 3 | 4)}
                 disabled={!canGoNext()}
                 className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -205,7 +226,13 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                className={`px-5 py-2.5 text-sm font-bold rounded-xl transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed
+                  ${
+                    !isEdit && isOnFacilityStep && selectedFacilityIds.length === 0
+                      ? "bg-amber-200 hover:bg-amber-300 text-amber-900" // Cảnh báo nhẹ khi không gán
+                      : "bg-[#d7ee46] hover:bg-[#c4dc32] text-[#060606]"
+                  }
+                `}
               >
                 {isSubmitting ? (
                   <>
@@ -214,6 +241,10 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                   </>
                 ) : isEdit ? (
                   'Lưu thay đổi'
+                ) : isOnFacilityStep && selectedFacilityIds.length === 0 ? (
+                  'Tạo tài khoản (Chưa gán tòa nhà)'
+                ) : isOnFacilityStep && selectedFacilityIds.length > 0 ? (
+                  'Phân công & Tạo tài khoản'
                 ) : (
                   'Tạo tài khoản'
                 )}

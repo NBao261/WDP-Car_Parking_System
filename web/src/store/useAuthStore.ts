@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { UserRole } from '../../../shared/types';
+import { AssignedFacility } from '../types/user.types';
 
 interface AuthUser {
   id: string;
@@ -8,6 +9,8 @@ interface AuthUser {
   email: string;
   role: UserRole;
   mustChangePassword?: boolean;
+  /** Populated facility objects fetched from /users/me after login */
+  assignedFacilities: AssignedFacility[];
 }
 
 interface AuthState {
@@ -16,6 +19,7 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   setAuth: (user: AuthUser, token: string, refreshToken?: string) => void;
+  setAssignedFacilities: (facilities: AssignedFacility[]) => void;
   logout: () => void;
 }
 
@@ -36,6 +40,12 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
+      setAssignedFacilities: (facilities) => {
+        set((state) => ({
+          user: state.user ? { ...state.user, assignedFacilities: facilities } : null,
+        }));
+      },
+
       logout: () => {
         set({
           user: null,
@@ -43,7 +53,7 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           isAuthenticated: false,
         });
-        localStorage.removeItem('token'); // Keep for legacy if needed, but persist handles auth-storage
+        localStorage.removeItem('token');
       },
     }),
     {
@@ -52,3 +62,4 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+

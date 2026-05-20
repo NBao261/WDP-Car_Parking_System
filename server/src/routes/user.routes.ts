@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { UserController } from '../controllers/user.controller';
-import { verifyToken, checkRole, checkPermission } from '../middlewares/auth.middleware';
+import { verifyToken, checkRole, checkPermission, checkAnyPermission } from '../middlewares/auth.middleware';
 import { UserRole } from '../models/user.model';
 import { validate } from '../middlewares/validate.middleware';
 import {
@@ -21,9 +21,9 @@ router.use(verifyToken);
 router.get('/me', UserController.getMe);
 
 // ── Admin-only routes ────────────────────────────────────
-// SRS 3.7: Quản lý tài khoản — chỉ Admin
+// SRS 3.7: Quản lý tài khoản — Admin full quyền, Manager chỉ được xem để phân công
 router.post('/', checkRole([UserRole.ADMIN]), validate(createUserSchema), checkPermission(PERMISSIONS.USER_MANAGE), UserController.createUser);
-router.get('/', checkRole([UserRole.ADMIN]), checkPermission(PERMISSIONS.USER_MANAGE), UserController.getAllUsers);
+router.get('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), checkAnyPermission([PERMISSIONS.USER_MANAGE, PERMISSIONS.USER_ASSIGN_FACILITY]), UserController.getAllUsers);
 router.get('/:id', checkRole([UserRole.ADMIN]), validate(objectIdParamSchema), checkPermission(PERMISSIONS.USER_MANAGE), UserController.getUserById);
 router.patch('/:id', checkRole([UserRole.ADMIN]), validate(updateUserSchema), checkPermission(PERMISSIONS.USER_MANAGE), UserController.updateUser);
 router.delete('/:id', checkRole([UserRole.ADMIN]), validate(objectIdParamSchema), checkPermission(PERMISSIONS.USER_MANAGE), UserController.softDeleteUser);
