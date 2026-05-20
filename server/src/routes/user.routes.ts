@@ -38,7 +38,7 @@ router.patch(
   '/:id/assign-facilities',
   checkRole([UserRole.ADMIN, UserRole.MANAGER]),
   validate(assignFacilitiesSchema),
-  checkPermission(PERMISSIONS.USER_MANAGE),
+  checkPermission(PERMISSIONS.USER_ASSIGN_FACILITY),
   UserController.assignFacilities
 );
 

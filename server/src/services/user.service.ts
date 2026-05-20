@@ -42,6 +42,7 @@ export class UserService {
     delete data.password;
     delete data.role;
     delete data.status;
+    delete data.assignedFacilities; // Force using assignFacilities endpoint for two-way sync
 
     const updatedUser = await User.findByIdAndUpdate(userId, data, { new: true, runValidators: true });
     if (!updatedUser) {
@@ -71,10 +72,37 @@ export class UserService {
   }
 
   /** PATCH /users/:id/assign-facilities — Manager phân công tòa nhà cho Staff */
-  static async assignFacilities(targetUserId: string, facilityIds: string[]): Promise<IUser | null> {
+  static async assignFacilities(
+    targetUserId: string,
+    facilityIds: string[],
+    callerUserId?: string,
+    callerRole?: string
+  ): Promise<IUser | null> {
     const user = await User.findById(targetUserId);
     if (!user) throw new AppError('User not found', 404);
     if (user.isDeleted) throw new AppError('User has been deleted', 400);
+
+    // Guard: Only Admin can assign facilities to Managers. Managers can only assign to Staff.
+    if (user.role === 'admin') {
+      throw new AppError('Cannot assign facilities to Admin users', 400);
+    }
+    if (callerRole === 'manager' && user.role !== 'staff') {
+      throw new AppError('Manager can only assign facilities to Staff users', 403);
+    }
+
+    // Guard: Manager chỉ được assign facility mà chính mình đang quản lý
+    if (callerRole === 'manager' && callerUserId) {
+      const caller = await User.findById(callerUserId);
+      if (!caller) throw new AppError('Caller not found', 404);
+      const callerFacilityIds = caller.assignedFacilities.map((fId) => fId.toString());
+      const unauthorized = facilityIds.filter((fId) => !callerFacilityIds.includes(fId));
+      if (unauthorized.length > 0) {
+        throw new AppError(
+          `Manager can only assign facilities they are assigned to. Unauthorized: ${unauthorized.join(', ')}`,
+          403
+        );
+      }
+    }
 
     const oldIds = user.assignedFacilities.map((fId) => fId.toString());
     const newIds = facilityIds;

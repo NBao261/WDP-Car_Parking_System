@@ -900,6 +900,16 @@ _Kết thúc Phần 2C – Tiếp theo: Phần 2D – Yêu cầu Chức năng: S
 | **Bộ lọc**   | Vai trò, trạng thái (Active/Locked), bãi xe, từ khóa tìm kiếm    |
 | **Hiển thị** | Họ tên, email, vai trò, trạng thái, ngày tạo, lần đăng nhập cuối |
 
+### FR-18.6: Phân công bãi xe (Assign Facility)
+
+| Thuộc tính      | Mô tả                                                                                                                                                                                            |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Mã**          | FR-18.6                                                                                                                                                                                          |
+| **Actor**       | System Administrator / Parking Manager                                                                                                                                                           |
+| **Mô tả**       | Phân công Manager hoặc Staff làm việc tại các bãi xe cụ thể (Sử dụng luồng API riêng biệt).                                                                                                      |
+| **Ràng buộc**   | - Admin có thể gán bãi xe cho cả Manager và Staff.<br>- Manager chỉ có thể gán bãi xe cho Staff và chỉ giới hạn trong danh sách các bãi xe mà Manager đó đang quản lý.<br>- Sử dụng tham chiếu 2 chiều (Two-way reference) giữa User và ParkingFacility. |
+| **Luồng chính** | 1. Chọn tài khoản cần phân công → 2. Chọn danh sách bãi xe (Thêm mới/Xóa bỏ) → 3. Hệ thống kiểm tra thẩm quyền (scope) → 4. Cập nhật đồng thời dữ liệu User và ParkingFacility → 5. Lưu kết quả  |
+
 ---
 
 ## FR-19: Phân quyền (Role-Based Access Control)
@@ -1241,7 +1251,7 @@ _Kết thúc Phần 3 – Tiếp theo: Phần 4 – Luật Nghiệp vụ (Busine
 | BR-9.1 | Tài khoản duy nhất    | Mỗi email/SĐT chỉ đăng ký 1 tài khoản. Không cho phép trùng                                             |
 | BR-9.2 | Vai trò bắt buộc      | Mỗi tài khoản phải có đúng 1 vai trò chính                                                              |
 | BR-9.3 | Admin không bị xóa    | Hệ thống luôn có ít nhất 1 tài khoản System Administrator. Không thể xóa/khóa tài khoản Admin cuối cùng |
-| BR-9.4 | Staff phải gán bãi xe | Tài khoản Staff phải được gán cho ít nhất 1 tòa nhà/bãi xe cụ thể                                       |
+| BR-9.4 | Phân công bãi xe (Staff/Manager) | Tài khoản Staff/Manager phải được gán cho ít nhất 1 tòa nhà/bãi xe thông qua luồng Assign Facility riêng biệt. Đảm bảo Two-way Reference (Đồng bộ 2 chiều User - Facility) và phân quyền Scope giới hạn. |
 | BR-9.5 | Đổi vai trò phải log  | Mọi thay đổi vai trò/quyền phải được ghi log audit                                                      |
 | BR-9.6 | Password policy       | Mật khẩu ≥ 8 ký tự, chứa chữ hoa, chữ thường, số. Đổi mật khẩu lần đầu đăng nhập                        |
 
