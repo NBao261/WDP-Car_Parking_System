@@ -551,10 +551,10 @@ _Kết thúc Phần 2A – Tiếp theo: Phần 2B – Yêu cầu Chức năng: P
 
 | Thuật toán | Mô tả | Paper tham chiếu |
 |-----------|-------|------------------|
-| **Weighted Scoring Model (WSM)** | `Score = W1×Distance + W2×FloorFillBalance + W3×DurationMatch + W4×FloorPreference`. Đơn giản hóa từ TOPSIS [P5] — thay khoảng cách Euclid bằng tổng có trọng số. | [P5] TOPSIS+CRITIC, [P6] COA |
-| **Greedy Matching** | Gán xe vào slot có Score cao nhất trong tập slot khả dụng. Đơn giản hóa từ Hungarian Algorithm [P3]. | [P3] Hungarian, [P4] Centralized Assignment |
-| **Zone Filtering** | Ràng buộc cứng: `vehicleType match` + `slot.status == Available`. Dựa trên Differentiated Parking [P2] và Contract Net Protocol [P1]. | [P1] CNP, [P2] MFD |
-| **Load Balancing (RQ4)** | Khi `effective_occupancy ≥ 85%` tại 1 tầng → redirect xe sang tầng có occupancy thấp nhất. Dựa trên NSGA-II demand allocation [P8] và Reservation-Aware Capacity [P10]. | [P8] NSGA-II, [P10] Reservation Model |
+| **Weighted Scoring Model (WSM)** | `Score = W1×Distance + W2×FloorFillBalance + W3×DurationMatch + W4×FloorPreference`. Đơn giản hóa từ TOPSIS/CRITIC [P5] (Amari et al., *Sustainability* 2023). | [P5] TOPSIS+CRITIC, [P6] COA (Shirazi & Farzaneh, 2025) |
+| **Greedy Matching** | Gán xe vào slot có Score cao nhất trong tập slot khả dụng. Đơn giản hóa từ Hungarian Algorithm [P3]. | [P3] Hungarian (arXiv 2025), [P4] Coordinated Assignment |
+| **Zone Filtering** | Ràng buộc cứng: `vehicleType match` + `slot.status == Available`. Dựa trên Hard Constraints từ MARL framework [P7] (Zhang et al., *TRC* 2022) + Differentiated Parking [P2]. | [P1] CNP (Icarte-Ahumada 2025), [P2] MFD, [P7] MARL |
+| **Load Balancing (RQ4)** | Khi `effective_occupancy ≥ 85%` tại 1 tầng → redirect xe sang tầng có occupancy thấp nhất. `effective = (occupied + reserved) / total` từ chance-constrained model [P10] (Wang, Li & Xie, *TRC* 2022). | [P8] NSGA-II, [P10] Reservation-Aware Capacity |
 
 ---
 

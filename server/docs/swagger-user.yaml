@@ -194,29 +194,20 @@ paths:
                   phone: "0909876544"
                   role: "staff"
                   status: "active"
-
-  /users/{id}/lock:
-    patch:
-      summary: Lock or unlock user account
+    delete:
+      summary: Soft delete user
+      description: |
+        Xóa mềm user (isDeleted + status = inactive). Chỉ Admin.
+        Two-way sync: tự động xóa user._id khỏi `ParkingFacility.assignedUsers[]`.
       tags: [Users]
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: string
-            example: "60b9b0b9e6b3f3b3b4f3b3b5"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                  enum: [active, locked]
-                  example: "locked"
       responses:
         '200':
           description: OK
@@ -224,7 +215,59 @@ paths:
             application/json:
               example:
                 success: true
-                message: "User status updated to locked"
+                message: "User deleted successfully"
+
+  /users/{id}/lock:
+    post:
+      summary: Lock user account
+      description: Khóa tài khoản user. Chỉ Admin.
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b5"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b5"
+                  name: "Nguyen Van B"
+                  status: "locked"
+
+  /users/{id}/unlock:
+    post:
+      summary: Unlock user account
+      description: Mở khóa tài khoản user. Reset failedLoginAttempts và lockedUntil. Chỉ Admin.
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b5"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b5"
+                  name: "Nguyen Van B"
+                  status: "active"
 
   /users/{id}/reset-password:
     patch:
@@ -265,6 +308,9 @@ paths:
         Cho phép Admin hoặc Manager gán danh sách bãi xe vào tài khoản Staff.
         Sau khi phân công, Staff chỉ có thể check-in/check-out tại các bãi đã được phân công.
         Gửi mảng rỗng `[]` để xóa tất cả phân công.
+
+        **Two-way sync:** Khi gán/xóa facility cho user, hệ thống tự động đồng bộ
+        `ParkingFacility.assignedUsers[]` ↔ `User.assignedFacilities[]` cả 2 chiều.
       tags: [Users]
       security:
         - bearerAuth: []

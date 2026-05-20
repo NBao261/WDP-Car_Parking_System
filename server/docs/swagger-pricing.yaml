@@ -1,0 +1,287 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - Pricing Plans
+  version: 1.0.0
+paths:
+  /pricing:
+    get:
+      summary: Get all pricing plans
+      description: Lấy danh sách bảng giá, có thể filter theo facilityId, vehicleType, status.
+      tags: [PricingPlans]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: facilityId
+          schema:
+            type: string
+          description: Lọc theo bãi xe
+        - in: query
+          name: vehicleType
+          schema:
+            type: string
+          description: Lọc theo loại xe (ObjectId)
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [active, inactive]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "64c1d2e3f4a5b6c7d8e9f0a1"
+                    name: "Gói xe máy theo lượt"
+                    vehicleTypeId: "60b9b0b9e6b3f3b3b4f3b3b6"
+                    facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                    feeType: "per_turn"
+                    rates:
+                      - label: "Phí gửi"
+                        amount: 5000
+                        unit: "lượt"
+                    overnightFee: 10000
+                    overtimeFeePerHour: 2000
+                    lostCardFee: 50000
+                    status: "active"
+                pagination:
+                  total: 5
+                  page: 1
+                  limit: 10
+                  pages: 1
+    post:
+      summary: Create a pricing plan
+      tags: [PricingPlans]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, vehicleTypeId, facilityId, feeType, rates]
+              properties:
+                name:
+                  type: string
+                  example: "Gói ô tô theo giờ"
+                vehicleTypeId:
+                  type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b6"
+                facilityId:
+                  type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b4"
+                feeType:
+                  type: string
+                  enum: [per_turn, hourly, daily, monthly]
+                  example: "hourly"
+                rates:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      label:
+                        type: string
+                      amount:
+                        type: number
+                      unit:
+                        type: string
+                  example:
+                    - label: "Giờ đầu"
+                      amount: 10000
+                      unit: "giờ"
+                    - label: "Giờ tiếp theo"
+                      amount: 5000
+                      unit: "giờ"
+                overnightFee:
+                  type: number
+                  example: 30000
+                overtimeFeePerHour:
+                  type: number
+                  example: 5000
+                lostCardFee:
+                  type: number
+                  example: 50000
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64c1d2e3f4a5b6c7d8e9f0a1"
+                  name: "Gói ô tô theo giờ"
+                  feeType: "hourly"
+                  status: "active"
+
+  /pricing/{id}:
+    get:
+      summary: Get pricing plan by ID
+      tags: [PricingPlans]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64c1d2e3f4a5b6c7d8e9f0a1"
+                  name: "Gói ô tô theo giờ"
+                  vehicleTypeId: "60b9b0b9e6b3f3b3b4f3b3b6"
+                  facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  feeType: "hourly"
+                  rates:
+                    - label: "Giờ đầu"
+                      amount: 10000
+                      unit: "giờ"
+                    - label: "Giờ tiếp theo"
+                      amount: 5000
+                      unit: "giờ"
+                  overnightFee: 30000
+                  overtimeFeePerHour: 5000
+                  lostCardFee: 50000
+                  status: "active"
+    patch:
+      summary: Update pricing plan
+      tags: [PricingPlans]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Gói ô tô theo giờ - VIP"
+                rates:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      label:
+                        type: string
+                      amount:
+                        type: number
+                      unit:
+                        type: string
+                overnightFee:
+                  type: number
+                overtimeFeePerHour:
+                  type: number
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64c1d2e3f4a5b6c7d8e9f0a1"
+                  name: "Gói ô tô theo giờ - VIP"
+                  status: "active"
+    delete:
+      summary: Deactivate pricing plan
+      description: Chuyển trạng thái bảng giá sang inactive (soft delete).
+      tags: [PricingPlans]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64c1d2e3f4a5b6c7d8e9f0a1"
+                  name: "Gói ô tô theo giờ"
+                  status: "inactive"
+
+components:
+  schemas:
+    PricingPlan:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        vehicleTypeId:
+          type: string
+          description: ObjectId loại xe áp dụng
+        facilityId:
+          type: string
+          description: ObjectId bãi xe áp dụng
+        feeType:
+          type: string
+          enum: [per_turn, hourly, daily, monthly]
+        rates:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+                description: "Nhãn bậc giá (VD: Giờ đầu, Giờ tiếp theo)"
+              amount:
+                type: number
+              unit:
+                type: string
+        overnightFee:
+          type: number
+          description: Phí qua đêm
+        overtimeFeePerHour:
+          type: number
+          description: Phí quá giờ mỗi giờ
+        lostCardFee:
+          type: number
+          description: Phí mất thẻ
+        status:
+          type: string
+          enum: [active, inactive]
+        isDeleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

@@ -265,10 +265,10 @@
   - Chuyển reservation → session khi Driver đến (BR-6.6)
 - [ ] API chính sách hủy (BR-6.5): tính phí hủy nếu < 2 giờ
 - [ ] 🔬 **[RQ3]** Implement Weighted Scoring Model cho API `suggest-floor` (FR-8.3):
-  - Thuật toán gốc: **TOPSIS + CRITIC** [P5], **CODAS** [P5], **COA** [P6]
+  - Thuật toán gốc: **TOPSIS + CRITIC** [P5] (Amari et al., *Sustainability* 2023), **COA** [P6] (Shirazi & Farzaneh, *JAIDM* 2025)
+  - Ràng buộc cứng (hard constraints) từ MARL framework [P7] (Zhang et al., *TRC* 2022): vehicleType match + slot.status == 'Available'
   - Phiên bản áp dụng: **WSM (Weighted Scoring Model)** — đơn giản hóa TOPSIS
   - `Score(slot) = W1×Distance + W2×FloorFillBalance + W3×DurationMatch + W4×FloorPreference`
-  - Ràng buộc cứng (từ MILP [P7]): vehicleType match + slot.status == 'Available'
   - Zone Filtering (từ Contract Net Protocol [P1] + Differentiated Parking [P2])
   - Greedy Matching (từ Hungarian Algorithm [P3] + Centralized Assignment [P4])
   - Trọng số mặc định: W1=0.25, W2=0.30, W3=0.25, W4=0.20 (cấu hình qua SystemConfig)
@@ -318,12 +318,12 @@
 - [ ] API Ngoại lệ nâng cao (FR-7): list exceptions for Manager, approve/reject
 - [ ] Optimize MongoDB queries: indexes cho licensePlate, sessionCode, slotCode
 - [ ] 🔬 **[RQ4]** Implement Load Balancing cho giờ cao điểm:
-  - Thuật toán gốc: **NSGA-II** (multi-objective demand allocation) [P8], **PCPT** (dynamic path tree) [P9]
+  - Thuật toán gốc: **NSGA-II** (multi-objective demand allocation) [P8] (Zhang et al., *Systems* 2024), **DQN** [P9] (Chen et al., 2024)
   - Phiên bản áp dụng: **Threshold-based Load Balancing** — phát hiện tầng sắp đầy (occupancy ≥ 85%) → chuyển hướng xe đến tầng occupancy thấp nhất
-  - Tích hợp Reservation-Aware Capacity [P10]: `effective_occupancy = (occupied + reserved) / total`
-  - Conflict Resolution (từ DCS [P9]): khi 2 xe hướng cùng slot → ưu tiên xe gần hơn
+  - Tích hợp **Reservation-Aware Capacity** [P10] (Wang, Li & Xie, *TRC* 2022): `effective_occupancy = (occupied + reserved) / total`
+  - Conflict Resolution: khi 2 xe hướng cùng slot → ưu tiên xe gần hơn
 - [ ] 🔬 **[RQ4]** Peak Hour Detection: xác định giờ cao điểm tự động từ dữ liệu lịch sử
-  - Hướng nâng cấp tương lai: **DRL (Deep Q-Network)** [P9] với reward function điều chỉnh được
+  - Hướng nâng cấp tương lai: **MARL (Multi-Agent Deep RL)** [P7] (Zhang et al., *TRC* 2022) và **DRL (Deep Q-Network)** [P9]
 
 #### BE2
 
@@ -355,7 +355,7 @@
 - [ ] Màn hình Tài khoản: thông tin cá nhân, đổi mật khẩu, lịch sử
 - [ ] Nhận push notification
 
-**✅ Deliverable tuần 6–7:** Đặt chỗ trước, báo cáo thống kê, ngoại lệ nâng cao, phản hồi, realtime, push notification. **+ WSM scoring [P5,P6] và Threshold Load Balancing [P8,P9,P10].**
+**✅ Deliverable tuần 6–7:** Đặt chỗ trước, báo cáo thống kê, ngoại lệ nâng cao, phản hồi, realtime, push notification. **+ WSM scoring [P5 Amari 2023, P6 Shirazi 2025] và Threshold Load Balancing [P8 Zhang 2024, P9 Chen 2024, P10 Wang 2022].**
 
 ---
 
@@ -424,8 +424,13 @@
 - [ ] Viết tài liệu API hoàn chỉnh
 - [ ] 🔬 Tổng hợp Research Report:
   - Kết quả từng RQ: dữ liệu, phân tích, so sánh với giả thuyết
-  - Mapping thuật toán gốc (TOPSIS, Hungarian, NSGA-II, MILP) → phiên bản đơn giản hóa (WSM, Greedy, Threshold LB)
-  - Đề xuất cải tiến: nâng cấp lên TOPSIS đầy đủ [P5], COA [P6], DQN [P9]
+  - Mapping thuật toán gốc → phiên bản đơn giản hóa:
+    - TOPSIS/CRITIC [P5 Amari 2023] + COA [P6 Shirazi 2025] → WSM
+    - Hungarian [P3] → Greedy Matching
+    - MARL hard constraints [P7 Zhang 2022] → Zone Filtering rules
+    - NSGA-II [P8] → Threshold Load Balancing
+    - Chance-constrained reservation [P10 Wang 2022] → Reservation-Aware Occupancy
+  - Đề xuất cải tiến: nâng cấp lên TOPSIS đầy đủ [P5], COA [P6], MARL [P7], DQN [P9]
   - Hạn chế nghiên cứu và đối chiếu với papers [P1]–[P10]
 
 ### BE2

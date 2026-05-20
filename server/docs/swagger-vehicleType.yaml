@@ -12,9 +12,27 @@ paths:
           description: OK
           content:
             application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VehicleType'
               example:
                 success: true
-                data: {}
+                data:
+                  - _id: "60b9b0b9e6b3f3b3b4f3b3b6"
+                    name: "Xe Máy"
+                    code: "MOTO"
+                    slotSize: "small"
+                    icon: "🏍️"
+                    floors:
+                      - "64a1b2c3d4e5f6a7b8c9d0e1"
+                      - "64a1b2c3d4e5f6a7b8c9d0e2"
+                    isDeleted: false
     post:
       summary: Create a vehicle type
       tags: [VehicleTypes]
@@ -44,7 +62,14 @@ paths:
             application/json:
               example:
                 success: true
-                data: {}
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b6"
+                  name: "Xe Máy"
+                  code: "MOTO"
+                  slotSize: "small"
+                  icon: "🏍️"
+                  floors: []
+                  isDeleted: false
 
   /vehicle-types/{id}:
     get:
@@ -64,7 +89,16 @@ paths:
             application/json:
               example:
                 success: true
-                data: {}
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b6"
+                  name: "Xe Máy"
+                  code: "MOTO"
+                  slotSize: "small"
+                  icon: "🏍️"
+                  floors:
+                    - "64a1b2c3d4e5f6a7b8c9d0e1"
+                    - "64a1b2c3d4e5f6a7b8c9d0e2"
+                  isDeleted: false
     patch:
       summary: Update vehicle type
       tags: [VehicleTypes]
@@ -101,9 +135,20 @@ paths:
             application/json:
               example:
                 success: true
-                data: {}
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b6"
+                  name: "Xe Máy Cỡ Lớn"
+                  code: "MOTO_LARGE"
+                  slotSize: "medium"
+                  icon: "🏍️"
+                  floors:
+                    - "64a1b2c3d4e5f6a7b8c9d0e1"
+                  isDeleted: false
     delete:
       summary: Soft delete vehicle type
+      description: |
+        Xóa mềm loại xe. Đồng thời tự động xóa vehicleType._id khỏi
+        `Floor.allowedVehicleTypes[]` của tất cả tầng liên quan (two-way sync).
       tags: [VehicleTypes]
       parameters:
         - in: path
@@ -118,4 +163,45 @@ paths:
             application/json:
               example:
                 success: true
-                data: {}
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b6"
+                  name: "Xe Máy"
+                  code: "MOTO"
+                  isDeleted: true
+                  floors: []
+
+components:
+  schemas:
+    VehicleType:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: MongoDB ObjectId
+        name:
+          type: string
+          description: Tên loại xe
+        code:
+          type: string
+          description: Mã loại xe (unique, uppercase)
+        slotSize:
+          type: string
+          enum: [small, medium, large]
+          description: Kích thước slot cần cho loại xe này
+        description:
+          type: string
+        icon:
+          type: string
+        floors:
+          type: array
+          items:
+            type: string
+          description: "Two-way ref: danh sách Floor ObjectId cho phép loại xe này (↔ Floor.allowedVehicleTypes)"
+        isDeleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
