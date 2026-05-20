@@ -111,7 +111,9 @@ export class UserController {
     try {
       const id = req.params.id as string;
       const { facilityIds } = req.body;
-      const user = await UserService.assignFacilities(id, facilityIds);
+      const callerUserId = req.user?.userId;
+      const callerRole = req.user?.role;
+      const user = await UserService.assignFacilities(id, facilityIds, callerUserId, callerRole);
       res.status(200).json({ success: true, data: user });
     } catch (error) {
       next(error);

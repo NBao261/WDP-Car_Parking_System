@@ -71,10 +71,34 @@ export class UserService {
   }
 
   /** PATCH /users/:id/assign-facilities — Manager phân công tòa nhà cho Staff */
-  static async assignFacilities(targetUserId: string, facilityIds: string[]): Promise<IUser | null> {
+  static async assignFacilities(
+    targetUserId: string,
+    facilityIds: string[],
+    callerUserId?: string,
+    callerRole?: string
+  ): Promise<IUser | null> {
     const user = await User.findById(targetUserId);
     if (!user) throw new AppError('User not found', 404);
     if (user.isDeleted) throw new AppError('User has been deleted', 400);
+
+    // Guard: chỉ cho phép assign cho Staff
+    if (user.role !== 'staff') {
+      throw new AppError('Can only assign facilities to Staff users', 400);
+    }
+
+    // Guard: Manager chỉ được assign facility mà chính mình đang quản lý
+    if (callerRole === 'manager' && callerUserId) {
+      const caller = await User.findById(callerUserId);
+      if (!caller) throw new AppError('Caller not found', 404);
+      const callerFacilityIds = caller.assignedFacilities.map((fId) => fId.toString());
+      const unauthorized = facilityIds.filter((fId) => !callerFacilityIds.includes(fId));
+      if (unauthorized.length > 0) {
+        throw new AppError(
+          `Manager can only assign facilities they are assigned to. Unauthorized: ${unauthorized.join(', ')}`,
+          403
+        );
+      }
+    }
 
     const oldIds = user.assignedFacilities.map((fId) => fId.toString());
     const newIds = facilityIds;

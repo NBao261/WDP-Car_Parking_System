@@ -45,6 +45,7 @@ export const PERMISSIONS = {
 
   // ── 3.7 Module Quản trị hệ thống ──
   USER_MANAGE: 'user:manage',
+  USER_ASSIGN_FACILITY: 'user:assign_facility',
   ROLE_MANAGE: 'role:manage',
   CONFIG_MANAGE: 'config:manage',
   LOG_VIEW: 'log:view',
@@ -97,6 +98,7 @@ export const DEFAULT_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.REPORT_EXCEPTIONS,
     // Quản trị hệ thống (full)
     PERMISSIONS.USER_MANAGE,
+    PERMISSIONS.USER_ASSIGN_FACILITY,
     PERMISSIONS.ROLE_MANAGE,
     PERMISSIONS.CONFIG_MANAGE,
     PERMISSIONS.LOG_VIEW,
@@ -138,6 +140,8 @@ export const DEFAULT_PERMISSIONS: Record<string, string[]> = {
     // Phản hồi (xem + xử lý)
     PERMISSIONS.FEEDBACK_READ,
     PERMISSIONS.FEEDBACK_PROCESS,
+    // Quản lý nhân sự (phân công tòa nhà cho Staff — FR-18.6)
+    PERMISSIONS.USER_ASSIGN_FACILITY,
   ],
 
   // ACT-02: Parking Staff — vận hành trực tiếp tại bãi xe

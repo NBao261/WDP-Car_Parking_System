@@ -309,6 +309,13 @@ paths:
         Sau khi phân công, Staff chỉ có thể check-in/check-out tại các bãi đã được phân công.
         Gửi mảng rỗng `[]` để xóa tất cả phân công.
 
+        **Business rules:**
+        - Target user phải có role = `staff` (không cho assign facility cho Admin/Manager).
+        - Manager chỉ được assign facility mà chính mình đang được gán (scope giới hạn).
+        - Admin có thể assign bất kỳ facility nào.
+
+        **Permission:** `user:assign_facility` (Admin + Manager đều có).
+
         **Two-way sync:** Khi gán/xóa facility cho user, hệ thống tự động đồng bộ
         `ParkingFacility.assignedUsers[]` ↔ `User.assignedFacilities[]` cả 2 chiều.
       tags: [Users]
@@ -364,16 +371,17 @@ paths:
                       address: "456 Le Van Sy, District 3, HCMC"
                       status: "active"
         '400':
-          description: facilityIds không hợp lệ
+          description: Target không phải Staff hoặc facilityIds không hợp lệ
           content:
             application/json:
               example:
                 success: false
-                message: "Invalid facility ID"
+                message: "Can only assign facilities to Staff users"
         '403':
-          description: Không có quyền
+          description: Manager cố assign facility ngoài phạm vi
           content:
             application/json:
               example:
                 success: false
-                message: "Forbidden"
+                message: "Manager can only assign facilities they are assigned to. Unauthorized: 683f..."
+
