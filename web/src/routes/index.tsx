@@ -11,19 +11,18 @@ import UnauthorizedPage from '../pages/error/UnauthorizedPage';
 // ── Admin Pages ──
 import DashboardPage from '../pages/admin/dashboard/DashboardPage';
 const FacilitiesPage = lazy(() => import('../pages/admin/facilities/FacilitiesPage'));
-const VehiclesPage   = lazy(() => import('../pages/admin/vehicles/VehiclesPage'));
-const SlotsPage      = lazy(() => import('../pages/admin/slots/SlotsPage'));
-const PricingPage    = lazy(() => import('../pages/admin/pricing/PricingPage'));
-const BillingPage    = lazy(() => import('../pages/admin/billing/BillingPage'));
-const ConfigPage     = lazy(() => import('../pages/admin/config/ConfigPage'));
-const UsersPage      = lazy(() => import('../pages/admin/users/UsersPage'));
+const VehiclesPage = lazy(() => import('../pages/admin/vehicles/VehiclesPage'));
+const SlotsPage = lazy(() => import('../pages/admin/slots/SlotsPage'));
+const PricingPage = lazy(() => import('../pages/admin/pricing/PricingPage'));
+const BillingPage = lazy(() => import('../pages/admin/billing/BillingPage'));
+const ConfigPage = lazy(() => import('../pages/admin/config/ConfigPage'));
+const UsersPage = lazy(() => import('../pages/admin/users/UsersPage'));
 const UserDetailPage = lazy(() => import('../pages/admin/users/UserDetailPage'));
-const RolesPage      = lazy(() => import('../pages/admin/roles/RolesPage'));
+const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
 
 // ── Manager / Staff Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
 // Staff Pages ──
-import DashboardStaffPage from '../pages/staff/dashboardStaff/DashboardStaffPage';
 const VehicleCheckPage = lazy(() => import('../pages/staff/vehicleCheck/VehicleCheckPage'));
 const ActiveSessionsPage = lazy(() => import('../pages/staff/activeSessions/ActiveSessionsPage'));
 const ExceptionsStaffPage = lazy(() => import('../pages/staff/exceptionsStaff/ExceptionsStaffPage'));
@@ -99,8 +98,7 @@ export const router = createBrowserRouter([
               <ProtectedRoute allowedRoles={[UserRole.STAFF, UserRole.MANAGER, UserRole.ADMIN]} />
             ),
             children: [
-              { index: true, element: <DashboardStaffPage /> },
-              { path: 'vehicle-check', element: <S><VehicleCheckPage /></S> },
+              { index: true, element: <S><VehicleCheckPage /></S> },
               { path: 'active-sessions', element: <S><ActiveSessionsPage /></S> },
               { path: 'exceptions', element: <S><ExceptionsStaffPage /></S> },
             ],
