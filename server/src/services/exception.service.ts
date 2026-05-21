@@ -44,8 +44,13 @@ export class ExceptionService {
 
     await exception.save();
 
-    // Nếu là LOST_CARD hoặc WRONG_PLATE, khoá session (không cho checkout cho đến khi exception được resolve)
-    if (data.type === ExceptionType.LOST_CARD || data.type === ExceptionType.WRONG_PLATE) {
+    // Khoá session (không cho checkout cho đến khi exception được resolve)
+    // WRONG_ZONE cũng cần khoá vì xe chưa có chỗ đậu hợp lệ
+    if (
+      data.type === ExceptionType.LOST_CARD ||
+      data.type === ExceptionType.WRONG_PLATE ||
+      data.type === ExceptionType.WRONG_ZONE
+    ) {
       session.status = SessionStatus.EXCEPTION;
       await session.save();
     }
@@ -154,22 +159,37 @@ export class ExceptionService {
 
         const oldSlotId = session.slotId;
         
-        // Cập nhật session (giữ nguyên mọi thông tin, chỉ đổi slot + floor)
+        // Lưu trạng thái gốc của slot mới TRƯỚC khi thay đổi
+        // Dùng để quyết định xử lý slot cũ:
+        //   - newSlot đang Available → đang dời xe sang chỗ mới → slot cũ có xe lạ → LOCKED
+        //   - newSlot đang Locked → đang gán xe vào chỗ nó đậu nhầm → slot cũ trống → AVAILABLE
+        const newSlotWasLocked = newSlot.status === SlotStatus.LOCKED;
+
+        // Cập nhật session (giữ nguyên mọi thông tin, chỉ đổi slot + floor + mở khoá)
         session.slotId = newSlot._id as mongoose.Types.ObjectId;
         session.floorId = newSlot.floorId;
+        session.status = SessionStatus.ACTIVE; // Mở khoá session sau khi đã có chỗ mới
         await session.save();
 
-        // Cập nhật slot mới -> Occupied
+        // Cập nhật slot mới -> Occupied (xoá ghi chú cũ nếu có)
         newSlot.status = SlotStatus.OCCUPIED;
         newSlot.currentSessionId = session._id as mongoose.Types.ObjectId;
+        newSlot.maintenanceReason = '';
         await newSlot.save();
 
-        // Khóa slot cũ → LOCKED (để staff kiểm tra xe lạ đang đậu trái phép)
+        // Xử lý slot cũ dựa trên trạng thái gốc của slot MỚI
         if (oldSlotId) {
           const oldSlot = await ParkingSlot.findById(oldSlotId);
           if (oldSlot) {
-            oldSlot.status = SlotStatus.LOCKED;
-            oldSlot.maintenanceReason = 'Đang có xe đậu sai chỗ, chờ xác minh';
+            if (newSlotWasLocked) {
+              // newSlot đang Locked → xe đậu nhầm được hợp lệ hoá tại chỗ → slot cũ trống
+              oldSlot.status = SlotStatus.AVAILABLE;
+              oldSlot.maintenanceReason = '';
+            } else {
+              // newSlot đang Available → dời xe sang chỗ mới → slot cũ có xe lạ chiếm → khoá
+              oldSlot.status = SlotStatus.LOCKED;
+              oldSlot.maintenanceReason = 'Đang có xe đậu sai chỗ, chờ xác minh';
+            }
             oldSlot.currentSessionId = null;
             await oldSlot.save();
           }
