@@ -58,17 +58,17 @@ export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: Vehicl
               <div className="fixed inset-0 z-[-1]" onClick={() => setMenuOpen(false)} />
               <button onClick={() => { onView(); setMenuOpen(false); }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                <Eye size={14} /> View Details
+                <Eye size={14} /> Xem Chi Tiết
               </button>
               <div className="h-px bg-gray-100 mx-2 my-1" />
               <button onClick={() => { onEdit(); setMenuOpen(false); }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                <Edit size={14} /> Edit
+                <Edit size={14} /> Chỉnh Sửa
               </button>
               <div className="h-px bg-gray-100 mx-2 my-1" />
               <button onClick={() => { onDelete(); setMenuOpen(false); }}
                 className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
-                <Trash2 size={14} /> Delete
+                <Trash2 size={14} /> Xóa
               </button>
             </motion.div>
           )}

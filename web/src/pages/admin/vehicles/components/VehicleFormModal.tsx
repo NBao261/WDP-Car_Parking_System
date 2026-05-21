@@ -18,15 +18,22 @@ interface ModalProps {
   onSuccess: () => void;
 }
 
+interface FormErrors {
+  name?: string;
+  code?: string;
+}
+
 export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalProps) {
   const isEdit = !!vehicle;
   const [form, setForm] = useState<CreateVehicleTypePayload>({
     name: '', code: '', slotSize: 'medium', description: '', icon: '🚗',
   });
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      setErrors({});
       if (vehicle) {
         setForm({
           name: vehicle.name,
@@ -41,8 +48,17 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
     }
   }, [isOpen, vehicle]);
 
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {};
+    if (!form.name.trim()) newErrors.name = 'Vui lòng nhập tên loại xe';
+    if (!isEdit && !form.code.trim()) newErrors.code = 'Vui lòng nhập mã loại xe';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     setIsSubmitting(true);
     try {
       if (isEdit && vehicle) {
@@ -53,19 +69,33 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
           icon: form.icon
         };
         await vehicleTypeService.update(vehicle._id, payload);
-        toast.success('Vehicle type updated successfully');
+        toast.success('Cập nhật loại xe thành công');
       } else {
         await vehicleTypeService.create(form);
-        toast.success('Vehicle type created successfully');
+        toast.success('Tạo loại xe mới thành công');
       }
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.message || 'An error occurred');
+      toast.error(err.message || 'Đã xảy ra lỗi');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Clear error on field change
+  const setName = (val: string) => {
+    setForm(f => ({ ...f, name: val }));
+    if (errors.name) setErrors(e => ({ ...e, name: undefined }));
+  };
+  const setCode = (val: string) => {
+    setForm(f => ({ ...f, code: val.toUpperCase() }));
+    if (errors.code) setErrors(e => ({ ...e, code: undefined }));
+  };
+
+  const inputBase = 'w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:bg-white transition-all';
+  const inputOk   = 'border-gray-200 focus:ring-[#d7ee46]';
+  const inputErr  = 'border-red-400 focus:ring-red-300 bg-red-50/30';
 
   if (!isOpen) return null;
 
@@ -82,16 +112,16 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div>
-              <h2 className="text-lg font-bold text-[#060606]">{isEdit ? 'Edit Vehicle Type' : 'Add New Vehicle Type'}</h2>
-              <p className="text-xs text-gray-500 mt-0.5">{isEdit ? 'Update vehicle information' : 'Create a new vehicle category'}</p>
+              <h2 className="text-lg font-bold text-[#060606]">{isEdit ? 'Chỉnh Sửa Loại Xe' : 'Thêm Loại Xe Mới'}</h2>
+              <p className="text-xs text-gray-500 mt-0.5">{isEdit ? 'Cập nhật thông tin loại phương tiện' : 'Tạo mới danh mục phương tiện'}</p>
             </div>
             <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"><X size={20} /></button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 space-y-4">
             {/* Icon picker */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Icon</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Biểu Tượng</label>
               <div className="flex gap-2 flex-wrap">
                 {ICON_OPTIONS.map((icon) => (
                   <button key={icon} type="button"
@@ -104,28 +134,51 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
 
             {/* Name */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Vehicle Name <span className="text-red-500">*</span></label>
-              <input type="text" required value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
-                placeholder="Ex: Motorbike, Car, Bicycle..."
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Tên Loại Xe <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setName(e.target.value)}
+                className={`${inputBase} ${errors.name ? inputErr : inputOk}`}
+                placeholder="VD: Xe máy, Ô tô, Xe đạp..."
               />
+              {errors.name && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <span>⚠</span> {errors.name}
+                </p>
+              )}
             </div>
 
             {/* Code */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Vehicle Code <span className="text-red-500">*</span></label>
-              <input type="text" required disabled={isEdit} value={form.code}
-                onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all disabled:opacity-60 disabled:cursor-not-allowed uppercase"
-                placeholder="Ex: MOTORBIKE, CAR, BICYCLE"
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Mã Loại Xe <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                disabled={isEdit}
+                value={form.code}
+                onChange={(e) => setCode(e.target.value)}
+                className={`${inputBase} ${errors.code ? inputErr : inputOk} disabled:opacity-60 disabled:cursor-not-allowed uppercase`}
+                placeholder="VD: MOTORBIKE, CAR, BICYCLE"
               />
-              {!isEdit && <p className="text-xs text-gray-400 mt-1">Code cannot be changed after creation</p>}
+              {errors.code && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <span>⚠</span> {errors.code}
+                </p>
+              )}
+              {!isEdit && !errors.code && (
+                <p className="text-xs text-gray-400 mt-1">Mã không thể thay đổi sau khi tạo</p>
+              )}
             </div>
 
             {/* Slot Size */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Slot Size <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Kích Thước Slot <span className="text-red-500">*</span>
+              </label>
               <div className="grid grid-cols-3 gap-2">
                 {(Object.keys(SLOT_SIZE_LABELS) as SlotSize[]).map((size) => {
                   const { label } = SLOT_SIZE_LABELS[size];
@@ -141,11 +194,11 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mô Tả</label>
               <textarea rows={2} value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all resize-none"
-                placeholder="Short description..."
+                className={`${inputBase} ${inputOk} resize-none`}
+                placeholder="Mô tả ngắn về loại xe..."
               />
             </div>
 
@@ -153,12 +206,12 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
             <div className="pt-2 flex justify-end gap-3 border-t border-gray-100">
               <button type="button" onClick={onClose} disabled={isSubmitting}
                 className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-60">
-                Cancel
+                Hủy
               </button>
               <button type="submit" disabled={isSubmitting}
                 className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2">
                 {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                {isEdit ? 'Save Changes' : 'Create Type'}
+                {isEdit ? 'Lưu Thay Đổi' : 'Tạo Loại Xe'}
               </button>
             </div>
           </form>
