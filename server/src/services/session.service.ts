@@ -536,6 +536,7 @@ export class SessionService {
     if (slot) {
       slot.status = SlotStatus.AVAILABLE;
       slot.currentSessionId = null;
+      slot.maintenanceReason = '';
       await slot.save();
     }
 
