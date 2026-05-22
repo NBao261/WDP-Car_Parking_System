@@ -120,7 +120,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
             <div className="grid grid-cols-2 gap-2">
               {FEE_TYPE_OPTIONS.map(([val, label]) => (
                 <Controller key={val} control={control} name="feeType" render={({ field }) => (
-                  <label className={`flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer transition-colors text-sm ${field.value === val ? 'border-[#060606] bg-[#d7ee46]/10 font-semibold' : 'border-gray-200 hover:bg-gray-50'
+                  <label className={`flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer transition-all text-sm font-semibold ${field.value === val ? 'border-[#d7ee46] bg-[#d7ee46] text-[#060606] scale-[1.03]' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                     }`}>
                     <input type="radio" className="sr-only" value={val} checked={field.value === val} onChange={() => field.onChange(val)} />
                     {label}
@@ -185,7 +185,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
               Hủy
             </button>
             <button type="submit" disabled={isSubmitting}
-              className="flex-1 py-2.5 bg-[#060606] text-white rounded-xl text-sm font-medium hover:bg-black/80 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+              className="flex-1 py-2.5 bg-[#d7ee46] text-[#060606] font-bold rounded-xl text-sm border border-[#c4dc32] hover:bg-[#c4dc32] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm">
               {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : null}
               {isEdit ? 'Lưu Thay Đổi' : 'Tạo Bảng Giá'}
             </button>

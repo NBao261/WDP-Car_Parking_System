@@ -248,8 +248,8 @@ export default function VehiclesPage() {
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
                   className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === i + 1
-                      ? 'bg-[#d7ee46] text-[#060606] border border-[#c4dc32] font-bold'
-                      : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                    ? 'bg-[#d7ee46] text-[#060606] border border-[#c4dc32] font-bold'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                 >
                   {i + 1}

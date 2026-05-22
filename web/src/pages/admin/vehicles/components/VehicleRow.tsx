@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
+import { Car } from 'lucide-react';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { SLOT_SIZE_LABELS } from './constants';
+import { SLOT_SIZE_LABELS, ICON_MAP } from './constants';
 
 interface VehicleRowProps {
   vehicle: VehicleType;
@@ -27,8 +28,8 @@ export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: Vehicl
     >
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl border border-gray-100">
-            {vehicle.icon || '🚗'}
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center border border-emerald-100 text-emerald-600">
+            {(() => { const Icon = (vehicle.icon && ICON_MAP[vehicle.icon]) ? ICON_MAP[vehicle.icon] : Car; return <Icon size={20} strokeWidth={1.5} />; })()}
           </div>
           <div>
             <p className="font-semibold text-[#060606] text-sm">{vehicle.name}</p>

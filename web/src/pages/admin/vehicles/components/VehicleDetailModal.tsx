@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Car } from 'lucide-react';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { SLOT_SIZE_LABELS } from './constants';
+import { SLOT_SIZE_LABELS, ICON_MAP } from './constants';
 
 interface DetailModalProps {
   isOpen: boolean;
@@ -30,8 +30,8 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
 
           <div className="p-6 space-y-6">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center text-3xl border border-gray-100 shadow-sm">
-                {vehicle.icon || '🚗'}
+              <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center border border-emerald-100 shadow-sm text-emerald-600">
+                {(() => { const Icon = (vehicle.icon && ICON_MAP[vehicle.icon]) ? ICON_MAP[vehicle.icon] : Car; return <Icon size={32} strokeWidth={1.5} />; })()}
               </div>
               <div>
                 <h3 className="text-xl font-bold text-[#060606]">{vehicle.name}</h3>

@@ -9,7 +9,7 @@ import {
   CreateVehicleTypePayload,
   UpdateVehicleTypePayload,
 } from '../../../../services/vehicleType.service';
-import { ICON_OPTIONS, SLOT_SIZE_LABELS } from './constants';
+import { ICON_OPTIONS, ICON_MAP, DEFAULT_ICON, SLOT_SIZE_LABELS } from './constants';
 
 interface ModalProps {
   isOpen: boolean;
@@ -26,7 +26,7 @@ interface FormErrors {
 export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalProps) {
   const isEdit = !!vehicle;
   const [form, setForm] = useState<CreateVehicleTypePayload>({
-    name: '', code: '', slotSize: 'medium', description: '', icon: '🚗',
+    name: '', code: '', slotSize: 'medium', description: '', icon: DEFAULT_ICON,
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,10 +40,10 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
           code: vehicle.code,
           slotSize: vehicle.slotSize,
           description: vehicle.description || '',
-          icon: vehicle.icon || '🚗'
+          icon: vehicle.icon || DEFAULT_ICON
         });
       } else {
-        setForm({ name: '', code: '', slotSize: 'medium', description: '', icon: '🚗' });
+        setForm({ name: '', code: '', slotSize: 'medium', description: '', icon: DEFAULT_ICON });
       }
     }
   }, [isOpen, vehicle]);
@@ -122,14 +122,40 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
             {/* Icon picker */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Biểu Tượng</label>
-              <div className="flex gap-2 flex-wrap">
-                {ICON_OPTIONS.map((icon) => (
-                  <button key={icon} type="button"
-                    onClick={() => setForm({ ...form, icon })}
-                    className={`w-10 h-10 text-xl rounded-xl border-2 transition-all flex items-center justify-center ${form.icon === icon ? 'border-[#d7ee46] bg-[#d7ee46]/10 scale-110' : 'border-gray-200 hover:border-gray-300'}`}
-                  >{icon}</button>
-                ))}
+              <div className="grid grid-cols-4 gap-2">
+                {ICON_OPTIONS.map(({ name, label, Icon }) => {
+                  const isSelected = form.icon === name;
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      title={label}
+                      onClick={() => setForm({ ...form, icon: name })}
+                      className={`flex flex-col items-center justify-center gap-1.5 w-full py-3 rounded-xl border-2 transition-all ${
+                        isSelected
+                          ? 'border-emerald-400 bg-emerald-50 text-emerald-700 scale-105 shadow-sm'
+                          : 'border-gray-200 text-gray-500 hover:border-emerald-200 hover:bg-emerald-50/50 hover:text-emerald-600'
+                      }`}
+                    >
+                      <Icon size={20} strokeWidth={1.5} />
+                      <span className="text-[10px] font-semibold leading-none truncate w-full text-center px-1">
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+              {/* Preview icon đang chọn */}
+              {form.icon && ICON_MAP[form.icon] && (() => {
+                const SelectedIcon = ICON_MAP[form.icon];
+                const selectedLabel = ICON_OPTIONS.find(o => o.name === form.icon)?.label ?? form.icon;
+                return (
+                  <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
+                    <SelectedIcon size={14} className="text-emerald-500" />
+                    <span>Đang chọn: <b className="text-gray-600">{selectedLabel}</b></span>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Name */}

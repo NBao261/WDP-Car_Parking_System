@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, DollarSign } from 'lucide-react';
+import { Plus, DollarSign, CheckCircle2, XCircle, LayoutGrid, Building2, ChevronDown } from 'lucide-react';
 
 import { facilityService, type Facility } from '../../../services/facility.service';
 import { vehicleTypeService, type VehicleType } from '../../../services/vehicleType.service';
@@ -47,6 +47,15 @@ export default function PricingPage() {
     return true;
   });
 
+  const activeCount   = plans.filter(p => p.status === 'active').length;
+  const inactiveCount = plans.filter(p => p.status === 'inactive').length;
+
+  const statusTabs = [
+    { key: 'all'      as const, label: 'Tất cả',    Icon: LayoutGrid,   count: plans.length },
+    { key: 'active'   as const, label: 'Hoạt động', Icon: CheckCircle2, count: activeCount   },
+    { key: 'inactive' as const, label: 'Đã tắt',     Icon: XCircle,      count: inactiveCount },
+  ];
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Header */}
@@ -57,30 +66,67 @@ export default function PricingPage() {
         </div>
         <button
           onClick={() => { setEditingPlan(undefined); setModalOpen(true); }}
-          className="bg-[#060606] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-black/80 transition-colors flex items-center gap-2"
+          className="bg-[#d7ee46] text-[#060606] font-bold px-5 py-2.5 rounded-xl border border-[#c4dc32] hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm"
         >
           <Plus size={18} /> Thêm Bảng Giá
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="flex gap-1.5">
-          {(['all', 'active', 'inactive'] as const).map((s) => (
-            <button key={s} onClick={() => setFilterStatus(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterStatus === s ? 'bg-[#060606] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}>
-              {s === 'all' ? 'Tất cả' : s === 'active' ? 'Hoạt động' : 'Đã tắt'}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-gray-100 pb-0">
+
+        {/* Status underline tabs */}
+        <div className="flex items-center gap-0">
+          {statusTabs.map(({ key, label, count }) => (
+            <button
+              key={key}
+              onClick={() => setFilterStatus(key)}
+              className={`relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                filterStatus === key
+                  ? 'text-emerald-600'
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              {label}
+              <span className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold leading-none transition-colors ${
+                filterStatus === key
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-gray-100 text-gray-400'
+              }`}>
+                {count}
+              </span>
+              {/* Active indicator */}
+              {filterStatus === key && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-emerald-500" />
+              )}
             </button>
           ))}
         </div>
-        <select value={filterFacility} onChange={(e) => setFilterFacility(e.target.value)}
-          className="border border-gray-200 rounded-xl px-3 py-1.5 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d7ee46]">
-          <option value="all">Tất cả cơ sở</option>
-          {facilities.map((f) => <option key={f._id} value={f._id}>{f.name}</option>)}
-        </select>
-        <span className="ml-auto text-xs text-gray-400">{displayed.length} bảng giá</span>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Facility select */}
+        <div className="relative flex items-center">
+          <Building2 size={14} className="pointer-events-none absolute left-2.5 text-gray-400" />
+          <select
+            value={filterFacility}
+            onChange={(e) => setFilterFacility(e.target.value)}
+            className="cursor-pointer appearance-none rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-6 text-sm text-gray-600 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+          >
+            <option value="all">Tất cả cơ sở</option>
+            {facilities.map((f) => <option key={f._id} value={f._id}>{f.name}</option>)}
+          </select>
+          <ChevronDown size={13} className="pointer-events-none absolute right-2 text-gray-400" />
+        </div>
+
+        {/* Count */}
+        <span className="text-xs text-gray-400 whitespace-nowrap">
+          <b className="text-gray-600 font-semibold">{displayed.length}</b> bảng giá
+        </span>
+
       </div>
+
 
       {/* Content */}
       {loading ? (
@@ -99,7 +145,7 @@ export default function PricingPage() {
           </div>
           <p className="text-gray-500 font-medium">Không tìm thấy bảng giá nào.</p>
           <button onClick={() => { setEditingPlan(undefined); setModalOpen(true); }}
-            className="mt-4 bg-[#060606] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-black/80 transition-colors inline-flex items-center gap-2">
+            className="mt-4 bg-[#d7ee46] text-[#060606] font-bold px-5 py-2.5 rounded-xl border border-[#c4dc32] hover:bg-[#c4dc32] transition-colors inline-flex items-center gap-2 shadow-sm">
             <Plus size={16} /> Tạo bảng giá đầu tiên
           </button>
         </div>
