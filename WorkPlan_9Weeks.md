@@ -50,7 +50,7 @@
   - `Feedback` (userId, sessionId, type, description, images, status)
   - `SystemConfig` / `AuditLog`
 - [x] Setup ESLint + Prettier cho backend
-- [x] Viết seed data cơ bản
+- [x] Viết seed data cơ bản (bao gồm `distanceToGate` cho mỗi Floor — cần thiết cho WSM scoring tuần 6)
 
 ### BE2 – Backend Developer
 
@@ -273,6 +273,17 @@
   - Zone Filtering (từ Contract Net Protocol [P1] + Differentiated Parking [P2])
   - Greedy Matching (từ Hungarian Algorithm [P3] + Centralized Assignment [P4])
   - Trọng số mặc định: W1=0.25, W2=0.30, W3=0.25, W4=0.20 (cấu hình qua SystemConfig)
+  - **Service files tạo mới:**
+    - `server/services/algorithms/zoneFilter.service.js` ← RQ1: Zone Differentiation [P2]
+    - `server/services/algorithms/wsmScoring.service.js` ← RQ3: TOPSIS/CRITIC → WSM [P5]
+    - `server/services/algorithms/greedyMatching.service.js` ← RQ2: Hungarian → Greedy [P3]
+    - `server/services/algorithms/slotAssignment.service.js` ← Orchestrator
+  - **Schema changes:**
+    - `Floor.js`: thêm `distanceToGate` (Number) cho WSM scoring
+    - `ParkingSession.js`: thêm `assignmentMode` (enum: 'auto'/'manual'), `suggestedSlotId`
+    - `SystemConfig.js`: thêm `algorithmWeights` ({W1, W2, W3, W4})
+  - **API mới:** `PUT /api/system-config/algorithm-weights` cho Manager điều chỉnh W1–W4
+  - **Unit test:** test WSM scoring logic, test zone filtering, test greedy matching
 
 #### BE2
 
@@ -325,6 +336,13 @@
   - Conflict Resolution: khi 2 xe hướng cùng slot → ưu tiên xe gần hơn
 - [ ] 🔬 **[RQ4]** Peak Hour Detection: xác định giờ cao điểm tự động từ dữ liệu lịch sử
   - Hướng nâng cấp tương lai: **MARL (Multi-Agent Deep RL)** [P7] (Zhang et al., *TRC* 2022) và **DRL (Deep Q-Network)** [P9]
+  - **Service files tạo mới:**
+    - `server/services/algorithms/loadBalancer.service.js` ← RQ4: Threshold LB [P8]
+    - `server/services/algorithms/peakDetection.service.js` ← RQ4: Peak detection [P8]
+  - **Schema changes:**
+    - `SystemConfig.js`: thêm `loadBalancingThreshold` (default: 0.85), `peakHourMultiplier` (default: 1.5)
+  - **API mới:** `GET /api/reports/load-imbalance`, `GET /api/reports/peak-hours`
+  - **Tích hợp:** Kết nối loadBalancer + peakDetection vào slotAssignment orchestrator
 
 #### BE2
 
@@ -533,6 +551,72 @@ Tuần 9: Deploy ───────────────┘── Mileston
 | Quản trị hệ thống        |   BE2   |     FE1      |   –    |
 | Realtime (Socket.IO)     |   BE2   |   FE1+FE2    |  FE3   |
 | **Research Questions**   | **BE1+BE2** |    –     |   –    |
+
+---
+
+## 🔬 KIẾN TRÚC THUẬT TOÁN PHÂN BỔ SLOT
+
+### Cấu trúc service files
+
+```
+server/services/algorithms/
+├── zoneFilter.service.js       ← RQ1: Zone Differentiation [P2]
+├── wsmScoring.service.js       ← RQ3: TOPSIS/CRITIC → WSM [P5]
+├── greedyMatching.service.js   ← RQ2: Hungarian → Greedy [P3]
+├── loadBalancer.service.js     ← RQ4: NSGA-II → Threshold LB [P8]
+├── peakDetection.service.js    ← RQ4: Peak detection [P8]
+└── slotAssignment.service.js   ← Orchestrator (tích hợp tất cả)
+```
+
+### Pipeline xử lý khi xe vào bãi (FR-8.3)
+
+```
+Xe vào → Zone Filter [P2] → Peak Detection [P8]
+                                    │
+                         ┌──── isPeak ────┐
+                         ▼                ▼
+                   Load Balancer     WSM Scoring
+                    [P8]+[P10]         [P5]
+                         │                │
+                         └──── Greedy ────┘
+                              Match [P3]
+                                │
+                         Slot Assigned
+                     (auto | manual mode)
+```
+
+### Schema changes tổng hợp
+
+| Collection | Field | Type | Default | RQ |
+|-----------|-------|------|---------|-----|
+| Floor | distanceToGate | Number | 0 | RQ1, RQ3 |
+| ParkingSession | assignmentMode | String enum | 'auto' | RQ2 |
+| ParkingSession | suggestedSlotId | ObjectId | null | RQ2, RQ3 |
+| SystemConfig | algorithmWeights.W1_distance | Number | 0.25 | RQ3 |
+| SystemConfig | algorithmWeights.W2_floorBalance | Number | 0.30 | RQ3 |
+| SystemConfig | algorithmWeights.W3_durationMatch | Number | 0.25 | RQ3 |
+| SystemConfig | algorithmWeights.W4_floorPreference | Number | 0.20 | RQ3 |
+| SystemConfig | loadBalancingThreshold | Number | 0.85 | RQ4 |
+| SystemConfig | peakHourMultiplier | Number | 1.5 | RQ4 |
+
+### API endpoints cho thuật toán
+
+| Method | Endpoint | Mô tả | RQ |
+|--------|----------|-------|----|
+| GET | `/api/parking/suggest-floor?mode=auto\|manual` | Gợi ý tầng/slot tối ưu | RQ2, RQ3 |
+| GET | `/api/reports/occupancy-heatmap` | Heatmap occupancy theo tầng | RQ1 |
+| GET | `/api/reports/peak-hours` | Phân tích giờ cao điểm | RQ4 |
+| GET | `/api/reports/load-imbalance` | Load Imbalance Index | RQ4 |
+| PUT | `/api/system-config/algorithm-weights` | Điều chỉnh W1–W4 | RQ3 |
+
+### Thuật toán đã chọn — tóm tắt
+
+| RQ | Paper chính | Ranking | Phiên bản áp dụng | Nâng cấp tương lai |
+|----|------------|---------|--------------------|-----------------|
+| RQ1 | [P2] Jakob & Menendez 2021 | Q2, IF=3.3 | Rule-based Zone Filtering | Adaptive ML Zoning |
+| RQ2 | [P3] arXiv 2025 + [P4] Wang 2021 | Preprint + Q1/IF=7.9 | Greedy Matching | Full Hungarian O(n³) |
+| RQ3 | [P5] Amari 2023 + [P7] Zhang 2022 | Q2 + Q1/IF=7.9 | WSM 4-criteria | Full TOPSIS + COA [P6] |
+| RQ4 | [P8] Zhang 2024 + [P10] Wang 2022 | Q1-JCR + Q1/IF=7.9 | Threshold Load Balancing | DQN [P9] / MARL [P7] |
 
 ---
 
