@@ -1536,10 +1536,19 @@ Output: suggestedFloor, loadBalancingApplied, isPeakHour
      floor.effective_occ = (countOccupied + countReserved) / totalSlots
      // Tính cả slot Reserved → tránh over-allocation
 
-2. PEAK HOUR DETECTION ([P8] NSGA-II inspired):
-   hourly_rate = countCheckIns(last_60_min)
-   avg_hourly = AVG(checkIns_per_hour, last_30_days, same_weekday)
-   isPeakHour = hourly_rate > avg_hourly × 1.5
+2. PEAK HOUR DETECTION — AI-Enhanced (thay thế rule-based):
+   // TRƯỚC (rule-based): isPeakHour = hourly_rate > avg × 1.5
+   // SAU (AI prediction):
+   isPeakHour = PeakHourModel.predict({
+     hour: currentHour,
+     weekday: dayOfWeek,       // 0-6
+     month: currentMonth,
+     isHoliday: checkHoliday(today),
+     recentRate: countCheckIns(last_30_min)
+   })
+   // Model: Linear Regression / Random Forest
+   // Training data: lịch sử check-in (≥ 30 ngày)
+   // Fallback: nếu model chưa train → dùng rule-based isPeakHour = rate > avg × 1.5
 
 3. LOAD BALANCING DECISION:
    IF isPeakHour AND anyFloor.effective_occ >= 0.85:
@@ -1605,7 +1614,7 @@ Complexity: O(F) — F = số tầng
 
 ## Kiến Trúc Thuật Toán Tích Hợp
 
-### Pipeline xử lý khi xe vào bãi (FR-8.3)
+### Pipeline xử lý khi xe vào bãi (FR-8.3) — AI-Enhanced
 
 ```
 🚗 Xe vào bãi (FR-8.1)
@@ -1615,8 +1624,9 @@ Complexity: O(F) — F = số tầng
     │ vehicleType match + slot.status == 'Available'
     │
     ▼
-[STEP 2] Peak Detection — [P8] NSGA-II inspired
-    │ isPeakHour = hourly_rate > avg × 1.5
+[STEP 2] 🤖 AI: Peak Hour Prediction (Linear Regression / Random Forest)
+    │ isPeakHour = ML_model.predict(hour, weekday, month, isHoliday, recentRate)
+    │ Fallback: isPeakHour = hourly_rate > avg × 1.5 (nếu model chưa train)
     │
     ├── isPeakHour = true & floor ≥ 85%
     │       ▼
@@ -1627,8 +1637,12 @@ Complexity: O(F) — F = số tầng
     │
     └── Normal hours
             ▼
+        🤖 AI: Duration Prediction → estimatedDuration
+            │ ML_model.predict(vehicleType, hour, weekday)
+            │ Fallback: user_input hoặc AVG(duration) theo loại xe
+            ▼
         WSM Scoring — [P5] TOPSIS/CRITIC
-            │ Score = W1×D + W2×F + W3×M + W4×L
+            │ Score = W1×D + W2×F + W3×M(AI_duration) + W4×L
             ▼
         Target Floor (highest WSM score)
             │
@@ -1662,7 +1676,15 @@ server/services/algorithms/
 ├── greedyMatching.service.js   ← RQ2: Hungarian → Greedy [P3]
 ├── loadBalancer.service.js     ← RQ4: NSGA-II → Threshold LB [P8]
 ├── peakDetection.service.js    ← RQ4: Peak hour detection [P8]
-└── slotAssignment.service.js   ← Orchestrator (tích hợp tất cả)
+├── slotAssignment.service.js   ← Orchestrator (tích hợp tất cả)
+│
+server/services/ai/
+├── peakHourPredictor.service.js    ← 🤖 AI: Linear Regression / Random Forest
+├── durationPredictor.service.js    ← 🤖 AI: Duration Prediction
+├── modelTrainer.service.js         ← 🤖 AI: Training pipeline (cron weekly)
+└── models/                         ← Trained model files (.json)
+    ├── peak_hour_model.json
+    └── duration_model.json
 ```
 
 ### Schema Changes cần thiết
@@ -1674,7 +1696,10 @@ server/services/algorithms/
 | `ParkingSession` | `suggestedSlotId` | ObjectId | null | So sánh suggested vs actual slot | RQ2, RQ3 |
 | `SystemConfig` | `algorithmWeights` | Object {W1,W2,W3,W4} | {0.25,0.30,0.25,0.20} | Trọng số WSM cấu hình | RQ3 |
 | `SystemConfig` | `loadBalancingThreshold` | Number | 0.85 | Ngưỡng kích hoạt LB | RQ4 |
-| `SystemConfig` | `peakHourMultiplier` | Number | 1.5 | Hệ số phát hiện giờ cao điểm | RQ4 |
+| `SystemConfig` | `peakHourMultiplier` | Number | 1.5 | Hệ số phát hiện giờ cao điểm (fallback) | RQ4 |
+| `SystemConfig` | `aiPredictionEnabled` | Boolean | false | Bật/tắt AI prediction (fallback về rule-based) | AI |
+| `AIModelMeta` | `peakHourModel` | Object | null | Metadata model peak hour: accuracy, lastTrained, features | AI |
+| `AIModelMeta` | `durationModel` | Object | null | Metadata model duration: MAE, lastTrained, features | AI |
 
 ### API Endpoints cho thuật toán
 
@@ -1685,6 +1710,10 @@ server/services/algorithms/
 | `GET` | `/api/reports/peak-hours` | Phân tích giờ cao điểm tự động | RQ4 | FR-6.4 |
 | `GET` | `/api/reports/load-imbalance` | Load Imbalance Index giữa các tầng | RQ4 | FR-6.3 |
 | `PUT` | `/api/system-config/algorithm-weights` | Manager điều chỉnh W1–W4 | RQ3 | FR-20.1 |
+| `POST` | `/api/ai/train-models` | Trigger re-train AI models (admin) | AI | FR-20.1 |
+| `GET` | `/api/ai/model-status` | Xem trạng thái model: accuracy, lastTrained | AI | FR-20.4 |
+| `GET` | `/api/ai/predict-peak?hour=&weekday=` | Dự đoán giờ cao điểm (test/debug) | AI | FR-6.4 |
+| `GET` | `/api/ai/predict-duration?vehicleType=&hour=&weekday=` | Dự đoán thời gian gửi (test/debug) | AI | FR-8.3 |
 
 ---
 
@@ -1695,9 +1724,81 @@ server/services/algorithms/
 | Phase 1 (Tuần 1) | 1 | Thiết kế DB schema với các field RQ-ready: `Floor.distanceToGate`, `ParkingSession.assignmentMode` |
 | Phase 3 (Tuần 4) | 4 | Implement API gợi ý tầng cơ bản (FR-8.3) hỗ trợ 2 mode: `auto` / `manual`. Thu thập dữ liệu baseline |
 | Phase 4 (Tuần 6) | 6 | Implement WSM Scoring [P5], Zone Filtering [P2], Greedy Matching [P3]. Schema changes + API weights |
-| Phase 4 (Tuần 7) | 7 | Implement Threshold Load Balancing [P8], Peak Detection [P8], Reservation-Aware [P10] |
-| Phase 5 (Tuần 8) | 8 | A/B testing (4 scenario × 500 sessions), thu thập metrics, đánh giá giả thuyết H1–H4 |
-| Phase 6 (Tuần 9) | 9 | Tổng hợp Research Report: kết quả RQ, mapping thuật toán gốc → đơn giản hóa, đề xuất cải tiến |
+| Phase 4 (Tuần 7) | 7 | Implement Threshold Load Balancing [P8], Peak Detection [P8], Reservation-Aware [P10]. **🤖 AI: Peak Hour Prediction + Duration Prediction** |
+| Phase 5 (Tuần 8) | 8 | A/B testing (4 scenario × 500 sessions + AI vs rule-based), thu thập metrics, đánh giá giả thuyết H1–H4 |
+| Phase 6 (Tuần 9) | 9 | Tổng hợp Research Report: kết quả RQ, mapping thuật toán gốc → đơn giản hóa, **AI accuracy report**, đề xuất cải tiến |
+
+---
+
+## 🤖 AI Prediction Modules
+
+Hệ thống bổ sung 2 module AI nhẹ để nâng cao chất lượng quyết định, **không thay đổi kiến trúc pipeline hiện tại**.
+
+### Module 1: Peak Hour Prediction
+
+| Thuộc tính | Mô tả |
+|-----------|-------|
+| **Mục đích** | Dự đoán giờ cao điểm chính xác hơn rule-based (thay thế `isPeakHour = rate > avg × 1.5`) |
+| **Input features** | `hour` (0-23), `weekday` (0-6), `month` (1-12), `isHoliday` (boolean), `recentCheckInRate` (last 30 min) |
+| **Output** | `isPeakHour` (boolean) + `confidence` (0-1) |
+| **Model** | Linear Regression → Random Forest (nâng cấp khi có đủ data) |
+| **Training data** | Lịch sử check-in sessions (≥ 30 ngày, aggregate theo giờ) |
+| **Training schedule** | Cron job chạy 1 lần/tuần (Chủ nhật 2:00 AM) |
+| **Thư viện** | `ml-regression` (Linear) hoặc `ml-random-forest` (RF) — JavaScript native, không cần Python |
+| **Fallback** | Nếu model chưa train hoặc accuracy < 70% → dùng rule-based `rate > avg × 1.5` |
+| **Metric đánh giá** | Accuracy, Precision, Recall so với actual peak hours |
+
+```
+TRƯỚC (rule-based):
+  isPeakHour = hourly_rate > avg × 1.5    ← threshold cứng, không học từ dữ liệu
+
+SAU (AI-enhanced):
+  isPeakHour = PeakHourModel.predict({    ← học từ patterns lịch sử
+    hour: 17,
+    weekday: 1,        // Thứ 2
+    month: 6,
+    isHoliday: false,
+    recentRate: 45      // 45 xe/30 phút
+  })
+  // → { isPeakHour: true, confidence: 0.87 }
+```
+
+### Module 2: Parking Duration Prediction
+
+| Thuộc tính | Mô tả |
+|-----------|-------|
+| **Mục đích** | Dự đoán thời gian gửi xe → cải thiện WSM scoring W3 (duration match) |
+| **Input features** | `vehicleType` (encoded), `checkInHour` (0-23), `weekday` (0-6), `month` (1-12) |
+| **Output** | `estimatedDuration` (phút) |
+| **Model** | Linear Regression → Random Forest |
+| **Training data** | Lịch sử parking sessions hoàn thành (≥ 200 records) |
+| **Training schedule** | Cron job chạy 1 lần/tuần (Chủ nhật 2:30 AM) |
+| **Thư viện** | `ml-regression` / `ml-random-forest` — JavaScript native |
+| **Fallback** | Nếu model chưa train → dùng `AVG(duration)` theo loại xe từ dữ liệu lịch sử |
+| **Metric đánh giá** | MAE (Mean Absolute Error), RMSE so với actual duration |
+
+```
+TRƯỚC (manual):
+  estimatedDuration = user_input           ← Staff đoán hoặc không nhập
+
+SAU (AI-enhanced):
+  estimatedDuration = DurationModel.predict({
+    vehicleType: 'car',
+    checkInHour: 8,
+    weekday: 1,        // Thứ 2
+    month: 6
+  })
+  // → { estimatedDuration: 480, unit: 'minutes' }  // ~8 tiếng (đi làm)
+```
+
+### So sánh TRƯỚC vs SAU khi thêm AI
+
+| Component | TRƯỚC (Rule-based) | SAU (AI-enhanced) | Cải thiện |
+|-----------|-------------------|-------------------|----------|
+| Peak Detection | `rate > avg × 1.5` (threshold cứng) | ML model học từ patterns (giờ, ngày, tháng, ngày lễ) | Chính xác hơn, tự adapt theo mùa/sự kiện |
+| Duration Estimate | Staff nhập tay / không nhập | ML model dự đoán từ lịch sử | WSM scoring W3 chính xác hơn → slot assignment tốt hơn |
+| Fallback | N/A | Tự động fallback về rule-based nếu model chưa sẵn sàng | Không bao giờ fail |
+| Training | N/A | Cron weekly, JavaScript native (không cần Python/GPU) | Tự cập nhật |
 
 ---
 

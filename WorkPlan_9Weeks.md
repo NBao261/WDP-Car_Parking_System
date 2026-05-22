@@ -343,6 +343,24 @@
     - `SystemConfig.js`: thêm `loadBalancingThreshold` (default: 0.85), `peakHourMultiplier` (default: 1.5)
   - **API mới:** `GET /api/reports/load-imbalance`, `GET /api/reports/peak-hours`
   - **Tích hợp:** Kết nối loadBalancer + peakDetection vào slotAssignment orchestrator
+- [ ] 🤖 **[AI]** Implement Peak Hour Prediction:
+  - Thư viện: `ml-regression` / `ml-random-forest` (JavaScript native, không cần Python)
+  - Input: hour, weekday, month, isHoliday, recentCheckInRate
+  - Output: isPeakHour (boolean) + confidence (0-1)
+  - Training: cron job chạy 1 lần/tuần trên lịch sử check-in (≥ 30 ngày)
+  - Fallback: nếu model chưa train hoặc accuracy < 70% → rule-based `rate > avg × 1.5`
+  - **Service files:**
+    - `server/services/ai/peakHourPredictor.service.js`
+    - `server/services/ai/modelTrainer.service.js`
+  - **Schema:** `SystemConfig.aiPredictionEnabled` (Boolean), `AIModelMeta.peakHourModel`
+  - **API:** `POST /api/ai/train-models`, `GET /api/ai/model-status`, `GET /api/ai/predict-peak`
+- [ ] 🤖 **[AI]** Implement Parking Duration Prediction:
+  - Input: vehicleType, checkInHour, weekday, month
+  - Output: estimatedDuration (phút) → feed vào WSM scoring W3
+  - Training: cron job trên lịch sử sessions hoàn thành (≥ 200 records)
+  - Fallback: `AVG(duration)` theo loại xe
+  - **Service file:** `server/services/ai/durationPredictor.service.js`
+  - **API:** `GET /api/ai/predict-duration`
 
 #### BE2
 
@@ -392,7 +410,10 @@
   - Scenario 2: 500 sessions auto-assign (Greedy [P3]) vs. manual (RQ2) — đo search time
   - Scenario 3: 500 sessions single-criteria vs. WSM multi-criteria [P5] (RQ3)
   - Scenario 4: 200 sessions giờ cao điểm với/không Threshold Load Balancing [P8] (RQ4)
+  - **Scenario 5: 🤖 AI vs Rule-based** — so sánh peak prediction accuracy (AI model vs threshold cứng)
+  - **Scenario 6: 🤖 Duration Prediction** — so sánh WSM với AI duration vs manual/avg duration
 - [ ] 🔬 Thu thập và phân tích metrics theo bảng chỉ số SRS Phần 5
+- [ ] 🤖 **[AI]** Đánh giá AI model performance: Accuracy/Precision/Recall (peak), MAE/RMSE (duration)
 
 ### BE2
 
@@ -449,6 +470,10 @@
     - MARL hard constraints [P7 Zhang 2022] → Zone Filtering rules
     - NSGA-II [P8] → Threshold Load Balancing
     - Chance-constrained reservation [P10 Wang 2022] → Reservation-Aware Occupancy
+  - **🤖 AI Accuracy Report:**
+    - Peak Hour Prediction: Accuracy, Precision, Recall, Confusion Matrix
+    - Duration Prediction: MAE, RMSE, R² score
+    - So sánh AI-enhanced vs Rule-based: cải thiện bao nhiêu %
   - Đề xuất cải tiến: nâng cấp lên TOPSIS đầy đủ [P5], COA [P6], MARL [P7], DQN [P9]
   - Hạn chế nghiên cứu và đối chiếu với papers [P1]–[P10]
 
@@ -565,24 +590,34 @@ server/services/algorithms/
 ├── greedyMatching.service.js   ← RQ2: Hungarian → Greedy [P3]
 ├── loadBalancer.service.js     ← RQ4: NSGA-II → Threshold LB [P8]
 ├── peakDetection.service.js    ← RQ4: Peak detection [P8]
-└── slotAssignment.service.js   ← Orchestrator (tích hợp tất cả)
+├── slotAssignment.service.js   ← Orchestrator (tích hợp tất cả)
+│
+server/services/ai/
+├── peakHourPredictor.service.js    ← 🤖 AI: Peak Hour Prediction
+├── durationPredictor.service.js    ← 🤖 AI: Duration Prediction
+├── modelTrainer.service.js         ← 🤖 AI: Training pipeline (cron weekly)
+└── models/                         ← Trained model files (.json)
 ```
 
 ### Pipeline xử lý khi xe vào bãi (FR-8.3)
 
 ```
-Xe vào → Zone Filter [P2] → Peak Detection [P8]
+Xe vào → Zone Filter [P2] → 🤖 AI Peak Prediction
                                     │
                          ┌──── isPeak ────┐
                          ▼                ▼
-                   Load Balancer     WSM Scoring
-                    [P8]+[P10]         [P5]
-                         │                │
+                   Load Balancer  🤖 AI Duration
+                    [P8]+[P10]     Prediction
+                         │           │
+                         │      WSM Scoring [P5]
+                         │           │
                          └──── Greedy ────┘
                               Match [P3]
                                 │
                          Slot Assigned
                      (auto | manual mode)
+
+Fallback: AI model chưa train → rule-based (rate > avg × 1.5) + AVG(duration)
 ```
 
 ### Schema changes tổng hợp
@@ -597,7 +632,10 @@ Xe vào → Zone Filter [P2] → Peak Detection [P8]
 | SystemConfig | algorithmWeights.W3_durationMatch | Number | 0.25 | RQ3 |
 | SystemConfig | algorithmWeights.W4_floorPreference | Number | 0.20 | RQ3 |
 | SystemConfig | loadBalancingThreshold | Number | 0.85 | RQ4 |
-| SystemConfig | peakHourMultiplier | Number | 1.5 | RQ4 |
+| SystemConfig | peakHourMultiplier | Number | 1.5 | RQ4 (fallback) |
+| SystemConfig | aiPredictionEnabled | Boolean | false | AI |
+| AIModelMeta | peakHourModel | Object | null | AI |
+| AIModelMeta | durationModel | Object | null | AI |
 
 ### API endpoints cho thuật toán
 
@@ -608,6 +646,10 @@ Xe vào → Zone Filter [P2] → Peak Detection [P8]
 | GET | `/api/reports/peak-hours` | Phân tích giờ cao điểm | RQ4 |
 | GET | `/api/reports/load-imbalance` | Load Imbalance Index | RQ4 |
 | PUT | `/api/system-config/algorithm-weights` | Điều chỉnh W1–W4 | RQ3 |
+| POST | `/api/ai/train-models` | Trigger re-train AI models | AI |
+| GET | `/api/ai/model-status` | Trạng thái model: accuracy, lastTrained | AI |
+| GET | `/api/ai/predict-peak` | Dự đoán giờ cao điểm (test) | AI |
+| GET | `/api/ai/predict-duration` | Dự đoán thời gian gửi (test) | AI |
 
 ### Thuật toán đã chọn — tóm tắt
 
