@@ -19,14 +19,14 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
     const isObj = typeof floor.facilityId === 'object';
     const id = isObj ? (floor.facilityId as any)._id : floor.facilityId as string;
     const name = isObj ? (floor.facilityId as any).name : 'Tòa nhà ' + id;
-    
+
     if (!acc[id]) {
       acc[id] = { id, name, floors: [] };
     }
     acc[id].floors.push({ id: floor._id, name: floor.name });
-    
+
     return acc;
-  }, {} as Record<string, { id: string, name: string, floors: {id: string, name: string}[] }>);
+  }, {} as Record<string, { id: string, name: string, floors: { id: string, name: string }[] }>);
 
   const groupedFacilities = Object.values(facilitiesWithFloors);
 
@@ -92,17 +92,17 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
             </div>
 
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Description</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Mô Tả</p>
               <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-sm text-gray-700 min-h-[80px]">
-                {vehicle.description || <span className="text-gray-400 italic">No description provided.</span>}
+                {vehicle.description || <span className="text-gray-400 italic">Không có mô tả</span>}
               </div>
             </div>
           </div>
-          
+
           <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
-             <button onClick={onClose} className="px-5 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                Close
-             </button>
+            <button onClick={onClose} className="px-5 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+              Close
+            </button>
           </div>
         </motion.div>
       </div>

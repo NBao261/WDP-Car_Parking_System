@@ -187,7 +187,7 @@ export default function VehiclesPage() {
       <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-gray-50/80 text-gray-500 font-semibold border-b border-gray-100">
+            <thead className="bg-lime-50/50 text-lime-700 font-semibold border-b border-lime-100/50">
               <tr>
                 <th className="px-6 py-4 rounded-tl-2xl w-[20%]">Loại Xe</th>
                 <th className="px-6 py-4 w-[15%]">Mã Xe</th>
@@ -232,7 +232,7 @@ export default function VehiclesPage() {
 
         {/* Pagination Footer */}
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30">
+          <div className="px-6 py-4 border-t border-lime-100/50 flex items-center justify-between bg-lime-50/50">
             <p className="text-sm text-gray-500">
               Hiển thị <span className="font-medium text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> đến <span className="font-medium text-gray-900">{Math.min(currentPage * itemsPerPage, filtered.length)}</span> trong tổng số <span className="font-medium text-gray-900">{filtered.length}</span> kết quả
             </p>
