@@ -1,0 +1,367 @@
+components:
+  schemas:
+    Reservation:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Mã đặt chỗ
+        userId:
+          type: string
+          description: ID người đặt (hoặc object đầy đủ nếu populated)
+        facilityId:
+          type: string
+          description: ID bãi xe (hoặc object đầy đủ nếu populated)
+        vehicleTypeId:
+          type: string
+          description: ID loại xe (hoặc object đầy đủ nếu populated)
+        slotId:
+          type: string
+          nullable: true
+          description: ID slot được giữ (hoặc object đầy đủ nếu populated)
+        startTime:
+          type: string
+          format: date-time
+          description: Thời gian bắt đầu dự kiến
+        endTime:
+          type: string
+          format: date-time
+          description: Thời gian kết thúc dự kiến
+        status:
+          type: string
+          enum: [pending, confirmed, used, cancelled, expired]
+          description: Trạng thái đặt chỗ
+        cancellationFee:
+          type: number
+          description: Phí hủy (VND)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+paths:
+  /reservations:
+    post:
+      summary: Tạo đặt chỗ trước (Driver)
+      description: |
+        **FR-14.1**: Cho phép Driver đặt chỗ trước tại bãi xe.
+        
+        **Business Rules áp dụng:**
+        - **BR-6.1**: Chỉ đặt khi còn slot Available cho loại xe yêu cầu
+        - **BR-6.2**: Phải đặt trước ít nhất 30 phút so với thời gian bắt đầu
+        - **BR-6.3**: Mỗi Driver tối đa 2 reservation đang active
+        
+        Khi đặt thành công, slot sẽ chuyển từ `Available` → `Reserved`.
+      tags: [Reservations]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - facilityId
+                - vehicleTypeId
+                - startTime
+                - endTime
+              properties:
+                facilityId:
+                  type: string
+                  example: "683f1a2b3c4d5e6f7a8b9c01"
+                vehicleTypeId:
+                  type: string
+                  example: "683f1a2b3c4d5e6f7a8b9c02"
+                startTime:
+                  type: string
+                  format: date-time
+                  example: "2026-05-25T08:00:00.000Z"
+                endTime:
+                  type: string
+                  format: date-time
+                  example: "2026-05-25T17:00:00.000Z"
+            example:
+              facilityId: "683f1a2b3c4d5e6f7a8b9c01"
+              vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c02"
+              startTime: "2026-05-25T08:00:00.000Z"
+              endTime: "2026-05-25T17:00:00.000Z"
+      responses:
+        '201':
+          description: Đặt chỗ thành công
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c30"
+                  userId: "683f1a2b3c4d5e6f7a8b9c05"
+                  facilityId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c01"
+                    name: "Bãi xe Tòa nhà A"
+                    address: "123 Nguyễn Văn Linh, Q7"
+                  vehicleTypeId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c02"
+                    name: "Xe máy"
+                  slotId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c03"
+                    code: "A1-01"
+                    floorId: "683f1a2b3c4d5e6f7a8b9c04"
+                  startTime: "2026-05-25T08:00:00.000Z"
+                  endTime: "2026-05-25T17:00:00.000Z"
+                  status: "confirmed"
+                  cancellationFee: 0
+                  createdAt: "2026-05-24T02:00:00.000Z"
+        '400':
+          description: Lỗi validation hoặc business rule
+          content:
+            application/json:
+              examples:
+                not_enough_advance:
+                  summary: Đặt trước chưa đủ 30 phút (BR-6.2)
+                  value:
+                    success: false
+                    message: "Phải đặt trước ít nhất 30 phút so với thời gian bắt đầu"
+                max_active:
+                  summary: Đã đạt tối đa 2 reservation (BR-6.3)
+                  value:
+                    success: false
+                    message: "Bạn chỉ có thể có tối đa 2 đặt chỗ đang hoạt động"
+                no_slot:
+                  summary: Không còn slot trống (BR-6.1)
+                  value:
+                    success: false
+                    message: "Không còn slot trống cho loại xe này trong khung giờ yêu cầu"
+                invalid_time:
+                  summary: Thời gian không hợp lệ
+                  value:
+                    success: false
+                    message: "Thời gian kết thúc phải sau thời gian bắt đầu"
+
+    get:
+      summary: Xem danh sách đặt chỗ
+      description: |
+        **FR-14.2**: Xem danh sách reservation.
+        - **Driver**: Chỉ xem đặt chỗ của mình
+        - **Manager/Admin**: Xem tất cả, có thể filter theo facility
+      tags: [Reservations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Số trang
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Số lượng / trang
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, confirmed, used, cancelled, expired]
+          description: Lọc theo trạng thái
+        - in: query
+          name: facilityId
+          schema:
+            type: string
+          description: Lọc theo bãi xe (Manager/Admin)
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            default: createdAt
+          description: Trường sắp xếp
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Thứ tự sắp xếp
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "683f1a2b3c4d5e6f7a8b9c30"
+                    userId:
+                      _id: "683f1a2b3c4d5e6f7a8b9c05"
+                      fullName: "Nguyễn Văn A"
+                      email: "driver@example.com"
+                      phone: "0901234567"
+                    facilityId:
+                      _id: "683f1a2b3c4d5e6f7a8b9c01"
+                      name: "Bãi xe Tòa nhà A"
+                      address: "123 Nguyễn Văn Linh, Q7"
+                    vehicleTypeId:
+                      _id: "683f1a2b3c4d5e6f7a8b9c02"
+                      name: "Xe máy"
+                    slotId:
+                      _id: "683f1a2b3c4d5e6f7a8b9c03"
+                      code: "A1-01"
+                      floorId: "683f1a2b3c4d5e6f7a8b9c04"
+                    startTime: "2026-05-25T08:00:00.000Z"
+                    endTime: "2026-05-25T17:00:00.000Z"
+                    status: "confirmed"
+                    cancellationFee: 0
+                    createdAt: "2026-05-24T02:00:00.000Z"
+                pagination:
+                  total: 1
+                  page: 1
+                  totalPages: 1
+
+  /reservations/{id}:
+    get:
+      summary: Xem chi tiết đặt chỗ
+      tags: [Reservations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "683f1a2b3c4d5e6f7a8b9c30"
+          description: ID reservation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c30"
+                  userId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c05"
+                    fullName: "Nguyễn Văn A"
+                    email: "driver@example.com"
+                    phone: "0901234567"
+                  facilityId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c01"
+                    name: "Bãi xe Tòa nhà A"
+                    address: "123 Nguyễn Văn Linh, Q7"
+                  vehicleTypeId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c02"
+                    name: "Xe máy"
+                  slotId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c03"
+                    code: "A1-01"
+                    floorId: "683f1a2b3c4d5e6f7a8b9c04"
+                  startTime: "2026-05-25T08:00:00.000Z"
+                  endTime: "2026-05-25T17:00:00.000Z"
+                  status: "confirmed"
+                  cancellationFee: 0
+                  createdAt: "2026-05-24T02:00:00.000Z"
+        '404':
+          description: Không tìm thấy đặt chỗ
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Đặt chỗ không tồn tại"
+
+  /reservations/{id}/cancel:
+    post:
+      summary: Hủy đặt chỗ (Driver)
+      description: |
+        **FR-14.2**: Cho phép Driver hủy đặt chỗ đã tạo.
+        
+        **BR-6.5 — Chính sách hủy:**
+        - Hủy trước ≥ 2 giờ so với `startTime`: **miễn phí**
+        - Hủy trong vòng 2 giờ: **phí hủy 10,000 VND**
+        
+        Chỉ hủy được reservation có status `pending` hoặc `confirmed`.
+        Sau khi hủy, slot sẽ chuyển từ `Reserved` → `Available`.
+      tags: [Reservations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "683f1a2b3c4d5e6f7a8b9c30"
+          description: ID reservation cần hủy
+      responses:
+        '200':
+          description: Hủy thành công
+          content:
+            application/json:
+              examples:
+                free_cancel:
+                  summary: Hủy miễn phí (trước ≥ 2h)
+                  value:
+                    success: true
+                    data:
+                      _id: "683f1a2b3c4d5e6f7a8b9c30"
+                      status: "cancelled"
+                      cancellationFee: 0
+                      startTime: "2026-05-25T08:00:00.000Z"
+                paid_cancel:
+                  summary: Hủy có phí (trong vòng 2h)
+                  value:
+                    success: true
+                    data:
+                      _id: "683f1a2b3c4d5e6f7a8b9c30"
+                      status: "cancelled"
+                      cancellationFee: 10000
+                      startTime: "2026-05-25T08:00:00.000Z"
+        '400':
+          description: Không thể hủy
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Không thể hủy đặt chỗ đã sử dụng hoặc đã hủy"
+        '403':
+          description: Không có quyền hủy
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không có quyền hủy đặt chỗ này"
+        '404':
+          description: Không tìm thấy đặt chỗ
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Đặt chỗ không tồn tại"
+
+  /reservations/auto-expire:
+    post:
+      summary: Tự động hủy reservation quá hạn (Admin/Cron)
+      description: |
+        **BR-6.4**: Hủy tất cả reservation mà Driver không đến trong vòng 30 phút kể từ `startTime`.
+        
+        Các reservation bị hủy sẽ chuyển sang status `expired`.
+        Slot tương ứng sẽ chuyển từ `Reserved` → `Available`.
+        
+        **Ghi chú:** Endpoint này nên được gọi bởi cron job mỗi 5 phút hoặc kích hoạt thủ công bởi Admin.
+      tags: [Reservations]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Quét hoàn tất
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Đã hủy 3 đặt chỗ quá hạn."
+                data:
+                  count: 3
