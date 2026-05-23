@@ -189,9 +189,10 @@ export default function VehiclesPage() {
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-gray-50/80 text-gray-500 font-semibold border-b border-gray-100">
               <tr>
-                <th className="px-6 py-4 rounded-tl-2xl w-[30%]">Loại Xe</th>
+                <th className="px-6 py-4 rounded-tl-2xl w-[20%]">Loại Xe</th>
+                <th className="px-6 py-4 w-[15%]">Mã Xe</th>
                 <th className="px-6 py-4 w-[20%]">Kích Thước Slot</th>
-                <th className="px-6 py-4 w-[30%]">Tòa Nhà Liên Kết</th>
+                <th className="px-6 py-4 w-[25%]">Tòa Nhà Liên Kết</th>
                 <th className="px-6 py-4 w-[10%]">Ngày Tạo</th>
                 <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Thao Tác</th>
               </tr>
@@ -199,14 +200,14 @@ export default function VehiclesPage() {
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-14 text-center text-gray-400">
+                  <td colSpan={6} className="px-6 py-14 text-center text-gray-400">
                     <div className="w-6 h-6 border-2 border-[#d7ee46] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     Đang tải...
                   </td>
                 </tr>
               ) : paginatedVehicles.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-14 text-center text-gray-400">
+                  <td colSpan={6} className="px-6 py-14 text-center text-gray-400">
                     <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Package size={22} className="text-gray-300" />
                     </div>

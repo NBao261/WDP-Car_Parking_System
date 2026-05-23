@@ -45,29 +45,31 @@ export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: Vehicl
             {(() => { const Icon = (vehicle.icon && ICON_MAP[vehicle.icon]) ? ICON_MAP[vehicle.icon] : Car; return <Icon size={20} strokeWidth={1.5} />; })()}
           </div>
           <div>
-            <p className="font-semibold text-[#060606] text-sm">{vehicle.name}</p>
-            <p className="text-xs text-gray-400 font-mono mt-0.5">{vehicle.code}</p>
+            <p className="font-semibold text-[#060606] text-base">{vehicle.name}</p>
           </div>
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className={`px-2.5 py-1 rounded-md text-xs font-semibold border ${color}`}>{label}</span>
+        <span className="text-sm text-gray-500 font-mono tracking-wide">{vehicle.code}</span>
       </td>
-      <td className="px-6 py-4 text-sm text-gray-500">
+      <td className="px-6 py-4">
+        <span className={`px-2.5 py-1 rounded-md text-sm font-semibold border ${color}`}>{label}</span>
+      </td>
+      <td className="px-6 py-4 text-base text-gray-500">
         {uniqueFacilities.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {uniqueFacilities.map(fac => (
-              <span key={fac.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100/60 shadow-sm">
-                <Building2 size={12} />
+              <span key={fac.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100/60 shadow-sm">
+                <Building2 size={14} />
                 {fac.name}
               </span>
             ))}
           </div>
         ) : (
-          <span className="text-gray-400 italic">Chưa liên kết</span>
+          <span className="text-gray-400 italic text-sm">Chưa liên kết</span>
         )}
       </td>
-      <td className="px-6 py-4 text-xs text-gray-400">
+      <td className="px-6 py-4 text-sm text-gray-500">
         {new Date(vehicle.createdAt).toLocaleDateString()}
       </td>
       <td className="px-6 py-4 text-right relative">
