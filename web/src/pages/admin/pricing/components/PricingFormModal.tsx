@@ -37,7 +37,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
         overtimeFeePerHour: plan.overtimeFeePerHour,
         lostCardFee: plan.lostCardFee,
       }
-      : { feeType: 'hourly', rates: [{ label: 'Giờ đầu', amount: 5000, unit: 'giờ' }], overnightFee: 0, overtimeFeePerHour: 0, lostCardFee: 50000 },
+      : { feeType: '' as any, rates: [{ label: '', amount: 0, unit: '' }], overnightFee: 0, overtimeFeePerHour: 0, lostCardFee: 0 },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'rates' });
@@ -87,7 +87,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
           {/* Name */}
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Tên Bảng Giá *</label>
+            <label className="text-sm font-medium text-gray-700 block mb-1">Tên Bảng Giá <span className="text-red-500">*</span></label>
             <input {...register('name')} className={inputCls} placeholder="VD: Xe máy - Theo giờ" />
             {errors.name && <p className={errCls}>{errors.name.message}</p>}
           </div>
@@ -95,7 +95,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
           <div className="grid grid-cols-2 gap-3">
             {/* Facility */}
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Cơ Sở *</label>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Cơ Sở <span className="text-red-500">*</span></label>
               <select {...register('facilityId')} className={isEdit ? `${inputCls} bg-gray-100 pointer-events-none opacity-70` : inputCls} tabIndex={isEdit ? -1 : 0}>
                 <option value="">-- Chọn --</option>
                 {facilities.map((f) => <option key={f._id} value={f._id}>{f.name}</option>)}
@@ -105,7 +105,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
 
             {/* Vehicle type */}
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Loại Xe *</label>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Loại Xe <span className="text-red-500">*</span></label>
               <select {...register('vehicleTypeId')} className={isEdit ? `${inputCls} bg-gray-100 pointer-events-none opacity-70` : inputCls} tabIndex={isEdit ? -1 : 0}>
                 <option value="">-- Chọn --</option>
                 {vehicleTypes.map((v) => <option key={v._id} value={v._id}>{v.icon} {v.name}</option>)}
@@ -116,7 +116,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
 
           {/* Fee type */}
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Loại Phí *</label>
+            <label className="text-sm font-medium text-gray-700 block mb-1">Loại Phí <span className="text-red-500">*</span></label>
             <div className="grid grid-cols-2 gap-2">
               {FEE_TYPE_OPTIONS.map(([val, label]) => (
                 <Controller key={val} control={control} name="feeType" render={({ field }) => (
@@ -128,12 +128,13 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
                 )} />
               ))}
             </div>
+            {errors.feeType && <p className={errCls}>{errors.feeType.message as string}</p>}
           </div>
 
           {/* Rates */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700">Mức Giá *</label>
+              <label className="text-sm font-medium text-gray-700">Mức Giá <span className="text-red-500">*</span></label>
               <button type="button" onClick={() => append({ label: '', amount: 0, unit: 'giờ' })}
                 className="text-xs font-medium text-[#060606] hover:underline flex items-center gap-1">
                 <Plus size={12} /> Thêm Mức Giá
@@ -180,13 +181,14 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+          <div className="pt-2 flex justify-end gap-3 border-t border-gray-100">
+            <button type="button" onClick={onClose} disabled={isSubmitting}
+              className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-60">
               Hủy
             </button>
             <button type="submit" disabled={isSubmitting}
-              className="flex-1 py-2.5 bg-[#d7ee46] text-[#060606] font-bold rounded-xl text-sm border border-[#c4dc32] hover:bg-[#c4dc32] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm">
-              {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : null}
+              className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2">
+              {isSubmitting && <Loader2 size={16} className="animate-spin" />}
               {isEdit ? 'Lưu Thay Đổi' : 'Tạo Bảng Giá'}
             </button>
           </div>

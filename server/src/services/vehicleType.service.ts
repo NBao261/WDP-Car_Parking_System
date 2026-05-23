@@ -11,14 +11,47 @@ export class VehicleTypeService {
 
     const newType = new VehicleType(data);
     await newType.save();
+
+    if (data.floors && data.floors.length > 0) {
+      await Floor.updateMany(
+        { _id: { $in: data.floors } },
+        { $addToSet: { allowedVehicleTypes: newType._id } }
+      );
+    }
+
     return newType;
   }
 
   static async updateVehicleType(id: string, data: Partial<IVehicleType>): Promise<IVehicleType | null> {
-    const vehicleType = await VehicleType.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-    if (!vehicleType) {
+    const oldVehicleType = await VehicleType.findById(id);
+    if (!oldVehicleType) {
       throw new AppError('Vehicle type not found', 404);
     }
+
+    const vehicleType = await VehicleType.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+    if (!vehicleType) return null;
+
+    if (data.floors) {
+      const oldFloorIds = oldVehicleType.floors.map((f: any) => f.toString());
+      const newFloorIds = data.floors.map((f: any) => f.toString());
+
+      const addedFloors = newFloorIds.filter(f => !oldFloorIds.includes(f));
+      const removedFloors = oldFloorIds.filter(f => !newFloorIds.includes(f));
+
+      if (addedFloors.length > 0) {
+        await Floor.updateMany(
+          { _id: { $in: addedFloors } },
+          { $addToSet: { allowedVehicleTypes: vehicleType._id } }
+        );
+      }
+      if (removedFloors.length > 0) {
+        await Floor.updateMany(
+          { _id: { $in: removedFloors } },
+          { $pull: { allowedVehicleTypes: vehicleType._id } }
+        );
+      }
+    }
+
     return vehicleType;
   }
 
@@ -52,7 +85,11 @@ export class VehicleTypeService {
   }
 
   static async getVehicleTypeById(id: string): Promise<IVehicleType | null> {
-    const vehicleType = await VehicleType.findById(id);
+    const vehicleType = await VehicleType.findById(id).populate({
+      path: 'floors',
+      select: 'name facilityId',
+      populate: { path: 'facilityId', select: 'name' }
+    });
     if (!vehicleType) {
       throw new AppError('Vehicle type not found', 404);
     }
@@ -61,7 +98,15 @@ export class VehicleTypeService {
 
   static async getAllVehicleTypes(filters: any = {}, skip = 0, limit = 10): Promise<{ vehicleTypes: IVehicleType[]; total: number }> {
     const query = { isDeleted: false, ...filters };
-    const vehicleTypes = await VehicleType.find(query).skip(skip).limit(limit).sort({ createdAt: -1 });
+    const vehicleTypes = await VehicleType.find(query)
+      .populate({
+        path: 'floors',
+        select: 'name facilityId',
+        populate: { path: 'facilityId', select: 'name' }
+      })
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
     const total = await VehicleType.countDocuments(query);
     return { vehicleTypes, total };
   }

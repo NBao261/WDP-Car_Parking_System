@@ -205,10 +205,9 @@ export default function FacilitiesPage() {
             </div>
             <button
               onClick={() => { setEditingFacility(undefined); setIsFacilityModalOpen(true); }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90 self-start sm:self-auto"
-              style={{ background: '#d7ee46', color: '#1a1a0a' }}
+              className="bg-[#d7ee46] text-[#060606] font-bold px-5 py-2.5 rounded-xl hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
             >
-              <Plus size={16} /> Thêm cơ sở mới
+              <Plus size={18} /> Thêm Cơ Sở Mới
             </button>
           </div>
 
@@ -229,10 +228,9 @@ export default function FacilitiesPage() {
               </div>
               <button
                 onClick={() => { setEditingFacility(undefined); setIsFacilityModalOpen(true); }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
-                style={{ background: '#d7ee46', color: '#1a1a0a' }}
+                className="bg-[#d7ee46] text-[#060606] font-bold px-5 py-2.5 rounded-xl hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm"
               >
-                <Plus size={16} /> Thêm cơ sở mới
+                <Plus size={18} /> Thêm Cơ Sở Mới
               </button>
             </div>
           ) : (
@@ -284,10 +282,9 @@ export default function FacilitiesPage() {
             </div>
             <button
               onClick={() => { setEditingFloor(undefined); setIsFloorModalOpen(true); }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90 self-start sm:self-auto"
-              style={{ background: '#d7ee46', color: '#1a1a0a' }}
+              className="bg-[#d7ee46] text-[#060606] font-bold px-5 py-2.5 rounded-xl hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
             >
-              <Plus size={16} /> Thêm tầng
+              <Plus size={18} /> Thêm Tầng
             </button>
           </div>
 

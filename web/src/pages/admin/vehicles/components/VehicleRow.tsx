@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Eye, Building2 } from 'lucide-react';
 import { Car } from 'lucide-react';
 import { VehicleType } from '../../../../services/vehicleType.service';
 import { SLOT_SIZE_LABELS, ICON_MAP } from './constants';
@@ -17,6 +17,19 @@ export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: Vehicl
   const [menuOpen, setMenuOpen] = useState(false);
   const { label, color } = SLOT_SIZE_LABELS[vehicle.slotSize] || { label: vehicle.slotSize, color: 'bg-gray-100 text-gray-600 border-gray-200' };
 
+  const uniqueFacilities = Array.from(
+    new Map(
+      (vehicle.floors || [])
+        .map((floor) => {
+          if (!floor.facilityId) return null;
+          const isObj = typeof floor.facilityId === 'object';
+          const id = isObj ? (floor.facilityId as any)._id : floor.facilityId;
+          const name = isObj ? (floor.facilityId as any).name : 'Tòa nhà ' + id;
+          return [id, { id, name }];
+        })
+        .filter(Boolean) as [string, { id: string; name: string }][]
+    ).values()
+  );
 
   return (
     <motion.tr
@@ -40,8 +53,19 @@ export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: Vehicl
       <td className="px-6 py-4">
         <span className={`px-2.5 py-1 rounded-md text-xs font-semibold border ${color}`}>{label}</span>
       </td>
-      <td className="px-6 py-4 text-sm text-gray-500 max-w-[200px]">
-        <span className="line-clamp-1">{vehicle.description || '—'}</span>
+      <td className="px-6 py-4 text-sm text-gray-500">
+        {uniqueFacilities.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {uniqueFacilities.map(fac => (
+              <span key={fac.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100/60 shadow-sm">
+                <Building2 size={12} />
+                {fac.name}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className="text-gray-400 italic">Chưa liên kết</span>
+        )}
       </td>
       <td className="px-6 py-4 text-xs text-gray-400">
         {new Date(vehicle.createdAt).toLocaleDateString()}

@@ -189,11 +189,11 @@ export default function VehiclesPage() {
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-gray-50/80 text-gray-500 font-semibold border-b border-gray-100">
               <tr>
-                <th className="px-6 py-4 rounded-tl-2xl w-[25%]">Loại Xe</th>
-                <th className="px-6 py-4 w-[15%]">Kích Thước Slot</th>
-                <th className="px-6 py-4 w-[40%]">Mô Tả</th>
-                <th className="px-6 py-4 w-[15%]">Ngày Tạo</th>
-                <th className="px-6 py-4 text-right rounded-tr-2xl w-[5%]">Thao Tác</th>
+                <th className="px-6 py-4 rounded-tl-2xl w-[30%]">Loại Xe</th>
+                <th className="px-6 py-4 w-[20%]">Kích Thước Slot</th>
+                <th className="px-6 py-4 w-[30%]">Tòa Nhà Liên Kết</th>
+                <th className="px-6 py-4 w-[10%]">Ngày Tạo</th>
+                <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Thao Tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

@@ -7,6 +7,7 @@ import { type Facility } from '../../../../services/facility.service';
 import { type VehicleType } from '../../../../services/vehicleType.service';
 import { FEE_TYPE_LABELS } from './constants';
 import { ICON_MAP } from '../../vehicles/components/constants';
+import { ConfirmModal } from '../../../../components/ConfirmModal';
 
 interface PlanCardProps {
   plan: PricingPlan;
@@ -19,6 +20,7 @@ interface PlanCardProps {
 export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onRefresh }: PlanCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   /** Màu badge theo loại phí */
   const FEE_TYPE_BADGE: Record<string, string> = {
@@ -80,15 +82,13 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onRefresh }: 
   };
 
   const handleDelete = async () => {
-    setMenuOpen(false);
-    if (!window.confirm(`Xóa bảng giá "${plan.name}"?`)) return;
     setLoading(true);
     try {
       await pricingService.deactivate(plan._id);
       toast.success('Đã xóa');
       onRefresh();
     } catch (e: any) { toast.error(e.message || 'Lỗi'); }
-    finally { setLoading(false); }
+    finally { setLoading(false); setShowConfirmDelete(false); }
   };
 
   return (
@@ -111,8 +111,13 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onRefresh }: 
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Status dot */}
-          <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-gray-300'}`} />
+          {/* Status dot and text */}
+          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border ${isActive ? 'bg-emerald-50 border-emerald-100' : 'bg-gray-50 border-gray-100'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+            <span className={`text-[10px] font-semibold uppercase tracking-wide ${isActive ? 'text-emerald-700' : 'text-gray-500'}`}>
+              {isActive ? 'Hoạt động' : 'Đã tắt'}
+            </span>
+          </div>
 
           {/* Menu */}
           {loading ? <Loader2 size={14} className="animate-spin text-gray-400" /> : (
@@ -145,7 +150,7 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onRefresh }: 
                         </button>
                     }
                     <div className="h-px bg-gray-100 mx-2 my-1" />
-                    <button onClick={handleDelete} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2">
+                    <button onClick={() => { setMenuOpen(false); setShowConfirmDelete(true); }} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2">
                       <Trash2 size={13} /> Xóa
                     </button>
                   </motion.div>
@@ -201,6 +206,18 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onRefresh }: 
           )}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showConfirmDelete}
+        onClose={() => setShowConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa"
+        message={`Bạn có chắc chắn muốn xóa bảng giá "${plan.name}" không?`}
+        confirmText="Xóa bảng giá"
+        cancelText="Hủy"
+        variant="danger"
+        isLoading={loading}
+      />
     </motion.div>
   );
 }

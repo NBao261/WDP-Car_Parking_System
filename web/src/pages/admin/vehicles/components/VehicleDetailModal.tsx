@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Car } from 'lucide-react';
+import { X, Car, Building2 } from 'lucide-react';
 import { VehicleType } from '../../../../services/vehicleType.service';
 import { SLOT_SIZE_LABELS, ICON_MAP } from './constants';
 
@@ -13,6 +13,22 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
   if (!isOpen || !vehicle) return null;
 
   const { label, color } = SLOT_SIZE_LABELS[vehicle.slotSize] || { label: vehicle.slotSize, color: 'bg-gray-100 text-gray-600 border-gray-200' };
+
+  const facilitiesWithFloors = (vehicle.floors || []).reduce((acc, floor) => {
+    if (!floor.facilityId) return acc;
+    const isObj = typeof floor.facilityId === 'object';
+    const id = isObj ? (floor.facilityId as any)._id : floor.facilityId as string;
+    const name = isObj ? (floor.facilityId as any).name : 'Tòa nhà ' + id;
+    
+    if (!acc[id]) {
+      acc[id] = { id, name, floors: [] };
+    }
+    acc[id].floors.push({ id: floor._id, name: floor.name });
+    
+    return acc;
+  }, {} as Record<string, { id: string, name: string, floors: {id: string, name: string}[] }>);
+
+  const groupedFacilities = Object.values(facilitiesWithFloors);
 
   return (
     <AnimatePresence>
@@ -48,6 +64,31 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
                 <p className="text-xs text-gray-500 mb-1">Created At</p>
                 <p className="text-sm font-medium text-gray-800">{new Date(vehicle.createdAt).toLocaleDateString()}</p>
               </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Tòa nhà & Tầng liên kết</p>
+              {groupedFacilities.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {groupedFacilities.map(fac => (
+                    <div key={fac.id} className="flex flex-col gap-2 p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100">
+                      <div className="flex items-center gap-1.5 text-indigo-800 font-bold text-sm">
+                        <Building2 size={16} />
+                        {fac.name}
+                      </div>
+                      <div className="flex flex-wrap gap-2 pl-5">
+                        {fac.floors.map(fl => (
+                          <span key={fl.id} className="inline-flex items-center px-2.5 py-1 bg-white text-gray-700 rounded-md text-xs font-semibold border border-indigo-100 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+                            {fl.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 italic">Chưa liên kết tòa nhà/tầng nào.</p>
+              )}
             </div>
 
             <div>

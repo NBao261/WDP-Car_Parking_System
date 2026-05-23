@@ -275,7 +275,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                 className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
               >
                 {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                {isEdit ? 'Lưu thay đổi' : 'Tạo cơ sở'}
+                {isEdit ? 'Lưu Thay Đổi' : 'Tạo Cơ Sở'}
               </button>
             </div>
           </form>

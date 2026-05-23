@@ -62,7 +62,7 @@ export default function PricingPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#060606]">Bảng Giá</h1>
-          <p className="text-gray-500 text-sm">Quản lý chính sách giá giữ xe (FR-5)</p>
+          <p className="text-gray-500 text-sm">Quản lý chính sách giá giữ xe</p>
         </div>
         <button
           onClick={() => { setEditingPlan(undefined); setModalOpen(true); }}
