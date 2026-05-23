@@ -287,7 +287,7 @@
 
 #### BE2
 
-- [ ] API Báo cáo (FR-6):
+- [x] API Báo cáo (FR-6):
   - Lượt xe vào/ra (FR-6.1): aggregate theo ngày/tuần/tháng, filter
   - Doanh thu (FR-6.2): aggregate payments, group by method/vehicleType
   - Tỷ lệ lấp đầy (FR-6.3): calculate occupied/total per floor
