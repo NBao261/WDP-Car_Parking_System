@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  Building2, ChevronDown, Plus, Layers, Loader2, RotateCcw, GripHorizontal
+  Building2, ChevronDown, Plus, Layers, Loader2, RotateCcw, GripHorizontal, Car
 } from 'lucide-react';
+import { ICON_MAP } from '../vehicles/components/constants';
 import { facilityService, type Facility } from '../../../services/facility.service';
 import { floorService, type Floor } from '../../../services/floor.service';
 import { vehicleTypeService, type VehicleType } from '../../../services/vehicleType.service';
@@ -85,12 +86,12 @@ export default function SlotsPage() {
   const filteredSlots = filterStatus === 'all' ? slots : slots.filter((s) => s.status === filterStatus);
 
   const filterButtons: { label: string; value: SlotStatus | 'all' }[] = [
-    { label: 'All', value: 'all' },
-    { label: 'Available', value: 'available' },
-    { label: 'Occupied', value: 'occupied' },
-    { label: 'Reserved', value: 'reserved' },
-    { label: 'Maintenance', value: 'maintenance' },
-    { label: 'Locked', value: 'locked' },
+    { label: 'Tất cả', value: 'all' },
+    { label: 'Trống', value: 'available' },
+    { label: 'Đang dùng', value: 'occupied' },
+    { label: 'Đã đặt', value: 'reserved' },
+    { label: 'Bảo trì', value: 'maintenance' },
+    { label: 'Khóa', value: 'locked' },
   ];
 
   if (pageLoading) {
@@ -106,8 +107,8 @@ export default function SlotsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#060606]">Slot Management</h1>
-          <p className="text-gray-500 text-sm">Interactive map and slot management</p>
+          <h1 className="text-2xl font-bold text-[#060606]">Sơ đồ Slot</h1>
+          <p className="text-gray-500 text-sm">Quản lý và cập nhật sơ đồ vị trí đỗ xe</p>
         </div>
       </div>
 
@@ -121,7 +122,7 @@ export default function SlotsPage() {
           >
             <Building2 size={16} className="text-gray-400" />
             <span className="flex-1 text-left truncate">
-              {selectedFacility?.name ?? 'Select Facility'}
+              {selectedFacility?.name ?? 'Chọn Cơ Sở'}
             </span>
             <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
           </button>
@@ -136,9 +137,8 @@ export default function SlotsPage() {
                   <button
                     key={f._id}
                     onClick={() => { setSelectedFacility(f); setFacilityDropOpen(false); }}
-                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                      selectedFacility?._id === f._id ? 'bg-[#d7ee46]/20 font-semibold text-[#060606]' : 'text-gray-700 hover:bg-gray-50'
-                    }`}
+                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${selectedFacility?._id === f._id ? 'bg-[#d7ee46]/20 font-semibold text-[#060606]' : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                   >
                     {f.name}
                   </button>
@@ -156,7 +156,7 @@ export default function SlotsPage() {
             className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors min-w-40 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Layers size={16} className="text-gray-400" />
-            <span className="flex-1 text-left">{selectedFloor?.name ?? 'Select Floor'}</span>
+            <span className="flex-1 text-left">{selectedFloor?.name ?? 'Chọn Tầng'}</span>
             <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
           </button>
           <AnimatePresence>
@@ -170,9 +170,8 @@ export default function SlotsPage() {
                   <button
                     key={fl._id}
                     onClick={() => { setSelectedFloor(fl); setFloorDropOpen(false); }}
-                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                      selectedFloor?._id === fl._id ? 'bg-[#d7ee46]/20 font-semibold text-[#060606]' : 'text-gray-700 hover:bg-gray-50'
-                    }`}
+                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${selectedFloor?._id === fl._id ? 'bg-[#d7ee46]/20 font-semibold text-[#060606]' : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                   >
                     {fl.name}
                   </button>
@@ -182,83 +181,80 @@ export default function SlotsPage() {
           </AnimatePresence>
         </div>
 
-        {/* Status filter */}
-        <div className="flex gap-1.5 flex-wrap">
-          {filterButtons.map((btn) => (
-            <button
-              key={btn.value}
-              onClick={() => setFilterStatus(btn.value)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                filterStatus === btn.value
-                  ? 'bg-[#d7ee46] text-[#060606] font-semibold'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              {btn.label}
-            </button>
-          ))}
-        </div>
       </div>
 
 
       {/* Parking Facility Manager: Slot Mapping (Drag & Drop Concept) */}
       {selectedFloor && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-lg font-bold text-[#060606]">Slot Mapping Editor (Drag & Drop)</h2>
+              <h2 className="text-xl font-bold text-[#060606]">Sơ đồ Slot — {selectedFloor.name}</h2>
+              <p className="text-sm text-gray-500 mt-1">Nhấp vào một slot để thay đổi trạng thái</p>
             </div>
             <div className="flex items-center gap-3">
               <button
-                onClick={loadSlots}
-                className="p-2.5 border border-gray-200 rounded-xl text-gray-500 hover:bg-gray-50 transition-colors flex items-center justify-center"
-                title="Refresh"
-              >
-                <RotateCcw size={16} />
-              </button>
-              <button
                 onClick={() => setBulkOpen(true)}
-                className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-semibold hover:bg-[#c5db3d] transition-colors flex items-center gap-2 shadow-sm hover:shadow-md"
+                className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm"
               >
-                <Plus size={18} /> Create Slots
+                <Plus size={20} /> Tạo Slot
               </button>
             </div>
           </div>
-          
+
+          {/* Status filter */}
+          <div className="flex gap-1.5 flex-wrap mb-6">
+            {filterButtons.map((btn) => (
+              <button
+                key={btn.value}
+                onClick={() => setFilterStatus(btn.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterStatus === btn.value
+                    ? 'bg-[#d7ee46] text-[#060606] font-semibold'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+              >
+                {btn.label}
+              </button>
+            ))}
+          </div>
+
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Tools Palette */}
             <div className="w-full lg:w-48 bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-3 shrink-0">
-               <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Vehicle Types</h4>
-               
-               {vehicleTypes
-                 .filter(vt => 
-                   selectedFloor.allowedVehicleTypes.some((allowed: any) => 
-                     (typeof allowed === 'string' ? allowed : allowed._id) === vt._id
-                   )
-                 )
-                 .map((vt) => (
-                   <div key={vt._id} className="bg-white border border-gray-200 p-2 rounded-lg text-sm flex items-center gap-2 cursor-grab hover:shadow-sm transition-shadow text-gray-700">
-                      <GripHorizontal size={14} className="opacity-50" /> {vt.icon} {vt.name}
-                   </div>
-                 ))}
-            </div> 
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Loại Xe</h4>
+
+              {vehicleTypes
+                .filter(vt =>
+                  selectedFloor.allowedVehicleTypes.some((allowed: any) =>
+                    (typeof allowed === 'string' ? allowed : allowed._id) === vt._id
+                  )
+                )
+                .map((vt) => {
+                  const Icon = (vt.icon && ICON_MAP[vt.icon]) ? ICON_MAP[vt.icon] : Car;
+                  return (
+                    <div key={vt._id} className="bg-white border border-gray-200 p-2 rounded-lg text-sm flex items-center gap-2 cursor-grab hover:shadow-sm transition-shadow text-gray-700">
+                      <GripHorizontal size={14} className="opacity-50" /> <Icon size={16} className="text-gray-500" /> {vt.name}
+                    </div>
+                  );
+                })}
+            </div>
 
             {/* Canvas Area */}
             <div className="flex-1 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50 p-6 relative min-h-[300px] overflow-x-auto">
               <div className="min-w-[500px]">
                 <div className="flex gap-4 mb-6 text-sm">
-                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-green-100 border border-green-300"></div> Occupied</div>
-                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-blue-100 border border-blue-200"></div> Reserved</div>
-                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-red-50 border border-red-200"></div> Maintenance / Locked</div>
+                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-green-100 border border-green-300"></div> Đang dùng</div>
+                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-blue-100 border border-blue-200"></div> Đã đặt</div>
+                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-red-50 border border-red-200"></div> Bảo trì / Khóa</div>
                 </div>
                 <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
                   {filteredSlots.map((slot) => {
                     const vtName = (slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object') ? slot.vehicleTypeId.name : (slot.vehicleTypeId ? (vtMap[slot.vehicleTypeId] ?? '') : '');
-                    
+
                     let bgClass = '';
                     if (slot.status === 'occupied') {
                       bgClass = 'bg-green-100 border-green-300 text-green-700';
@@ -270,10 +266,10 @@ export default function SlotsPage() {
                       // available / empty
                       bgClass = 'bg-white border-gray-200 text-gray-500';
                     }
-                    
+
                     return (
-                      <div 
-                        key={slot._id} 
+                      <div
+                        key={slot._id}
                         onClick={() => setStatusSlot(slot)}
                         className={`aspect-square rounded-lg flex items-center justify-center text-xs font-medium cursor-pointer transition-colors hover:opacity-80 shadow-sm border ${bgClass}`}
                         title={`${slot.code} - ${vtName} (${slot.status})`}
@@ -302,8 +298,8 @@ export default function SlotsPage() {
           <SlotFormModal
             facilityId={selectedFacility._id}
             floorId={selectedFloor._id}
-            vehicleTypes={vehicleTypes.filter(vt => 
-              (selectedFloor.allowedVehicleTypes || []).some((allowed: any) => 
+            vehicleTypes={vehicleTypes.filter(vt =>
+              (selectedFloor.allowedVehicleTypes || []).some((allowed: any) =>
                 (typeof allowed === 'string' ? allowed : allowed._id) === vt._id
               )
             )}

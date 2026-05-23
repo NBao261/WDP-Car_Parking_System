@@ -55,8 +55,8 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, 
         onRemove(facility._id);
       }
     } catch (err: any) { toast.error(err.message || 'Thao tác thất bại'); }
-    finally { 
-      setLoading(false); 
+    finally {
+      setLoading(false);
       setConfirmOpen(false);
     }
   };

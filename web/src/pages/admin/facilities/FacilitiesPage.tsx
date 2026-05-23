@@ -42,7 +42,7 @@ export default function FacilitiesPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
-  const [allSlots, setAllSlots] = useState<ParkingSlot[]>([]); 
+  const [allSlots, setAllSlots] = useState<ParkingSlot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewFacility, setViewFacility] = useState<Facility | null>(null);
 

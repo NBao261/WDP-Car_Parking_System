@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Plus, GripHorizontal, Map } from 'lucide-react';
+import { RotateCcw, Plus, GripHorizontal, Map, Car } from 'lucide-react';
 import { Floor } from '../../../../services/floor.service';
 import { ParkingSlot, SlotStatus } from '../../../../services/slot.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 import { SlotStatusModal } from '../../slots/components/SlotStatusModal';
 import { SlotFormModal } from '../../slots/components/SlotFormModal';
+import { ICON_MAP } from '../../vehicles/components/constants';
 
 interface SlotMappingEditorViewProps {
   floor: Floor | null;
@@ -71,10 +72,9 @@ export function SlotMappingEditorView({
             </button>
             <button
               onClick={() => setBulkOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
-              style={{ background: '#d7ee46', color: '#1a1a0a' }}
+              className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm"
             >
-              <Plus size={16} /> Tạo Slot
+              <Plus size={20} /> Tạo Slot
             </button>
           </div>
         </div>
@@ -103,16 +103,19 @@ export function SlotMappingEditorView({
             <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Loại xe</h4>
             {floorVehicleTypes.length === 0 ? (
               <p className="text-xs text-gray-400 italic">Chưa gán loại xe</p>
-            ) : floorVehicleTypes.map(vt => (
-              <div
-                key={vt._id}
-                className="bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm flex items-center gap-2 text-gray-700 hover:shadow-sm transition-shadow"
-              >
-                <GripHorizontal size={13} className="opacity-40" />
-                <span>{vt.icon}</span>
-                <span className="truncate">{vt.name}</span>
-              </div>
-            ))}
+            ) : floorVehicleTypes.map(vt => {
+              const Icon = (vt.icon && ICON_MAP[vt.icon]) ? ICON_MAP[vt.icon] : Car;
+              return (
+                <div
+                  key={vt._id}
+                  className="bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm flex items-center gap-2 text-gray-700 hover:shadow-sm transition-shadow cursor-grab"
+                >
+                  <GripHorizontal size={13} className="opacity-40" />
+                  <Icon size={16} className="text-gray-500" />
+                  <span className="truncate">{vt.name}</span>
+                </div>
+              );
+            })}
           </div>
 
           {/* Canvas */}
