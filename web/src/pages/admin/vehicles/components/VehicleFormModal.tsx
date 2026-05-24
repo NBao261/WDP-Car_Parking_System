@@ -11,7 +11,7 @@ import {
 } from '../../../../services/vehicleType.service';
 import { facilityService, Facility } from '../../../../services/facility.service';
 import { floorService, Floor } from '../../../../services/floor.service';
-import { ICON_OPTIONS, ICON_MAP, DEFAULT_ICON, SLOT_SIZE_LABELS } from './constants';
+import { ICON_OPTIONS, ICON_MAP, SLOT_SIZE_LABELS } from './constants';
 
 interface ModalProps {
   isOpen: boolean;
@@ -34,7 +34,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
   });
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [floorsList, setFloorsList] = useState<Floor[]>([]);
-  const [isLoadingFacilities, setIsLoadingFacilities] = useState(false);
+  const [, setIsLoadingFacilities] = useState(false);
   const [selectedFacId, setSelectedFacId] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,9 +76,9 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
 
   const availableFloors = selectedFacId
     ? floorsList.filter(fl => {
-        const flFacId = typeof fl.facilityId === 'object' ? (fl.facilityId as any)._id : fl.facilityId;
-        return flFacId === selectedFacId;
-      })
+      const flFacId = typeof fl.facilityId === 'object' ? (fl.facilityId as any)._id : fl.facilityId;
+      return flFacId === selectedFacId;
+    })
     : [];
 
   const validate = (): boolean => {
@@ -130,8 +130,8 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
   };
 
   const inputBase = 'w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:bg-white transition-all';
-  const inputOk   = 'border-gray-200 focus:ring-[#d7ee46]';
-  const inputErr  = 'border-red-400 focus:ring-red-300 bg-red-50/30';
+  const inputOk = 'border-gray-200 focus:ring-[#d7ee46]';
+  const inputErr = 'border-red-400 focus:ring-red-300 bg-red-50/30';
 
   if (!isOpen) return null;
 
@@ -169,11 +169,10 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                       type="button"
                       title={label}
                       onClick={() => { setForm({ ...form, icon: name }); setErrors(e => ({ ...e, icon: undefined })); }}
-                      className={`flex flex-col items-center justify-center gap-1.5 w-full py-3 rounded-xl border-2 transition-all ${
-                        isSelected
+                      className={`flex flex-col items-center justify-center gap-1.5 w-full py-3 rounded-xl border-2 transition-all ${isSelected
                           ? 'border-emerald-400 bg-emerald-50 text-emerald-700 scale-105 shadow-sm'
                           : 'border-gray-200 text-gray-500 hover:border-emerald-200 hover:bg-emerald-50/50 hover:text-emerald-600'
-                      }`}
+                        }`}
                     >
                       <Icon size={20} strokeWidth={1.5} />
                       <span className="text-[10px] font-semibold leading-none truncate w-full text-center px-1">
@@ -269,7 +268,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
             {/* Facilities & Floors */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Tòa Nhà & Tầng Hỗ Trợ</label>
-              
+
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                   {/* Facility Select */}
@@ -302,7 +301,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                       onChange={e => {
                         const val = e.target.value;
                         if (val && !form.floors?.includes(val)) {
-                           setForm(f => ({ ...f, floors: [...(f.floors || []), val] }));
+                          setForm(f => ({ ...f, floors: [...(f.floors || []), val] }));
                         }
                       }}
                       className="w-full pl-9 pr-8 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gray-300 transition-colors appearance-none font-medium text-gray-700 shadow-sm hover:bg-gray-50 cursor-pointer"

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  Building2, ChevronDown, Plus, Layers, Loader2, RotateCcw, GripHorizontal, Car
+  Building2, ChevronDown, Plus, Layers, Loader2, GripHorizontal, Car
 } from 'lucide-react';
 import { ICON_MAP } from '../vehicles/components/constants';
 import { facilityService, type Facility } from '../../../services/facility.service';
@@ -213,8 +213,8 @@ export default function SlotsPage() {
                 key={btn.value}
                 onClick={() => setFilterStatus(btn.value)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterStatus === btn.value
-                    ? 'bg-[#d7ee46] text-[#060606] font-semibold'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                  ? 'bg-[#d7ee46] text-[#060606] font-semibold'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}
               >
                 {btn.label}

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { X, Check, Loader2, Search, AlertTriangle } from 'lucide-react';
 import { floorService, Floor } from '../../../../services/floor.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
+import { ICON_MAP } from '../../vehicles/components/constants';
 
 interface FloorModalProps {
   isOpen: boolean;
@@ -196,7 +197,12 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
                           : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                         }`}
                     >
-                      <span>{vt.icon || '🚗'}</span>
+                      <span className="mr-1">
+                        {(() => {
+                          const IconComp = vt.icon ? ICON_MAP[vt.icon] : null;
+                          return IconComp ? <IconComp size={16} /> : '🚗';
+                        })()}
+                      </span>
                       {vt.name}
                       {isSelected && <Check size={13} />}
                     </button>

@@ -30,16 +30,16 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
   const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  
+
   const [facilityName, setFacilityName] = useState<string>('');
   const [floorName, setFloorName] = useState<string>('');
   const [fetchingNames, setFetchingNames] = useState(false);
 
-  useEffect(() => { 
-    setSelected(''); 
+  useEffect(() => {
+    setSelected('');
     setFacilityName('');
     setFloorName('');
-    
+
     if (!slot) return;
     const fetchNames = async () => {
       setFetchingNames(true);
@@ -120,9 +120,6 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
     vtNameStr = slot.vehicleTypeId as string;
   }
 
-  const floorIdStr = typeof slot.floorId === 'object' ? (slot.floorId as any)._id : slot.floorId;
-  const facIdStr = typeof slot.facilityId === 'object' ? (slot.facilityId as any)._id : slot.facilityId;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <motion.div
@@ -154,7 +151,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
             </div>
             <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><MapPin size={12}/> Cơ Sở</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><MapPin size={12} /> Cơ Sở</p>
                 {fetchingNames ? (
                   <div className="h-5 bg-gray-100 rounded animate-pulse" />
                 ) : (
@@ -164,7 +161,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                 )}
               </div>
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Layers size={12}/> Tầng</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Layers size={12} /> Tầng</p>
                 {fetchingNames ? (
                   <div className="h-5 bg-gray-100 rounded animate-pulse" />
                 ) : (
@@ -174,7 +171,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                 )}
               </div>
               <div className="col-span-1 sm:col-span-2">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><CarFront size={12}/> Loại Xe</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5"><CarFront size={12} /> Loại Xe</p>
                 <div className="flex items-center gap-2 text-gray-800">
                   {slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object' && (
                     <VtIcon size={16} className="text-indigo-500" />
@@ -199,18 +196,17 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                   <button
                     key={s}
                     onClick={() => setSelected(s)}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-                      selected === s
+                    className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all ${selected === s
                         ? 'bg-[#d7ee46] text-[#060606] border-[#c4dc32] shadow-sm scale-[1.02]'
                         : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     {STATUS_LABELS[s]}
                   </button>
                 ))}
               </div>
             )}
-            
+
             <button
               disabled={!selected || loading}
               onClick={handleSubmit}

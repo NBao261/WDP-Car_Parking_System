@@ -3,8 +3,6 @@ import { toast } from 'sonner';
 import { Plus, X, Loader2, Moon, Clock, CreditCard } from 'lucide-react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { facilityService, type Facility } from '../../../../services/facility.service';
-import { vehicleTypeService, type VehicleType } from '../../../../services/vehicleType.service';
 import {
   pricingService, type PricingPlan, type CreatePricingPlanPayload, type UpdatePricingPlanPayload,
 } from '../../../../services/pricing.service';
@@ -12,8 +10,8 @@ import { formSchema, type FormValues, FEE_TYPE_OPTIONS } from './constants';
 
 interface FormModalProps {
   plan?: PricingPlan;
-  facilities: Facility[];
-  vehicleTypes: VehicleType[];
+  facilities: any[];
+  vehicleTypes: any[];
   onClose: () => void;
   onSuccess: () => void;
 }
