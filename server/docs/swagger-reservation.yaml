@@ -5,7 +5,11 @@ components:
       properties:
         _id:
           type: string
-          description: Mã đặt chỗ
+          description: MongoDB ObjectId
+        code:
+          type: string
+          description: "Mã đặt chỗ (RSV-YYYYMMDD-XXXX) — dùng để check-in"
+          example: "RSV-20260525-A1B2"
         userId:
           type: string
           description: ID người đặt (hoặc object đầy đủ nếu populated)
@@ -19,6 +23,10 @@ components:
           type: string
           nullable: true
           description: ID slot được giữ (hoặc object đầy đủ nếu populated)
+        licensePlate:
+          type: string
+          description: Biển số xe đã đăng ký
+          example: "59A-12345"
         startTime:
           type: string
           format: date-time
@@ -53,7 +61,9 @@ paths:
         - **BR-6.2**: Phải đặt trước ít nhất 30 phút so với thời gian bắt đầu
         - **BR-6.3**: Mỗi Driver tối đa 2 reservation đang active
         
-        Khi đặt thành công, slot sẽ chuyển từ `Available` → `Reserved`.
+        Khi đặt thành công:
+        - Slot sẽ chuyển từ `Available` → `Reserved`
+        - Hệ thống sinh mã đặt chỗ `RSV-YYYYMMDD-XXXX` (dùng để check-in sau này)
       tags: [Reservations]
       security:
         - bearerAuth: []
@@ -66,6 +76,7 @@ paths:
               required:
                 - facilityId
                 - vehicleTypeId
+                - licensePlate
                 - startTime
                 - endTime
               properties:
@@ -75,6 +86,10 @@ paths:
                 vehicleTypeId:
                   type: string
                   example: "683f1a2b3c4d5e6f7a8b9c02"
+                licensePlate:
+                  type: string
+                  description: "Biển số xe (bắt buộc, tự uppercase)"
+                  example: "59A-12345"
                 startTime:
                   type: string
                   format: date-time
@@ -86,6 +101,7 @@ paths:
             example:
               facilityId: "683f1a2b3c4d5e6f7a8b9c01"
               vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c02"
+              licensePlate: "59A-12345"
               startTime: "2026-05-25T08:00:00.000Z"
               endTime: "2026-05-25T17:00:00.000Z"
       responses:
@@ -97,6 +113,7 @@ paths:
                 success: true
                 data:
                   _id: "683f1a2b3c4d5e6f7a8b9c30"
+                  code: "RSV-20260525-A1B2"
                   userId: "683f1a2b3c4d5e6f7a8b9c05"
                   facilityId:
                     _id: "683f1a2b3c4d5e6f7a8b9c01"
@@ -109,6 +126,7 @@ paths:
                     _id: "683f1a2b3c4d5e6f7a8b9c03"
                     code: "A1-01"
                     floorId: "683f1a2b3c4d5e6f7a8b9c04"
+                  licensePlate: "59A-12345"
                   startTime: "2026-05-25T08:00:00.000Z"
                   endTime: "2026-05-25T17:00:00.000Z"
                   status: "confirmed"
@@ -195,6 +213,7 @@ paths:
                 success: true
                 data:
                   - _id: "683f1a2b3c4d5e6f7a8b9c30"
+                    code: "RSV-20260525-A1B2"
                     userId:
                       _id: "683f1a2b3c4d5e6f7a8b9c05"
                       fullName: "Nguyễn Văn A"
@@ -211,6 +230,7 @@ paths:
                       _id: "683f1a2b3c4d5e6f7a8b9c03"
                       code: "A1-01"
                       floorId: "683f1a2b3c4d5e6f7a8b9c04"
+                    licensePlate: "59A-12345"
                     startTime: "2026-05-25T08:00:00.000Z"
                     endTime: "2026-05-25T17:00:00.000Z"
                     status: "confirmed"
@@ -244,6 +264,7 @@ paths:
                 success: true
                 data:
                   _id: "683f1a2b3c4d5e6f7a8b9c30"
+                  code: "RSV-20260525-A1B2"
                   userId:
                     _id: "683f1a2b3c4d5e6f7a8b9c05"
                     fullName: "Nguyễn Văn A"
@@ -260,6 +281,7 @@ paths:
                     _id: "683f1a2b3c4d5e6f7a8b9c03"
                     code: "A1-01"
                     floorId: "683f1a2b3c4d5e6f7a8b9c04"
+                  licensePlate: "59A-12345"
                   startTime: "2026-05-25T08:00:00.000Z"
                   endTime: "2026-05-25T17:00:00.000Z"
                   status: "confirmed"

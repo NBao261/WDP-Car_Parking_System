@@ -66,11 +66,20 @@ paths:
     post:
       summary: Tạo lượt gửi xe - Check-in (FR-9.1)
       description: |
-        Tạo parking session mới khi xe vào bãi.
-        - Auto-assign slot vào tầng có nhiều chỗ trống nhất
-        - Sinh mã thẻ xe (CARD-XXXX-XXXX) + mã lượt gửi (PS-YYYYMMDD-XXXX)
-        - Cập nhật slot → Occupied
-        - Chỉ Staff mới được tạo (SRS 3.4)
+        Tạo parking session mới khi xe vào bãi. Hỗ trợ 2 chế độ:
+
+        **Chế độ 1 — Có đặt trước (Reservation):**
+        Chỉ cần truyền `reservationCode` + `gateIn`. Hệ thống tự động:
+        - Lấy `facilityId`, `vehicleTypeId`, `licensePlate` từ reservation
+        - Dùng slot đã reserved sẵn → chuyển `Reserved → Occupied`
+        - Chuyển reservation status → `used` (BR-6.6)
+        - Validate Staff được phân công tại facility của reservation
+
+        **Chế độ 2 — Walk-in (Không đặt trước):**
+        Truyền đầy đủ `facilityId` + `vehicleTypeId` + `licensePlate` + `gateIn`.
+        Hệ thống auto-assign slot vào tầng có nhiều chỗ trống nhất.
+
+        **Lưu ý:** Nếu walk-in nhưng biển số xe khớp với 1 reservation confirmed → hệ thống tự match và dùng slot đã đặt.
 
         **Security (FR-18.6):** Staff chỉ được check-in tại bãi mình được phân công.
       tags: [Sessions]
@@ -82,19 +91,24 @@ paths:
           application/json:
             schema:
               type: object
-              required: [facilityId, vehicleTypeId, licensePlate, gateIn]
+              required: [gateIn]
+              description: "Truyền reservationCode HOẶC (facilityId + vehicleTypeId + licensePlate)"
               properties:
+                reservationCode:
+                  type: string
+                  description: "Mã đặt chỗ (RSV-YYYYMMDD-XXXX). Nếu có, hệ thống tự fill facilityId/vehicleTypeId/licensePlate"
+                  example: "RSV-20260525-A1B2"
                 facilityId:
                   type: string
-                  description: MongoDB ObjectId của bãi xe
+                  description: "MongoDB ObjectId của bãi xe (không cần nếu có reservationCode)"
                   example: "683f1a2b3c4d5e6f7a8b9c0d"
                 vehicleTypeId:
                   type: string
-                  description: MongoDB ObjectId của loại phương tiện
+                  description: "MongoDB ObjectId của loại phương tiện (không cần nếu có reservationCode)"
                   example: "683f1a2b3c4d5e6f7a8b9c01"
                 licensePlate:
                   type: string
-                  description: Biển số xe (tự uppercase)
+                  description: "Biển số xe (không cần nếu có reservationCode)"
                   example: "59A-12345"
                 gateIn:
                   type: string
@@ -108,11 +122,19 @@ paths:
                   type: string
                   description: (Optional) Chọn slot cụ thể, bỏ qua để auto-assign
                   example: "683f1a2b3c4d5e6f7a8b9c03"
-            example:
-              facilityId: "683f1a2b3c4d5e6f7a8b9c0d"
-              vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c01"
-              licensePlate: "59A-12345"
-              gateIn: "GATE-A"
+            examples:
+              reservation_checkin:
+                summary: "✅ Check-in bằng mã đặt chỗ (chỉ cần 2 trường)"
+                value:
+                  reservationCode: "RSV-20260525-A1B2"
+                  gateIn: "GATE-A"
+              walkin_checkin:
+                summary: "🚗 Check-in walk-in (không đặt trước)"
+                value:
+                  facilityId: "683f1a2b3c4d5e6f7a8b9c0d"
+                  vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c01"
+                  licensePlate: "59A-12345"
+                  gateIn: "GATE-A"
       responses:
         '201':
           description: Lượt gửi xe tạo thành công
@@ -149,7 +171,7 @@ paths:
                   status: "active"
                   totalFee: 0
         '400':
-          description: Không đủ điều kiện hoặc xe đang gửi trùng biển số
+          description: Không đủ điều kiện hoặc lỗi validation
           content:
             application/json:
               examples:
@@ -168,6 +190,16 @@ paths:
                   value:
                     success: false
                     message: "Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này"
+                plate_mismatch:
+                  summary: Biển số không khớp reservation
+                  value:
+                    success: false
+                    message: "Biển số xe không khớp với mã đặt chỗ. Mã RSV-20260525-A1B2 đã đăng ký cho biển số 59A-99999"
+                missing_fields:
+                  summary: Thiếu thông tin (không có reservationCode và không đủ fields)
+                  value:
+                    success: false
+                    message: "Cần truyền reservationCode HOẶC đầy đủ facilityId + vehicleTypeId + licensePlate"
         '403':
           description: Staff không được phân công tại bãi này
           content:
@@ -175,6 +207,14 @@ paths:
               example:
                 success: false
                 message: "Bạn không được phân công tại bãi xe này"
+        '404':
+          description: Mã đặt chỗ không tồn tại
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Mã đặt chỗ không tồn tại hoặc đã được sử dụng/hủy"
+
 
   /sessions/suggest-floor:
     get:
