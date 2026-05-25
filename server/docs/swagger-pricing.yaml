@@ -211,6 +211,13 @@ paths:
                   _id: "64c1d2e3f4a5b6c7d8e9f0a1"
                   name: "Gói ô tô theo giờ - VIP"
                   status: "active"
+        '400':
+          description: Lỗi validation
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Không thể vô hiệu hoá bảng giá này vì đây là bảng giá active duy nhất cho loại xe tại bãi xe này"
     delete:
       summary: Deactivate pricing plan
       description: Chuyển trạng thái bảng giá sang inactive (soft delete).
@@ -234,6 +241,13 @@ paths:
                   _id: "64c1d2e3f4a5b6c7d8e9f0a1"
                   name: "Gói ô tô theo giờ"
                   status: "inactive"
+        '400':
+          description: Lỗi validation
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Không thể vô hiệu hoá bảng giá này vì đây là bảng giá active duy nhất cho loại xe tại bãi xe này"
 
 components:
   schemas:

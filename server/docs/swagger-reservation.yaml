@@ -157,6 +157,16 @@ paths:
                   value:
                     success: false
                     message: "Thời gian kết thúc phải sau thời gian bắt đầu"
+                inactive_facility:
+                  summary: Bãi xe không hoạt động
+                  value:
+                    success: false
+                    message: "Bãi xe hiện đang không hoạt động"
+                outside_operating_hours:
+                  summary: Đặt chỗ ngoài giờ hoạt động
+                  value:
+                    success: false
+                    message: "Thời gian đặt chỗ phải nằm trong giờ hoạt động: 06:00 - 22:00"
 
     get:
       summary: Xem danh sách đặt chỗ
