@@ -71,10 +71,13 @@ export default function VehiclesPage() {
   const handleView = (v: VehicleType) => { setSelected(v); setIsDetailOpen(true); };
   const handleAdd = () => { setSelected(undefined); setIsModalOpen(true); };
 
-  const handleDeleteClick = async (v: VehicleType) => {
+  const handleDeleteClick = (v: VehicleType) => {
     setDeleteTarget(v);
-    setIsCheckingLinks(true);
-    setLinkedFloors(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
       const [floorsRes, facilitiesRes] = await Promise.all([
         floorService.getAll({ limit: 1000 }),
@@ -83,35 +86,38 @@ export default function VehiclesPage() {
       const facMap = Object.fromEntries(facilitiesRes.data.map((f: Facility) => [f._id, f.name]));
 
       const linked = floorsRes.data.filter((fl: Floor) =>
-        fl.allowedVehicleTypes.some((vt: any) => (typeof vt === 'string' ? vt : vt._id) === v._id)
+        fl.allowedVehicleTypes.some((vt: any) => (typeof vt === 'string' ? vt : vt._id) === deleteTarget._id)
       ).map((fl: Floor) => ({
         floor: fl,
         facilityName: facMap[typeof fl.facilityId === 'string' ? fl.facilityId : (fl.facilityId as any)?._id] || 'Bãi Xe Không Xác Định'
       }));
-      setLinkedFloors(linked);
-    } catch (e) {
-      console.error('Failed to fetch links', e);
-      setLinkedFloors([]);
-    } finally {
-      setIsCheckingLinks(false);
-    }
-  };
 
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
-    setIsDeleting(true);
-    try {
+      if (linked.length > 0) {
+        toast.error(
+          <div className="flex flex-col gap-1.5 w-full">
+            <p className="text-sm font-medium">
+              Không thể xóa loại xe này vì đang được phân công cho (các) bãi đỗ xe sau:
+            </p>
+            <ul className="list-disc pl-4 space-y-0.5 text-sm mt-1">
+              {linked.map((item: any) => (
+                <li key={item.floor._id}>
+                  {item.floor.name} — {item.facilityName}
+                </li>
+              ))}
+            </ul>
+          </div>
+        , { duration: 6000 });
+        setDeleteTarget(undefined);
+        return;
+      }
+
       await vehicleTypeService.softDelete(deleteTarget._id);
       toast.success(`Đã xóa "${deleteTarget.name}"`);
       setDeleteTarget(undefined);
       fetchVehicles();
     } catch (err: any) {
       const msg = err.message || '';
-      if (msg.includes('assigned to floors')) {
-        toast.error('Không thể xóa: Loại xe này đang được sử dụng ở một hoặc nhiều tầng.');
-      } else {
-        toast.error(msg || 'Xóa thất bại');
-      }
+      toast.error(msg || 'Xóa thất bại');
     } finally {
       setIsDeleting(false);
     }
@@ -169,15 +175,14 @@ export default function VehiclesPage() {
       </motion.div>
 
       {/* Table */}
-      <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
+      <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+        <div className="w-full">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-lime-50/50 text-lime-700 font-semibold border-b border-lime-100/50">
               <tr>
                 <th className="px-6 py-4 rounded-tl-2xl w-[20%]">Loại Xe</th>
                 <th className="px-6 py-4 w-[15%]">Mã Xe</th>
                 <th className="px-6 py-4 w-[20%]">Kích Thước Slot</th>
-                <th className="px-6 py-4 w-[25%]">Tòa Nhà Liên Kết</th>
                 <th className="px-6 py-4 w-[10%]">Ngày Tạo</th>
                 <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Thao Tác</th>
               </tr>
@@ -185,14 +190,14 @@ export default function VehiclesPage() {
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-14 text-center text-gray-400">
+                  <td colSpan={5} className="px-6 py-14 text-center text-gray-400">
                     <div className="w-6 h-6 border-2 border-[#d7ee46] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     Đang tải...
                   </td>
                 </tr>
               ) : paginatedVehicles.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-14 text-center text-gray-400">
+                  <td colSpan={5} className="px-6 py-14 text-center text-gray-400">
                     <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Package size={22} className="text-gray-300" />
                     </div>
@@ -207,7 +212,7 @@ export default function VehiclesPage() {
                     onEdit={() => handleEdit(v)}
                     onView={() => handleView(v)}
                     onDelete={() => handleDeleteClick(v)}
-                    isLast={idx >= paginatedVehicles.length - 2 && paginatedVehicles.length > 3}
+                    isLast={idx >= paginatedVehicles.length - 2}
                   />
                 ))
               )}
@@ -217,7 +222,7 @@ export default function VehiclesPage() {
 
         {/* Pagination Footer */}
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-lime-100/50 flex items-center justify-between bg-lime-50/50">
+          <div className="px-6 py-4 border-t border-lime-100/50 flex items-center justify-between bg-lime-50/50 rounded-b-2xl">
             <p className="text-sm text-gray-500">
               Hiển thị <span className="font-medium text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> đến <span className="font-medium text-gray-900">{Math.min(currentPage * itemsPerPage, filtered.length)}</span> trong tổng số <span className="font-medium text-gray-900">{filtered.length}</span> kết quả
             </p>
@@ -262,36 +267,11 @@ export default function VehiclesPage() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setDeleteTarget(undefined)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl p-6">
               <h2 className="text-lg font-bold text-[#060606] mb-2">Xác Nhận Xóa</h2>
-              <p className="text-sm text-gray-600 mb-3">Bạn có chắc chắn muốn xóa loại xe <strong>"{deleteTarget.name}"</strong>? Hành động này không thể hoàn tác.</p>
-
-              <div className="bg-orange-50 border border-orange-100 p-3 rounded-xl mb-6 flex gap-2.5 text-orange-800 text-sm">
-                <AlertTriangle size={16} className="shrink-0 mt-0.5 text-orange-500" />
-                <div className="flex-1">
-                  <p className="font-semibold mb-1">Lưu ý: Không thể xóa loại xe nếu nó đang được phân công cho bất kỳ tầng đỗ xe nào.</p>
-                  {isCheckingLinks ? (
-                    <div className="flex items-center gap-2 text-orange-600 mt-2">
-                      <Loader2 size={12} className="animate-spin" /> <span className="text-xs">Đang kiểm tra liên kết...</span>
-                    </div>
-                  ) : linkedFloors && linkedFloors.length > 0 ? (
-                    <div className="mt-2 text-xs">
-                      <p className="text-orange-700 font-medium mb-1">Hiện đang được phân công tại:</p>
-                      <ul className="list-disc pl-4 space-y-0.5 opacity-90 max-h-24 overflow-y-auto">
-                        {linkedFloors.map((item) => (
-                          <li key={item.floor._id}>
-                            <strong>{item.floor.name}</strong> — {item.facilityName}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : linkedFloors && linkedFloors.length === 0 ? (
-                    <p className="text-xs text-emerald-600 font-medium mt-1">✓ Có thể xóa an toàn (Chưa được phân công cho tầng nào)</p>
-                  ) : null}
-                </div>
-              </div>
+              <p className="text-sm text-gray-600 mb-6">Bạn có chắc chắn muốn xóa loại xe <strong>"{deleteTarget.name}"</strong>? Hành động này không thể hoàn tác.</p>
 
               <div className="flex justify-end gap-3">
                 <button onClick={() => setDeleteTarget(undefined)} disabled={isDeleting} className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">Hủy</button>
-                <button onClick={confirmDelete} disabled={isDeleting || (linkedFloors !== null && linkedFloors.length > 0)} className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button onClick={confirmDelete} disabled={isDeleting} className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                   {isDeleting && <Loader2 size={14} className="animate-spin" />} Xóa
                 </button>
               </div>
