@@ -117,7 +117,6 @@ export default function VehiclesPage() {
     }
   };
 
-  const countBySize = (size: SlotSize) => vehicles.filter((v) => v.slotSize === size).length;
 
   return (
     <motion.div className="space-y-6 max-w-[1400px] mx-auto pb-12" initial="hidden" animate="visible" variants={containerVariants}>
@@ -135,20 +134,6 @@ export default function VehiclesPage() {
         </div>
       </motion.div>
 
-      {/* Stats */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: 'Tổng Số Loại', value: vehicles.length, bg: 'bg-lime-50 text-lime-700 border border-lime-200/60' },
-          { label: 'Slot Nhỏ', value: countBySize('small'), bg: 'bg-blue-50 text-blue-700 border border-blue-200/60' },
-          { label: 'Slot Vừa', value: countBySize('medium'), bg: 'bg-amber-50 text-amber-700 border border-amber-200/60' },
-          { label: 'Slot Lớn', value: countBySize('large'), bg: 'bg-purple-50 text-purple-700 border border-purple-200/60' },
-        ].map(({ label, value, bg }) => (
-          <div key={label} className={`rounded-2xl p-4 ${bg}`}>
-            <p className="text-xs font-medium opacity-70">{label}</p>
-            <p className="text-2xl font-bold mt-1">{isLoading ? '—' : value}</p>
-          </div>
-        ))}
-      </motion.div>
 
       {/* Search & Filter */}
       <motion.div variants={itemVariants} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4">
