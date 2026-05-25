@@ -292,7 +292,7 @@
   - Doanh thu (FR-6.2): aggregate payments, group by method/vehicleType
   - Tỷ lệ lấp đầy (FR-6.3): calculate occupied/total per floor
   - Khung giờ cao điểm (FR-6.4): aggregate by hour
-- [ ] API Export báo cáo: xuất Excel (xlsx) / PDF
+- [x] API Export báo cáo: xuất Excel (xlsx) / PDF
 - [ ] 🔬 **[RQ1]** API occupancy heatmap theo tầng + loại xe (FR-6.3 mở rộng)
   - Thuật toán gốc: **Macroscopic Fundamental Diagram (MFD)** [P2] — tính Optimal Occupancy
 - [ ] 🔬 **[RQ1]** Tạo seed data 2 cấu hình: (A) phân tầng chuyên biệt, (B) tầng hỗn hợp

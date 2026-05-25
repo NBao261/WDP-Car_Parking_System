@@ -1,0 +1,61 @@
+openapi: 3.0.0
+info:
+  title: Báo cáo API (Export)
+  version: 1.0.0
+paths:
+  /reports/export:
+    get:
+      summary: Xuất báo cáo (Excel hoặc PDF)
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: reportType
+          schema:
+            type: string
+            enum: [traffic, revenue, occupancy, peak-hours]
+          required: true
+          description: Loại báo cáo cần xuất
+        - in: query
+          name: format
+          schema:
+            type: string
+            enum: [excel, pdf]
+          required: true
+          description: Định dạng xuất (excel hoặc pdf)
+        - in: query
+          name: facilityId
+          schema:
+            type: string
+          required: false
+          description: ID bãi xe
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date-time
+          required: false
+          description: Thời gian bắt đầu (vd 2026-05-01)
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date-time
+          required: false
+          description: Thời gian kết thúc (vd 2026-05-31)
+      responses:
+        '200':
+          description: File báo cáo (Excel hoặc PDF)
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Bad request (Thiếu param hoặc loại báo cáo không hợp lệ)
