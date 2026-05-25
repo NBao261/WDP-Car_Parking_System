@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Building2, MapPin, Plus, Clock, Layers } from 'lucide-react';
 import { Facility } from '../../../../services/facility.service';
 import { Floor } from '../../../../services/floor.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 import { FloorGrid, type FloorSlotStats } from './FloorCard';
+import { FloorDetailModal } from './FloorDetailModal';
 
 interface FacilityFloorsViewProps {
   viewFacility: Facility;
@@ -31,6 +33,8 @@ export function FacilityFloorsView({
   handleEditMapping, updateFloorLocal, removeFloorLocal,
   fetchAll, handleViewMap
 }: FacilityFloorsViewProps) {
+  const [detailFloor, setDetailFloor] = useState<Floor | null>(null);
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -61,26 +65,26 @@ export function FacilityFloorsView({
         </div>
         <button
           onClick={() => { setEditingFloor(undefined); setIsFloorModalOpen(true); }}
-          className="bg-[#cce242] text-[#060606] font-semibold px-5 py-2.5 rounded-xl hover:brightness-95 transition-all flex items-center gap-2 shadow-sm self-start sm:self-auto"
+          className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
         >
-          <Plus size={18} /> Thêm Tầng
+          <Plus size={20} /> Thêm Tầng
         </button>
       </div>
 
       {/* Facility summary strip */}
       <div className="bg-white rounded-2xl border border-[#e8eae8] px-5 py-3.5 flex flex-wrap items-center gap-5">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Clock size={13} /> {viewFacility.openTime} – {viewFacility.closeTime}
+        <div className="flex items-center gap-1.5 text-[14px] font-medium text-gray-500">
+          <Clock size={16} /> {viewFacility.openTime} – {viewFacility.closeTime}
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Layers size={13} /> {filteredFloors.length} tầng
+        <div className="flex items-center gap-1.5 text-[14px] font-medium text-gray-500">
+          <Layers size={16} /> {filteredFloors.length} tầng
         </div>
         <div className="flex items-center gap-3 ml-auto">
-          <span className="text-xs tabular-nums text-gray-400">
+          <span className="text-[14px] font-medium tabular-nums text-gray-500">
             {facilityStats[viewFacility._id]?.occupied || 0}/{facilityStats[viewFacility._id]?.totalSlots || 0} đang dùng
           </span>
           <div className="flex items-center gap-2">
-            <div style={{ width: 80, background: '#eff0ef', height: 6, borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ width: 100, background: '#eff0ef', height: 8, borderRadius: 999, overflow: 'hidden' }}>
               <div style={{
                 width: `${facilityStats[viewFacility._id]?.fillRate || 0}%`,
                 height: '100%',
@@ -88,7 +92,7 @@ export function FacilityFloorsView({
                 borderRadius: 999
               }} />
             </div>
-            <span className="text-xs tabular-nums font-semibold" style={{ color: (facilityStats[viewFacility._id]?.fillRate || 0) > 85 ? '#E24B4A' : (facilityStats[viewFacility._id]?.fillRate || 0) >= 60 ? '#BA7517' : '#3B6D11' }}>
+            <span className="text-sm tabular-nums font-bold" style={{ color: (facilityStats[viewFacility._id]?.fillRate || 0) > 85 ? '#E24B4A' : (facilityStats[viewFacility._id]?.fillRate || 0) >= 60 ? '#BA7517' : '#3B6D11' }}>
               {facilityStats[viewFacility._id]?.fillRate || 0}%
             </span>
           </div>
@@ -103,10 +107,23 @@ export function FacilityFloorsView({
         slotStats={slotStatsByFloor}
         onAddFloor={() => { setEditingFloor(undefined); setIsFloorModalOpen(true); }}
         onEditFloor={handleEditMapping}
+        onViewFloor={setDetailFloor}
         onUpdate={updateFloorLocal}
         onRemove={removeFloorLocal}
         onRefresh={fetchAll}
         onViewMap={handleViewMap}
+      />
+
+      <FloorDetailModal
+        isOpen={!!detailFloor}
+        onClose={() => setDetailFloor(null)}
+        floor={detailFloor || undefined}
+        stats={detailFloor ? slotStatsByFloor[detailFloor._id] : undefined}
+        vehicleTypes={detailFloor ? vehicleTypes.filter(vt =>
+          (detailFloor.allowedVehicleTypes || []).some((item: any) =>
+            (typeof item === 'string' ? item : item._id) === vt._id
+          )
+        ) : []}
       />
     </motion.div>
   );

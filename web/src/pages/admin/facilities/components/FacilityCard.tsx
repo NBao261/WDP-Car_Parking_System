@@ -11,6 +11,7 @@ import { ConfirmModal } from '../../../../components/ConfirmModal';
 interface FacilityStats {
   totalSlots: number;
   occupied: number;
+  reserved?: number;
   fillRate: number;
 }
 
@@ -59,6 +60,18 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, 
   const handleConfirm = async () => {
     setLoading(true);
     try {
+      const occupied = stats?.occupied ?? 0;
+      const reserved = stats?.reserved ?? 0;
+
+      if (occupied > 0 || reserved > 0) {
+        toast.error(confirmAction === 'delete'
+          ? 'Không thể xóa cơ sở vì đang có slot đang dùng hoặc đã đặt trước.'
+          : 'Không thể thay đổi trạng thái vì đang có slot đang dùng hoặc đã đặt trước.');
+        setConfirmOpen(false);
+        setLoading(false);
+        return;
+      }
+
       if (confirmAction === 'deactivate') {
         const res = await facilityService.deactivate(facility._id);
         toast.success(`Đã vô hiệu hóa "${facility.name}"`);
@@ -68,7 +81,16 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, 
         toast.success(`Đã xóa cơ sở "${facility.name}"`);
         onRemove(facility._id);
       }
-    } catch (err: any) { toast.error(err.message || 'Thao tác thất bại'); }
+    } catch (err: any) {
+      const msg = err.message || '';
+      if (msg.includes('active parking sessions')) {
+        toast.error(confirmAction === 'delete'
+          ? 'Không thể xóa cơ sở vì đang có slot đang dùng hoặc đã đặt trước.'
+          : 'Không thể thay đổi trạng thái vì đang có slot đang dùng hoặc đã đặt trước.');
+      } else {
+        toast.error(msg || 'Thao tác thất bại');
+      }
+    }
     finally {
       setLoading(false);
       setConfirmOpen(false);
@@ -266,7 +288,7 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, 
           message={
             confirmAction === 'delete'
               ? `Bạn có chắc muốn xóa cơ sở "${facility.name}"? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn và không thể khôi phục.`
-              : `Bạn có chắc muốn vô hiệu hóa cơ sở "${facility.name}"? Các slot trống sẽ được đặt thành bảo trì.`
+              : `Bạn có chắc muốn vô hiệu hóa cơ sở "${facility.name}"? Các tầng sẽ được chuyển thành trạng thái vô hiệu hóa.`
           }
           confirmText={confirmAction === 'delete' ? 'Xóa vĩnh viễn' : 'Vô hiệu hóa'}
           variant="danger"
@@ -279,6 +301,7 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, 
 
 // ─── FacilityListItem (list view mode) ────────────────────────────────────────
 export function FacilityListItem({ facility, stats, onViewFloors, onViewDetail }: Omit<FacilityCardProps, 'onEdit' | 'onRemove' | 'onUpdate'>) {
+  const [hovered, setHovered] = useState(false);
   const isActive = facility.status === 'active';
   const totalSlots = stats?.totalSlots ?? 0;
   const fillRate = stats?.fillRate ?? 0;
@@ -291,9 +314,15 @@ export function FacilityListItem({ facility, stats, onViewFloors, onViewDetail }
 
   return (
     <div className={`bg-white flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer ${!isActive ? 'opacity-70' : ''}`}
-      style={{ border: '1.5px solid #e2e3e2', borderLeft: `4px solid ${accentColor}`, transition: 'box-shadow 0.2s' }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
+      style={{
+        border: hovered ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
+        borderLeft: `4px solid ${accentColor}`,
+        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
+        transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+        transition: 'all 0.2s ease'
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onClick={() => onViewDetail?.(facility)}
     >
       {/* Icon */}

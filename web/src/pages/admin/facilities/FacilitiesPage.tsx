@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Building2, MapPin } from 'lucide-react';
+import { Plus, Building2 } from 'lucide-react';
 import { FacilityFormModal } from './components/FacilityFormModal';
 import { FloorFormModal } from './components/FloorFormModal';
 import { FacilityCard, FacilityListItem } from './components/FacilityCard';
@@ -13,6 +13,7 @@ import { slotService, type ParkingSlot } from '../../../services/slot.service';
 import { toast } from 'sonner';
 import { Facility } from '../../../services/facility.service';
 import { Floor } from '../../../services/floor.service';
+import { vehicleTypeService } from '../../../services/vehicleType.service';
 
 // ── Skeleton Card ────────
 function SkeletonFacilityCard() {
@@ -66,9 +67,9 @@ export default function FacilitiesPage() {
             </div>
             <button
               onClick={() => { setEditingFacility(undefined); setIsFacilityModalOpen(true); }}
-              className="bg-[#cce242] text-[#060606] font-semibold px-5 py-2.5 rounded-xl transition-all hover:brightness-95 flex items-center gap-2 shadow-sm self-start sm:self-auto"
+              className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
             >
-              <Plus size={18} /> Thêm Cơ Sở Mới
+              <Plus size={20} /> Thêm Cơ Sở
             </button>
           </div>
 
@@ -190,30 +191,14 @@ export default function FacilitiesPage() {
         />
       )}
 
-      {/* ══ View 3: Slot Mapping Editor Fullscreen ══ */}
+      {/* ══ View 3: Slot Mapping Editor Inline ══ */}
       {data.mapFloor && data.viewFacility && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          className="fixed inset-0 z-50 bg-white overflow-hidden flex flex-col"
           id="slot-editor"
         >
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white shadow-sm shrink-0">
-            <div>
-              <h2 className="text-xl font-bold text-[#060606] flex items-center gap-2">
-                <MapPin size={20} style={{ color: '#4a7c20' }} />
-                Sơ đồ Slot - {data.mapFloor.name}
-              </h2>
-              <p className="text-gray-500 text-sm mt-0.5">{data.viewFacility.name} • {data.mapFloor.totalSlots || 0} slot</p>
-            </div>
-            <button
-              onClick={() => data.setMapFloor(null)}
-              className="bg-[#f0f1f0] text-[#060606] font-medium px-5 py-2.5 rounded-xl hover:bg-gray-200 transition-colors"
-            >
-              Đóng Sơ Đồ
-            </button>
-          </div>
           <SlotMappingEditorView
             floor={data.mapFloor}
             slots={data.mapSlots}
@@ -223,7 +208,12 @@ export default function FacilitiesPage() {
             onRefreshSlots={async () => {
               data.setMapLoading(true);
               try {
-                const res = await slotService.getByFloor(data.mapFloor!._id);
+                const [res, vtRes] = await Promise.all([
+                  slotService.getByFloor(data.mapFloor!._id),
+                  vehicleTypeService.getAll({ limit: 100 })
+                ]);
+                data.setVehicleTypes(vtRes.data);
+
                 const sorted = res.data.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }));
                 data.setMapSlots(sorted);
                 data.setAllSlots((prev: ParkingSlot[]) => [
@@ -231,11 +221,12 @@ export default function FacilitiesPage() {
                   ...sorted,
                 ]);
               } catch {
-                toast.error('Lỗi tải dữ liệu slot');
+                toast.error('Lỗi tải dữ liệu');
               } finally {
                 data.setMapLoading(false);
               }
             }}
+            onClose={() => data.setMapFloor(null)}
           />
         </motion.div>
       )}
