@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Map,
   Car,
-  Layers,
   Wallet,
   Users,
   Settings,
@@ -31,7 +30,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
   { path: '/admin/facilities', label: 'Facilities', icon: Map, roles: [UserRole.ADMIN] },
   { path: '/admin/vehicles', label: 'Vehicles', icon: Car, roles: [UserRole.ADMIN] },
-  { path: '/admin/slots', label: 'Slot Management', icon: Layers, roles: [UserRole.ADMIN] },
+
   { path: '/admin/pricing', label: 'Pricing & Revenue', icon: Wallet, roles: [UserRole.ADMIN] },
   { path: '/admin/users', label: 'Users', icon: Users, roles: [UserRole.ADMIN] },
   { path: '/admin/roles', label: 'Roles & Permissions', icon: Shield, roles: [UserRole.ADMIN] },

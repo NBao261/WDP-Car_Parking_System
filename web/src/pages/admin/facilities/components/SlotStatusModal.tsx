@@ -197,8 +197,8 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                     key={s}
                     onClick={() => setSelected(s)}
                     className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all ${selected === s
-                        ? 'bg-[#d7ee46] text-[#060606] border-[#c4dc32] shadow-sm scale-[1.02]'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      ? 'bg-[#d7ee46] text-[#060606] border-[#c4dc32] shadow-sm scale-[1.02]'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                   >
                     {STATUS_LABELS[s]}
