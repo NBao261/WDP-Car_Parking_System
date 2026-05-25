@@ -78,14 +78,14 @@ Algorithm:
 - **Identifier:** `arXiv:2508.19979`
 - **Tóm tắt:** Đề xuất chiến lược "Cord-Approx" sử dụng **Hungarian Algorithm** (thuật toán đối sánh tối ưu) để gán chỗ đỗ cho xe. Mô phỏng tại Madrid cho thấy giảm **72–76% thời gian tìm chỗ** so với hệ thống không phối hợp (uncoordinated).
 
-#### [P4] Coordinated Parking Allocation with Matching Algorithms
+#### [P4] Optimal Parking Management of Connected Autonomous Vehicles
 
-- **Tác giả:** Cao, J. & Menendez, M.
-- **Năm:** 2022
-- **Tiêu đề:** *The value of parking information: Optimal parking assignment strategies and cruising reduction*
-- **Tạp chí:** Transportation Research Part C: Emerging Technologies
-- **DOI:** `10.1016/j.trc.2022.103950` *(ước tính — cần xác minh)*
-- **Tóm tắt:** Phân tích giá trị thông tin đỗ xe trong hệ thống phối hợp. So sánh chiến lược coordinated vs. uncoordinated → kết luận hệ thống phối hợp giảm đáng kể thời gian cruising khi tỷ lệ adoption ≥ 30%.
+- **Tác giả:** Wang, S., Levin, M. W. & Caverly, R. J.
+- **Năm:** 2021
+- **Tiêu đề:** *Optimal parking management of connected autonomous vehicles: A control-theoretic approach*
+- **Tạp chí:** Transportation Research Part C: Emerging Technologies, Elsevier
+- **DOI:** `10.1016/j.trc.2020.102924`
+- **Tóm tắt:** Áp dụng lý thuyết điều khiển (control theory) cho bài toán quản lý bãi đỗ xe tự động. Chứng minh hệ thống phối hợp trung tâm (centralized coordination) vượt trội hơn phi tập trung (decentralized). Cơ sở cho RQ2: auto-assign hiệu quả hơn manual.
 
 ### Thuật toán áp dụng vào hệ thống
 
@@ -208,14 +208,14 @@ Lưu ý:
 - **DOI:** `10.3390/systems12100404`
 - **Tóm tắt:** Phát triển mô hình tối ưu phân bổ nhu cầu đỗ xe giờ cao điểm cho cụm bãi xe hub. Sử dụng **NSGA-II** (Non-dominated Sorting Genetic Algorithm II) để giải. Kết quả: giảm **4.5% tổng thời gian chờ** (13,860 giây tiết kiệm trong 1 giờ).
 
-#### [P9] Deep Reinforcement Learning for Parking Guidance
+#### [P9] Dynamic Coordinated Strategy for Mixed-Traffic Parking
 
-- **Tác giả:** Chen, X. et al.
+- **Tác giả:** Wang, Z., Zhang, C., Xue, S., Luo, Y., Chen, J., Wang, W. & Yan, X.
 - **Năm:** 2024
-- **Tiêu đề:** *Dynamic Coordinated Strategy for Parking Guidance in Mixed-Traffic Environments*
-- **Tạp chí:** AIMS Mathematics / Mathematical Biosciences and Engineering
-- **DOI:** `10.3934/mbe.2024XXX` *(DOI cụ thể cần xác minh)*
-- **Tóm tắt:** Đề xuất chiến lược phối hợp động sử dụng **Deep Q-Network (DQN)** cho hướng dẫn đỗ xe trong môi trường giao thông hỗn hợp. Hàm phần thưởng (reward function) có thể điều chỉnh để ưu tiên cân bằng tải hoặc giảm thời gian tìm chỗ.
+- **Tiêu đề:** *Dynamic coordinated strategy for parking guidance in a mixed driving parking lot involving human-driven and autonomous vehicles*
+- **Tạp chí:** Electronic Research Archive, 32(1), 523–550. AIMS Press
+- **DOI:** `10.3934/era.2024026`
+- **Tóm tắt:** Đề xuất chiến lược phối hợp động (DCS) sử dụng **Parking-Cruising Path Tree (PCPT)** cho bãi đỗ hỗn hợp xe người lái + xe tự lái. Tối ưu phân bổ slot và dẫn đường với tỷ lệ tối ưu lên đến **18%**. Cơ sở cho hướng nâng cấp RQ4.
 
 #### [P10] Reservation & Allocation Model for Shared Parking under Uncertainty
 
@@ -271,7 +271,7 @@ Metrics thu thập:
 - Rejection Rate → mục tiêu ≤ 5%
 ```
 
-**Cơ sở khoa học:** Threshold-based load balancing dựa trên mô hình phân bổ nhu cầu NSGA-II [P8] (Zhang et al., 2024). Peak detection từ phân tích dữ liệu lịch sử [P8]. Reservation-Aware Capacity từ chance-constrained model [P10] (Wang, Li & Xie, 2022). Có thể nâng cấp lên DRL — Online Parking Assignment với MARL [P7] (Zhang et al., 2022) hoặc DQN [P9] trong tương lai.
+**Cơ sở khoa học:** Threshold-based load balancing dựa trên mô hình phân bổ nhu cầu NSGA-II [P8] (Zhang et al., 2024). Peak detection từ phân tích dữ liệu lịch sử [P8]. Reservation-Aware Capacity từ chance-constrained model [P10] (Wang, Li & Xie, 2022). Có thể nâng cấp lên DCS/PCPT [P9] (Wang et al., 2024) hoặc MARL [P7] (Zhang et al., 2022) trong tương lai.
 
 ---
 
@@ -280,9 +280,9 @@ Metrics thu thập:
 | RQ | Thuật toán chính | Paper gốc | Đơn giản hóa cho hệ thống | Nâng cấp tương lai |
 |----|-----------------|-----------|---------------------------|-------------------|
 | **RQ1** | Multi-Agent Zoning + Differentiated Parking | [P1] Icarte-Ahumada 2025, [P2] Jakob & Menendez 2021 | Dynamic Vehicle-Type Zoning (rule-based) | Adaptive Zoning với ML |
-| **RQ2** | Hungarian Algorithm + Coordinated Assignment | [P3] arXiv 2025, [P4] Cao & Menendez 2022 | Greedy Matching (nearest-first) | Full Hungarian / MARL [P7] |
+| **RQ2** | Hungarian Algorithm + Coordinated Assignment | [P3] arXiv 2025, [P4] Wang, Levin & Caverly 2021 | Greedy Matching (nearest-first) | Full Hungarian / MARL [P7] |
 | **RQ3** | TOPSIS/CRITIC + COA + MARL hard constraints | [P5] Amari 2023, [P6] Shirazi 2025, [P7] Zhang 2022 | Weighted Scoring Model (WSM) | COA [P6] hoặc MARL [P7] |
-| **RQ4** | NSGA-II + DRL + Chance-Constrained Reservation | [P8] Zhang 2024, [P9] Chen 2024, [P10] Wang 2022 | Threshold-based Load Balancing | DQN [P9] / MARL [P7] |
+| **RQ4** | NSGA-II + DCS/PCPT + Chance-Constrained Reservation | [P8] Zhang 2024, [P9] Wang et al. 2024, [P10] Wang 2022 | Threshold-based Load Balancing | DCS [P9] / MARL [P7] |
 
 ### Lý do đơn giản hóa
 
@@ -423,7 +423,7 @@ Wang, Z., Zhang, C., Xue, S., Luo, Y., Chen, J., Wang, W. & Yan, X. (2024). "Dyn
 - **DOI:** [10.3934/era.2024026](https://doi.org/10.3934/era.2024026)
 - **Link:** [https://www.aimspress.com/article/doi/10.3934/era.2024026](https://www.aimspress.com/article/doi/10.3934/era.2024026)
 - **Ranking:** Scopus & SCIE indexed | IF = 1.1 | CiteScore = 1.7
-- **Literature Review:** Giới thiệu chiến lược phối hợp động (DCS) sử dụng thuật toán **"Parking-Cruising Path Tree" (PCPT)** cho bãi đỗ hỗn hợp (xe tự lái + xe người lái). Hàm mục tiêu kép: giảm thời gian cruising (xe chạy vòng tìm chỗ) và giảm delay do blocking (xe chặn đường trong bãi). Nghiên cứu mở ra hướng nâng cấp cho hệ thống: có thể áp dụng **Deep Q-Network (DQN)** với reward function điều chỉnh được để ưu tiên cân bằng tải hoặc giảm thời gian tìm chỗ — đây là hướng phát triển tương lai cho RQ4.
+- **Literature Review:** Giới thiệu chiến lược phối hợp động (DCS) sử dụng thuật toán **"Parking-Cruising Path Tree" (PCPT)** cho bãi đỗ hỗn hợp (xe tự lái + xe người lái). Hàm mục tiêu kép: giảm thời gian cruising và giảm delay do blocking. Tỷ lệ tối ưu đạt lên đến **18%**, đặc biệt hiệu quả cho xe có thời gian cruising dài hoặc bãi xe có tỷ lệ bão hòa cao và tỷ lệ AV thấp. Đây là cơ sở cho hướng nâng cấp RQ4: áp dụng DCS/PCPT để tối ưu phân bổ slot và dẫn đường real-time.
 - **Thuật toán sử dụng:**
   - **PCPT (Parking-Cruising Path Tree):** Xây dựng cây đường đi từ cổng vào đến từng slot → tính weight cho mỗi nhánh = `cruising_time + blocking_probability` → chọn nhánh có tổng weight nhỏ nhất.
   - **DCS (Dynamic Coordinated Strategy):** Cập nhật PCPT theo real-time khi slot thay đổi trạng thái → tái phân bổ đường đi cho xe đang trong bãi.

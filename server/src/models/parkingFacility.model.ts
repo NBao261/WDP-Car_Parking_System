@@ -15,7 +15,7 @@ export interface IParkingFacility extends Document {
   closeTime: string; // HH:mm
   description: string;
   images: string[];
-  assignedUsers: mongoose.Types.ObjectId[]; // Two-way ref: các user được phân công tại bãi này
+  assignedUsers: mongoose.Types.ObjectId[]; 
   status: FacilityStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -32,7 +32,7 @@ const parkingFacilitySchema = new Schema<IParkingFacility>(
     closeTime: { type: String, required: true },
     description: { type: String, default: '' },
     images: [{ type: String }],
-    assignedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Two-way ref ↔ User.assignedFacilities
+    assignedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }], 
     status: { type: String, enum: Object.values(FacilityStatus), default: FacilityStatus.ACTIVE },
     isDeleted: { type: Boolean, default: false },
   },
