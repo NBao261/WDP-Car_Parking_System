@@ -112,6 +112,24 @@ export class SessionService {
         throw new AppError('Mã đặt chỗ không tồn tại hoặc đã được sử dụng/hủy', 404);
       }
 
+      // Validate thời gian check-in: chỉ cho phép trong khoảng 30 phút trước startTime → endTime
+      const now = new Date();
+      const earlyWindow = 30 * 60 * 1000; // 30 phút
+      const earliestCheckIn = new Date(matchedReservation.startTime.getTime() - earlyWindow);
+
+      if (now < earliestCheckIn) {
+        const startTimeStr = matchedReservation.startTime.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+        const minutesEarly = Math.ceil((earliestCheckIn.getTime() - now.getTime()) / 60000);
+        throw new AppError(
+          `Chưa đến giờ check-in. Đặt chỗ bắt đầu lúc ${startTimeStr}. Bạn có thể check-in sớm nhất trước 30 phút (còn ${minutesEarly} phút nữa).`,
+          400
+        );
+      }
+
+      if (now > matchedReservation.endTime) {
+        throw new AppError('Đặt chỗ đã hết hạn. Vui lòng tạo đặt chỗ mới hoặc check-in walk-in.', 400);
+      }
+
       // Auto-fill các trường từ reservation
       data.facilityId = matchedReservation.facilityId.toString();
       data.vehicleTypeId = matchedReservation.vehicleTypeId.toString();
