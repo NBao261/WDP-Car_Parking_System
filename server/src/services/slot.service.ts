@@ -10,6 +10,10 @@ export class SlotService {
       throw new AppError('Floor not found', 404);
     }
 
+    if (!floor.allowedVehicleTypes.includes(data.vehicleTypeId as any)) {
+      throw new AppError('Loại phương tiện này không được hỗ trợ tại tầng này', 400);
+    }
+
     const currentSlotCount = await ParkingSlot.countDocuments({
       floorId: data.floorId,
       isDeleted: false,
@@ -35,6 +39,10 @@ export class SlotService {
     const floor = await Floor.findById(floorId);
     if (!floor) {
       throw new AppError('Floor not found', 404);
+    }
+
+    if (!floor.allowedVehicleTypes.includes(vehicleType as any)) {
+      throw new AppError('Loại phương tiện này không được hỗ trợ tại tầng này', 400);
     }
 
     const currentSlotCount = await ParkingSlot.countDocuments({

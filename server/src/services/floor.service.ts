@@ -19,7 +19,6 @@ export class FloorService {
     const newFloor = new Floor(data);
     await newFloor.save();
 
-    // Two-way sync: thêm floor._id vào VehicleType.floors[] cho mỗi vehicleType
     if (data.allowedVehicleTypes && data.allowedVehicleTypes.length > 0) {
       await VehicleType.updateMany(
         { _id: { $in: data.allowedVehicleTypes } },
@@ -51,6 +50,26 @@ export class FloorService {
     // Xác định vehicleType bị xóa và thêm mới
     const removedIds = oldIds.filter((vtId) => !newIds.includes(vtId));
     const addedIds = newIds.filter((vtId) => !oldIds.includes(vtId));
+
+    if (removedIds.length > 0) {
+      // Check if there are active slots for the removed vehicle types
+      const activeSlots = await ParkingSlot.countDocuments({
+        floorId: id,
+        vehicleTypeId: { $in: removedIds },
+        status: { $in: ['occupied', 'reserved'] },
+        isDeleted: false,
+      });
+
+      if (activeSlots > 0) {
+        throw new AppError('Không thể gỡ loại xe đang có xe đỗ hoặc đặt chỗ tại tầng này', 400);
+      }
+
+      // Soft delete all remaining slots for the removed vehicle types on this floor
+      await ParkingSlot.updateMany(
+        { floorId: id, vehicleTypeId: { $in: removedIds }, isDeleted: false },
+        { $set: { isDeleted: true, status: 'maintenance' } }
+      );
+    }
 
     // Cập nhật Floor
     const floor = await Floor.findByIdAndUpdate(
