@@ -131,7 +131,7 @@ export class SlotService {
   }
 
   static async getSlotById(id: string): Promise<IParkingSlot | null> {
-    const slot = await ParkingSlot.findById(id).populate('vehicleTypeId');
+    const slot = await ParkingSlot.findById(id).populate('vehicleTypeId').populate('currentSessionId');
     if (!slot) {
       throw new AppError('Slot not found', 404);
     }
@@ -139,6 +139,6 @@ export class SlotService {
   }
 
   static async getSlotsByFloor(floorId: string): Promise<IParkingSlot[]> {
-    return ParkingSlot.find({ floorId, isDeleted: false }).populate('vehicleTypeId').sort({ code: 1 });
+    return ParkingSlot.find({ floorId, isDeleted: false }).populate('vehicleTypeId').populate('currentSessionId').sort({ code: 1 });
   }
 }
