@@ -13,7 +13,7 @@ const MainLayout = () => {
 
       <MainContent>
         <Header onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8">
+        <div className="flex-1 overflow-y-auto px-4 lg:px-8 pb-4 lg:pb-8 pt-[10px]">
           <Outlet />
         </div>
       </MainContent>
