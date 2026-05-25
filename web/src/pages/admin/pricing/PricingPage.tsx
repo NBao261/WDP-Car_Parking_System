@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, DollarSign, CheckCircle2, XCircle, LayoutGrid, Building2, ChevronDown } from 'lucide-react';
+import { Plus, DollarSign } from 'lucide-react';
 
 import { facilityService, type Facility } from '../../../services/facility.service';
 import { vehicleTypeService, type VehicleType } from '../../../services/vehicleType.service';
@@ -9,6 +9,8 @@ import { pricingService, type PricingPlan } from '../../../services/pricing.serv
 
 import { PlanCard } from './components/PlanCard';
 import { PricingFormModal } from './components/PricingFormModal';
+import { PricingFilterBar } from './components/PricingFilterBar';
+import { PricingPagination } from './components/PricingPagination';
 
 export default function PricingPage() {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
@@ -19,6 +21,13 @@ export default function PricingPage() {
   const [editingPlan, setEditingPlan] = useState<PricingPlan | undefined>();
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [filterFacility, setFilterFacility] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageLimit = 9;
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, filterFacility]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -47,15 +56,8 @@ export default function PricingPage() {
     return true;
   });
 
-  const activeCount   = plans.filter(p => p.status === 'active').length;
-  const inactiveCount = plans.filter(p => p.status === 'inactive').length;
-
-  const statusTabs = [
-    { key: 'all'      as const, label: 'Tất cả',    Icon: LayoutGrid,   count: plans.length },
-    { key: 'active'   as const, label: 'Hoạt động', Icon: CheckCircle2, count: activeCount   },
-    { key: 'inactive' as const, label: 'Đã tắt',     Icon: XCircle,      count: inactiveCount },
-  ];
-
+  const totalPages = Math.ceil(displayed.length / pageLimit);
+  const paginatedPlans = displayed.slice((currentPage - 1) * pageLimit, currentPage * pageLimit);
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Header */}
@@ -72,61 +74,13 @@ export default function PricingPage() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-gray-100 pb-0">
-
-        {/* Status underline tabs */}
-        <div className="flex items-center gap-0">
-          {statusTabs.map(({ key, label, count }) => (
-            <button
-              key={key}
-              onClick={() => setFilterStatus(key)}
-              className={`relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
-                filterStatus === key
-                  ? 'text-emerald-600'
-                  : 'text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              {label}
-              <span className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold leading-none transition-colors ${
-                filterStatus === key
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-gray-100 text-gray-400'
-              }`}>
-                {count}
-              </span>
-              {/* Active indicator */}
-              {filterStatus === key && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-emerald-500" />
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Facility select */}
-        <div className="relative flex items-center">
-          <Building2 size={14} className="pointer-events-none absolute left-2.5 text-gray-400" />
-          <select
-            value={filterFacility}
-            onChange={(e) => setFilterFacility(e.target.value)}
-            className="cursor-pointer appearance-none rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-6 text-sm text-gray-600 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400"
-          >
-            <option value="all">Tất cả cơ sở</option>
-            {facilities.map((f) => <option key={f._id} value={f._id}>{f.name}</option>)}
-          </select>
-          <ChevronDown size={13} className="pointer-events-none absolute right-2 text-gray-400" />
-        </div>
-
-        {/* Count */}
-        <span className="text-xs text-gray-400 whitespace-nowrap">
-          <b className="text-gray-600 font-semibold">{displayed.length}</b> bảng giá
-        </span>
-
-      </div>
-
+      <PricingFilterBar
+        filterStatus={filterStatus}
+        setFilterStatus={setFilterStatus}
+        filterFacility={filterFacility}
+        setFilterFacility={setFilterFacility}
+        facilities={facilities}
+      />
 
       {/* Content */}
       {loading ? (
@@ -150,17 +104,28 @@ export default function PricingPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {displayed.map((plan) => (
-            <PlanCard
-              key={plan._id}
-              plan={plan}
-              facilities={facilities}
-              vehicleTypes={vehicleTypes}
-              onEdit={(p) => { setEditingPlan(p); setModalOpen(true); }}
-              onRefresh={fetchAll}
-            />
-          ))}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {paginatedPlans.map((plan) => (
+              <PlanCard
+                key={plan._id}
+                plan={plan}
+                facilities={facilities}
+                vehicleTypes={vehicleTypes}
+                onEdit={(p) => { setEditingPlan(p); setModalOpen(true); }}
+                onRefresh={fetchAll}
+              />
+            ))}
+          </div>
+
+          <PricingPagination
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            totalPages={totalPages}
+            totalItems={displayed.length}
+            pageLimit={pageLimit}
+            itemLabel="bảng giá"
+          />
         </div>
       )}
 
