@@ -21,13 +21,14 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onRefresh }: 
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
   /** Màu badge theo loại phí */
   const FEE_TYPE_BADGE: Record<string, string> = {
     per_turn: 'bg-violet-100 text-violet-700',
-    hourly:   'bg-sky-100 text-sky-700',
-    daily:    'bg-amber-100 text-amber-700',
-    monthly:  'bg-emerald-100 text-emerald-700',
+    hourly: 'bg-sky-100 text-sky-700',
+    daily: 'bg-amber-100 text-amber-700',
+    monthly: 'bg-[#d7ee46]/20 text-[#060606]',
   };
 
   /** Dịch đơn vị sang tiếng Việt */
@@ -60,16 +61,20 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onRefresh }: 
     return map[label] ?? label;
   };
 
-  const vtId    = typeof plan.vehicleTypeId === 'object' ? plan.vehicleTypeId?._id   : plan.vehicleTypeId;
-  const facId   = typeof plan.facilityId   === 'object' ? plan.facilityId?._id     : plan.facilityId;
-  const vtName  = typeof plan.vehicleTypeId === 'object' ? plan.vehicleTypeId?.name  : vehicleTypes.find(v => v._id === vtId)?.name ?? '';
+  const vtId = typeof plan.vehicleTypeId === 'object' ? plan.vehicleTypeId?._id : plan.vehicleTypeId;
+  const facId = typeof plan.facilityId === 'object' ? plan.facilityId?._id : plan.facilityId;
+  const vtName = typeof plan.vehicleTypeId === 'object' ? plan.vehicleTypeId?.name : vehicleTypes.find(v => v._id === vtId)?.name ?? '';
   const vtIconKey = typeof plan.vehicleTypeId === 'object' ? plan.vehicleTypeId?.icon : vehicleTypes.find(v => v._id === vtId)?.icon ?? '';
-  const facName = typeof plan.facilityId   === 'object' ? plan.facilityId?.name    : facilities.find(f => f._id === facId)?.name ?? '';
+  const facName = typeof plan.facilityId === 'object' ? plan.facilityId?.name : facilities.find(f => f._id === facId)?.name ?? '';
 
-  const VtIcon   = (vtIconKey && ICON_MAP[vtIconKey]) ? ICON_MAP[vtIconKey] : Car;
+  const VtIcon = (vtIconKey && ICON_MAP[vtIconKey]) ? ICON_MAP[vtIconKey] : Car;
   const isActive = plan.status === 'active';
   const mainRate = plan.rates[0];
-  const fmt      = (n: number) => n.toLocaleString('vi-VN') + ' đ';
+  const fmt = (n: number) => n.toLocaleString('vi-VN') + ' đ';
+
+  const badgeStyle = isActive
+    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5', fontWeight: 600 }
+    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2', fontWeight: 600 };
 
   const toggle = async (s: 'active' | 'inactive') => {
     setMenuOpen(false); setLoading(true);
@@ -97,12 +102,22 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onRefresh }: 
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col gap-3 hover:border-emerald-200 hover:shadow-sm transition-all duration-150"
+      className={!isActive ? 'opacity-70 p-5 flex flex-col gap-3' : 'p-5 flex flex-col gap-3'}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: 'white',
+        borderRadius: 16,
+        border: hovered ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
+        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.06)',
+        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+        transition: 'all 0.2s ease',
+      }}
     >
       {/* Row 1: icon + name + menu */}
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 ring-1 ring-emerald-100">
-          <VtIcon size={18} strokeWidth={1.5} />
+        <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(204,226,66,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <VtIcon size={22} style={{ color: '#4a7c20' }} strokeWidth={1.5} />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -112,12 +127,10 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onRefresh }: 
 
         <div className="flex items-center gap-1.5 shrink-0">
           {/* Status dot and text */}
-          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border ${isActive ? 'bg-emerald-50 border-emerald-100' : 'bg-gray-50 border-gray-100'}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-400'}`} />
-            <span className={`text-[10px] font-semibold uppercase tracking-wide ${isActive ? 'text-emerald-700' : 'text-gray-500'}`}>
-              {isActive ? 'Hoạt động' : 'Đã tắt'}
-            </span>
-          </div>
+          <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 5, ...badgeStyle }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
+            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
+          </span>
 
           {/* Menu */}
           {loading ? <Loader2 size={14} className="animate-spin text-gray-400" /> : (
@@ -143,11 +156,11 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onRefresh }: 
                     <div className="h-px bg-gray-100 mx-2 my-1" />
                     {isActive
                       ? <button onClick={() => toggle('inactive')} className="w-full text-left px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2">
-                          <PowerOff size={13} /> Vô hiệu hóa
-                        </button>
-                      : <button onClick={() => toggle('active')} className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2">
-                          <CheckCircle2 size={13} /> Kích hoạt
-                        </button>
+                        <PowerOff size={13} /> Vô hiệu hóa
+                      </button>
+                      : <button onClick={() => toggle('active')} className="w-full text-left px-4 py-2 text-sm text-[#060606] hover:bg-[#d7ee46]/10 flex items-center gap-2">
+                        <CheckCircle2 size={13} /> Kích hoạt
+                      </button>
                     }
                     <div className="h-px bg-gray-100 mx-2 my-1" />
                     <button onClick={() => { setMenuOpen(false); setShowConfirmDelete(true); }} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2">
@@ -166,7 +179,9 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onRefresh }: 
 
       {/* Row 2: vehicle type + fee type */}
       <div className="flex items-center justify-between text-xs">
-        <span className="text-gray-500">{vtName}</span>
+        <span className="px-2.5 py-1.5 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[11px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm">
+          <VtIcon size={13} className="text-[#4a7c20]" strokeWidth={2} /> {vtName}
+        </span>
         <span className={`font-semibold px-2.5 py-0.5 rounded-full text-[11px] ${FEE_TYPE_BADGE[plan.feeType] ?? 'bg-gray-100 text-gray-600'}`}>
           {FEE_TYPE_LABELS[plan.feeType]}
         </span>
