@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ReportService } from '../services/report.service';
+import { ExportService } from '../services/export.service';
+import { AppError } from '../middlewares/error.middleware';
 
 /**
  * Controller xử lý các API Báo cáo & Thống kê (FR-6)
@@ -119,6 +121,58 @@ export class ReportController {
       });
 
       res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /reports/export
+   * FR-6 (Export): Xuất báo cáo ra Excel hoặc PDF
+   *
+   * Query params:
+   * - reportType: traffic | revenue | occupancy | peak-hours
+   * - format: excel | pdf
+   * - Các query params khác tương ứng với từng loại báo cáo
+   */
+  static async exportReport(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { reportType, format, ...filters } = req.query;
+      
+      if (!reportType || !['traffic', 'revenue', 'occupancy', 'peak-hours'].includes(reportType as string)) {
+        throw new AppError('Loại báo cáo không hợp lệ (traffic, revenue, occupancy, peak-hours)', 400);
+      }
+      if (!format || !['excel', 'pdf'].includes(format as string)) {
+        throw new AppError('Định dạng xuất không hợp lệ (excel, pdf)', 400);
+      }
+
+      let data;
+      switch (reportType) {
+        case 'traffic': 
+          data = await ReportService.getTrafficReport(filters); 
+          break;
+        case 'revenue': 
+          data = await ReportService.getRevenueReport(filters); 
+          break;
+        case 'occupancy': 
+          data = await ReportService.getOccupancyReport(filters); 
+          break;
+        case 'peak-hours': 
+          data = await ReportService.getPeakHoursReport(filters); 
+          break;
+      }
+
+      const buffer = await ExportService.generateReport(reportType as string, format as string, data);
+
+      const contentType = format === 'excel' 
+        ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        : 'application/pdf';
+      const extension = format === 'excel' ? 'xlsx' : 'pdf';
+      const filename = `report_${reportType}_${new Date().getTime()}.${extension}`;
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+      res.send(buffer);
     } catch (error) {
       next(error);
     }

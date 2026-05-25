@@ -45,4 +45,12 @@ router.get(
   ReportController.getPeakHoursReport
 );
 
+// GET /reports/export
+// FR-6: Xuất báo cáo (Excel/PDF)
+router.get(
+  '/export',
+  checkPermission(PERMISSIONS.REPORT_TRAFFIC), // or a generic export permission
+  ReportController.exportReport
+);
+
 export default router;
