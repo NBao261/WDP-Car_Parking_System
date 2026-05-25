@@ -24,6 +24,10 @@ export class FacilityService {
     return facility;
   }
 
+  /**
+   * Vô hiệu hoá facility (chỉ đổi status, không xoá)
+   * Cascade: floors → inactive, slots available → maintenance
+   */
   static async deactivateFacility(id: string): Promise<IParkingFacility | null> {
     // Check if there are active occupied or reserved slots before deactivating
     const activeSlots = await ParkingSlot.countDocuments({
@@ -45,24 +49,55 @@ export class FacilityService {
       throw new AppError('Facility not found', 404);
     }
 
-    // Optional: Cascade deactivate floors and slots
-    await Floor.updateMany({ facilityId: id }, { status: 'inactive' });
+    // Cascade: floors → inactive, slots available → maintenance
+    await Floor.updateMany({ facilityId: id, isDeleted: false }, { status: 'inactive' });
     await ParkingSlot.updateMany({ facilityId: id, status: 'available' }, { status: 'maintenance' });
 
-    // Two-way sync: xóa facility._id khỏi User.assignedFacilities[] cho tất cả user liên quan
+    return facility;
+  }
+
+  /**
+   * Xoá mềm facility (isDeleted = true)
+   * Cascade: floors → isDeleted, slots → isDeleted, gỡ Staff assignment
+   */
+  static async softDeleteFacility(id: string): Promise<IParkingFacility | null> {
+    // Check if there are active occupied or reserved slots
+    const activeSlots = await ParkingSlot.countDocuments({
+      facilityId: id,
+      status: { $in: ['occupied', 'reserved'] },
+    });
+
+    if (activeSlots > 0) {
+      throw new AppError('Không thể xoá bãi xe khi còn xe đang gửi hoặc đặt chỗ', 400);
+    }
+
+    const facility = await ParkingFacility.findByIdAndUpdate(
+      id,
+      { isDeleted: true, status: 'inactive' },
+      { new: true }
+    );
+
+    if (!facility) {
+      throw new AppError('Facility not found', 404);
+    }
+
+    // Cascade: floors + slots → isDeleted = true
+    await Floor.updateMany({ facilityId: id }, { isDeleted: true, status: 'inactive' });
+    await ParkingSlot.updateMany({ facilityId: id }, { isDeleted: true, status: 'maintenance' });
+
+    // Gỡ Staff assignment
     if (facility.assignedUsers && facility.assignedUsers.length > 0) {
       await User.updateMany(
         { _id: { $in: facility.assignedUsers } },
         { $pull: { assignedFacilities: facility._id } }
       );
-
-      // Xóa assignedUsers của facility
       facility.assignedUsers = [];
       await facility.save();
     }
 
     return facility;
   }
+
 
   static async getFacilityById(id: string): Promise<IParkingFacility | null> {
     const facility = await ParkingFacility.findById(id);
