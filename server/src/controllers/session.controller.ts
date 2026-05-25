@@ -39,7 +39,7 @@ export class SessionController {
    */
   static async checkIn(req: Request, res: Response, next: NextFunction) {
     try {
-      const { facilityId, vehicleTypeId, licensePlate, gateIn, floorId, slotId } = req.body;
+      const { facilityId, vehicleTypeId, licensePlate, gateIn, floorId, slotId, reservationCode } = req.body;
       const staffInId = req.user!.userId;
 
       const session = await SessionService.checkIn({
@@ -50,6 +50,7 @@ export class SessionController {
         staffInId,
         floorId,
         slotId,
+        reservationCode,
       });
 
       res.status(201).json({ success: true, data: session });

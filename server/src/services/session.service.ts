@@ -8,6 +8,7 @@ import { PricingPlan } from '../models/pricingPlan.model';
 import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 import { Exception, ExceptionStatus, ExceptionType } from '../models/exception.model';
+import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { generateSessionCode, generateCardCode } from '../utils/codeGenerator';
 import { getIO } from '../config/socket';
 
@@ -32,6 +33,7 @@ interface CheckInData {
   staffInId: string;
   floorId?: string;
   slotId?: string;
+  reservationCode?: string;
 }
 
 export class SessionService {
@@ -137,66 +139,123 @@ export class SessionService {
       throw new AppError('Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này', 400);
     }
 
-    // 5. Tìm slot — nếu user chọn cụ thể thì validate, nếu không thì auto-assign
+    // 5. Tìm slot — kiểm tra reservation trước, nếu không thì auto-assign
     let slot;
+    let matchedReservation = null;
 
-    if (data.slotId) {
-      // User chọn slot cụ thể
-      slot = await ParkingSlot.findOne({
-        _id: data.slotId,
-        facilityId: data.facilityId,
-        vehicleTypeId: data.vehicleTypeId,
-        status: SlotStatus.AVAILABLE,
-        isDeleted: false,
+    // BR-6.6: Check nếu có reservation code → dùng slot đã đặt trước
+    if (data.reservationCode) {
+      matchedReservation = await Reservation.findOne({
+        code: data.reservationCode,
+        status: ReservationStatus.CONFIRMED,
       });
 
-      if (!slot) {
-        throw new AppError('Slot đã chọn không khả dụng', 400);
+      if (!matchedReservation) {
+        throw new AppError('Mã đặt chỗ không tồn tại hoặc đã được sử dụng/hủy', 404);
+      }
+
+      // Validate biển số xe khớp với reservation
+      if (matchedReservation.licensePlate !== data.licensePlate.toUpperCase()) {
+        throw new AppError(`Biển số xe không khớp với mã đặt chỗ. Mã ${data.reservationCode} đã đăng ký cho biển số ${matchedReservation.licensePlate}`, 400);
+      }
+
+      // Validate facility khớp
+      if (matchedReservation.facilityId.toString() !== data.facilityId) {
+        throw new AppError('Mã đặt chỗ không thuộc bãi xe này', 400);
+      }
+
+      // Dùng slot đã reserve sẵn
+      if (matchedReservation.slotId) {
+        slot = await ParkingSlot.findOne({
+          _id: matchedReservation.slotId,
+          status: SlotStatus.RESERVED,
+          isDeleted: false,
+        });
+
+        if (!slot) {
+          // Slot bị thay đổi → fallback auto-assign
+          slot = null;
+        }
       }
     } else {
-      // Auto-assign: tìm slot available, ưu tiên floor ít xe nhất
-      const floorQuery: any = {
+      // Không có reservation code → kiểm tra xem có reservation nào match theo biển số không
+      const autoMatchReservation = await Reservation.findOne({
+        licensePlate: data.licensePlate.toUpperCase(),
         facilityId: data.facilityId,
-        allowedVehicleTypes: data.vehicleTypeId,
-        isDeleted: false,
-        status: 'active',
-      };
+        status: ReservationStatus.CONFIRMED,
+        startTime: { $lte: new Date(Date.now() + 30 * 60 * 1000) }, // Trong khoảng ±30 phút
+      });
 
-      if (data.floorId) {
-        floorQuery._id = data.floorId;
+      if (autoMatchReservation && autoMatchReservation.slotId) {
+        matchedReservation = autoMatchReservation;
+        slot = await ParkingSlot.findOne({
+          _id: autoMatchReservation.slotId,
+          status: SlotStatus.RESERVED,
+          isDeleted: false,
+        });
       }
+    }
 
-      // Aggregate: tìm floor có nhiều slot trống nhất
-      const floorSlotCounts = await ParkingSlot.aggregate([
-        {
-          $match: {
-            facilityId: new mongoose.Types.ObjectId(data.facilityId),
-            vehicleTypeId: new mongoose.Types.ObjectId(data.vehicleTypeId),
-            status: SlotStatus.AVAILABLE,
-            isDeleted: false,
-            ...(data.floorId ? { floorId: new mongoose.Types.ObjectId(data.floorId) } : {}),
+    // Nếu vẫn chưa có slot (không có reservation hoặc slot reserved bị lỗi) → fallback
+    if (!slot) {
+      if (data.slotId) {
+        // User chọn slot cụ thể
+        slot = await ParkingSlot.findOne({
+          _id: data.slotId,
+          facilityId: data.facilityId,
+          vehicleTypeId: data.vehicleTypeId,
+          status: SlotStatus.AVAILABLE,
+          isDeleted: false,
+        });
+
+        if (!slot) {
+          throw new AppError('Slot đã chọn không khả dụng', 400);
+        }
+      } else {
+        // Auto-assign: tìm slot available, ưu tiên floor ít xe nhất
+        const floorQuery: any = {
+          facilityId: data.facilityId,
+          allowedVehicleTypes: data.vehicleTypeId,
+          isDeleted: false,
+          status: 'active',
+        };
+
+        if (data.floorId) {
+          floorQuery._id = data.floorId;
+        }
+
+        // Aggregate: tìm floor có nhiều slot trống nhất
+        const floorSlotCounts = await ParkingSlot.aggregate([
+          {
+            $match: {
+              facilityId: new mongoose.Types.ObjectId(data.facilityId),
+              vehicleTypeId: new mongoose.Types.ObjectId(data.vehicleTypeId),
+              status: SlotStatus.AVAILABLE,
+              isDeleted: false,
+              ...(data.floorId ? { floorId: new mongoose.Types.ObjectId(data.floorId) } : {}),
+            },
           },
-        },
-        { $group: { _id: '$floorId', count: { $sum: 1 } } },
-        { $sort: { count: -1 } },
-      ]);
+          { $group: { _id: '$floorId', count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
+        ]);
 
-      if (floorSlotCounts.length === 0) {
-        throw new AppError('Không còn slot trống phù hợp', 400);
-      }
+        if (floorSlotCounts.length === 0) {
+          throw new AppError('Không còn slot trống phù hợp', 400);
+        }
 
-      // Lấy slot đầu tiên từ floor có nhiều chỗ trống nhất
-      const bestFloorId = floorSlotCounts[0]._id;
-      slot = await ParkingSlot.findOne({
-        floorId: bestFloorId,
-        facilityId: data.facilityId,
-        vehicleTypeId: data.vehicleTypeId,
-        status: SlotStatus.AVAILABLE,
-        isDeleted: false,
-      }).sort({ code: 1 });
+        // Lấy slot đầu tiên từ floor có nhiều chỗ trống nhất
+        const bestFloorId = floorSlotCounts[0]._id;
+        slot = await ParkingSlot.findOne({
+          floorId: bestFloorId,
+          facilityId: data.facilityId,
+          vehicleTypeId: data.vehicleTypeId,
+          status: SlotStatus.AVAILABLE,
+          isDeleted: false,
+        }).sort({ code: 1 });
 
-      if (!slot) {
-        throw new AppError('Không còn slot trống phù hợp', 400);
+        if (!slot) {
+          throw new AppError('Không còn slot trống phù hợp', 400);
+        }
       }
     }
 
@@ -240,6 +299,12 @@ export class SessionService {
     slot.status = SlotStatus.OCCUPIED;
     slot.currentSessionId = session._id as mongoose.Types.ObjectId;
     await slot.save();
+
+    // 8. BR-6.6: Nếu check-in từ reservation → chuyển reservation sang USED
+    if (matchedReservation) {
+      matchedReservation.status = ReservationStatus.USED;
+      await matchedReservation.save();
+    }
 
     // 8. Return session populated
     const populatedSession = await ParkingSession.findById(session._id)

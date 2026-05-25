@@ -41,6 +41,10 @@ export const checkInSchema = z.object({
       .string()
       .regex(objectIdRegex, 'Invalid slot ID format')
       .optional(),
+    reservationCode: z
+      .string()
+      .min(1, 'Reservation code is required')
+      .optional(),
   }),
 });
 
