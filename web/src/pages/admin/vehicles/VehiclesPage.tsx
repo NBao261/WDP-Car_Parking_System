@@ -1,13 +1,141 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, Search, RefreshCw, Package, ChevronLeft, ChevronRight, Filter, Loader2, AlertTriangle } from 'lucide-react';
+import { Plus, Search, RefreshCw, Package, ChevronLeft, ChevronRight, ChevronDown, Filter, Loader2, X } from 'lucide-react';
 import { vehicleTypeService, VehicleType, SlotSize } from '../../../services/vehicleType.service';
 import { floorService, Floor } from '../../../services/floor.service';
 import { facilityService, Facility } from '../../../services/facility.service';
 import { VehicleFormModal } from './components/VehicleFormModal';
 import { VehicleRow } from './components/VehicleRow';
 import { VehicleDetailModal } from './components/VehicleDetailModal';
+import React from 'react';
+
+const inputBase: React.CSSProperties = {
+  height: 40, background: '#ffffff',
+  border: '1.5px solid #e2e3e2', borderRadius: 10,
+  fontSize: 14, outline: 'none', cursor: 'pointer',
+};
+
+function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
+  value: string; onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  width?: number | string;
+  icon?: React.ElementType;
+}) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const active = value !== 'all';
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => o.value === value) || options[0];
+
+  return (
+    <div className="relative" style={{ width, flexShrink: 0 }} ref={dropdownRef}>
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          ...inputBase,
+          display: 'flex',
+          alignItems: 'center',
+          padding: Icon ? '0 32px 0 32px' : '0 32px 0 14px',
+          border: isOpen || active ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
+          boxShadow: isOpen ? '0 0 0 3px rgba(204,226,66,0.2)' : 'none',
+          color: active ? '#060606' : '#6b6e6b',
+          fontWeight: active ? 600 : 400,
+          transition: 'all 0.2s ease',
+          userSelect: 'none',
+        }}
+      >
+        {Icon && (
+          <Icon size={14} style={{ position: 'absolute', left: 12, color: '#9ca3af' }} />
+        )}
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {selectedOption?.label}
+        </span>
+      </div>
+
+      <ChevronDown
+        size={15}
+        style={{
+          position: 'absolute', right: 12, top: '50%', transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`,
+          color: '#6b6e6b', pointerEvents: 'none',
+          transition: 'transform 0.2s ease'
+        }}
+      />
+
+      {isOpen && (
+        <div
+          className="custom-scrollbar"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            right: 0,
+            background: '#ffffff',
+            border: '1px solid #e2e3e2',
+            borderRadius: 12,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            zIndex: 50,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            maxHeight: 280,
+            animation: 'fadeIn 0.15s ease-out'
+          }}
+        >
+          <style>
+            {`
+              @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-4px); }
+                to { opacity: 1; transform: translateY(0); }
+              }
+            `}
+          </style>
+          {options.map((o) => (
+            <div
+              key={o.value}
+              onClick={() => {
+                onChange(o.value);
+                setIsOpen(false);
+              }}
+              style={{
+                padding: '10px 14px',
+                fontSize: 14,
+                cursor: 'pointer',
+                color: value === o.value ? '#060606' : '#4a4a4a',
+                background: value === o.value ? '#f8fce2' : '#ffffff',
+                fontWeight: value === o.value ? 500 : 400,
+                display: 'flex',
+                alignItems: 'center',
+                transition: 'background 0.15s ease, color 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (value !== o.value) {
+                  e.currentTarget.style.background = '#f5f5f5';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (value !== o.value) {
+                  e.currentTarget.style.background = '#ffffff';
+                }
+              }}
+            >
+              {o.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -32,9 +160,6 @@ export default function VehiclesPage() {
   const [selected, setSelected] = useState<VehicleType | undefined>();
   const [deleteTarget, setDeleteTarget] = useState<VehicleType | undefined>();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [linkedFloors, setLinkedFloors] = useState<{ floor: Floor, facilityName: string }[] | null>(null);
-  const [isCheckingLinks, setIsCheckingLinks] = useState(false);
-
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -106,7 +231,7 @@ export default function VehiclesPage() {
               ))}
             </ul>
           </div>
-        , { duration: 6000 });
+          , { duration: 6000 });
         setDeleteTarget(undefined);
         return;
       }
@@ -152,18 +277,44 @@ export default function VehiclesPage() {
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-48">
-            <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <select
+            <DropFilter
+              width="100%"
               value={filterSize}
-              onChange={(e) => setFilterSize(e.target.value as SlotSize | 'all')}
-              className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:border-transparent transition-all appearance-none"
-            >
-              <option value="all">Tất Cả Kích Thước</option>
-              <option value="small">Nhỏ</option>
-              <option value="medium">Vừa</option>
-              <option value="large">Lớn</option>
-            </select>
+              onChange={(v) => setFilterSize(v as any)}
+              icon={Filter}
+              options={[
+                { value: 'all', label: 'Tất Cả Kích Thước' },
+                { value: 'small', label: 'Nhỏ' },
+                { value: 'medium', label: 'Vừa' },
+                { value: 'large', label: 'Lớn' },
+              ]}
+            />
           </div>
+          {(search || filterSize !== 'all') && (
+            <button
+              onClick={() => { setSearch(''); setFilterSize('all'); }}
+              style={{
+                height: 40,
+                padding: '0 16px',
+                borderRadius: 10,
+                border: 'none',
+                background: '#fff1f1',
+                color: '#d32f2f',
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#fce4e4'}
+              onMouseLeave={e => e.currentTarget.style.background = '#fff1f1'}
+            >
+              <X size={15} />
+              Bỏ lọc
+            </button>
+          )}
           <button
             onClick={fetchVehicles}
             title="Làm mới"
