@@ -26,9 +26,9 @@ interface SuggestedFloor {
 }
 
 interface CheckInData {
-  facilityId: string;
-  vehicleTypeId: string;
-  licensePlate: string;
+  facilityId?: string;
+  vehicleTypeId?: string;
+  licensePlate?: string;
   gateIn: string;
   staffInId: string;
   floorId?: string;
@@ -99,6 +99,30 @@ export class SessionService {
    * Tạo session + cập nhật slot → Occupied + sinh mã thẻ
    */
   static async checkIn(data: CheckInData): Promise<IParkingSession> {
+    let matchedReservation = null;
+
+    // 0. BR-6.6: Nếu có reservationCode → auto-fill facilityId, vehicleTypeId, licensePlate từ reservation
+    if (data.reservationCode) {
+      matchedReservation = await Reservation.findOne({
+        code: data.reservationCode,
+        status: ReservationStatus.CONFIRMED,
+      });
+
+      if (!matchedReservation) {
+        throw new AppError('Mã đặt chỗ không tồn tại hoặc đã được sử dụng/hủy', 404);
+      }
+
+      // Auto-fill các trường từ reservation
+      data.facilityId = matchedReservation.facilityId.toString();
+      data.vehicleTypeId = matchedReservation.vehicleTypeId.toString();
+      data.licensePlate = matchedReservation.licensePlate;
+    }
+
+    // Đảm bảo các trường bắt buộc đã có (dù từ reservation hay từ request)
+    if (!data.facilityId || !data.vehicleTypeId || !data.licensePlate) {
+      throw new AppError('Thiếu thông tin bắt buộc: facilityId, vehicleTypeId, licensePlate', 400);
+    }
+
     // 1. Kiểm tra điều kiện
     const conditions = await this.checkConditions(data.facilityId, data.vehicleTypeId);
     if (!conditions.eligible) {
@@ -139,51 +163,26 @@ export class SessionService {
       throw new AppError('Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này', 400);
     }
 
-    // 5. Tìm slot — kiểm tra reservation trước, nếu không thì auto-assign
+    // 5. Tìm slot — dùng slot từ reservation nếu có, không thì auto-assign
     let slot;
-    let matchedReservation = null;
 
-    // BR-6.6: Check nếu có reservation code → dùng slot đã đặt trước
-    if (data.reservationCode) {
-      matchedReservation = await Reservation.findOne({
-        code: data.reservationCode,
-        status: ReservationStatus.CONFIRMED,
+    // Nếu có reservation → dùng slot đã reserved
+    if (matchedReservation && matchedReservation.slotId) {
+      slot = await ParkingSlot.findOne({
+        _id: matchedReservation.slotId,
+        status: SlotStatus.RESERVED,
+        isDeleted: false,
       });
+      // Nếu slot reserved bị lỗi → fallback auto-assign bên dưới
+    }
 
-      if (!matchedReservation) {
-        throw new AppError('Mã đặt chỗ không tồn tại hoặc đã được sử dụng/hủy', 404);
-      }
-
-      // Validate biển số xe khớp với reservation
-      if (matchedReservation.licensePlate !== data.licensePlate.toUpperCase()) {
-        throw new AppError(`Biển số xe không khớp với mã đặt chỗ. Mã ${data.reservationCode} đã đăng ký cho biển số ${matchedReservation.licensePlate}`, 400);
-      }
-
-      // Validate facility khớp
-      if (matchedReservation.facilityId.toString() !== data.facilityId) {
-        throw new AppError('Mã đặt chỗ không thuộc bãi xe này', 400);
-      }
-
-      // Dùng slot đã reserve sẵn
-      if (matchedReservation.slotId) {
-        slot = await ParkingSlot.findOne({
-          _id: matchedReservation.slotId,
-          status: SlotStatus.RESERVED,
-          isDeleted: false,
-        });
-
-        if (!slot) {
-          // Slot bị thay đổi → fallback auto-assign
-          slot = null;
-        }
-      }
-    } else {
-      // Không có reservation code → kiểm tra xem có reservation nào match theo biển số không
+    // Nếu không có reservationCode → kiểm tra xem có reservation nào match theo biển số không
+    if (!matchedReservation) {
       const autoMatchReservation = await Reservation.findOne({
         licensePlate: data.licensePlate.toUpperCase(),
         facilityId: data.facilityId,
         status: ReservationStatus.CONFIRMED,
-        startTime: { $lte: new Date(Date.now() + 30 * 60 * 1000) }, // Trong khoảng ±30 phút
+        startTime: { $lte: new Date(Date.now() + 30 * 60 * 1000) },
       });
 
       if (autoMatchReservation && autoMatchReservation.slotId) {
