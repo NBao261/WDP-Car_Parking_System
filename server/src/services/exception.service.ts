@@ -132,7 +132,7 @@ export class ExceptionService {
         session.licensePlate = data.newLicensePlate.toUpperCase();
         session.status = SessionStatus.ACTIVE;
         await session.save();
-      } 
+      }
       else if (exception.type === ExceptionType.WRONG_ZONE) {
         if (!data.newSlotId) {
           throw new AppError('Vui lòng chọn slot mới khi xử lý ngoại lệ sai khu vực', 400);
@@ -141,7 +141,7 @@ export class ExceptionService {
         // Cập nhật lại slot thực tế
         const newSlot = await ParkingSlot.findById(data.newSlotId);
         if (!newSlot) throw new AppError('Slot mới không tồn tại', 404);
-        
+
         // 1. Chỉ được đổi những slot thực sự còn trống (AVAILABLE) hoặc đang khóa tạm (LOCKED)
         if (newSlot.status !== SlotStatus.AVAILABLE && newSlot.status !== SlotStatus.LOCKED) {
           throw new AppError('Slot mới không còn trống hoặc không khả dụng', 400);
@@ -158,7 +158,7 @@ export class ExceptionService {
         }
 
         const oldSlotId = session.slotId;
-        
+
         // Lưu trạng thái gốc của slot mới TRƯỚC khi thay đổi
         // Dùng để quyết định xử lý slot cũ:
         //   - newSlot đang Available → đang dời xe sang chỗ mới → slot cũ có xe lạ → LOCKED
@@ -177,7 +177,7 @@ export class ExceptionService {
         newSlot.maintenanceReason = '';
         await newSlot.save();
 
-        // Xử lý slot cũ dựa trên trạng thái gốc của slot MỚI
+        // Xử lý slot cũ dựa trên trạng thái gốc của slot MỚI  
         if (oldSlotId) {
           const oldSlot = await ParkingSlot.findById(oldSlotId);
           if (oldSlot) {
@@ -218,7 +218,7 @@ export class ExceptionService {
    */
   static async detectOverdueSessions(): Promise<number> {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    
+
     // Tìm các session đang active và gửi quá 24h
     const overdueSessions = await ParkingSession.find({
       status: SessionStatus.ACTIVE,
@@ -241,7 +241,7 @@ export class ExceptionService {
         // Để giữ schema không đổi, lấy user có role admin đầu tiên
         const mongooseUser = mongoose.model('User');
         const adminUser = await mongooseUser.findOne({ role: 'admin' });
-        
+
         if (adminUser) {
           await Exception.create({
             sessionId: session._id,
