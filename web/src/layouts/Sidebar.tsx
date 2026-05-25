@@ -27,26 +27,26 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   // ── Admin ──
-  { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
-  { path: '/admin/facilities', label: 'Facilities', icon: Map, roles: [UserRole.ADMIN] },
-  { path: '/admin/vehicles', label: 'Vehicles', icon: Car, roles: [UserRole.ADMIN] },
+  { path: '/admin', label: 'Tổng Quan', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
+  { path: '/admin/facilities', label: 'Cơ Sở', icon: Map, roles: [UserRole.ADMIN] },
+  { path: '/admin/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.ADMIN] },
 
-  { path: '/admin/pricing', label: 'Pricing & Revenue', icon: Wallet, roles: [UserRole.ADMIN] },
-  { path: '/admin/users', label: 'Users', icon: Users, roles: [UserRole.ADMIN] },
-  { path: '/admin/roles', label: 'Roles & Permissions', icon: Shield, roles: [UserRole.ADMIN] },
-  { path: '/admin/config', label: 'System Config', icon: Settings, roles: [UserRole.ADMIN] },
-  { path: '/admin/logs', label: 'Audit Logs', icon: ScrollText, roles: [UserRole.ADMIN] },
+  { path: '/admin/pricing', label: 'Bảng Giá & Doanh Thu', icon: Wallet, roles: [UserRole.ADMIN] },
+  { path: '/admin/users', label: 'Người Dùng', icon: Users, roles: [UserRole.ADMIN] },
+  { path: '/admin/roles', label: 'Phân Quyền', icon: Shield, roles: [UserRole.ADMIN] },
+  { path: '/admin/config', label: 'Cấu Hình Hệ Thống', icon: Settings, roles: [UserRole.ADMIN] },
+  { path: '/admin/logs', label: 'Lịch Sử Hoạt Động', icon: ScrollText, roles: [UserRole.ADMIN] },
 
   // ── Manager ──
-  { path: '/manager', label: 'Dashboard', icon: LayoutDashboard, roles: [UserRole.MANAGER] },
-  { path: '/manager/zones', label: 'Zones', icon: Map, roles: [UserRole.MANAGER] },
-  { path: '/manager/vehicles', label: 'Vehicles', icon: Car, roles: [UserRole.MANAGER] },
-  { path: '/manager/reports', label: 'Reports', icon: ClipboardList, roles: [UserRole.MANAGER] },
+  { path: '/manager', label: 'Tổng Quan', icon: LayoutDashboard, roles: [UserRole.MANAGER] },
+  { path: '/manager/zones', label: 'Khu Vực', icon: Map, roles: [UserRole.MANAGER] },
+  { path: '/manager/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.MANAGER] },
+  { path: '/manager/reports', label: 'Báo Cáo', icon: ClipboardList, roles: [UserRole.MANAGER] },
 
   // ── Staff ──
-  { path: '/staff', label: 'Check-in / out', icon: ScanLine, roles: [UserRole.STAFF] },
-  { path: '/staff/active-sessions', label: 'Active Sessions', icon: Car, roles: [UserRole.STAFF] },
-  { path: '/staff/exceptions', label: 'Exceptions', icon: AlertTriangle, roles: [UserRole.STAFF] },
+  { path: '/staff', label: 'Xe Ra Vào', icon: ScanLine, roles: [UserRole.STAFF] },
+  { path: '/staff/active-sessions', label: 'Xe Đang Gửi', icon: Car, roles: [UserRole.STAFF] },
+  { path: '/staff/exceptions', label: 'Xử Lý Ngoại Lệ', icon: AlertTriangle, roles: [UserRole.STAFF] },
 ];
 
 function getInitials(name: string): string {
@@ -61,13 +61,13 @@ function getInitials(name: string): string {
 function getRoleLabel(role: UserRole): string {
   switch (role) {
     case UserRole.ADMIN:
-      return 'System Administrator';
+      return 'Quản Trị Hệ Thống';
     case UserRole.MANAGER:
-      return 'Facility Manager';
+      return 'Quản Lý Cơ Sở';
     case UserRole.STAFF:
-      return 'Parking Staff';
+      return 'Nhân Viên Bãi Xe';
     default:
-      return 'User';
+      return 'Người Dùng';
   }
 }
 
