@@ -54,8 +54,22 @@ export class SessionService {
     // 2. Kiểm tra giờ hoạt động
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    if (currentTime < facility.openTime || currentTime >= facility.closeTime) {
-      return { eligible: false, reason: `Bãi xe đang đóng. Giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, availableSlotCount: 0 };
+
+    // Nếu openTime == closeTime → hoạt động 24h, bỏ qua check
+    if (facility.openTime !== facility.closeTime) {
+      let isClosed = false;
+
+      if (facility.openTime < facility.closeTime) {
+        // Trường hợp bình thường: vd 06:00 - 22:00
+        isClosed = currentTime < facility.openTime || currentTime >= facility.closeTime;
+      } else {
+        // Trường hợp qua đêm: vd 22:00 - 06:00
+        isClosed = currentTime < facility.openTime && currentTime >= facility.closeTime;
+      }
+
+      if (isClosed) {
+        return { eligible: false, reason: `Bãi xe đang đóng. Giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, availableSlotCount: 0 };
+      }
     }
 
     // 3. Kiểm tra vehicleType tồn tại
