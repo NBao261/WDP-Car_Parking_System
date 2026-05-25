@@ -7,6 +7,11 @@ export const createReservationSchema = z.object({
   body: z.object({
     facilityId: z.string({ required_error: 'Facility ID không được để trống' }).regex(objectIdRegex, 'Invalid facility ID'),
     vehicleTypeId: z.string({ required_error: 'Loại xe không được để trống' }).regex(objectIdRegex, 'Invalid vehicle type ID'),
+    licensePlate: z
+      .string({ required_error: 'Biển số xe không được để trống' })
+      .min(4, 'Biển số xe phải có ít nhất 4 ký tự')
+      .max(15, 'Biển số xe tối đa 15 ký tự')
+      .transform((val) => val.toUpperCase().trim()),
     startTime: z.string({ required_error: 'Thời gian bắt đầu không được để trống' }).datetime({ message: 'Thời gian bắt đầu không hợp lệ' }),
     endTime: z.string({ required_error: 'Thời gian kết thúc không được để trống' }).datetime({ message: 'Thời gian kết thúc không hợp lệ' }),
   }),

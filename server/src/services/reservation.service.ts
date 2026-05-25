@@ -4,6 +4,7 @@ import { ParkingFacility } from '../models/parkingFacility.model';
 import { VehicleType } from '../models/vehicleType.model';
 import { AppError } from '../middlewares/error.middleware';
 import { logger } from '../config/logger';
+import { generateReservationCode } from '../utils/codeGenerator';
 
 export class ReservationService {
   /**
@@ -15,10 +16,12 @@ export class ReservationService {
   static async createReservation(userId: string, data: {
     facilityId: string;
     vehicleTypeId: string;
+    licensePlate: string;
     startTime: string;
     endTime: string;
   }): Promise<IReservation> {
-    const { facilityId, vehicleTypeId, startTime, endTime } = data;
+    const { facilityId, vehicleTypeId, licensePlate, startTime, endTime } = data;
+    const normalizedPlate = licensePlate.toUpperCase().trim();
     const start = new Date(startTime);
     const end = new Date(endTime);
     const now = new Date();
@@ -63,12 +66,27 @@ export class ReservationService {
       throw new AppError('Không còn slot trống cho loại xe này trong khung giờ yêu cầu', 400);
     }
 
+    // Sinh mã reservation (đảm bảo unique)
+    let reservationCode = generateReservationCode();
+    let retries = 5;
+    while (retries > 0) {
+      const codeExists = await Reservation.findOne({ code: reservationCode });
+      if (!codeExists) break;
+      reservationCode = generateReservationCode();
+      retries--;
+    }
+    if (retries === 0) {
+      throw new AppError('Không thể tạo mã đặt chỗ. Vui lòng thử lại.', 500);
+    }
+
     // Tạo reservation + lock slot
     const reservation = await Reservation.create({
+      code: reservationCode,
       userId,
       facilityId,
       vehicleTypeId,
       slotId: availableSlot._id,
+      licensePlate: normalizedPlate,
       startTime: start,
       endTime: end,
       status: ReservationStatus.CONFIRMED,
@@ -79,7 +97,7 @@ export class ReservationService {
       status: SlotStatus.RESERVED,
     });
 
-    logger.info(`Reservation created: ${reservation._id} by user ${userId}, slot ${availableSlot.code}`);
+    logger.info(`Reservation created: ${reservation._id} (${reservationCode}) by user ${userId}, slot ${availableSlot.code}, plate ${normalizedPlate}`);
 
     return reservation.populate([
       { path: 'facilityId', select: 'name address' },
