@@ -273,9 +273,9 @@ components:
           type: string
           enum: [available, occupied, reserved, maintenance, locked]
         currentSessionId:
-          type: string
+          type: object
           nullable: true
-          description: ObjectId phiên gửi xe hiện tại (null nếu trống)
+          description: Đối tượng phiên gửi xe hiện tại (được populate, null nếu trống)
         maintenanceReason:
           type: string
         isDeleted:

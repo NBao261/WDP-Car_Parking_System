@@ -1,0 +1,366 @@
+components:
+  schemas:
+    Feedback:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Mã phản hồi
+        userId:
+          type: string
+          description: ID người gửi phản hồi (hoặc object đầy đủ nếu populated)
+        sessionId:
+          type: string
+          nullable: true
+          description: ID lượt gửi xe liên quan (hoặc object đầy đủ nếu populated)
+        type:
+          type: string
+          enum: [lost_card, wrong_fee, hard_to_find, slot_occupied, other]
+          description: Loại phản hồi
+        description:
+          type: string
+          description: Mô tả chi tiết
+        images:
+          type: array
+          items:
+            type: string
+          description: Danh sách URL ảnh đính kèm
+        status:
+          type: string
+          enum: [submitted, processing, resolved, rejected]
+          description: Trạng thái xử lý
+        responseNote:
+          type: string
+          description: Ghi chú phản hồi từ Manager/Admin
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+paths:
+  /feedbacks:
+    post:
+      summary: Gửi phản hồi / báo cáo sự cố (Driver)
+      description: |
+        **FR-17.1**: Cho phép Driver gửi phản hồi hoặc báo cáo sự cố về lượt gửi xe.
+        
+        **Các loại phản hồi:**
+        - `lost_card` — Mất thẻ xe
+        - `wrong_fee` — Tính phí sai
+        - `hard_to_find` — Khó tìm chỗ đỗ
+        - `slot_occupied` — Chỗ đã bị chiếm
+        - `other` — Khác
+        
+        Có thể đính kèm hình ảnh (URL) để minh chứng.
+      tags: [Feedbacks]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - description
+              properties:
+                sessionId:
+                  type: string
+                  description: ID lượt gửi xe liên quan (không bắt buộc)
+                  example: "683f1a2b3c4d5e6f7a8b9c10"
+                type:
+                  type: string
+                  enum: [lost_card, wrong_fee, hard_to_find, slot_occupied, other]
+                  example: "wrong_fee"
+                description:
+                  type: string
+                  example: "Tính phí cao hơn bảng giá niêm yết"
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                  example: ["https://storage.example.com/feedback/photo1.jpg"]
+            example:
+              sessionId: "683f1a2b3c4d5e6f7a8b9c10"
+              type: "wrong_fee"
+              description: "Tính phí cao hơn bảng giá niêm yết. Giá niêm yết 5,000/giờ nhưng bị thu 10,000/giờ."
+              images: ["https://storage.example.com/feedback/photo1.jpg"]
+      responses:
+        '201':
+          description: Gửi phản hồi thành công
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c40"
+                  userId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c05"
+                    fullName: "Nguyễn Văn A"
+                    email: "driver@example.com"
+                    phone: "0901234567"
+                  sessionId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c10"
+                    code: "PS-20260514-A1B2"
+                    licensePlate: "59A-12345"
+                    checkInTime: "2026-05-14T08:00:00.000Z"
+                  type: "wrong_fee"
+                  description: "Tính phí cao hơn bảng giá niêm yết. Giá niêm yết 5,000/giờ nhưng bị thu 10,000/giờ."
+                  images: ["https://storage.example.com/feedback/photo1.jpg"]
+                  status: "submitted"
+                  responseNote: ""
+                  createdAt: "2026-05-24T02:30:00.000Z"
+        '400':
+          description: Lỗi validation
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Mô tả không được để trống"
+        '404':
+          description: Session không tồn tại
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Lượt gửi xe không tồn tại"
+
+    get:
+      summary: Xem danh sách phản hồi
+      description: |
+        **FR-17.2**: Xem danh sách phản hồi theo quyền:
+        - **Driver**: Chỉ xem phản hồi của mình (PQ-03)
+        - **Staff**: Xem phản hồi liên quan
+        - **Manager/Admin**: Xem tất cả, có thể filter
+      tags: [Feedbacks]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Số trang
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Số lượng / trang
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [submitted, processing, resolved, rejected]
+          description: Lọc theo trạng thái
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [lost_card, wrong_fee, hard_to_find, slot_occupied, other]
+          description: Lọc theo loại phản hồi
+        - in: query
+          name: userId
+          schema:
+            type: string
+          description: Lọc theo user (chỉ Manager/Admin)
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            default: createdAt
+          description: Trường sắp xếp
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Thứ tự sắp xếp
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "683f1a2b3c4d5e6f7a8b9c40"
+                    userId:
+                      _id: "683f1a2b3c4d5e6f7a8b9c05"
+                      fullName: "Nguyễn Văn A"
+                      email: "driver@example.com"
+                      phone: "0901234567"
+                    sessionId:
+                      _id: "683f1a2b3c4d5e6f7a8b9c10"
+                      code: "PS-20260514-A1B2"
+                      licensePlate: "59A-12345"
+                      checkInTime: "2026-05-14T08:00:00.000Z"
+                    type: "wrong_fee"
+                    description: "Tính phí cao hơn bảng giá niêm yết"
+                    images: ["https://storage.example.com/feedback/photo1.jpg"]
+                    status: "submitted"
+                    responseNote: ""
+                    createdAt: "2026-05-24T02:30:00.000Z"
+                  - _id: "683f1a2b3c4d5e6f7a8b9c41"
+                    userId:
+                      _id: "683f1a2b3c4d5e6f7a8b9c06"
+                      fullName: "Trần Thị B"
+                      email: "driver2@example.com"
+                      phone: "0907654321"
+                    sessionId: null
+                    type: "hard_to_find"
+                    description: "Bãi xe quá phức tạp, khó tìm được slot đỗ"
+                    images: []
+                    status: "processing"
+                    responseNote: ""
+                    createdAt: "2026-05-23T14:00:00.000Z"
+                pagination:
+                  total: 2
+                  page: 1
+                  totalPages: 1
+
+  /feedbacks/{id}:
+    get:
+      summary: Xem chi tiết phản hồi
+      tags: [Feedbacks]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "683f1a2b3c4d5e6f7a8b9c40"
+          description: ID feedback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c40"
+                  userId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c05"
+                    fullName: "Nguyễn Văn A"
+                    email: "driver@example.com"
+                    phone: "0901234567"
+                  sessionId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c10"
+                    code: "PS-20260514-A1B2"
+                    licensePlate: "59A-12345"
+                    checkInTime: "2026-05-14T08:00:00.000Z"
+                  type: "wrong_fee"
+                  description: "Tính phí cao hơn bảng giá niêm yết. Giá niêm yết 5,000/giờ nhưng bị thu 10,000/giờ."
+                  images: ["https://storage.example.com/feedback/photo1.jpg"]
+                  status: "submitted"
+                  responseNote: ""
+                  createdAt: "2026-05-24T02:30:00.000Z"
+        '404':
+          description: Không tìm thấy phản hồi
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Phản hồi không tồn tại"
+
+  /feedbacks/{id}/status:
+    put:
+      summary: Xử lý phản hồi (Manager/Admin)
+      description: |
+        **FR-17.3**: Cho phép Manager hoặc Admin xử lý phản hồi từ Driver.
+        
+        **Luồng trạng thái:**
+        ```
+        submitted → processing → resolved
+                               → rejected
+        ```
+        
+        Không thể thay đổi phản hồi đã ở trạng thái `resolved` hoặc `rejected`.
+      tags: [Feedbacks]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "683f1a2b3c4d5e6f7a8b9c40"
+          description: ID feedback cần xử lý
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [processing, resolved, rejected]
+                  description: Trạng thái mới
+                  example: "resolved"
+                responseNote:
+                  type: string
+                  description: Ghi chú phản hồi từ Manager
+                  example: "Đã kiểm tra lại hệ thống tính phí, sẽ hoàn tiền chênh lệch."
+            examples:
+              start_processing:
+                summary: Bắt đầu xử lý
+                value:
+                  status: "processing"
+                  responseNote: "Đang kiểm tra với Staff ca đêm."
+              resolve:
+                summary: Giải quyết xong
+                value:
+                  status: "resolved"
+                  responseNote: "Đã kiểm tra lại hệ thống tính phí, sẽ hoàn tiền chênh lệch 5,000 VND."
+              reject:
+                summary: Từ chối
+                value:
+                  status: "rejected"
+                  responseNote: "Phí tính đúng theo bảng giá giờ cao điểm."
+      responses:
+        '200':
+          description: Xử lý phản hồi thành công
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c40"
+                  userId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c05"
+                    fullName: "Nguyễn Văn A"
+                    email: "driver@example.com"
+                    phone: "0901234567"
+                  type: "wrong_fee"
+                  description: "Tính phí cao hơn bảng giá niêm yết"
+                  status: "resolved"
+                  responseNote: "Đã kiểm tra lại hệ thống tính phí, sẽ hoàn tiền chênh lệch 5,000 VND."
+                  createdAt: "2026-05-24T02:30:00.000Z"
+                  updatedAt: "2026-05-24T03:00:00.000Z"
+        '400':
+          description: Không thể thay đổi
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Phản hồi đã được xử lý, không thể thay đổi"
+        '404':
+          description: Không tìm thấy phản hồi
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Phản hồi không tồn tại"

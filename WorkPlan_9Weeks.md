@@ -260,11 +260,11 @@
 
 #### BE1
 
-- [ ] API Reservation (FR-14): create, cancel, list, autoExpire
+- [x] API Reservation (FR-14): create, cancel, list, autoExpire
   - Logic: kiểm tra slot trống theo khung giờ (BR-6.1)
   - Auto-cancel sau 30 phút (BR-6.4) – sử dụng cron job / agenda
   - Chuyển reservation → session khi Driver đến (BR-6.6)
-- [ ] API chính sách hủy (BR-6.5): tính phí hủy nếu < 2 giờ
+- [x] API chính sách hủy (BR-6.5): tính phí hủy nếu < 2 giờ
 - [ ] 🔬 **[RQ3]** Implement Weighted Scoring Model cho API `suggest-floor` (FR-8.3):
   - Thuật toán gốc: **TOPSIS + CRITIC** [P5] (Amari et al., *Sustainability* 2023), **COA** [P6] (Shirazi & Farzaneh, *JAIDM* 2025)
   - Ràng buộc cứng (hard constraints) từ MARL framework [P7] (Zhang et al., *TRC* 2022): vehicleType match + slot.status == 'Available'
