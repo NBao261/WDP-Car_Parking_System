@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Building2, MapPin, Clock, Layers, FileText, Calendar, Lock, Car } from 'lucide-react';
 import { Facility } from '../../../../services/facility.service';
+import { ICON_MAP } from '../../vehicles/components/constants';
 
 function getBarTextColor(pct: number) {
   if (pct > 85) return 'text-[#E24B4A]';
@@ -14,7 +15,7 @@ interface DetailModalProps {
   facility?: Facility;
   stats?: { totalSlots: number; occupied: number; fillRate: number };
   currentFloors?: number;
-  vehicleTypes?: { _id: string; name: string }[];
+  vehicleTypes?: { _id: string; name: string; icon?: string }[];
 }
 
 export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentFloors = 0, vehicleTypes = [] }: DetailModalProps) {
@@ -37,7 +38,10 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
         >
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-            <h2 className="text-lg font-bold text-[#060606]">Chi tiết Cơ sở</h2>
+            <div>
+              <h2 className="text-lg font-bold text-[#060606]">Chi tiết Cơ sở</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Xem thông tin và thống kê sức chứa</p>
+            </div>
             <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
               <X size={20} />
             </button>
@@ -60,28 +64,40 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
                   <MapPin size={14} className="shrink-0 mt-[3px]" />
                   <span>{facility.address}</span>
                 </p>
+                <div className="flex items-center gap-1.5 text-[13px] text-gray-400 mt-2">
+                  <Calendar size={13} /> Ngày tạo: <span className="text-gray-600 font-medium">{new Date(facility.createdAt).toLocaleDateString('vi-VN')}</span>
+                  {!isActive && (
+                    <>
+                      <span className="mx-1.5 text-gray-300">•</span>
+                      <Lock size={13} className="text-red-400" /> <span className="text-red-500">Tạm khóa:</span> <span className="text-gray-600 font-medium">{new Date(facility.updatedAt).toLocaleDateString('vi-VN')}</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="space-y-3 mt-4">
-              <div className="flex items-center gap-1.5 text-[13px] text-gray-400">
-                <Calendar size={13} /> Ngày tạo: <span className="text-gray-600 font-medium">{new Date(facility.createdAt).toLocaleDateString('vi-VN')}</span>
-                {!isActive && (
-                  <>
-                    <span className="mx-1.5 text-gray-300">•</span>
-                    <Lock size={13} className="text-red-400" /> <span className="text-red-500">Tạm khóa:</span> <span className="text-gray-600 font-medium">{new Date(facility.updatedAt).toLocaleDateString('vi-VN')}</span>
-                  </>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-2">
+                  Các loại xe cho phép
+                </p>
+                {vehicleTypes.length > 0 ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {vehicleTypes.map(v => {
+                      const IconComp = (v.icon && ICON_MAP[v.icon]) ? ICON_MAP[v.icon] : Car;
+                      return (
+                        <span key={v._id} className="px-2.5 py-1.5 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm">
+                          <IconComp size={14} className="text-[#4a7c20]" /> {v.name}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-sm text-gray-400 italic">
+                    Không có loại xe nào được hỗ trợ
+                  </div>
                 )}
               </div>
-              {vehicleTypes.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  {vehicleTypes.map(v => (
-                    <span key={v._id} className="px-2 py-1 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[11px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm">
-                      <Car size={11} /> {v.name}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
 
             <div className="grid grid-cols-3 gap-4">

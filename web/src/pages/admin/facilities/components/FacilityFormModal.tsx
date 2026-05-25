@@ -264,7 +264,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-red-500 hover:text-white transition-all disabled:opacity-60"
+                className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-60"
               >
                 Hủy
               </button>

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Search, ChevronDown, LayoutGrid, List } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, ChevronDown, LayoutGrid, List, X } from 'lucide-react';
 import { VehicleType } from '../../../../services/vehicleType.service';
 
 interface FacilityFilterBarProps {
@@ -24,30 +24,128 @@ function DropFilter({ value, onChange, options }: {
   label: string; value: string; onChange: (v: string) => void;
   options: { value: string; label: string }[];
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const active = value !== 'all';
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => o.value === value) || options[0];
+
   return (
-    <div className="relative" style={{ width: 160, flexShrink: 0 }}>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        onFocus={e => { e.target.style.border = '1.5px solid #cce242'; e.target.style.boxShadow = '0 0 0 3px rgba(204,226,66,0.2)'; }}
-        onBlur={e => { e.target.style.border = active ? '1.5px solid #cce242' : '1.5px solid #e2e3e2'; e.target.style.boxShadow = 'none'; }}
+    <div className="relative" style={{ width: 180, flexShrink: 0 }} ref={dropdownRef}>
+      <div
+        onClick={() => setIsOpen(!isOpen)}
         style={{
-          ...inputBase, width: '100%',
-          padding: active ? '0 32px 0 24px' : '0 32px 0 14px',
-          appearance: 'none',
-          border: active ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
+          ...inputBase,
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 32px 0 14px',
+          border: isOpen || active ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
+          boxShadow: isOpen ? '0 0 0 3px rgba(204,226,66,0.2)' : 'none',
           color: active ? '#060606' : '#6b6e6b',
           fontWeight: active ? 600 : 400,
           transition: 'all 0.2s ease',
+          userSelect: 'none',
         }}
       >
-        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-      {active && (
-        <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 6, height: 6, borderRadius: '50%', background: '#cce242' }} />
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {selectedOption?.label}
+        </span>
+      </div>
+      
+      <ChevronDown 
+        size={15} 
+        style={{ 
+          position: 'absolute', right: 12, top: '50%', transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`, 
+          color: '#6b6e6b', pointerEvents: 'none',
+          transition: 'transform 0.2s ease'
+        }} 
+      />
+
+      {isOpen && (
+        <div 
+          className="custom-scrollbar"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            right: 0,
+            background: '#ffffff',
+            border: '1px solid #e2e3e2',
+            borderRadius: 12,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            zIndex: 50,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            maxHeight: 280,
+            animation: 'fadeIn 0.15s ease-out'
+          }}
+        >
+          <style>
+            {`
+              @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-4px); }
+                to { opacity: 1; transform: translateY(0); }
+              }
+              .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+              }
+              .custom-scrollbar::-webkit-scrollbar-track {
+                background: transparent;
+                margin: 4px 0;
+              }
+              .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: #e2e3e2;
+                border-radius: 4px;
+              }
+              .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: #c0c0c0;
+              }
+            `}
+          </style>
+          {options.map((o) => (
+            <div
+              key={o.value}
+              onClick={() => {
+                onChange(o.value);
+                setIsOpen(false);
+              }}
+              style={{
+                padding: '10px 14px',
+                fontSize: 14,
+                cursor: 'pointer',
+                color: value === o.value ? '#060606' : '#4a4a4a',
+                background: value === o.value ? '#f8fce2' : '#ffffff',
+                fontWeight: value === o.value ? 500 : 400,
+                display: 'flex',
+                alignItems: 'center',
+                transition: 'background 0.15s ease, color 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (value !== o.value) {
+                  e.currentTarget.style.background = '#f5f5f5';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (value !== o.value) {
+                  e.currentTarget.style.background = '#ffffff';
+                }
+              }}
+            >
+              {o.label}
+            </div>
+          ))}
+        </div>
       )}
-      <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#6b6e6b', pointerEvents: 'none' }} />
     </div>
   );
 }
@@ -59,6 +157,14 @@ export function FacilityFilterBar({
   vehicleTypes,
   viewMode, setViewMode
 }: FacilityFilterBarProps) {
+  const hasActiveFilters = search !== '' || statusFilter !== 'all' || vehicleFilter !== 'all';
+
+  const clearFilters = () => {
+    setSearch('');
+    setStatusFilter('all');
+    setVehicleFilter('all');
+  };
+
   return (
     <div className="mb-5">
       <div className="flex flex-wrap items-center gap-3" style={{ minHeight: 48 }}>
@@ -92,8 +198,34 @@ export function FacilityFilterBar({
           ]}
         />
 
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            style={{
+              height: 40,
+              padding: '0 16px',
+              borderRadius: 10,
+              border: 'none',
+              background: '#fff1f1',
+              color: '#d32f2f',
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#fce4e4'}
+            onMouseLeave={e => e.currentTarget.style.background = '#fff1f1'}
+          >
+            <X size={15} />
+            Bỏ lọc
+          </button>
+        )}
+
         {/* View toggle */}
-        <div className="flex gap-1 shrink-0">
+        <div className="flex gap-1 shrink-0 ml-auto">
           {(['grid', 'list'] as const).map(mode => (
             <button
               key={mode}

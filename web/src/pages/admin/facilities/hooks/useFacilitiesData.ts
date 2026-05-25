@@ -50,6 +50,10 @@ export function useFacilitiesData() {
           );
           const slots = slotResults.flatMap((r: { data: ParkingSlot[] }) => r.data);
           setAllSlots(slots);
+          
+          // Keep mapFloor and mapSlots in sync if currently viewing map
+          setMapFloor(prev => prev ? fetchedFloors.find((f: Floor) => f._id === prev._id) || prev : null);
+          setMapSlots(prev => prev.length > 0 ? slots.filter(s => s.floorId === prev[0].floorId).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })) : []);
         } catch {
           setAllSlots([]);
         }
@@ -76,20 +80,22 @@ export function useFacilitiesData() {
       const floorSlots = byFloor[floor._id] ?? [];
       const total = floor.totalSlots ?? floorSlots.length;
       const occupied = floorSlots.filter(s => s.status === 'occupied').length;
+      const reserved = floorSlots.filter(s => s.status === 'reserved').length;
       const fillRate = total > 0 ? Math.round((occupied / total) * 100) : 0;
-      map[floor._id] = { total, occupied, fillRate };
+      map[floor._id] = { total, occupied, reserved, fillRate };
     }
     return map;
   }, [allSlots, floors]);
 
-  const facilityStats = useMemo<Record<string, { totalSlots: number; occupied: number; fillRate: number }>>(() => {
-    const map: Record<string, { totalSlots: number; occupied: number; fillRate: number }> = {};
+  const facilityStats = useMemo<Record<string, { totalSlots: number; occupied: number; reserved: number; fillRate: number }>>(() => {
+    const map: Record<string, { totalSlots: number; occupied: number; reserved: number; fillRate: number }> = {};
     for (const facility of facilities) {
       const facilityFloors = floors.filter(f => f.facilityId === facility._id);
       const totalSlots = facilityFloors.reduce((sum, f) => sum + (slotStatsByFloor[f._id]?.total ?? f.totalSlots ?? 0), 0);
       const occupied = facilityFloors.reduce((sum, f) => sum + (slotStatsByFloor[f._id]?.occupied ?? 0), 0);
+      const reserved = facilityFloors.reduce((sum, f) => sum + (slotStatsByFloor[f._id]?.reserved ?? 0), 0);
       const fillRate = totalSlots > 0 ? Math.round((occupied / totalSlots) * 100) : 0;
-      map[facility._id] = { totalSlots, occupied, fillRate };
+      map[facility._id] = { totalSlots, occupied, reserved, fillRate };
     }
     return map;
   }, [facilities, floors, slotStatsByFloor]);
@@ -151,6 +157,7 @@ export function useFacilitiesData() {
 
   const updateFloorLocal = useCallback((updated: Floor) => {
     setFloors((prev: Floor[]) => prev.map(f => f._id === updated._id ? updated : f));
+    setMapFloor((prev: Floor | null) => prev && prev._id === updated._id ? updated : prev);
   }, []);
 
   const removeFloorLocal = useCallback((id: string) => {
