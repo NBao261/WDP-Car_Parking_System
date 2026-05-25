@@ -11,7 +11,7 @@ import {
 } from '../../../../services/vehicleType.service';
 import { facilityService, Facility } from '../../../../services/facility.service';
 import { floorService, Floor } from '../../../../services/floor.service';
-import { ICON_OPTIONS, ICON_MAP, SLOT_SIZE_LABELS } from './constants';
+import { ICON_OPTIONS, SLOT_SIZE_LABELS } from './constants';
 
 interface ModalProps {
   isOpen: boolean;
@@ -38,6 +38,8 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
   const [selectedFacId, setSelectedFacId] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFacOpen, setIsFacOpen] = useState(false);
+  const [isFloorOpen, setIsFloorOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -67,6 +69,13 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
       ]);
       setFacilities(facRes.data);
       setFloorsList(floorRes.data);
+
+      if (vehicle) {
+        const linkedFloorIds = floorRes.data.filter((fl: Floor) =>
+          fl.allowedVehicleTypes.some((vt: any) => (typeof vt === 'string' ? vt : vt._id) === vehicle._id)
+        ).map((fl: Floor) => fl._id);
+        setForm(f => ({ ...f, floors: linkedFloorIds }));
+      }
     } catch (err) {
       toast.error('Lỗi khi tải danh sách tòa nhà');
     } finally {
@@ -170,8 +179,8 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                       title={label}
                       onClick={() => { setForm({ ...form, icon: name }); setErrors(e => ({ ...e, icon: undefined })); }}
                       className={`flex flex-col items-center justify-center gap-1.5 w-full py-3 rounded-xl border-2 transition-all ${isSelected
-                          ? 'border-emerald-400 bg-emerald-50 text-emerald-700 scale-105 shadow-sm'
-                          : 'border-gray-200 text-gray-500 hover:border-emerald-200 hover:bg-emerald-50/50 hover:text-emerald-600'
+                        ? 'border-[#d7ee46] bg-[#d7ee46]/15 text-[#060606] scale-105 shadow-sm'
+                        : 'border-gray-200 text-gray-500 hover:border-[#d7ee46]/50 hover:bg-[#d7ee46]/5 hover:text-[#060606]'
                         }`}
                     >
                       <Icon size={20} strokeWidth={1.5} />
@@ -187,17 +196,6 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                   <span>⚠</span> {errors.icon}
                 </p>
               )}
-              {/* Preview icon đang chọn */}
-              {form.icon && ICON_MAP[form.icon] && (() => {
-                const SelectedIcon = ICON_MAP[form.icon];
-                const selectedLabel = ICON_OPTIONS.find(o => o.name === form.icon)?.label ?? form.icon;
-                return (
-                  <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
-                    <SelectedIcon size={14} className="text-emerald-500" />
-                    <span>Đang chọn: <b className="text-gray-600">{selectedLabel}</b></span>
-                  </div>
-                );
-              })()}
             </div>
 
             {/* Name */}
@@ -210,7 +208,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                 value={form.name}
                 onChange={(e) => setName(e.target.value)}
                 className={`${inputBase} ${errors.name ? inputErr : inputOk}`}
-                placeholder="VD: Xe máy, Ô tô, Xe đạp..."
+                placeholder="Xe máy, Ô tô, Xe đạp"
               />
               {errors.name && (
                 <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
@@ -230,7 +228,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                 value={form.code}
                 onChange={(e) => setCode(e.target.value)}
                 className={`${inputBase} ${errors.code ? inputErr : inputOk} disabled:opacity-60 disabled:cursor-not-allowed uppercase`}
-                placeholder="VD: MOTORBIKE, CAR, BICYCLE"
+                placeholder="MOTORBIKE, CAR, BICYCLE"
               />
               {errors.code && (
                 <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
@@ -273,47 +271,96 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                 <div className="flex items-center gap-3">
                   {/* Facility Select */}
                   <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                       <Building2 size={16} className="text-gray-500" />
                     </div>
-                    <select
-                      value={selectedFacId}
-                      onChange={e => setSelectedFacId(e.target.value)}
-                      className="w-full pl-9 pr-8 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gray-300 transition-colors appearance-none font-medium text-gray-700 shadow-sm hover:bg-gray-50 cursor-pointer"
+                    <div
+                      onClick={() => { setIsFacOpen(!isFacOpen); setIsFloorOpen(false); }}
+                      className={`w-full pl-9 pr-8 py-2 bg-white border rounded-xl text-sm transition-all cursor-pointer flex items-center justify-between shadow-sm relative z-10
+                        ${isFacOpen ? 'border-transparent ring-2 ring-[#d7ee46]' : 'border-gray-200 hover:bg-gray-50'}`}
                     >
-                      <option value="" disabled>Chọn tòa nhà</option>
-                      {facilities.map(fac => (
-                        <option key={fac._id} value={fac._id}>{fac.name}</option>
-                      ))}
-                    </select>
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <ChevronDown size={16} className="text-gray-400" />
+                      <span className={selectedFacId ? "font-medium text-gray-700" : "text-gray-500 font-medium"}>
+                        {selectedFacId ? facilities.find(f => f._id === selectedFacId)?.name : 'Chọn tòa nhà'}
+                      </span>
                     </div>
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none z-10">
+                      <ChevronDown size={16} className={`text-gray-400 transition-transform ${isFacOpen ? 'rotate-180' : ''}`} />
+                    </div>
+
+                    <AnimatePresence>
+                      {isFacOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setIsFacOpen(false)} />
+                          <motion.div
+                            initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.15 }}
+                            className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] pb-2 z-50 max-h-40 overflow-y-auto overflow-x-hidden custom-scrollbar"
+                          >
+                            <div className="px-3 pt-2.5 pb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider sticky top-0 bg-white/95 backdrop-blur-sm z-10">Danh Sách Tòa Nhà</div>
+                            {facilities.map(fac => (
+                              <div
+                                key={fac._id}
+                                onClick={() => { setSelectedFacId(fac._id); setIsFacOpen(false); }}
+                                className={`px-4 py-2 text-sm cursor-pointer transition-colors flex items-center gap-2 whitespace-normal break-words ${selectedFacId === fac._id ? 'bg-[#d7ee46]/20 text-[#060606] font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
+                              >
+                                {fac.name}
+                              </div>
+                            ))}
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Floor Select */}
                   <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                       <Layers size={16} className="text-gray-500" />
                     </div>
-                    <select
-                      value=""
-                      onChange={e => {
-                        const val = e.target.value;
-                        if (val && !form.floors?.includes(val)) {
-                          setForm(f => ({ ...f, floors: [...(f.floors || []), val] }));
-                        }
-                      }}
-                      className="w-full pl-9 pr-8 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gray-300 transition-colors appearance-none font-medium text-gray-700 shadow-sm hover:bg-gray-50 cursor-pointer"
+                    <div
+                      onClick={() => { if(availableFloors.length > 0) { setIsFloorOpen(!isFloorOpen); setIsFacOpen(false); } }}
+                      className={`w-full pl-9 pr-8 py-2 bg-white border rounded-xl text-sm transition-all flex items-center justify-between shadow-sm relative z-10
+                        ${availableFloors.length === 0 ? 'opacity-50 cursor-not-allowed border-gray-200' : 'cursor-pointer hover:bg-gray-50'}
+                        ${isFloorOpen ? 'border-transparent ring-2 ring-[#d7ee46]' : 'border-gray-200'}`}
                     >
-                      <option value="">Thêm tầng...</option>
-                      {availableFloors.map(fl => (
-                        <option key={fl._id} value={fl._id} disabled={form.floors?.includes(fl._id)}>{fl.name}</option>
-                      ))}
-                    </select>
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <ChevronDown size={16} className="text-gray-400" />
+                      <span className="text-gray-500 font-medium">Thêm tầng...</span>
                     </div>
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none z-10">
+                      <ChevronDown size={16} className={`text-gray-400 transition-transform ${isFloorOpen ? 'rotate-180' : ''}`} />
+                    </div>
+
+                    <AnimatePresence>
+                      {isFloorOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setIsFloorOpen(false)} />
+                          <motion.div
+                            initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.15 }}
+                            className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] pb-2 z-50 max-h-40 overflow-y-auto overflow-x-hidden custom-scrollbar"
+                          >
+                            <div className="px-3 pt-2.5 pb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider sticky top-0 bg-white/95 backdrop-blur-sm z-10">Danh Sách Tầng</div>
+                            {availableFloors.length === 0 && <div className="px-4 py-2 text-sm text-gray-400">Không có tầng nào</div>}
+                            {availableFloors.map(fl => {
+                              const isSelected = form.floors?.includes(fl._id);
+                              return (
+                                <div
+                                  key={fl._id}
+                                  onClick={() => {
+                                    if (!isSelected) {
+                                      setForm(f => ({ ...f, floors: [...(f.floors || []), fl._id] }));
+                                      setIsFloorOpen(false);
+                                    }
+                                  }}
+                                  className={`px-4 py-2 text-sm transition-colors flex items-center justify-between whitespace-normal break-words
+                                    ${isSelected ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'cursor-pointer text-gray-600 hover:bg-[#d7ee46]/20 hover:text-[#060606] hover:font-medium'}`}
+                                >
+                                  {fl.name}
+                                  {isSelected && <span className="text-xs font-semibold text-gray-400 shrink-0 ml-2">Đã chọn</span>}
+                                </div>
+                              );
+                            })}
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
 
