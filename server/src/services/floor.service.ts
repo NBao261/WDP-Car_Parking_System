@@ -30,10 +30,27 @@ export class FloorService {
   }
 
   static async updateFloor(id: string, data: Partial<IFloor>): Promise<IFloor | null> {
+    if (data.status === 'inactive') {
+      const activeSlots = await ParkingSlot.countDocuments({
+        floorId: id,
+        status: { $in: ['occupied', 'reserved'] },
+      });
+
+      if (activeSlots > 0) {
+        throw new AppError('Không thể vô hiệu hoá tầng khi còn xe đang gửi hoặc đặt chỗ', 400);
+      }
+    }
+
     const floor = await Floor.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     if (!floor) {
       throw new AppError('Floor not found', 404);
     }
+
+    if (data.status === 'inactive') {
+      // Cascade: slots available → maintenance
+      await ParkingSlot.updateMany({ floorId: id, status: 'available' }, { status: 'maintenance' });
+    }
+
     return floor;
   }
 

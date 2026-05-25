@@ -17,10 +17,30 @@ export class FacilityService {
   }
 
   static async updateFacility(id: string, data: Partial<IParkingFacility>): Promise<IParkingFacility | null> {
+    if (data.status === 'inactive') {
+      const activeSlots = await ParkingSlot.countDocuments({
+        facilityId: id,
+        status: { $in: ['occupied', 'reserved'] },
+      });
+
+      if (activeSlots > 0) {
+        throw new AppError('Không thể vô hiệu hoá toà nhà khi còn xe đang gửi hoặc đặt chỗ', 400);
+      }
+    }
+
     const facility = await ParkingFacility.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     if (!facility) {
       throw new AppError('Facility not found', 404);
     }
+
+    if (data.status === 'inactive') {
+      // Cascade: floors → inactive, slots available → maintenance
+      await Floor.updateMany({ facilityId: id, isDeleted: false }, { status: 'inactive' });
+      await ParkingSlot.updateMany({ facilityId: id, status: 'available' }, { status: 'maintenance' });
+    } else if (data.status === 'active') {
+      // Tùy chọn: Khi activate toà nhà, có thể kích hoạt lại các tầng (nhưng tạm thời giữ nguyên để admin tự bật lại nếu cần)
+    }
+
     return facility;
   }
 
