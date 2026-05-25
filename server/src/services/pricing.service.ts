@@ -26,6 +26,20 @@ export class PricingService {
           { status: 'inactive' }
         );
       }
+    } else if (data.status === 'inactive' || data.isDeleted) {
+      // Prevent deactivating the last active plan
+      const planToUpdate = await PricingPlan.findById(id);
+      if (planToUpdate && planToUpdate.status === 'active') {
+        const activeCount = await PricingPlan.countDocuments({
+          facilityId: planToUpdate.facilityId,
+          vehicleTypeId: planToUpdate.vehicleTypeId,
+          status: 'active',
+          _id: { $ne: id }
+        });
+        if (activeCount === 0) {
+          throw new AppError('Không thể vô hiệu hoá bảng giá này vì đây là bảng giá active duy nhất cho loại xe tại bãi xe này', 400);
+        }
+      }
     }
 
     const updatedPlan = await PricingPlan.findByIdAndUpdate(id, data, { new: true, runValidators: true });
@@ -36,6 +50,23 @@ export class PricingService {
   }
 
   static async deactivatePricingPlan(id: string): Promise<IPricingPlan | null> {
+    const planToUpdate = await PricingPlan.findById(id);
+    if (!planToUpdate) {
+      throw new AppError('Pricing plan not found', 404);
+    }
+    
+    if (planToUpdate.status === 'active') {
+      const activeCount = await PricingPlan.countDocuments({
+        facilityId: planToUpdate.facilityId,
+        vehicleTypeId: planToUpdate.vehicleTypeId,
+        status: 'active',
+        _id: { $ne: id }
+      });
+      if (activeCount === 0) {
+        throw new AppError('Không thể vô hiệu hoá bảng giá này vì đây là bảng giá active duy nhất cho loại xe tại bãi xe này', 400);
+      }
+    }
+
     const plan = await PricingPlan.findByIdAndUpdate(id, { status: 'inactive' }, { new: true });
     if (!plan) {
       throw new AppError('Pricing plan not found', 404);

@@ -26,9 +26,27 @@ export class ReservationService {
     const end = new Date(endTime);
     const now = new Date();
 
-    // Validate facility exists
+    // Validate facility exists and is active
     const facility = await ParkingFacility.findById(facilityId);
     if (!facility) throw new AppError('Bãi xe không tồn tại', 404);
+    if (facility.status !== 'active') throw new AppError('Bãi xe hiện đang không hoạt động', 400);
+
+    // Validate facility operating hours
+    const startStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
+    const endStr = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
+    
+    if (facility.openTime !== facility.closeTime) {
+      if (facility.openTime < facility.closeTime) {
+        if (startStr < facility.openTime || startStr >= facility.closeTime || endStr < facility.openTime || endStr > facility.closeTime) {
+          throw new AppError(`Thời gian đặt chỗ phải nằm trong giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, 400);
+        }
+      } else {
+        // Qua đêm (ví dụ 22:00 - 06:00) -> Không hợp lệ nếu nằm trong khoảng 06:00 - 22:00
+        if ((startStr < facility.openTime && startStr >= facility.closeTime) || (endStr < facility.openTime && endStr > facility.closeTime)) {
+          throw new AppError(`Thời gian đặt chỗ phải nằm trong giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, 400);
+        }
+      }
+    }
 
     // Validate vehicle type exists
     const vehicleType = await VehicleType.findById(vehicleTypeId);

@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { User, IUser, UserStatus } from '../models/user.model';
 import { ParkingFacility } from '../models/parkingFacility.model';
+import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { AppError } from '../middlewares/error.middleware';
 
 export class UserService {
@@ -144,6 +145,15 @@ export class UserService {
   }
 
   static async lockUser(userId: string): Promise<IUser | null> {
+    // Không cho phép khoá nếu đang có đặt chỗ
+    const activeReservations = await Reservation.countDocuments({
+      userId,
+      status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
+    });
+    if (activeReservations > 0) {
+      throw new AppError('Không thể khoá người dùng này do vẫn còn đặt chỗ đang hoạt động. Vui lòng xử lý đặt chỗ trước.', 400);
+    }
+
     const user = await User.findByIdAndUpdate(userId, { status: UserStatus.LOCKED }, { new: true });
     if (!user) {
       throw new AppError('User not found', 404);
@@ -160,6 +170,15 @@ export class UserService {
   }
 
   static async softDeleteUser(userId: string): Promise<IUser | null> {
+    // Không cho phép xoá nếu đang có đặt chỗ
+    const activeReservations = await Reservation.countDocuments({
+      userId,
+      status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
+    });
+    if (activeReservations > 0) {
+      throw new AppError('Không thể xoá người dùng này do vẫn còn đặt chỗ đang hoạt động. Vui lòng xử lý đặt chỗ trước.', 400);
+    }
+
     const user = await User.findByIdAndUpdate(userId, { isDeleted: true, status: UserStatus.INACTIVE }, { new: true });
     if (!user) {
       throw new AppError('User not found', 404);

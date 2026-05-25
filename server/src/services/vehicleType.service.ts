@@ -1,5 +1,7 @@
 import { VehicleType, IVehicleType } from '../models/vehicleType.model';
 import { Floor } from '../models/floor.model';
+import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
+import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { AppError } from '../middlewares/error.middleware';
 
 export class VehicleTypeService {
@@ -30,7 +32,25 @@ export class VehicleTypeService {
     });
 
     if (floorsWithThisType > 0) {
-      throw new AppError('Cannot delete vehicle type that is currently assigned to floors', 400);
+      throw new AppError('Không thể xoá loại xe này do đang được gán cho các tầng', 400);
+    }
+
+    // Check if there are active sessions
+    const activeSessions = await ParkingSession.countDocuments({
+      vehicleTypeId: id,
+      status: SessionStatus.ACTIVE,
+    });
+    if (activeSessions > 0) {
+      throw new AppError('Không thể xoá loại xe này do đang có lượt gửi xe hoạt động', 400);
+    }
+
+    // Check if there are active reservations
+    const activeReservations = await Reservation.countDocuments({
+      vehicleTypeId: id,
+      status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
+    });
+    if (activeReservations > 0) {
+      throw new AppError('Không thể xoá loại xe này do đang có đặt chỗ đang hoạt động', 400);
     }
 
     const vehicleType = await VehicleType.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
@@ -38,13 +58,11 @@ export class VehicleTypeService {
       throw new AppError('Vehicle type not found', 404);
     }
 
-    // Two-way sync: xóa vehicleType._id khỏi Floor.allowedVehicleTypes[] cho tất cả floor liên quan
     await Floor.updateMany(
       { allowedVehicleTypes: id },
       { $pull: { allowedVehicleTypes: vehicleType._id } }
     );
 
-    // Two-way sync: xóa floors[] của vehicleType
     vehicleType.floors = [];
     await vehicleType.save();
 
