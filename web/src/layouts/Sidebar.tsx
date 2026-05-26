@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { ConfirmModal } from '../components/ConfirmModal';
 import {
   LayoutDashboard,
   Map,
@@ -78,6 +79,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { logout, user } = useAuthStore();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const visibleNavItems = useMemo(() => {
     if (!user) return [];
@@ -89,17 +91,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-40
-          w-64 bg-[#eff0ef] flex flex-col transition-transform duration-300 ease-in-out
+          w-64 bg-surface-sidebar flex flex-col transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
         role="navigation"
         aria-label="Main navigation"
       >
         <div className="h-20 flex items-center px-6 gap-3 shrink-0">
-          <div className="w-10 h-10 rounded-xl bg-[#d7ee46] flex items-center justify-center shrink-0">
-             <Car className="w-6 h-6 text-[#060606]" />
+          <div className="w-14 h-14 flex items-center justify-center shrink-0 overflow-hidden">
+            <img src="/Logo.png" alt="ParkMaster Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="font-bold text-xl tracking-tight text-[#060606]">LYNC PARK</span>
+          <span className="font-bold text-xl tracking-tight">LYNC PARK</span>
         </div>
 
         <nav className="flex-1 px-4 pb-6 space-y-1.5 overflow-y-auto">
@@ -110,8 +112,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               end={item.path === '/admin' || item.path === '/manager' || item.path === '/staff'}
               onClick={onClose}
               className={({ isActive }) => `
-                flex items-center gap-3 px-4 py-3 rounded-[12px] transition-all duration-200 font-medium text-sm
-                ${isActive ? 'bg-white text-[#060606] shadow-sm' : 'text-[#060606]/70 hover:bg-black/5 hover:text-[#060606]'}
+                flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 font-medium text-sm
+                ${isActive ? 'bg-white text-brand shadow-sm' : 'text-brand/70 hover:bg-brand/5 hover:text-brand'}
               `}
             >
               <item.icon size={20} className="shrink-0" />
@@ -121,19 +123,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         <div className="p-4 mt-auto shrink-0">
-          <div className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow border border-gray-100">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-              <span className="font-bold text-sm text-[#060606]">{user ? getInitials(user.name) : '??'}</span>
+          <div className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+              <span className="font-bold text-sm">{user ? getInitials(user.name) : '??'}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm truncate text-[#060606]">{user?.name ?? 'Guest'}</p>
-              <p className="text-xs text-[#060606]/60 truncate">
+              <p className="font-semibold text-sm truncate">{user?.name ?? 'Guest'}</p>
+              <p className="text-xs text-gray-500 truncate">
                 {user ? getRoleLabel(user.role) : ''}
               </p>
             </div>
             <button
-              onClick={logout}
-              className="text-[#060606]/40 hover:text-[#060606] transition-colors"
+              onClick={() => setShowLogoutModal(true)}
+              className="text-gray-400 hover:text-brand transition-colors"
               aria-label="Logout"
             >
               <LogOut size={18} />
@@ -141,6 +143,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
       </aside>
+
+      <ConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={logout}
+        title="Xác nhận Đăng xuất"
+        message="Bạn có chắc chắn muốn kết thúc ca làm việc và đăng xuất không?"
+        confirmText="Đăng xuất"
+        cancelText="Hủy"
+        variant="danger"
+      />
 
       {isOpen && (
         <div

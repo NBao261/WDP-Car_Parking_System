@@ -26,6 +26,7 @@ import ManagerDashboard from '../pages/manager/ManagerDashboard';
 const VehicleCheckPage = lazy(() => import('../pages/staff/vehicleCheck/VehicleCheckPage'));
 const ActiveSessionsPage = lazy(() => import('../pages/staff/activeSessions/ActiveSessionsPage'));
 const ExceptionsStaffPage = lazy(() => import('../pages/staff/exceptionsStaff/ExceptionsStaffPage'));
+const ShiftSelectionPage = lazy(() => import('../pages/staff/shiftSelection/ShiftSelectionPage'));
 
 const Loading = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
@@ -58,6 +59,13 @@ export const router = createBrowserRouter([
     path: '/',
     element: <ProtectedRoute />,
     children: [
+      {
+        path: 'staff/shift-selection',
+        element: (
+          <ProtectedRoute allowedRoles={[UserRole.STAFF, UserRole.MANAGER, UserRole.ADMIN]} />
+        ),
+        children: [{ index: true, element: <S><ShiftSelectionPage /></S> }],
+      },
       {
         element: <MainLayout />,
         children: [

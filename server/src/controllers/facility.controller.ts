@@ -31,6 +31,16 @@ export class FacilityController {
     }
   }
 
+  static async softDeleteFacility(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = req.params.id as string;
+      const facility = await FacilityService.softDeleteFacility(id);
+      res.status(200).json({ success: true, message: 'Facility đã được xoá', data: facility });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async getFacilityById(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;

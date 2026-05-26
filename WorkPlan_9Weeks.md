@@ -50,7 +50,7 @@
   - `Feedback` (userId, sessionId, type, description, images, status)
   - `SystemConfig` / `AuditLog`
 - [x] Setup ESLint + Prettier cho backend
-- [x] Viết seed data cơ bản
+- [x] Viết seed data cơ bản (bao gồm `distanceToGate` cho mỗi Floor — cần thiết cho WSM scoring tuần 6)
 
 ### BE2 – Backend Developer
 
@@ -260,11 +260,11 @@
 
 #### BE1
 
-- [ ] API Reservation (FR-14): create, cancel, list, autoExpire
+- [x] API Reservation (FR-14): create, cancel, list, autoExpire
   - Logic: kiểm tra slot trống theo khung giờ (BR-6.1)
   - Auto-cancel sau 30 phút (BR-6.4) – sử dụng cron job / agenda
   - Chuyển reservation → session khi Driver đến (BR-6.6)
-- [ ] API chính sách hủy (BR-6.5): tính phí hủy nếu < 2 giờ
+- [x] API chính sách hủy (BR-6.5): tính phí hủy nếu < 2 giờ
 - [ ] 🔬 **[RQ3]** Implement Weighted Scoring Model cho API `suggest-floor` (FR-8.3):
   - Thuật toán gốc: **TOPSIS + CRITIC** [P5] (Amari et al., *Sustainability* 2023), **COA** [P6] (Shirazi & Farzaneh, *JAIDM* 2025)
   - Ràng buộc cứng (hard constraints) từ MARL framework [P7] (Zhang et al., *TRC* 2022): vehicleType match + slot.status == 'Available'
@@ -273,15 +273,26 @@
   - Zone Filtering (từ Contract Net Protocol [P1] + Differentiated Parking [P2])
   - Greedy Matching (từ Hungarian Algorithm [P3] + Centralized Assignment [P4])
   - Trọng số mặc định: W1=0.25, W2=0.30, W3=0.25, W4=0.20 (cấu hình qua SystemConfig)
+  - **Service files tạo mới:**
+    - `server/services/algorithms/zoneFilter.service.js` ← RQ1: Zone Differentiation [P2]
+    - `server/services/algorithms/wsmScoring.service.js` ← RQ3: TOPSIS/CRITIC → WSM [P5]
+    - `server/services/algorithms/greedyMatching.service.js` ← RQ2: Hungarian → Greedy [P3]
+    - `server/services/algorithms/slotAssignment.service.js` ← Orchestrator
+  - **Schema changes:**
+    - `Floor.js`: thêm `distanceToGate` (Number) cho WSM scoring
+    - `ParkingSession.js`: thêm `assignmentMode` (enum: 'auto'/'manual'), `suggestedSlotId`
+    - `SystemConfig.js`: thêm `algorithmWeights` ({W1, W2, W3, W4})
+  - **API mới:** `PUT /api/system-config/algorithm-weights` cho Manager điều chỉnh W1–W4
+  - **Unit test:** test WSM scoring logic, test zone filtering, test greedy matching
 
 #### BE2
 
-- [ ] API Báo cáo (FR-6):
+- [x] API Báo cáo (FR-6):
   - Lượt xe vào/ra (FR-6.1): aggregate theo ngày/tuần/tháng, filter
   - Doanh thu (FR-6.2): aggregate payments, group by method/vehicleType
   - Tỷ lệ lấp đầy (FR-6.3): calculate occupied/total per floor
   - Khung giờ cao điểm (FR-6.4): aggregate by hour
-- [ ] API Export báo cáo: xuất Excel (xlsx) / PDF
+- [x] API Export báo cáo: xuất Excel (xlsx) / PDF
 - [ ] 🔬 **[RQ1]** API occupancy heatmap theo tầng + loại xe (FR-6.3 mở rộng)
   - Thuật toán gốc: **Macroscopic Fundamental Diagram (MFD)** [P2] — tính Optimal Occupancy
 - [ ] 🔬 **[RQ1]** Tạo seed data 2 cấu hình: (A) phân tầng chuyên biệt, (B) tầng hỗn hợp
@@ -325,6 +336,31 @@
   - Conflict Resolution: khi 2 xe hướng cùng slot → ưu tiên xe gần hơn
 - [ ] 🔬 **[RQ4]** Peak Hour Detection: xác định giờ cao điểm tự động từ dữ liệu lịch sử
   - Hướng nâng cấp tương lai: **MARL (Multi-Agent Deep RL)** [P7] (Zhang et al., *TRC* 2022) và **DRL (Deep Q-Network)** [P9]
+  - **Service files tạo mới:**
+    - `server/services/algorithms/loadBalancer.service.js` ← RQ4: Threshold LB [P8]
+    - `server/services/algorithms/peakDetection.service.js` ← RQ4: Peak detection [P8]
+  - **Schema changes:**
+    - `SystemConfig.js`: thêm `loadBalancingThreshold` (default: 0.85), `peakHourMultiplier` (default: 1.5)
+  - **API mới:** `GET /api/reports/load-imbalance`, `GET /api/reports/peak-hours`
+  - **Tích hợp:** Kết nối loadBalancer + peakDetection vào slotAssignment orchestrator
+- [ ] 🤖 **[AI]** Implement Peak Hour Prediction:
+  - Thư viện: `ml-regression` / `ml-random-forest` (JavaScript native, không cần Python)
+  - Input: hour, weekday, month, isHoliday, recentCheckInRate
+  - Output: isPeakHour (boolean) + confidence (0-1)
+  - Training: cron job chạy 1 lần/tuần trên lịch sử check-in (≥ 30 ngày)
+  - Fallback: nếu model chưa train hoặc accuracy < 70% → rule-based `rate > avg × 1.5`
+  - **Service files:**
+    - `server/services/ai/peakHourPredictor.service.js`
+    - `server/services/ai/modelTrainer.service.js`
+  - **Schema:** `SystemConfig.aiPredictionEnabled` (Boolean), `AIModelMeta.peakHourModel`
+  - **API:** `POST /api/ai/train-models`, `GET /api/ai/model-status`, `GET /api/ai/predict-peak`
+- [ ] 🤖 **[AI]** Implement Parking Duration Prediction:
+  - Input: vehicleType, checkInHour, weekday, month
+  - Output: estimatedDuration (phút) → feed vào WSM scoring W3
+  - Training: cron job trên lịch sử sessions hoàn thành (≥ 200 records)
+  - Fallback: `AVG(duration)` theo loại xe
+  - **Service file:** `server/services/ai/durationPredictor.service.js`
+  - **API:** `GET /api/ai/predict-duration`
 
 #### BE2
 
@@ -374,7 +410,10 @@
   - Scenario 2: 500 sessions auto-assign (Greedy [P3]) vs. manual (RQ2) — đo search time
   - Scenario 3: 500 sessions single-criteria vs. WSM multi-criteria [P5] (RQ3)
   - Scenario 4: 200 sessions giờ cao điểm với/không Threshold Load Balancing [P8] (RQ4)
+  - **Scenario 5: 🤖 AI vs Rule-based** — so sánh peak prediction accuracy (AI model vs threshold cứng)
+  - **Scenario 6: 🤖 Duration Prediction** — so sánh WSM với AI duration vs manual/avg duration
 - [ ] 🔬 Thu thập và phân tích metrics theo bảng chỉ số SRS Phần 5
+- [ ] 🤖 **[AI]** Đánh giá AI model performance: Accuracy/Precision/Recall (peak), MAE/RMSE (duration)
 
 ### BE2
 
@@ -431,6 +470,10 @@
     - MARL hard constraints [P7 Zhang 2022] → Zone Filtering rules
     - NSGA-II [P8] → Threshold Load Balancing
     - Chance-constrained reservation [P10 Wang 2022] → Reservation-Aware Occupancy
+  - **🤖 AI Accuracy Report:**
+    - Peak Hour Prediction: Accuracy, Precision, Recall, Confusion Matrix
+    - Duration Prediction: MAE, RMSE, R² score
+    - So sánh AI-enhanced vs Rule-based: cải thiện bao nhiêu %
   - Đề xuất cải tiến: nâng cấp lên TOPSIS đầy đủ [P5], COA [P6], MARL [P7], DQN [P9]
   - Hạn chế nghiên cứu và đối chiếu với papers [P1]–[P10]
 
@@ -533,6 +576,89 @@ Tuần 9: Deploy ───────────────┘── Mileston
 | Quản trị hệ thống        |   BE2   |     FE1      |   –    |
 | Realtime (Socket.IO)     |   BE2   |   FE1+FE2    |  FE3   |
 | **Research Questions**   | **BE1+BE2** |    –     |   –    |
+
+---
+
+## 🔬 KIẾN TRÚC THUẬT TOÁN PHÂN BỔ SLOT
+
+### Cấu trúc service files
+
+```
+server/services/algorithms/
+├── zoneFilter.service.js       ← RQ1: Zone Differentiation [P2]
+├── wsmScoring.service.js       ← RQ3: TOPSIS/CRITIC → WSM [P5]
+├── greedyMatching.service.js   ← RQ2: Hungarian → Greedy [P3]
+├── loadBalancer.service.js     ← RQ4: NSGA-II → Threshold LB [P8]
+├── peakDetection.service.js    ← RQ4: Peak detection [P8]
+├── slotAssignment.service.js   ← Orchestrator (tích hợp tất cả)
+│
+server/services/ai/
+├── peakHourPredictor.service.js    ← 🤖 AI: Peak Hour Prediction
+├── durationPredictor.service.js    ← 🤖 AI: Duration Prediction
+├── modelTrainer.service.js         ← 🤖 AI: Training pipeline (cron weekly)
+└── models/                         ← Trained model files (.json)
+```
+
+### Pipeline xử lý khi xe vào bãi (FR-8.3)
+
+```
+Xe vào → Zone Filter [P2] → 🤖 AI Peak Prediction
+                                    │
+                         ┌──── isPeak ────┐
+                         ▼                ▼
+                   Load Balancer  🤖 AI Duration
+                    [P8]+[P10]     Prediction
+                         │           │
+                         │      WSM Scoring [P5]
+                         │           │
+                         └──── Greedy ────┘
+                              Match [P3]
+                                │
+                         Slot Assigned
+                     (auto | manual mode)
+
+Fallback: AI model chưa train → rule-based (rate > avg × 1.5) + AVG(duration)
+```
+
+### Schema changes tổng hợp
+
+| Collection | Field | Type | Default | RQ |
+|-----------|-------|------|---------|-----|
+| Floor | distanceToGate | Number | 0 | RQ1, RQ3 |
+| ParkingSession | assignmentMode | String enum | 'auto' | RQ2 |
+| ParkingSession | suggestedSlotId | ObjectId | null | RQ2, RQ3 |
+| SystemConfig | algorithmWeights.W1_distance | Number | 0.25 | RQ3 |
+| SystemConfig | algorithmWeights.W2_floorBalance | Number | 0.30 | RQ3 |
+| SystemConfig | algorithmWeights.W3_durationMatch | Number | 0.25 | RQ3 |
+| SystemConfig | algorithmWeights.W4_floorPreference | Number | 0.20 | RQ3 |
+| SystemConfig | loadBalancingThreshold | Number | 0.85 | RQ4 |
+| SystemConfig | peakHourMultiplier | Number | 1.5 | RQ4 (fallback) |
+| SystemConfig | aiPredictionEnabled | Boolean | false | AI |
+| AIModelMeta | peakHourModel | Object | null | AI |
+| AIModelMeta | durationModel | Object | null | AI |
+
+### API endpoints cho thuật toán
+
+| Method | Endpoint | Mô tả | RQ |
+|--------|----------|-------|----|
+| GET | `/api/parking/suggest-floor?mode=auto\|manual` | Gợi ý tầng/slot tối ưu | RQ2, RQ3 |
+| GET | `/api/reports/occupancy-heatmap` | Heatmap occupancy theo tầng | RQ1 |
+| GET | `/api/reports/peak-hours` | Phân tích giờ cao điểm | RQ4 |
+| GET | `/api/reports/load-imbalance` | Load Imbalance Index | RQ4 |
+| PUT | `/api/system-config/algorithm-weights` | Điều chỉnh W1–W4 | RQ3 |
+| POST | `/api/ai/train-models` | Trigger re-train AI models | AI |
+| GET | `/api/ai/model-status` | Trạng thái model: accuracy, lastTrained | AI |
+| GET | `/api/ai/predict-peak` | Dự đoán giờ cao điểm (test) | AI |
+| GET | `/api/ai/predict-duration` | Dự đoán thời gian gửi (test) | AI |
+
+### Thuật toán đã chọn — tóm tắt
+
+| RQ | Paper chính | Ranking | Phiên bản áp dụng | Nâng cấp tương lai |
+|----|------------|---------|--------------------|-----------------|
+| RQ1 | [P2] Jakob & Menendez 2021 | Q2, IF=3.3 | Rule-based Zone Filtering | Adaptive ML Zoning |
+| RQ2 | [P3] arXiv 2025 + [P4] Wang 2021 | Preprint + Q1/IF=7.9 | Greedy Matching | Full Hungarian O(n³) |
+| RQ3 | [P5] Amari 2023 + [P7] Zhang 2022 | Q2 + Q1/IF=7.9 | WSM 4-criteria | Full TOPSIS + COA [P6] |
+| RQ4 | [P8] Zhang 2024 + [P10] Wang 2022 | Q1-JCR + Q1/IF=7.9 | Threshold Load Balancing | DQN [P9] / MARL [P7] |
 
 ---
 

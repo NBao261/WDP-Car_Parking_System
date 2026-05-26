@@ -216,6 +216,13 @@ paths:
               example:
                 success: true
                 message: "User deleted successfully"
+        '400':
+          description: Lỗi validation (ví dụ người dùng đang có đặt chỗ hoạt động)
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Không thể xoá người dùng này do vẫn còn đặt chỗ đang hoạt động. Vui lòng xử lý đặt chỗ trước."
 
   /users/{id}/lock:
     post:
@@ -242,6 +249,13 @@ paths:
                   _id: "60b9b0b9e6b3f3b3b4f3b3b5"
                   name: "Nguyen Van B"
                   status: "locked"
+        '400':
+          description: Lỗi validation (ví dụ người dùng đang có đặt chỗ hoạt động)
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Không thể khoá người dùng này do vẫn còn đặt chỗ đang hoạt động. Vui lòng xử lý đặt chỗ trước."
 
   /users/{id}/unlock:
     post:

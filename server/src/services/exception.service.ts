@@ -44,8 +44,13 @@ export class ExceptionService {
 
     await exception.save();
 
-    // Nếu là LOST_CARD hoặc WRONG_PLATE, khoá session (không cho checkout cho đến khi exception được resolve)
-    if (data.type === ExceptionType.LOST_CARD || data.type === ExceptionType.WRONG_PLATE) {
+    // Khoá session (không cho checkout cho đến khi exception được resolve)
+    // WRONG_ZONE cũng cần khoá vì xe chưa có chỗ đậu hợp lệ
+    if (
+      data.type === ExceptionType.LOST_CARD ||
+      data.type === ExceptionType.WRONG_PLATE ||
+      data.type === ExceptionType.WRONG_ZONE
+    ) {
       session.status = SessionStatus.EXCEPTION;
       await session.save();
     }
@@ -127,7 +132,7 @@ export class ExceptionService {
         session.licensePlate = data.newLicensePlate.toUpperCase();
         session.status = SessionStatus.ACTIVE;
         await session.save();
-      } 
+      }
       else if (exception.type === ExceptionType.WRONG_ZONE) {
         if (!data.newSlotId) {
           throw new AppError('Vui lòng chọn slot mới khi xử lý ngoại lệ sai khu vực', 400);
@@ -136,7 +141,7 @@ export class ExceptionService {
         // Cập nhật lại slot thực tế
         const newSlot = await ParkingSlot.findById(data.newSlotId);
         if (!newSlot) throw new AppError('Slot mới không tồn tại', 404);
-        
+
         // 1. Chỉ được đổi những slot thực sự còn trống (AVAILABLE) hoặc đang khóa tạm (LOCKED)
         if (newSlot.status !== SlotStatus.AVAILABLE && newSlot.status !== SlotStatus.LOCKED) {
           throw new AppError('Slot mới không còn trống hoặc không khả dụng', 400);
@@ -153,23 +158,38 @@ export class ExceptionService {
         }
 
         const oldSlotId = session.slotId;
-        
-        // Cập nhật session (giữ nguyên mọi thông tin, chỉ đổi slot + floor)
+
+        // Lưu trạng thái gốc của slot mới TRƯỚC khi thay đổi
+        // Dùng để quyết định xử lý slot cũ:
+        //   - newSlot đang Available → đang dời xe sang chỗ mới → slot cũ có xe lạ → LOCKED
+        //   - newSlot đang Locked → đang gán xe vào chỗ nó đậu nhầm → slot cũ trống → AVAILABLE
+        const newSlotWasLocked = newSlot.status === SlotStatus.LOCKED;
+
+        // Cập nhật session (giữ nguyên mọi thông tin, chỉ đổi slot + floor + mở khoá)
         session.slotId = newSlot._id as mongoose.Types.ObjectId;
         session.floorId = newSlot.floorId;
+        session.status = SessionStatus.ACTIVE; // Mở khoá session sau khi đã có chỗ mới
         await session.save();
 
-        // Cập nhật slot mới -> Occupied
+        // Cập nhật slot mới -> Occupied (xoá ghi chú cũ nếu có)
         newSlot.status = SlotStatus.OCCUPIED;
         newSlot.currentSessionId = session._id as mongoose.Types.ObjectId;
+        newSlot.maintenanceReason = '';
         await newSlot.save();
 
-        // Khóa slot cũ → LOCKED (để staff kiểm tra xe lạ đang đậu trái phép)
+        // Xử lý slot cũ dựa trên trạng thái gốc của slot MỚI  
         if (oldSlotId) {
           const oldSlot = await ParkingSlot.findById(oldSlotId);
           if (oldSlot) {
-            oldSlot.status = SlotStatus.LOCKED;
-            oldSlot.maintenanceReason = 'Đang có xe đậu sai chỗ, chờ xác minh';
+            if (newSlotWasLocked) {
+              // newSlot đang Locked → xe đậu nhầm được hợp lệ hoá tại chỗ → slot cũ trống
+              oldSlot.status = SlotStatus.AVAILABLE;
+              oldSlot.maintenanceReason = '';
+            } else {
+              // newSlot đang Available → dời xe sang chỗ mới → slot cũ có xe lạ chiếm → khoá
+              oldSlot.status = SlotStatus.LOCKED;
+              oldSlot.maintenanceReason = 'Đang có xe đậu sai chỗ, chờ xác minh';
+            }
             oldSlot.currentSessionId = null;
             await oldSlot.save();
           }
@@ -198,7 +218,7 @@ export class ExceptionService {
    */
   static async detectOverdueSessions(): Promise<number> {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    
+
     // Tìm các session đang active và gửi quá 24h
     const overdueSessions = await ParkingSession.find({
       status: SessionStatus.ACTIVE,
@@ -221,7 +241,7 @@ export class ExceptionService {
         // Để giữ schema không đổi, lấy user có role admin đầu tiên
         const mongooseUser = mongoose.model('User');
         const adminUser = await mongooseUser.findOne({ role: 'admin' });
-        
+
         if (adminUser) {
           await Exception.create({
             sessionId: session._id,

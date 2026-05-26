@@ -31,7 +31,7 @@ export const AuthRedirect = ({ children }: { children: JSX.Element }) => {
         ? '/admin'
         : user.role === UserRole.MANAGER
           ? '/manager'
-          : '/staff';
+          : '/staff/shift-selection';
     return <Navigate to={dashboardPath} replace />;
   }
 
