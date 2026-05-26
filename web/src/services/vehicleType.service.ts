@@ -9,6 +9,11 @@ export interface VehicleType {
   slotSize: SlotSize;
   description: string;
   icon: string;
+  floors?: {
+    _id: string;
+    name: string;
+    facilityId: { _id: string; name: string } | string;
+  }[];
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
@@ -31,6 +36,7 @@ export interface CreateVehicleTypePayload {
   slotSize: SlotSize;
   description?: string;
   icon?: string;
+  floors?: string[];
 }
 
 export interface UpdateVehicleTypePayload {
@@ -38,6 +44,7 @@ export interface UpdateVehicleTypePayload {
   slotSize?: SlotSize;
   description?: string;
   icon?: string;
+  floors?: string[];
 }
 
 export const vehicleTypeService = {

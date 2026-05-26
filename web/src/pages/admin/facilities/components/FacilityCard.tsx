@@ -11,6 +11,7 @@ import { ConfirmModal } from '../../../../components/ConfirmModal';
 interface FacilityStats {
   totalSlots: number;
   occupied: number;
+  reserved?: number;
   fillRate: number;
 }
 
@@ -21,6 +22,7 @@ interface FacilityCardProps {
   onViewFloors: (f: Facility) => void;
   onUpdate: (updated: Facility) => void;
   onRemove: (id: string) => void;
+  onViewDetail?: (f: Facility) => void;
 }
 
 function getBarColor(pct: number) {
@@ -29,22 +31,47 @@ function getBarColor(pct: number) {
   return '#3B6D11';
 }
 
-export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, onRemove }: FacilityCardProps) {
+function getBarTextColor(pct: number) {
+  if (pct > 85) return 'text-[#E24B4A]';
+  if (pct >= 60) return 'text-[#BA7517]';
+  return 'text-[#3B6D11]';
+}
+
+
+
+export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, onRemove, onViewDetail }: FacilityCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'deactivate' | 'delete'>('deactivate');
-  const isActive = facility.status === 'active';
+  const [hovered, setHovered] = useState(false);
 
+  const isActive = facility.status === 'active';
   const totalSlots = stats?.totalSlots ?? 0;
   const inUse = stats?.occupied ?? 0;
   const fillRate = stats?.fillRate ?? 0;
   const barColor = getBarColor(fillRate);
-  const fillTextColor = fillRate > 85 ? '#E24B4A' : fillRate >= 60 ? '#BA7517' : '#3B6D11';
+  const textColor = getBarTextColor(fillRate);
+
+  const badgeStyle = isActive
+    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5', fontWeight: 600 }
+    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2', fontWeight: 600 };
 
   const handleConfirm = async () => {
     setLoading(true);
     try {
+      const occupied = stats?.occupied ?? 0;
+      const reserved = stats?.reserved ?? 0;
+
+      if (occupied > 0 || reserved > 0) {
+        toast.error(confirmAction === 'delete'
+          ? 'Không thể xóa cơ sở vì đang có slot đang dùng hoặc đã đặt trước.'
+          : 'Không thể thay đổi trạng thái vì đang có slot đang dùng hoặc đã đặt trước.');
+        setConfirmOpen(false);
+        setLoading(false);
+        return;
+      }
+
       if (confirmAction === 'deactivate') {
         const res = await facilityService.deactivate(facility._id);
         toast.success(`Đã vô hiệu hóa "${facility.name}"`);
@@ -54,9 +81,18 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, 
         toast.success(`Đã xóa cơ sở "${facility.name}"`);
         onRemove(facility._id);
       }
-    } catch (err: any) { toast.error(err.message || 'Thao tác thất bại'); }
-    finally { 
-      setLoading(false); 
+    } catch (err: any) {
+      const msg = err.message || '';
+      if (msg.includes('active parking sessions')) {
+        toast.error(confirmAction === 'delete'
+          ? 'Không thể xóa cơ sở vì đang có slot đang dùng hoặc đã đặt trước.'
+          : 'Không thể thay đổi trạng thái vì đang có slot đang dùng hoặc đã đặt trước.');
+      } else {
+        toast.error(msg || 'Thao tác thất bại');
+      }
+    }
+    finally {
+      setLoading(false);
       setConfirmOpen(false);
     }
   };
@@ -90,42 +126,49 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, 
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
-      onClick={() => { if (!confirmOpen) onViewFloors(facility); }}
-      style={{ borderTop: `3px solid ${isActive ? '#3B6D11' : '#9ca3af'}` }}
-      className={`cursor-pointer bg-white rounded-2xl border border-[#e8eae8] shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden ${!isActive ? 'opacity-60' : ''}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: 'white',
+        borderRadius: 16,
+        border: hovered ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
+        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.06)',
+        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+        transition: 'all 0.2s ease',
+        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
+        cursor: 'pointer'
+      }}
+      className={!isActive ? 'opacity-70' : ''}
+      onClick={() => onViewDetail?.(facility)}
     >
-      {/* ── Header: name+address LEFT | icon RIGHT ── */}
-      <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          {/* Name row + status badge */}
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <h3 className="text-sm font-semibold text-[#060606]">{facility.name}</h3>
-            {isActive ? (
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-medium"
-                style={{ background: '#EAF3DE', color: '#27500A' }}>
-                Hoạt động
-              </span>
-            ) : (
-              <span className="px-2 py-0.5 rounded-full text-[11px] bg-gray-100 text-gray-400">
-                Đã tắt
-              </span>
-            )}
+
+      {/* Header */}
+      <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-3 relative">
+        <div className="flex gap-3 min-w-0">
+          {/* Icon */}
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(204,226,66,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Building2 size={24} style={{ color: '#4a7c20' }} />
           </div>
-          {/* Address */}
-          <p className="text-xs text-gray-400 flex items-center gap-1">
-            <MapPin size={10} /> {facility.address}
-          </p>
+          {/* Text */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <h3 className="text-[15px] text-[#060606] font-semibold truncate" title={facility.name}>{facility.name}</h3>
+            </div>
+            <div className="text-[13px] flex items-center gap-1.5 mt-1 min-w-0" style={{ color: '#6b6e6b' }}>
+              <MapPin size={12} className="flex-shrink-0" />
+              <span className="truncate" title={facility.address}>{facility.address}</span>
+            </div>
+          </div>
         </div>
 
-        {/* Icon (right) + menu */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: isActive ? '#EAF3DE' : '#f3f4f6' }}>
-            <Building2 size={16} style={{ color: isActive ? '#3B6D11' : '#9ca3af' }} />
-          </div>
-
-          {/* ⋮ menu */}
-          <div className="relative" onClick={(e) => e.stopPropagation()}>
+        {/* Badge & Action Menu */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 5, ...badgeStyle }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
+            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
+          </span>
+          <div className="relative -mr-2" onClick={(e) => e.stopPropagation()}>
             {loading ? (
               <div className="w-7 h-7 flex items-center justify-center">
                 <Loader2 size={14} className="animate-spin text-gray-400" />
@@ -148,8 +191,7 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, 
                   onClick={(e) => e.stopPropagation()}
                   className="absolute right-0 top-8 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-20"
                 >
-                  <div className="fixed inset-0 z-[-1]"
-                    onClick={(e) => { e.stopPropagation(); setMenuOpen(false); }} />
+                  <div className="fixed inset-0 z-[-1]" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); }} />
                   <button
                     onClick={(e) => { e.stopPropagation(); onEdit(facility); setMenuOpen(false); }}
                     className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
@@ -183,78 +225,146 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, 
         </div>
       </div>
 
-      {/* ── Meta row: floors count + operating hours ── */}
-      <div className="px-5 pb-3 flex items-center gap-4 text-xs text-gray-400">
-        <span className="flex items-center gap-1">
-          <Layers size={11} /> {facility.totalFloors ?? 0} tầng
-        </span>
-        <span className="flex items-center gap-1">
-          <Clock size={11} /> {facility.openTime} – {facility.closeTime}
-        </span>
+      {/* Meta row */}
+      <div className="px-5 pb-3 flex items-center gap-4 text-[13px]" style={{ color: '#9b9e9b' }}>
+        <span className="flex items-center gap-1"><Layers size={12} /> {facility.totalFloors} tầng</span>
+        <span className="flex items-center gap-1"><Clock size={12} /> {facility.openTime} – {facility.closeTime}</span>
       </div>
 
-      {/* ── Stats grid: Total slots / In use / Fill rate ── */}
+      {/* Stats grid */}
       <div className="px-5 pb-3">
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="bg-[#f7f8f7] rounded-xl py-2.5">
-            <div className="text-sm font-semibold text-[#060606] tabular-nums">{totalSlots}</div>
-            <div className="text-[10px] text-gray-400 mt-0.5">Tổng slot</div>
+          <div style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}>
+            <div className="text-[17px] tabular-nums font-semibold" style={{ color: '#060606' }}>{totalSlots}</div>
+            <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Tổng slot</div>
           </div>
-          <div className="bg-[#f7f8f7] rounded-xl py-2.5">
-            <div className="text-sm font-semibold text-[#060606] tabular-nums">{inUse}</div>
-            <div className="text-[10px] text-gray-400 mt-0.5">Đang dùng</div>
+          <div style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}>
+            <div className="text-[17px] tabular-nums font-semibold" style={{ color: '#060606' }}>{inUse}</div>
+            <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Đang dùng</div>
           </div>
-          <div className="bg-[#f7f8f7] rounded-xl py-2.5">
-            <div className="text-sm font-semibold tabular-nums" style={{ color: fillTextColor }}>{fillRate}%</div>
-            <div className="text-[10px] text-gray-400 mt-0.5">Lấp đầy</div>
+          <div style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}>
+            <div className={`text-[17px] tabular-nums font-semibold ${textColor}`}>{fillRate}%</div>
+            <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Lấp đầy</div>
           </div>
         </div>
       </div>
 
-      {/* ── Occupancy bar ── */}
-      <div className="px-5 pb-2">
-        <div className="flex items-center justify-between text-xs mb-1.5">
-          <span className="text-gray-400">Công suất</span>
-          <span className="text-gray-400">
-            {new Date(facility.createdAt).toLocaleDateString('en-US')}
-          </span>
+      {/* Occupancy bar */}
+      <div className="px-5 pb-4">
+        <div className="flex items-center justify-between mb-1.5" style={{ fontSize: 12, color: '#9b9e9b' }}>
+          <span>Tỷ lệ lấp đầy</span>
+          <span style={{ color: '#6b6e6b' }}>{new Date(facility.createdAt).toLocaleDateString('en-US')}</span>
         </div>
-        <div className="bg-[#eff0ef] h-1.5 rounded-full overflow-hidden">
-          <motion.div
-            className="h-full rounded-full"
-            style={{ background: barColor }}
-            initial={{ width: 0 }}
-            animate={{ width: `${Math.min(fillRate, 100)}%` }}
-            transition={{ duration: 0.7, ease: 'easeOut' }}
-          />
+        <div style={{ background: '#eff0ef', height: 6, borderRadius: 999, overflow: 'hidden' }}>
+          <div className="h-full rounded-full transition-all duration-700" style={{ width: `${fillRate}%`, background: barColor }} />
         </div>
       </div>
 
-      {/* ── Footer ── */}
-      <div className="px-5 py-3 mt-auto border-t border-[#e8eae8] flex justify-end">
+      {/* View Floors button */}
+      <div className="px-5 py-3 mt-auto" style={{ borderTop: '1px solid #f0f1f0' }}>
         <button
-          onClick={(e) => { e.stopPropagation(); onViewFloors(facility); }}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors hover:bg-[#f0f5e8]"
-          style={{ borderColor: '#b8cc30', color: '#3B6D11' }}
+          onClick={(e) => { e.stopPropagation(); if (!confirmOpen) onViewFloors(facility); }}
+          style={{
+            width: '100%', padding: '10px 20px', borderRadius: 10,
+            border: hovered ? '1.5px solid #cce242' : '1.5px solid #c8d4b8',
+            background: hovered ? '#cce242' : 'white',
+            color: '#060606',
+            fontWeight: hovered ? 600 : 500,
+            fontSize: 14, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            transition: 'all 0.2s ease',
+          }}
         >
-          <Layers size={11} /> Xem các tầng →
+          <Building2 size={13} style={{ color: '#4a7c20' }} /> Xem các tầng →
         </button>
       </div>
 
-      <ConfirmModal
-        isOpen={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        onConfirm={handleConfirm}
-        title={confirmAction === 'delete' ? 'Xóa cơ sở' : 'Vô hiệu hóa cơ sở'}
-        message={
-          confirmAction === 'delete'
-            ? `Bạn có chắc muốn xóa cơ sở "${facility.name}"? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn và không thể khôi phục.`
-            : `Bạn có chắc muốn vô hiệu hóa cơ sở "${facility.name}"? Các slot trống sẽ được đặt thành bảo trì.`
-        }
-        confirmText={confirmAction === 'delete' ? 'Xóa vĩnh viễn' : 'Vô hiệu hóa'}
-        variant="danger"
-        isLoading={loading}
-      />
+      <div onClick={(e) => e.stopPropagation()}>
+        <ConfirmModal
+          isOpen={confirmOpen}
+          onClose={() => setConfirmOpen(false)}
+          onConfirm={handleConfirm}
+          title={confirmAction === 'delete' ? 'Xóa cơ sở' : 'Vô hiệu hóa cơ sở'}
+          message={
+            confirmAction === 'delete'
+              ? `Bạn có chắc muốn xóa cơ sở "${facility.name}"? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn và không thể khôi phục.`
+              : `Bạn có chắc muốn vô hiệu hóa cơ sở "${facility.name}"? Các tầng sẽ được chuyển thành trạng thái vô hiệu hóa.`
+          }
+          confirmText={confirmAction === 'delete' ? 'Xóa vĩnh viễn' : 'Vô hiệu hóa'}
+          variant="danger"
+          isLoading={loading}
+        />
+      </div>
     </motion.div>
   );
 }
+
+// ─── FacilityListItem (list view mode) ────────────────────────────────────────
+export function FacilityListItem({ facility, stats, onViewFloors, onViewDetail }: Omit<FacilityCardProps, 'onEdit' | 'onRemove' | 'onUpdate'>) {
+  const [hovered, setHovered] = useState(false);
+  const isActive = facility.status === 'active';
+  const totalSlots = stats?.totalSlots ?? 0;
+  const fillRate = stats?.fillRate ?? 0;
+  const barColor = getBarColor(fillRate);
+
+  const accentColor = isActive ? '#cce242' : '#e2e3e2';
+  const badgeStyle = isActive
+    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5', fontWeight: 600 }
+    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2', fontWeight: 600 };
+
+  return (
+    <div className={`bg-white flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer ${!isActive ? 'opacity-70' : ''}`}
+      style={{
+        border: hovered ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
+        borderLeft: `4px solid ${accentColor}`,
+        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
+        transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+        transition: 'all 0.2s ease'
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => onViewDetail?.(facility)}
+    >
+      {/* Icon */}
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(204,226,66,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Building2 size={20} style={{ color: '#4a7c20' }} />
+      </div>
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-[15px] text-[#060606] font-semibold">{facility.name}</span>
+          <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4, ...badgeStyle }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
+            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
+          </span>
+        </div>
+        <span className="text-[13px] block truncate" title={facility.address} style={{ color: '#9b9e9b' }}>{facility.address}</span>
+      </div>
+      {/* Stats */}
+      <div className="flex items-center gap-6 shrink-0 hidden md:flex">
+        <div className="text-center">
+          <div className="text-[15px] text-[#060606] tabular-nums font-medium">{facility.totalFloors}</div>
+          <div style={{ fontSize: 11, color: '#9b9e9b' }}>Tầng</div>
+        </div>
+        <div className="text-center">
+          <div className="text-[15px] text-[#060606] tabular-nums font-medium">{totalSlots}</div>
+          <div style={{ fontSize: 11, color: '#9b9e9b' }}>Tổng slot</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div style={{ width: 80, background: '#eff0ef', height: 6, borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ width: `${fillRate}%`, height: '100%', background: barColor, borderRadius: 999 }} />
+          </div>
+          <span className="text-[15px] tabular-nums font-semibold" style={{ color: barColor }}>{fillRate}%</span>
+        </div>
+      </div>
+      {/* Button */}
+      <button onClick={(e) => { e.stopPropagation(); onViewFloors(facility); }}
+        style={{ padding: '7px 16px', borderRadius: 10, border: '1.5px solid #c8d4b8', background: 'white', color: '#060606', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
+        onMouseEnter={e => { e.currentTarget.style.background = '#cce242'; e.currentTarget.style.borderColor = '#cce242'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = '#c8d4b8'; }}>
+        Xem tầng →
+      </button>
+    </div>
+  );
+}
+

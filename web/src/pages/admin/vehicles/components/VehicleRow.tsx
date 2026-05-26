@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
+import { Car } from 'lucide-react';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { SLOT_SIZE_LABELS } from './constants';
+import { SLOT_SIZE_LABELS, ICON_MAP } from './constants';
 
 interface VehicleRowProps {
   vehicle: VehicleType;
@@ -16,7 +17,6 @@ export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: Vehicl
   const [menuOpen, setMenuOpen] = useState(false);
   const { label, color } = SLOT_SIZE_LABELS[vehicle.slotSize] || { label: vehicle.slotSize, color: 'bg-gray-100 text-gray-600 border-gray-200' };
 
-
   return (
     <motion.tr
       layout
@@ -27,22 +27,21 @@ export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: Vehicl
     >
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl border border-gray-100">
-            {vehicle.icon || '🚗'}
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center border border-emerald-100 text-emerald-600">
+            {(() => { const Icon = (vehicle.icon && ICON_MAP[vehicle.icon]) ? ICON_MAP[vehicle.icon] : Car; return <Icon size={20} strokeWidth={1.5} />; })()}
           </div>
           <div>
-            <p className="font-semibold text-[#060606] text-sm">{vehicle.name}</p>
-            <p className="text-xs text-gray-400 font-mono mt-0.5">{vehicle.code}</p>
+            <p className="font-semibold text-[#060606] text-base">{vehicle.name}</p>
           </div>
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className={`px-2.5 py-1 rounded-md text-xs font-semibold border ${color}`}>{label}</span>
+        <span className="text-sm text-gray-500 font-mono tracking-wide">{vehicle.code}</span>
       </td>
-      <td className="px-6 py-4 text-sm text-gray-500 max-w-[200px]">
-        <span className="line-clamp-1">{vehicle.description || '—'}</span>
+      <td className="px-6 py-4">
+        <span className={`px-2.5 py-1 rounded-md text-sm font-semibold border ${color}`}>{label}</span>
       </td>
-      <td className="px-6 py-4 text-xs text-gray-400">
+      <td className="px-6 py-4 text-sm text-gray-500">
         {new Date(vehicle.createdAt).toLocaleDateString()}
       </td>
       <td className="px-6 py-4 text-right relative">
@@ -58,17 +57,17 @@ export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: Vehicl
               <div className="fixed inset-0 z-[-1]" onClick={() => setMenuOpen(false)} />
               <button onClick={() => { onView(); setMenuOpen(false); }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                <Eye size={14} /> View Details
+                <Eye size={14} /> Xem Chi Tiết
               </button>
               <div className="h-px bg-gray-100 mx-2 my-1" />
               <button onClick={() => { onEdit(); setMenuOpen(false); }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                <Edit size={14} /> Edit
+                <Edit size={14} /> Chỉnh Sửa
               </button>
               <div className="h-px bg-gray-100 mx-2 my-1" />
               <button onClick={() => { onDelete(); setMenuOpen(false); }}
                 className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
-                <Trash2 size={14} /> Delete
+                <Trash2 size={14} /> Xóa
               </button>
             </motion.div>
           )}

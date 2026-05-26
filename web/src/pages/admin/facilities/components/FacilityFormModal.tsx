@@ -44,9 +44,8 @@ function FormField({
       <div className="relative">
         <Icon
           size={16}
-          className={`absolute left-3 text-gray-400 ${
-            iconAlign === 'top' ? 'top-3' : 'top-1/2 -translate-y-1/2'
-          }`}
+          className={`absolute left-3 text-gray-400 ${iconAlign === 'top' ? 'top-3' : 'top-1/2 -translate-y-1/2'
+            }`}
         />
         {children}
       </div>
@@ -170,7 +169,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                   if (errors.name) setErrors({ ...errors, name: '' });
                 }}
                 className={getInputClass('name')}
-                placeholder="Ex: Vincom Center"
+                placeholder="Vincom Center"
               />
             </FormField>
 
@@ -184,7 +183,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                   if (errors.address) setErrors({ ...errors, address: '' });
                 }}
                 className={getInputClass('address', 'resize-none')}
-                placeholder="Ex: 72 Le Thanh Ton, District 1, HCMC"
+                placeholder="72 Le Thanh Ton, District 1, HCMC"
               />
             </FormField>
 
@@ -194,7 +193,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                 type="number"
                 min={1}
                 max={50}
-                placeholder="Ex: 5"
+                placeholder="5"
                 value={form.totalFloors}
                 onChange={(e) => {
                   setForm({ ...form, totalFloors: e.target.value === '' ? ('' as any) : parseInt(e.target.value, 10) });
@@ -275,7 +274,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                 className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
               >
                 {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                {isEdit ? 'Lưu thay đổi' : 'Tạo cơ sở'}
+                {isEdit ? 'Lưu Thay Đổi' : 'Tạo Cơ Sở'}
               </button>
             </div>
           </form>
