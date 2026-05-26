@@ -13,29 +13,6 @@ interface Session {
   gateIn: string;
 }
 
-const MOCK_DATA: Session[] = [
-  {
-    "_id": "6a0d5cffb653ac4fc60a4c7e",
-    "code": "PS-20260520-7249",
-    "licensePlate": "59A-12222",
-    "vehicleTypeId": { "_id": "683f1a2b3c4d5e6f7a8b9c02", "name": "Ô tô 4-5 chỗ", "code": "CAR4", "icon": "🚗" },
-    "gateIn": "GATE-A",
-    "checkInTime": "2026-05-20T07:04:31.869Z",
-    "status": "active",
-    "totalFee": 0
-  },
-  {
-    "_id": "6a0ae6e0795dd575838569b7",
-    "code": "PS-20260518-7FC1",
-    "licensePlate": "37YHWIUWEHUI",
-    "vehicleTypeId": { "_id": "683f1a2b3c4d5e6f7a8b9c01", "name": "Xe Máy", "code": "MOTO", "icon": "🏍️" },
-    "gateIn": "GATE-A",
-    "checkInTime": "2026-05-18T10:16:00.310Z",
-    "status": "active",
-    "totalFee": 0
-  }
-];
-
 export default function TableSessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(false);
@@ -58,10 +35,24 @@ export default function TableSessionsPage() {
       if (res?.data && res.data.length > 0) {
         setSessions(res.data);
       } else {
-        setSessions(MOCK_DATA);
+        throw new Error("No real API data");
       }
     } catch (error) {
-      setSessions(MOCK_DATA);
+      const localDataStr = localStorage.getItem("mock_active_sessions");
+      const localData = localDataStr ? JSON.parse(localDataStr) : [];
+      
+      const localSessions = localData.map((item: any, idx: number) => ({
+        _id: `local-${item.id}-${idx}`,
+        code: item.id,
+        licensePlate: item.plate,
+        vehicleType: { _id: `type-${idx}`, name: item.type, code: "LOCAL" },
+        gateIn: item.gate,
+        checkInTime: item.timestamp || new Date().toISOString(),
+        status: item.status,
+        totalFee: 0
+      }));
+
+      setSessions(localSessions);
     } finally {
       setLoading(false);
     }

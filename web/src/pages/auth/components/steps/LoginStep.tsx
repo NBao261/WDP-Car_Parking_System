@@ -78,7 +78,7 @@ export function LoginStep({ changeView }: LoginStepProps) {
         } else if (user.role === UserRole.MANAGER) {
           navigate('/manager');
         } else if (user.role === UserRole.STAFF) {
-          navigate('/staff');
+          navigate('/staff/shift-selection');
         } else {
           navigate('/unauthorized');
         }
