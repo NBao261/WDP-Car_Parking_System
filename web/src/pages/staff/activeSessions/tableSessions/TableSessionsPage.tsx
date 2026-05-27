@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, X, AlertCircle } from 'lucide-react';
-import { apiClient } from '../../../../services/api';
+import { sessionService } from '../../../../services/session.service';
 
 interface Session {
   _id: string;
@@ -31,28 +31,18 @@ export default function TableSessionsPage() {
   const fetchSessions = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get('/session/active') as any;
-      if (res?.data && res.data.length > 0) {
-        setSessions(res.data);
+      const facilityId = sessionStorage.getItem("staff_facility_id") || undefined;
+      // Giới hạn 100 record thay vì 1000 — tránh timeout 10s của axios
+      // Thực tế một bãi đỗ không bao giờ có >100 xe vào cùng lúc cần hiển thị
+      const res = await sessionService.getActiveSessions({ limit: 100, facilityId });
+      if (res.success && res.data) {
+        setSessions(res.data as any);
       } else {
-        throw new Error("No real API data");
+        setSessions([]);
       }
     } catch (error) {
-      const localDataStr = localStorage.getItem("mock_active_sessions");
-      const localData = localDataStr ? JSON.parse(localDataStr) : [];
-      
-      const localSessions = localData.map((item: any, idx: number) => ({
-        _id: `local-${item.id}-${idx}`,
-        code: item.id,
-        licensePlate: item.plate,
-        vehicleType: { _id: `type-${idx}`, name: item.type, code: "LOCAL" },
-        gateIn: item.gate,
-        checkInTime: item.timestamp || new Date().toISOString(),
-        status: item.status,
-        totalFee: 0
-      }));
-
-      setSessions(localSessions);
+      console.error("Failed to fetch sessions:", error);
+      setSessions([]);
     } finally {
       setLoading(false);
     }
@@ -87,19 +77,19 @@ export default function TableSessionsPage() {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden relative">
-      <div className="p-5 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap bg-white">
+      <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap bg-white">
         <div className="relative max-w-sm w-full">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input 
             type="text" placeholder="Tìm kiếm biển số hoặc mã vé..." value={search} onChange={handleSearchChange}
             maxLength={12}
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606]"
+            className="w-full pl-9 pr-4 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606]"
           />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <select 
             value={filterVehicleType} onChange={e => {setFilterVehicleType(e.target.value); setCurrentPage(1);}}
-            className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-[#060606] bg-white focus:outline-none"
+            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-[#060606] bg-white focus:outline-none"
           >
             <option value="All">Tất cả loại xe</option>
             {uniqueVehicleTypes.map(vt => (
@@ -108,51 +98,51 @@ export default function TableSessionsPage() {
           </select>
           <select 
             value={filterGate} onChange={e => {setFilterGate(e.target.value); setCurrentPage(1);}}
-            className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-[#060606] bg-white focus:outline-none"
+            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-[#060606] bg-white focus:outline-none"
           >
             <option value="All">Tất cả cổng</option>
             {uniqueGates.map(gate => (
               <option key={gate} value={gate}>{gate}</option>
             ))}
           </select>
-          <button className="p-2 border border-gray-200 rounded-lg text-[#060606] hover:bg-gray-50"><Filter className="w-4 h-4" /></button>
+          <button className="p-1.5 border border-gray-200 rounded-lg text-[#060606] hover:bg-gray-50"><Filter className="w-4 h-4" /></button>
         </div>
       </div>
 
       <div className="overflow-x-auto flex-1">
         <table className="w-full text-left text-sm whitespace-nowrap">
           <thead className="sticky top-0 bg-white z-10">
-            <tr className="text-[#060606]/60 border-b border-gray-100 font-medium">
-              <th className="px-5 py-4 font-medium">Số thứ tự</th>
-              <th className="px-5 py-4 font-medium">Mã vé (code)</th>
-              <th className="px-5 py-4 font-medium">Biển số</th>
-              <th className="px-5 py-4 font-medium">Loại xe</th>
-              <th className="px-5 py-4 font-medium">Cổng vào</th>
-              <th className="px-5 py-4 font-medium">Giờ vào</th>
-              <th className="px-5 py-4 font-medium">Trạng thái</th>
-              <th className="px-5 py-4 font-medium text-right">Thao tác</th>
+            <tr className="text-[11px] text-[#060606]/50 border-b border-gray-100 font-semibold uppercase tracking-wider">
+              <th className="px-4 py-2.5 font-semibold">#</th>
+              <th className="px-4 py-2.5 font-semibold">Mã vé</th>
+              <th className="px-4 py-2.5 font-semibold">Biển số</th>
+              <th className="px-4 py-2.5 font-semibold">Loại xe</th>
+              <th className="px-4 py-2.5 font-semibold">Cổng vào</th>
+              <th className="px-4 py-2.5 font-semibold">Giờ vào</th>
+              <th className="px-4 py-2.5 font-semibold">Trạng thái</th>
+              <th className="px-4 py-2.5 font-semibold text-right">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
             {currentData.map((session, index) => {
               const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
               return (
-                <tr key={session._id} className="hover:bg-gray-50/50 transition-colors bg-white">
-                  <td className="px-5 py-4 text-[#060606]">{globalIndex}</td>
-                  <td className="px-5 py-4 text-[#060606] font-medium">{session.code}</td>
-                  <td className="px-5 py-4 font-mono text-[16px] text-[#060606] font-semibold">{session.licensePlate}</td>
-                  <td className="px-5 py-4 text-[#060606]">{session.vehicleTypeId?.name || 'N/A'}</td>
-                  <td className="px-5 py-4 text-[#060606]">{session.gateIn || 'N/A'}</td>
-                  <td className="px-5 py-4 text-[#060606]/80">{new Date(session.checkInTime).toLocaleString('vi-VN')}</td>
-                  <td className="px-5 py-4">
-                    <span className="inline-flex px-2.5 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700">
+                <tr key={session._id} className="hover:bg-[#f9fafb] transition-colors border-b border-gray-50 last:border-0">
+                  <td className="px-4 py-2.5 text-[#060606]/50 text-sm">{globalIndex}</td>
+                  <td className="px-4 py-2.5 text-[#060606] font-medium text-sm">{session.code}</td>
+                  <td className="px-4 py-2.5 font-mono text-[15px] text-[#060606] font-bold">{session.licensePlate}</td>
+                  <td className="px-4 py-2.5 text-[#060606] text-sm">{session.vehicleTypeId?.name || 'N/A'}</td>
+                  <td className="px-4 py-2.5 text-[#060606] text-sm max-w-[200px] truncate">{session.gateIn || 'N/A'}</td>
+                  <td className="px-4 py-2.5 text-[#060606]/70 text-sm tabular-nums">{new Date(session.checkInTime).toLocaleString('vi-VN')}</td>
+                  <td className="px-4 py-2.5">
+                    <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-semibold bg-green-50 text-green-700 border border-green-100">
                       {session.status}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-right">
+                  <td className="px-4 py-2.5 text-right">
                     <button 
                       onClick={() => setSelectedSession(session)}
-                      className="px-4 py-1.5 bg-white border border-[#d7ee46] text-[#060606] font-medium rounded-lg hover:bg-gray-50 transition-all text-sm shadow-sm"
+                      className="px-3 py-1 bg-white border border-gray-200 text-[#060606] font-medium rounded-lg hover:bg-gray-50 transition-all text-xs shadow-sm"
                     >
                       Chi tiết
                     </button>
@@ -161,7 +151,7 @@ export default function TableSessionsPage() {
               );
             })}
             {currentData.length === 0 && !loading && (
-              <tr><td colSpan={8} className="px-5 py-10 text-center text-gray-500">Không có dữ liệu</td></tr>
+              <tr><td colSpan={8} className="px-5 py-12 text-center text-gray-400 text-sm">Không có phiên đỗ xe nào đang hoạt động</td></tr>
             )}
           </tbody>
         </table>

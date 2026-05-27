@@ -1,6 +1,7 @@
 import { ParkingFacility, IParkingFacility } from '../models/parkingFacility.model';
 import { Floor } from '../models/floor.model';
 import { ParkingSlot } from '../models/parkingSlot.model';
+import { VehicleType, IVehicleType } from '../models/vehicleType.model';
 import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 
@@ -131,5 +132,40 @@ export class FacilityService {
     const facilities = await ParkingFacility.find(filters).skip(skip).limit(limit).sort({ createdAt: -1 });
     const total = await ParkingFacility.countDocuments(filters);
     return { facilities, total };
+  }
+
+  /**
+   * Operational Config cho Staff (BFF pattern)
+   * Tổng hợp cấu hình vận hành: loại xe được phép trong toà nhà dựa vào Floor.allowedVehicleTypes
+   * API này an toàn với Staff (FACILITY_READ) mà không cần mở Floor API
+   */
+  static async getOperationsConfig(facilityId: string): Promise<{ facilityId: string; allowedVehicleTypes: IVehicleType[] }> {
+    const facility = await ParkingFacility.findById(facilityId);
+    if (!facility) {
+      throw new AppError('Facility not found', 404);
+    }
+
+    // Lấy tất cả Floor active của Facility này
+    const floors = await Floor.find({
+      facilityId,
+      status: 'active',
+      isDeleted: false,
+    }).select('allowedVehicleTypes');
+
+    // Gộp unique VehicleType IDs từ tất cả các tầng
+    const vehicleTypeIdSet = new Set<string>();
+    for (const floor of floors) {
+      for (const vtId of floor.allowedVehicleTypes) {
+        vehicleTypeIdSet.add(vtId.toString());
+      }
+    }
+
+    // Query Vehicle Types theo IDs đã gộp, loại bỏ các loại đã bị xóa
+    const allowedVehicleTypes = await VehicleType.find({
+      _id: { $in: Array.from(vehicleTypeIdSet) },
+      isDeleted: false,
+    }).sort({ name: 1 });
+
+    return { facilityId, allowedVehicleTypes };
   }
 }

@@ -16,17 +16,18 @@ export default function TerminalToolbar({ onFlagException }: TerminalToolbarProp
   return (
     <div className="h-9 border-t border-[#e8e9e8] bg-white flex items-center justify-between px-6 text-[12px] text-[#6b6b6b] shrink-0 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
       <div className="flex gap-6">
-        <span className="font-mono text-[#060606] font-medium"><span className="text-[#6b6b6b]">F6:</span> Nhập lại biển số</span>
-        <span className="font-mono text-[#060606] font-medium"><span className="text-[#6b6b6b]">PageDown:</span> Sửa biển số</span>
-        <span className="font-mono text-[#060606] font-medium"><span className="text-[#6b6b6b]">Space:</span> Xe ra</span>
-        <span className="font-mono text-[#060606] font-medium"><span className="text-[#6b6b6b]">Enter:</span> Xe vào</span>
+        <span className="font-mono text-[#060606] font-medium"><span className="text-[#6b6b6b]">F2:</span> Xe vào</span>
+        <span className="font-mono text-[#060606] font-medium"><span className="text-[#6b6b6b]">F4:</span> Tìm vé ra</span>
+        <span className="font-mono text-[#060606] font-medium"><span className="text-[#6b6b6b]">F8:</span> Mở chắn</span>
+        <span className="font-mono text-[#060606] font-medium"><span className="text-[#6b6b6b]">F9:</span> Ngoại lệ</span>
+        <span className="font-mono text-[#060606] font-medium"><span className="text-[#6b6b6b]">F10:</span> Hủy / Reset</span>
       </div>
       <div className="flex items-center gap-6">
         <button 
           onClick={onFlagException} 
           className="text-[#ef4444] font-bold hover:underline flex items-center gap-1.5 uppercase tracking-wide"
         >
-          <AlertTriangle className="w-3.5 h-3.5"/> Exception
+          <AlertTriangle className="w-3.5 h-3.5"/> Exception (F9)
         </button>
         <div className="w-px h-4 bg-[#e8e9e8]" />
         <span className="font-semibold text-[#060606]">{currentTime.toLocaleDateString('vi-VN')}</span>

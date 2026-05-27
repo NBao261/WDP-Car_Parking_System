@@ -116,9 +116,9 @@
 
 #### FE2
 
-- [ ] Trang Login cho Staff
-- [ ] Layout Staff Portal (tối ưu cho tablet)
-- [ ] Tích hợp Auth flow (login, logout, token refresh)
+- [x] Trang Login cho Staff
+- [x] Layout Staff Portal (tối ưu cho tablet)
+- [x] Tích hợp Auth flow (login, logout, token refresh)
 
 #### FE3
 
@@ -147,13 +147,13 @@
 - [x] Trang Quản lý Tòa nhà (FR-1): CRUD + trạng thái
 - [x] Trang Quản lý Loại xe (FR-2): CRUD
 - [x] Trang Phân tầng (FR-3): gán loại xe cho tầng, sơ đồ tầng
-- [ ] Trang Cấu hình Hệ thống (FR-20): form cấu hình chung
+- [x] Trang Cấu hình Hệ thống (FR-20): form cấu hình chung
 
 #### FE2
 
-- [ ] Trang Quản lý Slot (FR-4): bản đồ slot theo tầng, mã màu trạng thái
-- [ ] Trang Bảng giá (FR-5): xem danh sách, tạo/sửa bảng giá
-- [ ] Component SlotStatusBadge, SlotGrid
+- [x] Trang Quản lý Slot (FR-4): bản đồ slot theo tầng, mã màu trạng thái
+- [x] Trang Bảng giá (FR-5): xem danh sách, tạo/sửa bảng giá
+- [x] Component SlotStatusBadge, SlotGrid
 
 #### FE3
 
@@ -196,12 +196,12 @@
 
 #### FE2
 
-- [ ] **Màn hình Xe VÀO bãi** (FR-8 + FR-9):
+- [x] **Màn hình Xe VÀO bãi** (FR-8 + FR-9):
   - Chọn cổng vào → Chọn loại xe → Nhập biển số
   - Hiển thị kết quả kiểm tra điều kiện
   - Gợi ý tầng/khu vực → Xác nhận tạo session
   - Hiển thị mã thẻ/QR để in
-- [ ] Component: LicensePlateInput, SessionCard, QRDisplay
+- [x] Component: LicensePlateInput, SessionCard, QRDisplay
 
 #### FE3
 
@@ -235,14 +235,14 @@
 
 #### FE2
 
-- [ ] **Màn hình Xe RA bãi** (FR-10):
+- [x] **Màn hình Xe RA bãi** (FR-10):
   - Quét/nhập mã thẻ → Hiển thị session
   - Hiển thị chi tiết phí → Chọn phương thức thanh toán → Xác nhận
   - In biên lai
-- [ ] **Màn hình Xử lý Ngoại lệ** (FR-11):
+- [x] **Màn hình Xử lý Ngoại lệ** (FR-11):
   - Form báo mất thẻ, sai biển số, quá hạn
   - Cập nhật trạng thái slot
-- [ ] Component: PaymentSummary, ExceptionForm, ReceiptPreview
+- [x] Component: PaymentSummary, ExceptionForm, ReceiptPreview
 
 #### FE3
 

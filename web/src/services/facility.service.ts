@@ -1,4 +1,5 @@
 import { apiClient } from './api';
+import { VehicleType } from './vehicleType.service';
 
 export interface Facility {
   _id: string;
@@ -13,6 +14,11 @@ export interface Facility {
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface OperationsConfig {
+  facilityId: string;
+  allowedVehicleTypes: VehicleType[];
 }
 
 export interface FacilityListResponse {
@@ -75,5 +81,13 @@ export const facilityService = {
 
   deleteFacility: async (id: string): Promise<{ success: boolean }> => {
     return apiClient.delete(`/facilities/${id}`);
+  },
+
+  /**
+   * BFF endpoint: Lấy cấu hình vận hành của Toà nhà dành cho Staff
+   * Trả về danh sách loại xe được phép, đã được Backend tổng hợp từ cấu hình các Tầng.
+   */
+  getOperationsConfig: async (id: string): Promise<{ success: boolean; data: OperationsConfig }> => {
+    return apiClient.get(`/facilities/${id}/operations-config`);
   },
 };
