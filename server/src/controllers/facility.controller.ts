@@ -63,4 +63,18 @@ export class FacilityController {
       next(error);
     }
   }
+
+  /**
+   * GET /:id/operations-config
+   * Dành cho Staff: trả về cấu hình vận hành của Toà nhà (danh sách loại xe được phép)
+   */
+  static async getOperationsConfig(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = req.params.id as string;
+      const config = await FacilityService.getOperationsConfig(id);
+      res.status(200).json({ success: true, data: config });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
