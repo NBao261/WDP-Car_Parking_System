@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { VehicleType } from "../../../../services/vehicleType.service";
+import { facilityService } from "../../../../services/facility.service";
+import { sessionService } from "../../../../services/session.service";
 
 interface CheckInPanelProps {
   onCheckIn: (data: any) => void;
@@ -7,128 +10,168 @@ interface CheckInPanelProps {
 
 export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   const [plate, setPlate] = useState("");
-  const [vehicleType, setVehicleType] = useState("Ô tô (Car)");
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
+  const [selectedVehicleTypeId, setSelectedVehicleTypeId] = useState("");
   const [step, setStep] = useState<"INPUT" | "OPEN">("INPUT");
-  
-  const building = sessionStorage.getItem("staff_building") || "Topaz 2";
-  const gate = sessionStorage.getItem("staff_gate") || "Gate 1 (Basement 1)";
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCheckIn = () => {
+  // Lắng nghe Hotkeys
+  useEffect(() => {
+    const onF2 = () => {
+      // Chỉ check-in khi đã nhập đủ biển số và đang ở bước 1
+      if (step === "INPUT" && plate.trim().length > 0 && !isSubmitting) {
+        handleCheckIn();
+      }
+    };
+    
+    const onF10 = () => {
+      handleReset();
+    };
+
+    window.addEventListener("HOTKEY_F2", onF2);
+    window.addEventListener("HOTKEY_F10", onF10);
+    return () => {
+      window.removeEventListener("HOTKEY_F2", onF2);
+      window.removeEventListener("HOTKEY_F10", onF10);
+    };
+  }, [step, plate, isSubmitting]);
+
+  // ─── Terminal Session (từ sessionStorage, set lúc chọn ca) ────────────────
+  const facilityId = sessionStorage.getItem("staff_facility_id") || "";
+  const facilityName =
+    sessionStorage.getItem("staff_facility_name") || "Chưa chọn Toà nhà";
+  // gateIn được auto-sinh khi staff chọn ca → nhất quán, không cần nhập tay
+  const gateIn =
+    sessionStorage.getItem("staff_gate_name") || `Cổng - ${facilityName}`;
+
+  useEffect(() => {
+    if (!facilityId) return;
+
+    facilityService
+      .getOperationsConfig(facilityId)
+      .then((res) => {
+        if (res.success && res.data.allowedVehicleTypes.length > 0) {
+          setVehicleTypes(res.data.allowedVehicleTypes);
+          setSelectedVehicleTypeId(res.data.allowedVehicleTypes[0]._id);
+        } else {
+          // Toà nhà chưa có cấu hình loại xe nào
+          setVehicleTypes([]);
+          setSelectedVehicleTypeId("");
+          toast.warning("Toà nhà này chưa được cấu hình loại xe. Liên hệ Admin.");
+        }
+      })
+      .catch(() => toast.error("Không thể tải cấu hình loại xe"));
+  }, [facilityId]);
+
+  const handleCheckIn = async () => {
     if (step === "INPUT") {
       if (!plate) {
         toast.error("Vui lòng nhập biển số xe!");
         return;
       }
-      
-      const newTicket = {
-        ticketCode: `TKT-${Math.floor(Math.random() * 100000)}`,
-        plate: plate,
-        vehicleType: vehicleType,
-        checkInTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-        gate: gate,
-        zone: building
-      };
-      
-      onCheckIn(newTicket);
-      toast.success("Đã tiếp nhận xe vào! Vui lòng mở chắn.");
-      setStep("OPEN");
+      if (!facilityId || !selectedVehicleTypeId) {
+        toast.error("Thiếu thông tin vị trí trực hoặc loại xe. Vui lòng đăng nhập lại!");
+        return;
+      }
 
-      // Save to localStorage for mock API sessions
-      const existing = JSON.parse(localStorage.getItem("mock_active_sessions") || "[]");
-      existing.push({
-        id: newTicket.ticketCode,
-        plate: newTicket.plate,
-        type: newTicket.vehicleType,
-        gate: newTicket.gate,
-        zone: newTicket.zone,
-        time: newTicket.checkInTime,
-        timestamp: new Date().toISOString(),
-        status: "ACTIVE"
-      });
-      localStorage.setItem("mock_active_sessions", JSON.stringify(existing));
+      setIsSubmitting(true);
+      try {
+        const res = await sessionService.checkIn({
+          facilityId,
+          vehicleTypeId: selectedVehicleTypeId,
+          licensePlate: plate,
+          gateIn, // auto-generated, không cần staff nhập
+          // floorId không truyền → Backend auto-assign slot tối ưu
+        });
 
+        if (res.success) {
+          const floorName = res.data.floorId?.name || "Tầng Auto";
+          const slotCode = res.data.slotId?.code || "Slot Auto";
+
+          onCheckIn({
+            ticketCode: res.data.code,
+            plate: res.data.licensePlate,
+            vehicleType:
+              vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name || "",
+            checkInTime: new Date(res.data.checkInTime).toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            gate: gateIn,
+            zone: `${floorName} - Slot: ${slotCode}`,
+          });
+          toast.success(`Đã cấp phát: ${floorName} - Slot: ${slotCode}. Vui lòng mở chắn.`);
+          setStep("OPEN");
+        }
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Lỗi khi tạo phiên đỗ xe!");
+      } finally {
+        setIsSubmitting(false);
+      }
     } else if (step === "OPEN") {
       toast.success("Đã mở chắn thành công!");
       setStep("INPUT");
       setPlate("");
-      onCheckIn(null); // Clear confirm panel optionally, or keep it until next input
+      onCheckIn(null);
     }
   };
 
   return (
-    <div className="flex flex-col bg-white rounded-[16px] border border-[#e8e9e8] shadow-lg shadow-blue-500/20 p-5 h-full min-h-0 overflow-hidden">
-      <h2 className="text-xl font-bold text-[#060606] mb-4 shrink-0">Đăng Ký Xe Vào</h2>
-      
-      <div className="flex-1 overflow-y-auto min-h-0 pr-1">
-        <div className="flex gap-4 mb-4">
-        <div className="flex-1">
-          <label className="block text-[12px] font-semibold text-[#6b6b6b] mb-1">Tòa nhà</label>
-          <input 
-            type="text" 
-            value={building} 
-            readOnly 
-            className="w-full h-9 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[13px] font-medium cursor-not-allowed outline-none" 
-          />
-        </div>
-        <div className="flex-1">
-          <label className="block text-[12px] font-semibold text-[#6b6b6b] mb-1">Tầng / Cổng</label>
-          <input 
-            type="text" 
-            value={gate} 
-            readOnly 
-            className="w-full h-9 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[13px] font-medium cursor-not-allowed outline-none" 
-          />
-        </div>
-      </div>
+    <div className="flex flex-col bg-white rounded-[16px] border border-[#e8e9e8] shadow-lg shadow-blue-500/20 px-5 pt-4 pb-4 h-full min-h-0 overflow-hidden">
+      <h2 className="text-[17px] font-bold text-[#060606] mb-3 shrink-0">Đăng Ký Xe Vào</h2>
 
-        <div className="mb-4">
-          <label className="block text-[12px] font-semibold text-[#060606] mb-1">Loại xe</label>
-          <select 
-            value={vehicleType}
-            onChange={(e) => setVehicleType(e.target.value)}
-            className="w-full h-9 px-3 border border-[#e8e9e8] rounded-[6px] text-[13px] font-medium outline-none focus:border-[#060606]"
-          >
-            <option>Ô tô (Car)</option>
-            <option>Xe máy (Motorbike)</option>
+      {/* Form — không scroll, dùng gap đều */}
+      <div className="flex flex-col gap-3 flex-1 min-h-0">
+        {/* Toà nhà + Cổng trực */}
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="block text-[11px] font-semibold text-[#6b6b6b] mb-1">Toà nhà</label>
+            <input type="text" value={facilityName} readOnly
+              className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none" />
+          </div>
+          <div className="flex-1">
+            <label className="block text-[11px] font-semibold text-[#6b6b6b] mb-1">Cổng trực</label>
+            <input type="text" value={gateIn} readOnly
+              className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none" />
+          </div>
+        </div>
+
+        {/* Loại xe */}
+        <div>
+          <label className="block text-[11px] font-semibold text-[#060606] mb-1">Loại xe</label>
+          <select value={selectedVehicleTypeId} onChange={(e) => setSelectedVehicleTypeId(e.target.value)}
+            className="w-full h-8 px-3 border border-[#e8e9e8] rounded-[6px] text-[12px] font-medium outline-none focus:border-[#060606]">
+            {vehicleTypes.length === 0 && <option value="">Đang tải...</option>}
+            {vehicleTypes.map((vt) => (<option key={vt._id} value={vt._id}>{vt.name}</option>))}
           </select>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-[13px] font-semibold text-[#060606] mb-1.5">Biển số xe</label>
-          <input 
-            type="text" 
-            value={plate}
+        {/* Biển số xe — ô nhập lớn làm điểm nhấn */}
+        <div className="flex-1 flex flex-col">
+          <label className="block text-[12px] font-semibold text-[#060606] mb-1">Biển số xe</label>
+          <input
+            type="text" value={plate}
             onChange={(e) => setPlate(e.target.value.toUpperCase())}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleCheckIn();
-              }
-            }}
-            disabled={step === "OPEN"}
-            className="w-full h-14 text-[22px] font-mono px-4 border border-[#e8e9e8] rounded-[8px] uppercase font-bold text-[#060606] placeholder-gray-300 outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606] disabled:opacity-50" 
-            placeholder="29A-123.45" 
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCheckIn(); } }}
+            disabled={step === "OPEN" || isSubmitting}
+            className="flex-1 w-full text-[28px] font-mono px-4 border border-[#e8e9e8] rounded-[8px] uppercase font-bold text-[#060606] placeholder-gray-300 outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606] disabled:opacity-50"
+            placeholder="29A-123.45"
           />
         </div>
-      </div>
 
-      <div className="flex gap-3 h-[44px] shrink-0 mt-4">
-        <button 
-          onClick={() => {
-            setStep("INPUT");
-            setPlate("");
-          }}
-          className="flex-[1] bg-white border border-[#e8e9e8] rounded-[8px] font-medium text-[#6b6b6b] hover:bg-gray-50 transition-colors"
-        >
-          Hủy
-        </button>
-        <button 
-          onClick={handleCheckIn}
-          className={`flex-[4] font-bold rounded-[8px] transition-all text-[15px] shadow-sm
-            ${step === "OPEN" ? "bg-[#1d7a4a] text-white hover:bg-[#155d38]" : "bg-[#d7ee46] text-[#060606] hover:brightness-95"}`}
-        >
-          {step === "OPEN" ? "Mở chắn" : "Xe vào"}
-        </button>
+        {/* Action buttons */}
+        <div className="flex gap-3 h-[42px] shrink-0">
+          <button onClick={() => { setStep("INPUT"); setPlate(""); }} disabled={isSubmitting}
+            className="flex-[1] bg-white border border-[#e8e9e8] rounded-[8px] font-medium text-[#6b6b6b] hover:bg-gray-50 transition-colors disabled:opacity-50">
+            Hủy
+          </button>
+          <button onClick={handleCheckIn} disabled={isSubmitting}
+            className={`flex-[4] font-bold rounded-[8px] transition-all text-[15px] shadow-sm disabled:opacity-70 ${
+              step === "OPEN" ? "bg-[#1d7a4a] text-white hover:bg-[#155d38]" : "bg-[#d7ee46] text-[#060606] hover:brightness-95"
+            }`}>
+            {isSubmitting ? "Đang xử lý..." : step === "OPEN" ? "Mở chắn" : "Xe vào"}
+          </button>
+        </div>
       </div>
     </div>
   );
