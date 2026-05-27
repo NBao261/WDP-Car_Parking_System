@@ -437,6 +437,18 @@ _Kết thúc Phần 1 – Tiếp theo: Phần 2 – Yêu cầu Chức năng (Fun
 | **Actor**  | Parking Manager                                                                     |
 | **Mô tả**  | Hiển thị tất cả bảng giá kèm trạng thái (Active/Inactive), loại xe, tòa nhà áp dụng |
 
+### FR-5.5: AI gợi ý điều chỉnh bảng giá (RQ6)
+
+| Thuộc tính         | Mô tả                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Mã**           | FR-5.5                                                                                                                         |
+| **Actor**        | Parking Manager                                                                                                                |
+| **Mô tả**        | AI phân tích tần suất gửi xe, tỷ lệ lấp đầy, khung giờ cao điểm của từng tòa nhà → đề xuất điều chỉnh mức giá phù hợp          |
+| **Đầu vào**      | Facility ID, khoảng thời gian phân tích (7 ngày / 30 ngày / 90 ngày)                                                          |
+| **Đầu ra**       | Danh sách gợi ý: loại xe, giá hiện tại, giá đề xuất, lý do, độ tin cậy                                                      |
+| **Cơ sở khoa học** | Prediction-based Pricing [P15] (Hong et al., CIKM 2022), DRL-DP [P16] (Poh et al., 2023), ML Pricing Framework [P17] (Saharan et al., 2020), Review [P18] (Bayih & Tilahun, 2024) |
+| **Ghi chú**      | Manager chỉ xem suggestion, tự quyết định có áp dụng hay không (không tự động thay đổi giá)                                    |
+
 ---
 
 ## FR-6: Xem báo cáo thống kê
@@ -1612,6 +1624,7 @@ Complexity: O(F) — F = số tầng
 | **RQ3:** Tiêu chí ưu tiên phân bổ | FR-8.3, FR-6.3, FR-6.4 | BR-2.3, BR-3.2 | TOPSIS + CRITIC Weighting, CODAS, Cheetah Optimization (COA) | Weighted Scoring Model (WSM) 4 tiêu chí | [P5], [P6] |
 | **RQ4:** Cải thiện giờ cao điểm | FR-8.1, FR-8.3, FR-9.1, FR-6.3, FR-6.4, FR-14 | BR-3.3, BR-6.1 | MILP (Branch-and-Bound), NSGA-II, PCPT, DRL (DQN), Reservation-Aware Capacity | Threshold-based Load Balancing + Effective Occupancy | [P7], [P8], [P9], [P10] |
 | **RQ5:** AI Chatbot hỗ trợ quản lý & báo cáo | FR-6.1, FR-6.2, FR-6.3, FR-6.4, FR-6.5, FR-20.4 | BR-10.1, BR-10.2 | NLI Text-to-SQL [P11], Conversational FM Chatbot [P12], TAM [P13] | Intent-based NLQ (keyword matching + template query) | [P11], [P12], [P13], [P14] |
+| **RQ6:** AI điều chỉnh bảng giá dựa trên tần suất gửi xe | FR-5.1, FR-5.2, FR-5.5, FR-6.2 | BR-4.1, BR-4.2 | NODE Prediction + DRL Dynamic Pricing [P15][P16], ML Pricing Framework [P17] | Demand-based Pricing Suggestion (rule-based + statistics) | [P15], [P16], [P17], [P18] |
 
 ---
 
@@ -1663,6 +1676,7 @@ Complexity: O(F) — F = số tầng
 | RQ3 | [P5] Amari 2023 + [P7] Zhang 2022 | Q2/IF=3.3 + Q1/IF=7.9 | **4.4/5** | CRITIC trọng số khách quan; TOPSIS ranking ổn định | [P6] COA (nâng cấp) |
 | RQ4 | [P8] Zhang 2024 + [P10] Wang 2022 | Q1-JCR + Q1/IF=7.9 | **4.3/5** | Peak demand allocation giảm 4.5% delay; Reservation-aware | [P9] DCS (nâng cấp) |
 | RQ5 | [P12] Chen & Tsai 2021 + [P11] Quamar 2022 | Q1/IF=3.4 + Top-tier survey | **4.1/5** | Chatbot FM kiến trúc 4-module áp dụng trực tiếp; NLI survey toàn diện | [P13] TAM, [P14] SLR |
+| RQ6 | [P15] Hong 2022 + [P17] Saharan 2020 | CIKM-A + Q1/IF=7.5 | **4.0/5** | Prediction→pricing framework trực tiếp; ML pricing 3 tầng cải thiện 23% revenue | [P16] DRL-DP, [P18] Review |
 
 **Papers KHÔNG được chọn làm chính:** [P1] CNP/MAS quá phức tạp cho 9 tuần; [P6] COA metaheuristic khó implement; [P9] DQN/DRL cần training data lớn + GPU.
 
@@ -1680,7 +1694,8 @@ server/services/algorithms/
 server/services/ai/
 ├── chatbotQuery.service.js     ← RQ5: Intent-based NLQ [P11][P12]
 ├── intentClassifier.service.js ← RQ5: Intent classification [P12]
-└── entityExtractor.service.js  ← RQ5: Entity extraction [P11]
+├── entityExtractor.service.js  ← RQ5: Entity extraction [P11]
+└── pricingSuggestion.service.js ← RQ6: Demand-based Pricing [P15][P17]
 ```
 
 ### Schema Changes cần thiết
@@ -1695,6 +1710,8 @@ server/services/ai/
 | `SystemConfig` | `peakHourMultiplier` | Number | 1.5 | Hệ số phát hiện giờ cao điểm | RQ4 |
 | `SystemConfig` | `chatbotEnabled` | Boolean | false | Bật/tắt AI chatbot query | RQ5 |
 | `ChatHistory` | `userId, message, intent, response, timestamp` | Mixed | — | Lưu lịch sử hội thoại chatbot | RQ5 |
+| `PricingSuggestion` | `facilityId, vehicleType, currentPrice, suggestedPrice, reason, confidence, status, createdAt` | Mixed | — | Lưu lịch sử gợi ý giá | RQ6 |
+| `SystemConfig` | `pricingSuggestionEnabled` | Boolean | false | Bật/tắt AI pricing suggestion | RQ6 |
 
 ### API Endpoints cho thuật toán
 
@@ -1707,6 +1724,8 @@ server/services/ai/
 | `PUT` | `/api/system-config/algorithm-weights` | Manager điều chỉnh W1–W4 | RQ3 | FR-20.1 |
 | `POST` | `/api/ai/chat-query` | Chatbot truy vấn báo cáo bằng ngôn ngữ tự nhiên | RQ5 | FR-6.5 |
 | `GET` | `/api/ai/chat-history` | Lịch sử hội thoại chatbot của user | RQ5 | FR-6.5 |
+| `GET` | `/api/ai/pricing-suggestion/:facilityId` | Gợi ý điều chỉnh bảng giá cho tòa nhà | RQ6 | FR-5.5 |
+| `GET` | `/api/ai/pricing-suggestion/compare` | So sánh giá giữa các tòa nhà | RQ6 | FR-5.5 |
 
 ---
 
@@ -1717,9 +1736,9 @@ server/services/ai/
 | Phase 1 (Tuần 1) | 1 | Thiết kế DB schema với các field RQ-ready: `Floor.distanceToGate`, `ParkingSession.assignmentMode` |
 | Phase 3 (Tuần 4) | 4 | Implement API gợi ý tầng cơ bản (FR-8.3) hỗ trợ 2 mode: `auto` / `manual`. Thu thập dữ liệu baseline |
 | Phase 4 (Tuần 6) | 6 | Implement WSM Scoring [P5], Zone Filtering [P2], Greedy Matching [P3]. Schema changes + API weights |
-| Phase 4 (Tuần 7) | 7 | Implement Threshold Load Balancing [P8], Peak Detection [P8], Reservation-Aware [P10]. **Implement AI Chatbot Query [P11][P12] (RQ5)** |
-| Phase 5 (Tuần 8) | 8 | A/B testing (4+1 scenario × 500 sessions), thu thập metrics, đánh giá giả thuyết H1–H5 |
-| Phase 6 (Tuần 9) | 9 | Tổng hợp Research Report: kết quả RQ1–RQ5, mapping thuật toán gốc → đơn giản hóa, đề xuất cải tiến |
+| Phase 4 (Tuần 7) | 7 | Implement Threshold Load Balancing [P8], Peak Detection [P8], Reservation-Aware [P10]. **Implement AI Chatbot Query [P11][P12] (RQ5). Implement AI Pricing Suggestion [P15][P17] (RQ6)** |
+| Phase 5 (Tuần 8) | 8 | A/B testing (4+2 scenario × 500 sessions), thu thập metrics, đánh giá giả thuyết H1–H6 |
+| Phase 6 (Tuần 9) | 9 | Tổng hợp Research Report: kết quả RQ1–RQ6, mapping thuật toán gốc → đơn giản hóa, đề xuất cải tiến |
 
 ---
 

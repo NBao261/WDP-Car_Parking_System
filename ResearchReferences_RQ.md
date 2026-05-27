@@ -12,8 +12,9 @@
 3. [RQ3 – Tiêu chí ưu tiên phân bổ slot (MCDM)](#rq3--tiêu-chí-ưu-tiên-phân-bổ-slot-mcdm)
 4. [RQ4 – Cải thiện tỷ lệ sử dụng giờ cao điểm](#rq4--cải-thiện-tỷ-lệ-sử-dụng-giờ-cao-điểm)
 5. [RQ5 – AI Chatbot hỗ trợ quản lý & báo cáo](#rq5--ai-chatbot-hỗ-trợ-quản-lý--báo-cáo)
-6. [Bảng tổng hợp thuật toán áp dụng](#bảng-tổng-hợp-thuật-toán-áp-dụng)
-7. [Danh mục tài liệu tham khảo (References)](#danh-mục-tài-liệu-tham-khảo)
+6. [RQ6 – AI điều chỉnh bảng giá dựa trên tần suất gửi xe](#rq6--ai-điều-chỉnh-bảng-giá-dựa-trên-tần-suất-gửi-xe)
+7. [Bảng tổng hợp thuật toán áp dụng](#bảng-tổng-hợp-thuật-toán-áp-dụng)
+8. [Danh mục tài liệu tham khảo (References)](#danh-mục-tài-liệu-tham-khảo)
 
 ---
 
@@ -371,6 +372,108 @@ Complexity: O(1) cho intent classification, O(n) cho query execution
 
 ---
 
+## RQ6 – AI điều chỉnh bảng giá dựa trên tần suất gửi xe
+
+> **Câu hỏi:** Việc sử dụng AI để phân tích tần suất gửi xe, tỷ lệ lấp đầy, và khung giờ cao điểm tại các tòa nhà khác nhau có giúp đề xuất điều chỉnh bảng giá hợp lý hơn so với bảng giá cố định?
+
+### Bài báo liên quan
+
+#### [P15] Prediction-based One-shot Dynamic Parking Pricing
+
+- **Tác giả:** Hong, S., Shin, H., Choi, J. & Park, N.
+- **Năm:** 2022
+- **Tiêu đề:** *Prediction-based One-shot Dynamic Parking Pricing*
+- **Tạp chí:** *Proceedings of the 31st ACM International Conference on Information & Knowledge Management (CIKM '22)*. ACM
+- **DOI:** `10.1145/3511808.3557421`
+- **Tóm tắt:** Đề xuất framework proactive dynamic pricing dựa trên dự đoán occupancy. Sử dụng **Neural Ordinary Differential Equations (NODEs)** để dự đoán tỷ lệ lấp đầy trong tương lai dựa trên dữ liệu lịch sử occupancy + price. Khai thác tính chất continuous và bijective của NODEs để thiết kế phương pháp tối ưu giá **"one-shot"** — tìm giải pháp giá tối ưu chỉ trong 1 iteration, nhanh hơn đáng kể so với black-box/white-box search. Đánh giá trên dữ liệu đa năm từ **San Francisco và Seattle**. Trực tiếp áp dụng cho RQ6: dự đoán occupancy → đề xuất mức giá tối ưu cho từng tòa nhà.
+
+#### [P16] Deep Reinforcement Learning-Based Dynamic Pricing for Parking Solutions
+
+- **Tác giả:** Poh, L.Z., Connie, T., Ong, T.S. & Goh, M.K.O.
+- **Năm:** 2023
+- **Tiêu đề:** *Deep Reinforcement Learning-Based Dynamic Pricing for Parking Solutions*
+- **Tạp chí:** *Algorithms*, Vol. 16, No. 1, Article 32. MDPI
+- **DOI:** `10.3390/a16010032`
+- **Tóm tắt:** Đề xuất mô hình **DRL-DP (Deep Reinforcement Learning-based Dynamic Pricing)** để tối ưu hóa bãi xe và tăng lợi nhuận. Mô hình hóa bài toán pricing như sequential decision-making: agent học cách điều chỉnh giá dựa trên **occupancy rate** và **vehicle flow** hiện tại. State space: (occupancy, time_of_day, day_of_week). Action space: tăng/giảm/giữ giá. Reward: revenue × occupancy_balance. Kết quả: DRL-DP đạt cân bằng giữa tối đa doanh thu và duy trì utilization rate. Cơ sở cho RQ6: sử dụng RL để học chính sách giá tối ưu dựa trên tần suất gửi xe.
+
+#### [P17] An Efficient Smart Parking Pricing System: A Machine Learning-Based Approach
+
+- **Tác giả:** Saharan, S., Kumar, N. & Bawa, S.
+- **Năm:** 2020
+- **Tiêu đề:** *An efficient smart parking pricing system for smart city environment: A machine-learning based approach*
+- **Tạp chí:** *Future Generation Computer Systems*, Vol. 106, pp. 622–640. Elsevier
+- **DOI:** `10.1016/j.future.2020.01.031`
+- **Tóm tắt:** Đề xuất hệ thống pricing thông minh sử dụng machine learning để điều chỉnh giá gửi xe dựa trên **demand prediction** và **arrival rate**. Framework 3 tầng: (1) Data Collection — thu thập occupancy, arrival rate, duration từ IoT sensors; (2) ML Prediction — dự đoán demand cho từng khu vực/khung giờ; (3) Pricing Engine — tính giá dựa trên predicted demand, current supply, và price elasticity. Đánh giá trên smart city testbed. **Trực tiếp áp dụng cho RQ6:** framework ML pricing cho các tòa nhà khác nhau — tòa nhà demand cao → giá cao hơn, tòa nhà demand thấp → giá khuyến mãi.
+
+#### [P18] Dynamic Vehicle Parking Pricing: A Review
+
+- **Tác giả:** Bayih, S.H. & Tilahun, S.L.
+- **Năm:** 2024
+- **Tiêu đề:** *Dynamic vehicle parking pricing: A review*
+- **Tạp chí:** *Operations Research and Decisions*, Vol. 34, No. 1, pp. 35–59. Wrocław University of Science and Technology
+- **DOI:** `10.37190/ord240103`
+- **Tóm tắt:** Review toàn diện các phương pháp dynamic parking pricing: game theory, dynamic/stochastic control, multi-objective programming, queuing theory, AI-based methods. Phân loại theo mục tiêu: revenue maximization, congestion reduction, occupancy targeting (85% benchmark). Xác định rằng AI-based pricing (ML, DRL) đang thay thế dần các phương pháp truyền thống vì khả năng học từ dữ liệu lịch sử và thích ứng realtime. **Áp dụng cho RQ6:** cung cấp evidence-base rằng dynamic pricing dựa trên AI và demand frequency là hướng nghiên cứu chính thống.
+
+### Thuật toán áp dụng vào hệ thống
+
+**Demand-based Pricing Suggestion — đơn giản hóa DRL Dynamic Pricing:**
+
+```
+Input:  facilityId (string) — tòa nhà cần đề xuất giá
+        analysisWindow (string) — '7d' | '30d' | '90d'
+Output: { suggestions: Array<{vehicleType, currentPrice, suggestedPrice, reason, confidence}> }
+
+Algorithm:
+1. DATA COLLECTION (dựa trên [P17] ML Pricing Framework):
+   - Thu thập dữ liệu lịch sử cho facility trong analysisWindow:
+     • totalSessions: tổng lượt gửi xe
+     • avgDailyDemand: trung bình lượt/ngày
+     • avgOccupancyRate: tỷ lệ lấp đầy trung bình
+     • peakHourDemand: demand trong giờ cao điểm
+     • avgDuration: thời gian gửi trung bình
+     • revenuePerSlot: doanh thu trung bình/slot
+   - So sánh với các facility khác trong hệ thống (cross-facility benchmarking)
+
+2. DEMAND ANALYSIS (dựa trên [P15] Prediction-based Pricing):
+   - Phân loại demand level cho facility:
+     • 'high_demand': avgOccupancyRate ≥ 85% HOẶC peakHourDemand ≥ 90%
+     • 'normal_demand': 50% ≤ avgOccupancyRate < 85%
+     • 'low_demand': avgOccupancyRate < 50%
+   - Tính demand_score = weighted_avg(occupancy_rate × 0.4, peak_demand × 0.3, daily_trend × 0.3)
+
+3. PRICE SUGGESTION ENGINE (dựa trên [P16] DRL-DP reward model):
+   - IF demand_level == 'high_demand' AND revenuePerSlot < benchmark:
+       suggestedPrice = currentPrice × (1 + adjustment_rate)
+       adjustment_rate = min(0.20, (demand_score - 0.85) × 2)
+       reason = 'Tỷ lệ lấp đầy cao ({occupancy}%), đề xuất tăng {adjustment}%'
+   - ELIF demand_level == 'low_demand' AND revenuePerSlot > 0:
+       suggestedPrice = currentPrice × (1 - discount_rate)
+       discount_rate = min(0.15, (0.50 - demand_score) × 1.5)
+       reason = 'Tỷ lệ lấp đầy thấp ({occupancy}%), đề xuất giảm {discount}% để thu hút'
+   - ELSE:
+       suggestedPrice = currentPrice
+       reason = 'Mức giá hiện tại phù hợp với demand'
+
+4. CROSS-FACILITY COMPARISON:
+   - So sánh suggested price với facilities cùng khu vực
+   - Cảnh báo nếu chênh lệch > 30% với facilities tương tự
+
+5. CONFIDENCE SCORING:
+   - confidence = f(sample_size, data_recency, demand_stability)
+   - Nếu totalSessions < 100 → confidence = 'low', kèm disclaimer
+
+6. OUTPUT:
+   - Trả về suggestions cho từng loại xe tại facility
+   - Manager xem xét và quyết định có áp dụng suggestion hay không
+   - Lưu lịch sử suggestions để track hiệu quả
+
+Complexity: O(n) cho data aggregation, O(1) cho suggestion
+```
+
+**Cơ sở khoa học:** Framework prediction → pricing từ Hong et al. [P15] (CIKM 2022). Mô hình RL reward (revenue × occupancy_balance) từ Poh et al. [P16] (Algorithms 2023). Pipeline 3 tầng (Data → ML Prediction → Pricing Engine) từ Saharan et al. [P17] (FGCS 2020). Evidence-base cho AI-based dynamic pricing từ review Bayih & Tilahun [P18] (ORD 2024).
+
+---
+
 ## Bảng tổng hợp thuật toán áp dụng
 
 | RQ | Thuật toán chính | Paper gốc | Đơn giản hóa cho hệ thống | Nâng cấp tương lai |
@@ -380,6 +483,7 @@ Complexity: O(1) cho intent classification, O(n) cho query execution
 | **RQ3** | TOPSIS/CRITIC + COA + MARL hard constraints | [P5] Amari 2023, [P6] Shirazi 2025, [P7] Zhang 2022 | Weighted Scoring Model (WSM) | COA [P6] hoặc MARL [P7] |
 | **RQ4** | NSGA-II + DCS/PCPT + Chance-Constrained Reservation | [P8] Zhang 2024, [P9] Wang et al. 2024, [P10] Wang 2022 | Threshold-based Load Balancing | DCS [P9] / MARL [P7] |
 | **RQ5** | NLI Text-to-SQL + Conversational FM Chatbot + TAM | [P11] Quamar 2022, [P12] Chen & Tsai 2021, [P13] Alhammadi 2023, [P14] Delgado 2025 | Intent-based NLQ (keyword matching + template query) | LLM-based Text-to-SQL [P11] |
+| **RQ6** | NODE Prediction + DRL Dynamic Pricing + ML Pricing Framework | [P15] Hong et al. 2022, [P16] Poh et al. 2023, [P17] Saharan et al. 2020, [P18] Bayih & Tilahun 2024 | Demand-based Pricing Suggestion (rule-based + statistics) | Full DRL-DP agent [P16] |
 
 ### Lý do đơn giản hóa
 
@@ -395,6 +499,7 @@ Trong phạm vi đồ án 9 tuần, hệ thống áp dụng **phiên bản đơn
 - **Threshold Load Balancing** giữ nguyên ý tưởng peak-demand allocation từ NSGA-II [P8]
 - **Reservation-Aware Occupancy** từ chance-constrained model [P10]: `effective = (occupied + reserved) / total`
 - **Intent-based NLQ** giữ nguyên ý tưởng NLI pipeline [P11] (intent → entity → query → response) và kiến trúc 4-module chatbot [P12]
+- **Demand-based Pricing Suggestion** giữ nguyên ý tưởng prediction → pricing từ [P15] và ML pricing pipeline 3 tầng từ [P17], đơn giản hóa DRL agent [P16] thành rule-based suggestion dựa trên occupancy statistics
 
 ---
 
@@ -600,6 +705,62 @@ Delgado, S., Villamarin, A. & Insuasti, J. (2025). "AI-Powered Chatbots in Organ
 
 ---
 
-> **Ghi chú:** Tất cả 14 paper đã được xác minh DOI. Paper [P2] (Jakob & Menendez, *Transportation Letters*, 2021) có DOI `10.1080/19427867.2021.1988245` tồn tại nhưng nằm sau paywall Taylor & Francis — có thể tra toàn văn qua ResearchGate hoặc email tác giả. Paper [P4], [P7], [P10] thuộc Elsevier (paywall) — truy cập qua thư viện trường hoặc Sci-Hub. Các paper [P1], [P5], [P6], [P8], [P9], [P11], [P12], [P13], [P14] là open access, truy cập tự do.
+### [P15] Prediction-based One-shot Dynamic Parking Pricing (CIKM 2022)
+
+Hong, S., Shin, H., Choi, J. & Park, N. (2022). "Prediction-based One-shot Dynamic Parking Pricing." *Proceedings of the 31st ACM International Conference on Information & Knowledge Management (CIKM '22)*, pp. 713–722. ACM.
+- **DOI:** [10.1145/3511808.3557421](https://doi.org/10.1145/3511808.3557421)
+- **Link:** [https://doi.org/10.1145/3511808.3557421](https://doi.org/10.1145/3511808.3557421)
+- **Ranking:** **ACM CIKM** — Top-tier conference (CORE Rank A) | Acceptance rate ~22%
+- **Literature Review:** Đề xuất framework proactive dynamic pricing dựa trên dự đoán occupancy. Sử dụng **Neural Ordinary Differential Equations (NODEs)** — mô hình deep learning liên tục (continuous-depth) — để dự đoán tỷ lệ lấp đầy trong tương lai. Khai thác tính bijective (ánh xạ 1-1) của NODEs để thiết kế **one-shot optimization**: tìm giá tối ưu chỉ trong 1 iteration thay vì iterative search. Đánh giá trên dữ liệu đa năm từ **SFpark (San Francisco)** và **Seattle DOT**. Kết quả: vượt trội so với baselines (Random Forest, LSTM, black-box optimization) về cả prediction accuracy và optimization speed. **Áp dụng cho RQ6:** nguyên lý "dự đoán occupancy → tối ưu giá" là foundation cho pricing suggestion engine.
+- **Thuật toán sử dụng:**
+  - **Neural ODE Model:** `dh/dt = f(h(t), θ)` — mô hình hóa biến đổi occupancy liên tục theo thời gian. Giải ODE bằng adaptive solver (Dormand-Prince).
+  - **One-shot Price Optimization:** Khai thác tính bijective: `price* = g⁻¹(target_occupancy)` — tìm giá tối ưu bằng cách invert model thay vì search.
+  - **Multi-block Architecture:** Chia thành blocks theo khu vực → mỗi block có model riêng → aggregate kết quả.
+
+---
+
+### [P16] Deep Reinforcement Learning-Based Dynamic Pricing for Parking
+
+Poh, L.Z., Connie, T., Ong, T.S. & Goh, M.K.O. (2023). "Deep Reinforcement Learning-Based Dynamic Pricing for Parking Solutions." *Algorithms*, 16(1), Article 32. MDPI.
+- **DOI:** [10.3390/a16010032](https://doi.org/10.3390/a16010032)
+- **Link:** [https://doi.org/10.3390/a16010032](https://doi.org/10.3390/a16010032)
+- **Ranking:** Scopus-indexed | ESCI (Emerging Sources Citation Index) | Open access
+- **Literature Review:** Đề xuất mô hình **DRL-DP (Deep Reinforcement Learning-based Dynamic Pricing)** mô hình hóa bài toán pricing như Markov Decision Process (MDP). Agent (parking operator) quan sát state = (current_occupancy, time_of_day, day_of_week, vehicle_flow), chọn action = (increase_price, decrease_price, keep_price), nhận reward = revenue × occupancy_balance_factor. Sử dụng Deep Q-Network (DQN) với experience replay và target network. Kết quả: DRL-DP đạt cân bằng tối ưu giữa tối đa doanh thu và duy trì utilization rate ổn định, vượt trội so với fixed pricing và simple rule-based pricing. **Áp dụng cho RQ6:** ý tưởng reward function (revenue × occupancy_balance) được adapt thành demand_score trong pricing suggestion engine.
+- **Thuật toán sử dụng:**
+  - **DQN (Deep Q-Network):** Neural network xấp xỉ Q-value function. Input: state vector. Output: Q-values cho mỗi action (tăng/giảm/giữ giá).
+  - **Experience Replay:** Lưu transitions (s, a, r, s') → sample mini-batch → train offline → giảm correlation trong training data.
+  - **Reward Shaping:** `R = α × revenue + β × (1 - |occupancy - target|)` — cân bằng doanh thu và occupancy target.
+
+---
+
+### [P17] Smart Parking Pricing System: Machine Learning-Based Approach
+
+Saharan, S., Kumar, N. & Bawa, S. (2020). "An efficient smart parking pricing system for smart city environment: A machine-learning based approach." *Future Generation Computer Systems*, 106, 622–640. Elsevier.
+- **DOI:** [10.1016/j.future.2020.01.031](https://doi.org/10.1016/j.future.2020.01.031)
+- **Link:** [https://doi.org/10.1016/j.future.2020.01.031](https://doi.org/10.1016/j.future.2020.01.031)
+- **Ranking:** Scopus **Q1** (Computer Science) | IF = 7.5 | CiteScore = 13.2
+- **Literature Review:** Đề xuất framework **3 tầng** cho smart parking pricing: (1) **Data Collection Layer** — IoT sensors thu thập real-time occupancy, arrival rate, parking duration, weather, events; (2) **ML Prediction Layer** — dự đoán demand cho từng parking zone/khung giờ sử dụng ensemble methods (Random Forest + Gradient Boosting); (3) **Dynamic Pricing Engine** — tính giá dựa trên predicted demand, current supply, price elasticity, và social welfare constraints. Đánh giá trên smart city testbed với 500+ parking spaces. Kết quả: cải thiện **23% revenue** so với fixed pricing, đồng thời giảm **15% cruising time**. **Trực tiếp áp dụng cho RQ6:** framework ML pricing 3 tầng — adapt cho hệ thống multi-facility: mỗi tòa nhà có demand profile riêng → pricing engine gợi ý giá phù hợp.
+- **Thuật toán sử dụng:**
+  - **Demand Prediction:** Ensemble (RF + GBM): features = (hour, day_of_week, month, weather, nearby_events, historical_demand) → output = predicted_demand (vehicles/hour).
+  - **Price Elasticity Model:** `∆demand = ε × ∆price` — ước lượng price elasticity ε từ dữ liệu lịch sử → xác định mức giá tối ưu cho target occupancy.
+  - **Social Welfare Constraint:** `min_price ≤ suggested_price ≤ max_price` — đảm bảo giá không quá cao (gây bất bình) hoặc quá thấp (lỗ).
+
+---
+
+### [P18] Dynamic Vehicle Parking Pricing: A Review
+
+Bayih, S.H. & Tilahun, S.L. (2024). "Dynamic vehicle parking pricing: A review." *Operations Research and Decisions*, 34(1), 35–59. Wrocław University of Science and Technology.
+- **DOI:** [10.37190/ord240103](https://doi.org/10.37190/ord240103)
+- **Link:** [https://doi.org/10.37190/ord240103](https://doi.org/10.37190/ord240103)
+- **Ranking:** Scopus-indexed | WoS (ESCI) | Peer-reviewed | Open access
+- **Literature Review:** Review toàn diện phân loại **6 nhóm phương pháp** dynamic parking pricing: (1) **Game Theory** — Stackelberg game giữa operator và driver; (2) **Dynamic Programming** — Bellman equation cho sequential pricing decisions; (3) **Stochastic Control** — mô hình arrival/departure uncertainty; (4) **Multi-objective Programming** — cân bằng revenue, congestion, equity; (5) **Queuing Theory** — mô hình M/M/c cho parking systems; (6) **AI-based Methods** — ML, DRL, neural networks. Key findings: AI-based pricing (đặc biệt DRL) đang nổi lên vì khả năng học từ dữ liệu lịch sử mà không cần mô hình toán học phức tạp. Occupancy targeting benchmark = 85%. **Áp dụng cho RQ6:** cung cấp evidence-base và taxonomy cho dynamic pricing, hỗ trợ lựa chọn phương pháp phù hợp với quy mô hệ thống.
+- **Thuật toán sử dụng:**
+  - **Taxonomy Framework:** Phân loại theo: mục tiêu (revenue/congestion/equity), phương pháp (exact/heuristic/AI), quy mô (single-lot/network), dữ liệu (real-time/historical).
+  - **Benchmark Metrics:** Occupancy rate (target 85%), revenue change (%), cruising time reduction, driver surplus.
+  - **Gap Analysis:** Xác định 4 hướng nghiên cứu mở: multi-modal integration, equity-aware pricing, real-time adaptation, EV charging integration.
+
+---
+
+> **Ghi chú:** Tất cả 18 paper đã được xác minh DOI. Paper [P2] (Jakob & Menendez, *Transportation Letters*, 2021) có DOI `10.1080/19427867.2021.1988245` tồn tại nhưng nằm sau paywall Taylor & Francis — có thể tra toàn văn qua ResearchGate hoặc email tác giả. Paper [P4], [P7], [P10], [P17] thuộc Elsevier (paywall) — truy cập qua thư viện trường hoặc Sci-Hub. Các paper [P1], [P5], [P6], [P8], [P9], [P11], [P12], [P13], [P14], [P16], [P18] là open access. Paper [P15] (CIKM '22) truy cập qua ACM Digital Library hoặc arXiv preprint.
 
 

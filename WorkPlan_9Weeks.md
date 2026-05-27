@@ -376,6 +376,20 @@
   - **Schema:** `SystemConfig.chatbotEnabled` (Boolean), `ChatHistory` collection
   - **API:** `POST /api/ai/chat-query`, `GET /api/ai/chat-history`
   - **Nâng cấp tương lai:** LLM-based Text-to-SQL [P11], multi-turn conversation context [P11]
+- [ ] 🤖 **[RQ6]** Implement AI Pricing Suggestion cho Manager (FR-5.5):
+  - Tham khảo: **Prediction-based Pricing** [P15] (Hong et al., *CIKM* 2022), **DRL-DP** [P16] (Poh et al., *Algorithms* 2023)
+  - Framework: **ML Pricing 3 tầng** [P17] (Saharan et al., *FGCS* 2020), **Review** [P18] (Bayih & Tilahun, *ORD* 2024)
+  - Phương pháp: **Demand-based Pricing Suggestion** — phân tích tần suất gửi xe, occupancy rate, peak demand → gợi ý điều chỉnh giá
+  - Pipeline: Data Collection → Demand Analysis → Price Suggestion Engine → Cross-Facility Comparison
+  - Demand levels: high_demand (≥85%), normal_demand (50-85%), low_demand (<50%)
+  - Max adjustment: +20% (high demand), -15% (low demand)
+  - Confidence scoring: dựa trên sample_size, data_recency, demand_stability
+  - Ghi chú: Manager chỉ xem suggestion, tự quyết định (không auto-apply)
+  - **Service file tạo mới:**
+    - `server/services/ai/pricingSuggestion.service.js` ← RQ6: Demand-based Pricing [P15][P17]
+  - **Schema:** `SystemConfig.pricingSuggestionEnabled` (Boolean), `PricingSuggestion` collection
+  - **API:** `GET /api/ai/pricing-suggestion/:facilityId`, `GET /api/ai/pricing-suggestion/compare`
+  - **Nâng cấp tương lai:** Full DRL-DP agent [P16], Neural ODE prediction [P15]
 
 #### BE2
 
@@ -407,7 +421,7 @@
 - [ ] Màn hình Tài khoản: thông tin cá nhân, đổi mật khẩu, lịch sử
 - [ ] Nhận push notification
 
-**✅ Deliverable tuần 6–7:** Đặt chỗ trước, báo cáo thống kê, ngoại lệ nâng cao, phản hồi, realtime, push notification. **+ WSM scoring [P5 Amari 2023, P6 Shirazi 2025], Threshold Load Balancing [P8 Zhang 2024, P9 Chen 2024, P10 Wang 2022], và AI Chatbot Query [P11 Quamar 2022, P12 Chen & Tsai 2021].**
+**✅ Deliverable tuần 6–7:** Đặt chỗ trước, báo cáo thống kê, ngoại lệ nâng cao, phản hồi, realtime, push notification. **+ WSM scoring [P5 Amari 2023, P6 Shirazi 2025], Threshold Load Balancing [P8 Zhang 2024, P9 Chen 2024, P10 Wang 2022], AI Chatbot Query [P11 Quamar 2022, P12 Chen & Tsai 2021], và AI Pricing Suggestion [P15 Hong 2022, P17 Saharan 2020].**
 
 ---
 
@@ -614,6 +628,7 @@ server/services/ai/
 ├── chatbotQuery.service.js         ← 🤖 RQ5: Intent-based NLQ [P11][P12]
 ├── intentClassifier.service.js     ← 🤖 RQ5: Intent classification [P12]
 ├── entityExtractor.service.js      ← 🤖 RQ5: Entity extraction [P11]
+├── pricingSuggestion.service.js    ← 🤖 RQ6: Demand-based Pricing [P15][P17]
 └── models/                         ← Trained model files (.json)
 ```
 
@@ -670,6 +685,8 @@ Fallback: AI model chưa train → rule-based (rate > avg × 1.5) + AVG(duration
 | GET | `/api/ai/predict-duration` | Dự đoán thời gian gửi (test) | AI |
 | POST | `/api/ai/chat-query` | Chatbot truy vấn báo cáo bằng NL | RQ5 |
 | GET | `/api/ai/chat-history` | Lịch sử hội thoại chatbot | RQ5 |
+| GET | `/api/ai/pricing-suggestion/:facilityId` | Gợi ý điều chỉnh bảng giá | RQ6 |
+| GET | `/api/ai/pricing-suggestion/compare` | So sánh giá giữa các tòa nhà | RQ6 |
 
 ### Thuật toán đã chọn — tóm tắt
 
@@ -680,6 +697,7 @@ Fallback: AI model chưa train → rule-based (rate > avg × 1.5) + AVG(duration
 | RQ3 | [P5] Amari 2023 + [P7] Zhang 2022 | Q2 + Q1/IF=7.9 | WSM 4-criteria | Full TOPSIS + COA [P6] |
 | RQ4 | [P8] Zhang 2024 + [P10] Wang 2022 | Q1-JCR + Q1/IF=7.9 | Threshold Load Balancing | DQN [P9] / MARL [P7] |
 | RQ5 | [P12] Chen & Tsai 2021 + [P11] Quamar 2022 | Q1/IF=3.4 + Top-tier survey | Intent-based NLQ | LLM Text-to-SQL [P11] |
+| RQ6 | [P15] Hong 2022 + [P17] Saharan 2020 | CIKM-A + Q1/IF=7.5 | Demand-based Pricing Suggestion | Full DRL-DP agent [P16] |
 
 ---
 
