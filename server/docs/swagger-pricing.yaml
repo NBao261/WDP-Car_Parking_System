@@ -2,11 +2,14 @@ openapi: 3.0.0
 info:
   title: Smart Parking API - Pricing Plans
   version: 1.0.0
+
 paths:
   /pricing:
     get:
       summary: Get all pricing plans
-      description: Lấy danh sách bảng giá, có thể filter theo facilityId, vehicleType, status.
+      description: |
+        Lấy danh sách bảng giá, có thể filter theo facilityId, vehicleType, status.
+        Kết quả trả về đã populate vehicleTypeId và facilityId.
       tags: [PricingPlans]
       security:
         - bearerAuth: []
@@ -15,17 +18,18 @@ paths:
           name: facilityId
           schema:
             type: string
-          description: Lọc theo bãi xe
+          description: Lọc theo ID bãi xe (ObjectId)
         - in: query
           name: vehicleType
           schema:
             type: string
-          description: Lọc theo loại xe (ObjectId)
+          description: Lọc theo ID loại xe (ObjectId) — map sang field vehicleTypeId trong DB
         - in: query
           name: status
           schema:
             type: string
             enum: [active, inactive]
+          description: Lọc theo trạng thái
         - in: query
           name: page
           schema:
@@ -46,36 +50,53 @@ paths:
                 data:
                   - _id: "64c1d2e3f4a5b6c7d8e9f0a1"
                     name: "Gói xe máy theo lượt"
-                    vehicleTypeId: "60b9b0b9e6b3f3b3b4f3b3b6"
-                    facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                    vehicleTypeId:
+                      _id: "60b9b0b9e6b3f3b3b4f3b3b6"
+                      name: "Xe máy"
+                      code: "motorbike"
+                    facilityId:
+                      _id: "60b9b0b9e6b3f3b3b4f3b3b4"
+                      name: "Bãi xe Topaz"
+                      address: "Vinhomes Grand Park"
                     feeType: "per_turn"
                     feeMethod: "flat_rate"
                     rates:
                       - label: "Phí gửi"
                         amount: 5000
-                        unit: "lượt"
+                        unit: "VND/lượt"
                     overnightFee: 10000
                     overtimeFeePerHour: 2000
                     lostCardFee: 50000
                     gracePeriodMinutes: 15
                     maxDailyFee: 0
+                    firstBlockHours: 1
                     status: "active"
+                    isDeleted: false
+                    createdAt: "2026-05-14T08:00:00.000Z"
+                    updatedAt: "2026-05-14T08:00:00.000Z"
                 pagination:
                   total: 5
                   page: 1
                   limit: 10
                   pages: 1
+
     post:
       summary: Create a pricing plan
       description: |
         Tạo bảng giá mới. Hỗ trợ 3 phương thức tính phí:
-        - **flat_rate**: Đồng giá theo lượt (dùng với feeType per_turn)
+        - **flat_rate**: Đồng giá theo lượt (dùng với feeType per_turn). Chỉ 1 rate.
         - **duration_based**: Theo thời gian gửi — giờ đầu + giờ tiếp theo (dùng với feeType hourly/daily)
-        - **time_window**: Theo khung giờ trong ngày (VD: 6h-16h = 4000đ, 16h-22h = 6000đ)
+        - **time_window**: Theo khung giờ trong ngày (VD: 6h-16h = 4000đ, 16h-22h = 6000đ). Mỗi rate phải có startTime + endTime.
 
-        Nếu không truyền feeMethod, hệ thống tự suy:
+        **Auto-set feeMethod**: Nếu không truyền feeMethod, hệ thống tự suy:
         - feeType = per_turn → feeMethod = flat_rate
         - feeType = hourly/daily → feeMethod = duration_based
+
+        **Business rules:**
+        - Nếu tạo plan có `status: active`, tất cả plan active cùng (facilityId + vehicleTypeId) sẽ tự động chuyển sang `inactive`.
+        - feeType `per_turn` chỉ hỗ trợ feeMethod `flat_rate`.
+        - feeMethod `flat_rate` chỉ cho phép 1 rate trong mảng rates.
+        - feeMethod `time_window` yêu cầu mỗi rate phải có `startTime` và `endTime` (HH:MM).
       tags: [PricingPlans]
       security:
         - bearerAuth: []
@@ -92,9 +113,11 @@ paths:
                   example: "Gói ô tô theo giờ"
                 vehicleTypeId:
                   type: string
+                  description: ObjectId loại xe
                   example: "60b9b0b9e6b3f3b3b4f3b3b6"
                 facilityId:
                   type: string
+                  description: ObjectId bãi xe
                   example: "60b9b0b9e6b3f3b3b4f3b3b4"
                 feeType:
                   type: string
@@ -107,52 +130,166 @@ paths:
                   example: "duration_based"
                 rates:
                   type: array
+                  description: |
+                    Mảng bậc giá. Số lượng và cấu trúc phụ thuộc feeMethod:
+                    - flat_rate: 1 rate duy nhất
+                    - duration_based: rates[0] = mốc đầu, rates[1] = mốc tiếp theo
+                    - time_window: nhiều rates, mỗi cái có startTime + endTime
                   items:
                     type: object
+                    required: [label, amount, unit]
                     properties:
                       label:
                         type: string
+                        description: "Nhãn bậc giá (VD: 'Giờ đầu', '6h-16h')"
                       amount:
                         type: number
+                        minimum: 0
+                        description: "Số tiền (VND)"
                       unit:
                         type: string
+                        description: "Đơn vị (VD: 'VND', 'VND/giờ', 'VND/lượt')"
                       startTime:
                         type: string
-                        description: "Giờ bắt đầu khung (HH:MM) — chỉ dùng khi feeMethod = time_window"
+                        description: "Giờ bắt đầu khung (HH:MM) — bắt buộc khi feeMethod = time_window"
+                        example: "06:00"
                       endTime:
                         type: string
-                        description: "Giờ kết thúc khung (HH:MM) — chỉ dùng khi feeMethod = time_window"
+                        description: "Giờ kết thúc khung (HH:MM) — bắt buộc khi feeMethod = time_window"
+                        example: "16:00"
                   example:
-                    - label: "Giờ đầu"
-                      amount: 10000
-                      unit: "giờ"
-                    - label: "Giờ tiếp theo"
-                      amount: 5000
-                      unit: "giờ"
+                    - label: "Sáng - Chiều"
+                      amount: 4000
+                      unit: "VND"
+                      startTime: "06:00"
+                      endTime: "16:00"
+                    - label: "Chiều - Tối"
+                      amount: 6000
+                      unit: "VND"
+                      startTime: "16:00"
+                      endTime: "22:00"
                 overnightFee:
                   type: number
+                  minimum: 0
+                  description: "Phí qua đêm (VND). Tính cho mỗi đêm qua 00:00."
                   example: 30000
                 overtimeFeePerHour:
                   type: number
+                  minimum: 0
+                  description: "Phí quá giờ mỗi giờ (VND). Áp dụng khi gửi > 24h."
                   example: 5000
                 lostCardFee:
                   type: number
+                  minimum: 0
+                  description: "Phí mất thẻ (VND). Mặc định 50,000."
                   example: 50000
                 gracePeriodMinutes:
                   type: number
-                  description: "Thời gian miễn phí (phút). Tối đa 60."
+                  minimum: 0
+                  maximum: 60
+                  description: "Thời gian miễn phí (phút). Tối đa 60. Mặc định 0."
                   example: 15
                 maxDailyFee:
                   type: number
-                  description: "Giá trần mỗi ngày. 0 = không giới hạn."
+                  minimum: 0
+                  description: "Giá trần mỗi ngày (VND). 0 = không giới hạn."
                   example: 0
                 firstBlockHours:
                   type: number
-                  description: "Số giờ của mốc tính tiền đầu tiên. Mặc định là 1."
+                  minimum: 1
+                  description: "Số giờ của mốc tính tiền đầu tiên (chỉ dùng cho duration_based). Mặc định 1."
                   example: 2
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  description: "Trạng thái. Mặc định 'active'. Nếu active → auto deactivate plan cũ cùng facility+vehicleType."
+                  example: "active"
+              example:
+                name: "Gói ô tô theo khung giờ"
+                vehicleTypeId: "60b9b0b9e6b3f3b3b4f3b3b6"
+                facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                feeType: "hourly"
+                feeMethod: "time_window"
+                rates:
+                  - label: "Khung giờ ngày (Sáng - Chiều)"
+                    amount: 10000
+                    unit: "VND"
+                    startTime: "06:00"
+                    endTime: "18:00"
+                  - label: "Khung giờ đêm"
+                    amount: 15000
+                    unit: "VND"
+                    startTime: "18:00"
+                    endTime: "06:00"
+                overnightFee: 30000
+                lostCardFee: 50000
+                gracePeriodMinutes: 15
+                status: "active"
+            examples:
+              timeWindowPlan:
+                summary: "Bảng giá theo khung giờ (Time Window - Xe máy)"
+                value:
+                  name: "Xe máy - Theo khung giờ"
+                  vehicleTypeId: "60b9b0b9e6b3f3b3b4f3b3b6"
+                  facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  feeType: "hourly"
+                  feeMethod: "time_window"
+                  rates:
+                    - label: "Khung giờ ngày (Sáng - Chiều)"
+                      amount: 4000
+                      unit: "VND"
+                      startTime: "06:00"
+                      endTime: "18:00"
+                    - label: "Khung giờ đêm"
+                      amount: 8000
+                      unit: "VND"
+                      startTime: "18:00"
+                      endTime: "06:00"
+                  overnightFee: 15000
+                  lostCardFee: 50000
+                  gracePeriodMinutes: 15
+                  status: "active"
+              durationBasedPlan:
+                summary: "Bảng giá theo thời gian (Duration Based - Ô tô)"
+                value:
+                  name: "Ô tô 4 chỗ - Theo giờ"
+                  vehicleTypeId: "60b9b0b9e6b3f3b3b4f3b3b6"
+                  facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  feeType: "hourly"
+                  feeMethod: "duration_based"
+                  rates:
+                    - label: "2 giờ đầu"
+                      amount: 20000
+                      unit: "VND"
+                    - label: "Giờ tiếp theo"
+                      amount: 10000
+                      unit: "VND/giờ"
+                  overnightFee: 50000
+                  overtimeFeePerHour: 15000
+                  lostCardFee: 50000
+                  maxDailyFee: 100000
+                  firstBlockHours: 2
+                  gracePeriodMinutes: 15
+                  status: "active"
+              flatRatePlan:
+                summary: "Bảng giá đồng giá (Flat Rate - Xe máy)"
+                value:
+                  name: "Xe máy - Theo lượt"
+                  vehicleTypeId: "60b9b0b9e6b3f3b3b4f3b3b6"
+                  facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  feeType: "per_turn"
+                  feeMethod: "flat_rate"
+                  rates:
+                    - label: "Phí lượt"
+                      amount: 5000
+                      unit: "VND/lượt"
+                  overnightFee: 10000
+                  lostCardFee: 50000
+                  gracePeriodMinutes: 15
+                  status: "active"
       responses:
         '201':
-          description: Created
+          description: Tạo bảng giá thành công
           content:
             application/json:
               example:
@@ -160,9 +297,26 @@ paths:
                 data:
                   _id: "64c1d2e3f4a5b6c7d8e9f0a1"
                   name: "Gói ô tô theo giờ"
+                  vehicleTypeId: "60b9b0b9e6b3f3b3b4f3b3b6"
+                  facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
                   feeType: "hourly"
                   feeMethod: "duration_based"
+                  rates:
+                    - label: "Giờ đầu"
+                      amount: 10000
+                      unit: "VND"
+                    - label: "Giờ tiếp theo"
+                      amount: 5000
+                      unit: "VND/giờ"
+                  overnightFee: 30000
+                  overtimeFeePerHour: 5000
+                  lostCardFee: 50000
+                  gracePeriodMinutes: 15
+                  maxDailyFee: 0
+                  firstBlockHours: 2
                   status: "active"
+                  isDeleted: false
+                  createdAt: "2026-05-14T08:00:00.000Z"
         '400':
           description: Lỗi validation
           content:
@@ -178,6 +332,11 @@ paths:
                   value:
                     success: false
                     message: "Khi feeMethod là time_window, mỗi rate phải có startTime và endTime (HH:MM)"
+                tooManyRatesFlatRate:
+                  summary: flat_rate chỉ cho 1 rate
+                  value:
+                    success: false
+                    message: "Khi feeMethod là flat_rate, rates chỉ được có 1 phần tử"
                 vehicleTypeNotFound:
                   summary: Loại phương tiện không tồn tại
                   value:
@@ -192,6 +351,7 @@ paths:
   /pricing/{id}:
     get:
       summary: Get pricing plan by ID
+      description: Lấy chi tiết bảng giá. vehicleTypeId và facilityId được populate.
       tags: [PricingPlans]
       security:
         - bearerAuth: []
@@ -201,6 +361,7 @@ paths:
           required: true
           schema:
             type: string
+          description: ObjectId bảng giá
       responses:
         '200':
           description: OK
@@ -211,25 +372,45 @@ paths:
                 data:
                   _id: "64c1d2e3f4a5b6c7d8e9f0a1"
                   name: "Gói ô tô theo giờ"
-                  vehicleTypeId: "60b9b0b9e6b3f3b3b4f3b3b6"
-                  facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  vehicleTypeId:
+                    _id: "60b9b0b9e6b3f3b3b4f3b3b6"
+                    name: "Ô tô 4 chỗ"
+                    code: "car_4"
+                  facilityId:
+                    _id: "60b9b0b9e6b3f3b3b4f3b3b4"
+                    name: "Bãi xe Topaz"
+                    address: "Vinhomes Grand Park"
                   feeType: "hourly"
                   feeMethod: "duration_based"
                   rates:
                     - label: "Giờ đầu"
                       amount: 10000
-                      unit: "giờ"
+                      unit: "VND"
                     - label: "Giờ tiếp theo"
                       amount: 5000
-                      unit: "giờ"
+                      unit: "VND/giờ"
                   overnightFee: 30000
                   overtimeFeePerHour: 5000
                   lostCardFee: 50000
                   gracePeriodMinutes: 15
                   maxDailyFee: 0
+                  firstBlockHours: 2
                   status: "active"
+                  isDeleted: false
+                  createdAt: "2026-05-14T08:00:00.000Z"
+                  updatedAt: "2026-05-14T08:00:00.000Z"
+        '404':
+          description: Bảng giá không tồn tại
+
     patch:
       summary: Update pricing plan
+      description: |
+        Cập nhật bảng giá. Hỗ trợ partial update.
+
+        **Business rules:**
+        - Nếu bảng giá đã từng được sử dụng (có session liên quan), **KHÔNG cho sửa** các trường giá tiền: rates, overnightFee, overtimeFeePerHour, lostCardFee, feeType, feeMethod, gracePeriodMinutes, maxDailyFee. Chỉ được sửa name, status.
+        - Nếu chuyển `status: active`, tất cả plan active cùng (facilityId + vehicleTypeId) sẽ tự động chuyển sang `inactive`.
+        - Nếu chuyển `status: inactive` hoặc `isDeleted: true`, và đây là plan active **duy nhất** cho combo (facility + vehicleType) → sẽ bị **từ chối** để tránh không có bảng giá nào active.
       tags: [PricingPlans]
       security:
         - bearerAuth: []
@@ -239,6 +420,7 @@ paths:
           required: true
           schema:
             type: string
+          description: ObjectId bảng giá
       requestBody:
         required: true
         content:
@@ -249,9 +431,14 @@ paths:
                 name:
                   type: string
                   example: "Gói ô tô theo giờ - VIP"
+                feeType:
+                  type: string
+                  enum: [per_turn, hourly, daily]
+                  example: "hourly"
                 feeMethod:
                   type: string
                   enum: [flat_rate, duration_based, time_window]
+                  example: "time_window"
                 rates:
                   type: array
                   items:
@@ -259,27 +446,104 @@ paths:
                     properties:
                       label:
                         type: string
+                        example: "Sáng - Chiều"
                       amount:
                         type: number
+                        example: 4000
                       unit:
                         type: string
+                        example: "VND"
                       startTime:
                         type: string
+                        example: "06:00"
                       endTime:
                         type: string
+                        example: "16:00"
+                  example:
+                    - label: "Sáng - Chiều"
+                      amount: 4000
+                      unit: "VND"
+                      startTime: "06:00"
+                      endTime: "16:00"
+                    - label: "Chiều - Tối"
+                      amount: 6000
+                      unit: "VND"
+                      startTime: "16:00"
+                      endTime: "22:00"
                 overnightFee:
                   type: number
+                  example: 30000
                 overtimeFeePerHour:
                   type: number
+                  example: 5000
+                lostCardFee:
+                  type: number
+                  example: 50000
                 gracePeriodMinutes:
                   type: number
+                  maximum: 60
+                  example: 15
                 maxDailyFee:
                   type: number
+                  example: 0
                 firstBlockHours:
                   type: number
+                  minimum: 1
+                  example: 2
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  description: "Chuyển trạng thái. active → auto deactivate plan cũ."
+                  example: "active"
+              example:
+                name: "Gói ô tô theo khung giờ - VIP"
+                feeType: "hourly"
+                feeMethod: "time_window"
+                rates:
+                  - label: "Sáng - Chiều"
+                    amount: 12000
+                    unit: "VND"
+                    startTime: "06:00"
+                    endTime: "18:00"
+                  - label: "Chiều - Đêm"
+                    amount: 18000
+                    unit: "VND"
+                    startTime: "18:00"
+                    endTime: "06:00"
+                overnightFee: 35000
+                lostCardFee: 50000
+                gracePeriodMinutes: 15
+                status: "active"
+            examples:
+              updateNameAndStatus:
+                summary: "Chỉnh sửa tên và trạng thái (Dùng khi bảng giá đã sử dụng)"
+                value:
+                  name: "Gói ô tô theo giờ - Cập nhật"
+                  status: "active"
+              updateFullTimeWindow:
+                summary: "Cập nhật toàn bộ bảng giá theo khung giờ (Chỉ khi chưa sử dụng)"
+                value:
+                  name: "Gói xe máy khung giờ - Sửa"
+                  feeType: "hourly"
+                  feeMethod: "time_window"
+                  rates:
+                    - label: "Sáng - Chiều"
+                      amount: 5000
+                      unit: "VND"
+                      startTime: "06:00"
+                      endTime: "17:00"
+                    - label: "Tối - Đêm"
+                      amount: 8000
+                      unit: "VND"
+                      startTime: "17:00"
+                      endTime: "06:00"
+                  overnightFee: 20000
+                  lostCardFee: 50000
+                  gracePeriodMinutes: 10
+                  status: "active"
       responses:
         '200':
-          description: OK
+          description: Cập nhật thành công
           content:
             application/json:
               example:
@@ -287,25 +551,52 @@ paths:
                 data:
                   _id: "64c1d2e3f4a5b6c7d8e9f0a1"
                   name: "Gói ô tô theo giờ - VIP"
+                  feeType: "hourly"
+                  feeMethod: "duration_based"
+                  rates:
+                    - label: "Giờ đầu"
+                      amount: 10000
+                      unit: "VND"
+                    - label: "Giờ tiếp theo"
+                      amount: 5000
+                      unit: "VND/giờ"
+                  overnightFee: 30000
+                  overtimeFeePerHour: 5000
+                  lostCardFee: 50000
+                  gracePeriodMinutes: 15
+                  maxDailyFee: 0
+                  firstBlockHours: 2
                   status: "active"
+                  isDeleted: false
         '400':
-          description: Lỗi validation
+          description: Lỗi validation / Business rule
           content:
             application/json:
               examples:
+                planAlreadyUsed:
+                  summary: Bảng giá đã sử dụng — không sửa được giá
+                  value:
+                    success: false
+                    message: "Không thể sửa các thông tin giá tiền (rates, overnightFee) vì bảng giá này đã từng được áp dụng cho xe. Vui lòng tạo bảng giá mới."
                 lastActivePlan:
-                  summary: Bảng giá active duy nhất
+                  summary: Bảng giá active duy nhất — không vô hiệu hoá được
                   value:
                     success: false
                     message: "Không thể vô hiệu hoá bảng giá này vì đây là bảng giá active duy nhất cho loại xe tại bãi xe này"
                 invalidTimeWindow:
-                  summary: Thiếu startTime/endTime
+                  summary: Thiếu startTime/endTime cho time_window
                   value:
                     success: false
                     message: "Khi feeMethod là time_window, mỗi rate phải có startTime và endTime (HH:MM)"
+        '404':
+          description: Bảng giá không tồn tại
+
     delete:
       summary: Deactivate pricing plan
-      description: Chuyển trạng thái bảng giá sang inactive (soft delete).
+      description: |
+        Chuyển trạng thái bảng giá sang `inactive` (soft delete).
+
+        **Business rule:** Nếu đây là bảng giá active **duy nhất** cho combo (facility + vehicleType), sẽ bị **từ chối** để tránh không có bảng giá nào active.
       tags: [PricingPlans]
       security:
         - bearerAuth: []
@@ -315,9 +606,10 @@ paths:
           required: true
           schema:
             type: string
+          description: ObjectId bảng giá
       responses:
         '200':
-          description: OK
+          description: Vô hiệu hoá thành công
           content:
             application/json:
               example:
@@ -327,31 +619,36 @@ paths:
                   name: "Gói ô tô theo giờ"
                   status: "inactive"
         '400':
-          description: Lỗi validation
+          description: Bảng giá active duy nhất
           content:
             application/json:
               example:
                 success: false
                 message: "Không thể vô hiệu hoá bảng giá này vì đây là bảng giá active duy nhất cho loại xe tại bãi xe này"
+        '404':
+          description: Bảng giá không tồn tại
 
 components:
   schemas:
     PricingRate:
       type: object
+      required: [label, amount, unit]
       properties:
         label:
           type: string
           description: 'Nhãn bậc giá (VD: "Giờ đầu", "6h-16h", "Phí lượt")'
         amount:
           type: number
+          minimum: 0
         unit:
           type: string
         startTime:
           type: string
-          description: "Giờ bắt đầu khung (HH:MM) — chỉ dùng khi feeMethod = time_window"
+          description: "Giờ bắt đầu khung (HH:MM) — bắt buộc khi feeMethod = time_window"
         endTime:
           type: string
-          description: "Giờ kết thúc khung (HH:MM) — chỉ dùng khi feeMethod = time_window"
+          description: "Giờ kết thúc khung (HH:MM) — bắt buộc khi feeMethod = time_window"
+
     PricingPlan:
       type: object
       properties:
@@ -361,44 +658,48 @@ components:
           type: string
         vehicleTypeId:
           type: string
-          description: ObjectId loại xe áp dụng
+          description: ObjectId loại xe áp dụng (hoặc object populated)
         facilityId:
           type: string
-          description: ObjectId bãi xe áp dụng
+          description: ObjectId bãi xe áp dụng (hoặc object populated)
         feeType:
           type: string
           enum: [per_turn, hourly, daily]
-          description: "Loại phí hiển thị (per_turn/hourly/daily)"
+          description: |
+            Loại phí:
+            - per_turn: Tính theo lượt gửi
+            - hourly: Tính theo giờ
+            - daily: Tính theo ngày
         feeMethod:
           type: string
           enum: [flat_rate, duration_based, time_window]
           description: |
             Phương thức tính phí:
-            - flat_rate: Đồng giá theo lượt
-            - duration_based: Theo thời gian gửi (giờ đầu + giờ tiếp theo)
-            - time_window: Theo khung giờ trong ngày (VD: 6h-16h = 4000đ)
+            - flat_rate: Đồng giá theo lượt (chỉ dùng với per_turn, 1 rate)
+            - duration_based: Theo thời gian gửi (rates[0] = giờ đầu, rates[1] = giờ tiếp theo)
+            - time_window: Theo khung giờ trong ngày (mỗi rate có startTime + endTime)
         rates:
           type: array
           items:
             $ref: '#/components/schemas/PricingRate'
         overnightFee:
           type: number
-          description: Phí qua đêm
+          description: Phí qua đêm (VND). Tính mỗi lần qua 00:00.
         overtimeFeePerHour:
           type: number
-          description: Phí quá giờ mỗi giờ (áp dụng khi > 24h)
+          description: Phí quá giờ mỗi giờ (VND). Áp dụng khi gửi > 24h.
         lostCardFee:
           type: number
-          description: Phí mất thẻ
+          description: Phí mất thẻ (VND). Mặc định 50,000.
         gracePeriodMinutes:
           type: number
-          description: Thời gian miễn phí (phút, tối đa 60)
+          description: Thời gian miễn phí (phút, tối đa 60). Gửi trong khoảng này = 0đ.
         maxDailyFee:
           type: number
-          description: Giá trần mỗi ngày (0 = không giới hạn)
+          description: Giá trần mỗi ngày (VND). 0 = không giới hạn.
         firstBlockHours:
           type: number
-          description: Số giờ của mốc tính tiền đầu tiên (chỉ dùng cho duration_based)
+          description: Số giờ của mốc tính tiền đầu tiên (chỉ dùng cho duration_based). Mặc định 1.
         status:
           type: string
           enum: [active, inactive]
@@ -412,6 +713,7 @@ components:
           format: date-time
 
     # ─── Ví dụ cho từng loại feeMethod ───
+
     PricingPlanExampleFlatRate:
       description: "Ví dụ: Đồng giá theo lượt (flat_rate)"
       type: object
@@ -426,6 +728,7 @@ components:
             amount: 5000
             unit: "VND/lượt"
         overnightFee: 10000
+        lostCardFee: 50000
         gracePeriodMinutes: 15
 
     PricingPlanExampleDurationBased:
@@ -438,7 +741,7 @@ components:
         feeType: "hourly"
         feeMethod: "duration_based"
         rates:
-          - label: "Giờ đầu"
+          - label: "2 giờ đầu"
             amount: 20000
             unit: "VND"
           - label: "Giờ tiếp theo"
@@ -446,6 +749,7 @@ components:
             unit: "VND/giờ"
         overnightFee: 50000
         overtimeFeePerHour: 15000
+        lostCardFee: 50000
         maxDailyFee: 100000
         firstBlockHours: 2
         gracePeriodMinutes: 15

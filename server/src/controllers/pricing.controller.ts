@@ -48,7 +48,7 @@ export class PricingController {
       const filters: any = {};
       
       if (facilityId) filters.facilityId = facilityId;
-      if (vehicleType) filters.vehicleType = vehicleType;
+      if (vehicleType) filters.vehicleTypeId = vehicleType;
       if (status) filters.status = status;
 
       const { pricingPlans, total } = await PricingService.getAllPricingPlans(filters, skip, Number(limit));
