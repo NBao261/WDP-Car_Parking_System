@@ -6,14 +6,14 @@ export default function CurrentOccupancy() {
   const trongHam = xeVao - xeRa;
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between h-[160px]">
-      <div className="flex items-start justify-between">
-        <span className="text-[15px] text-[#060606]/80 font-bold">Lượng Phương Tiện Trong Hầm</span>
-        <div className="p-1.5 rounded-lg bg-gray-50 text-[#060606]">
-          <Car className="w-5 h-5" />
+    <div className="bg-white rounded-xl px-5 py-3 shadow-sm border border-gray-100 flex items-center justify-between h-full">
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-[#060606]/5 text-[#060606]">
+          <Car className="w-4 h-4" />
         </div>
+        <span className="text-[13px] text-[#060606]/60 font-semibold">Trong hầm hiện tại</span>
       </div>
-      <div className="text-[40px] font-bold text-[#060606] leading-none mb-1">
+      <div className="text-[28px] font-bold text-[#060606] leading-none">
         {trongHam}
       </div>
     </div>
