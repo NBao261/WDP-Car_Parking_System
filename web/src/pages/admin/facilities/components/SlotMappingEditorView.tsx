@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Plus, GripHorizontal, Map } from 'lucide-react';
+import { RefreshCw, Plus, GripHorizontal, Map, Car, X } from 'lucide-react';
 import { Floor } from '../../../../services/floor.service';
 import { ParkingSlot, SlotStatus } from '../../../../services/slot.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { SlotStatusModal } from '../../slots/components/SlotStatusModal';
-import { SlotFormModal } from '../../slots/components/SlotFormModal';
+import { SlotStatusModal } from './SlotStatusModal';
+import { SlotFormModal } from './SlotFormModal';
+import { ICON_MAP } from '../../vehicles/components/constants';
 
 interface SlotMappingEditorViewProps {
   floor: Floor | null;
@@ -14,10 +16,11 @@ interface SlotMappingEditorViewProps {
   vehicleTypes: VehicleType[];
   loading: boolean;
   onRefreshSlots: () => void;
+  onClose?: () => void;
 }
 
 export function SlotMappingEditorView({
-  floor, slots, vtMap, vehicleTypes, loading, onRefreshSlots,
+  floor, slots, vtMap, vehicleTypes, loading, onRefreshSlots, onClose
 }: SlotMappingEditorViewProps) {
   const [filterStatus, setFilterStatus] = useState<SlotStatus | 'all'>('all');
   const [statusSlot, setStatusSlot]     = useState<ParkingSlot | null>(null);
@@ -54,69 +57,95 @@ export function SlotMappingEditorView({
         className="bg-white rounded-2xl shadow-sm border border-[#e8eae8] p-6 mt-6"
       >
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div className="flex items-start justify-between mb-5">
           <div>
             <h2 className="text-lg font-bold text-[#060606]">
               Sơ đồ Slot — {floor.name}
             </h2>
             <p className="text-sm text-gray-400 mt-0.5">Nhấp vào một slot để thay đổi trạng thái</p>
           </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+            >
+              <X size={20} />
+            </button>
+          )}
+        </div>
+
+        {/* Filters and Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          {/* Status filter pills */}
+          <div className="flex gap-1.5 flex-wrap">
+            {filterButtons.map(btn => (
+              <button
+                key={btn.value}
+                onClick={() => setFilterStatus(btn.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  filterStatus === btn.value
+                    ? 'bg-[#d7ee46] text-[#060606] font-semibold'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {btn.label}
+              </button>
+            ))}
+          </div>
+          
           <div className="flex items-center gap-2">
             <button
               onClick={onRefreshSlots}
-              className="p-2.5 border border-gray-200 rounded-xl text-gray-500 hover:bg-gray-50 transition-colors"
               title="Làm mới"
+              className="px-3 py-2 border border-gray-200 text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors flex items-center justify-center shrink-0"
             >
-              <RotateCcw size={16} />
+              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             </button>
-            <button
-              onClick={() => setBulkOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
-              style={{ background: '#d7ee46', color: '#1a1a0a' }}
-            >
-              <Plus size={16} /> Tạo Slot
-            </button>
+            {floor.status === 'active' && (
+              <button
+                onClick={() => setBulkOpen(true)}
+                className="bg-[#d7ee46] text-[#060606] px-5 py-2 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm text-sm"
+              >
+                <Plus size={18} /> Tạo Slot
+              </button>
+            )}
           </div>
-        </div>
-
-        {/* Status filter pills */}
-        <div className="flex gap-1.5 flex-wrap mb-5">
-          {filterButtons.map(btn => (
-            <button
-              key={btn.value}
-              onClick={() => setFilterStatus(btn.value)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                filterStatus === btn.value
-                  ? 'bg-[#d7ee46] text-[#060606] font-semibold'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              {btn.label}
-            </button>
-          ))}
         </div>
 
         {/* Body: palette + canvas */}
         <div className="flex flex-col lg:flex-row gap-5">
           {/* Vehicle types palette */}
-          <div className="w-full lg:w-44 bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2.5 shrink-0">
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Loại xe</h4>
-            {floorVehicleTypes.length === 0 ? (
-              <p className="text-xs text-gray-400 italic">Chưa gán loại xe</p>
-            ) : floorVehicleTypes.map(vt => (
-              <div
-                key={vt._id}
-                className="bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm flex items-center gap-2 text-gray-700 hover:shadow-sm transition-shadow"
-              >
-                <GripHorizontal size={13} className="opacity-40" />
-                <span>{vt.icon}</span>
-                <span className="truncate">{vt.name}</span>
+          <div className="w-full lg:w-44 bg-gray-50 rounded-xl border border-gray-200 shrink-0 relative min-h-[260px]">
+            <div className="absolute inset-0 p-4 flex flex-col">
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 shrink-0">Loại xe</h4>
+              <div className="overflow-y-auto space-y-2.5 pr-1 vehicle-scrollbar h-full">
+                <style>{`
+                  .vehicle-scrollbar::-webkit-scrollbar { width: 4px; }
+                  .vehicle-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                  .vehicle-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+                  .vehicle-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+                `}</style>
+                {floorVehicleTypes.length === 0 ? (
+                  <p className="text-xs text-gray-400 italic">Chưa gán loại xe</p>
+                ) : floorVehicleTypes.map(vt => {
+                  const Icon = (vt.icon && ICON_MAP[vt.icon]) ? ICON_MAP[vt.icon] : Car;
+                  return (
+                    <div
+                      key={vt._id}
+                      className="bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm flex items-center gap-2 text-gray-700 hover:shadow-sm transition-shadow cursor-grab shrink-0"
+                    >
+                      <GripHorizontal size={13} className="opacity-40 shrink-0" />
+                      <Icon size={16} className="text-gray-500 shrink-0" />
+                      <span className="truncate">{vt.name}</span>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            </div>
           </div>
 
           {/* Canvas */}
-          <div className="flex-1 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50 p-5 min-h-[260px] overflow-x-auto">
+          <div className="flex-1 min-w-0 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50 p-5 min-h-[260px] overflow-x-auto">
             {loading ? (
               <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
                 {Array.from({ length: 20 }).map((_, i) => (
@@ -149,8 +178,11 @@ export function SlotMappingEditorView({
                     return (
                       <div
                         key={slot._id}
-                        onClick={() => setStatusSlot(slot)}
-                        className={`aspect-square rounded-lg flex items-center justify-center text-xs font-semibold cursor-pointer transition-all hover:scale-105 hover:shadow-md shadow-sm border ${bgClass}`}
+                        onClick={() => {
+                          if (floor.status === 'active') setStatusSlot(slot);
+                          else toast.error('Không thể chỉnh sửa slot của tầng đang bị vô hiệu hóa.');
+                        }}
+                        className={`aspect-square rounded-lg flex items-center justify-center text-xs font-semibold ${floor.status === 'active' ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
                         title={`${slot.code} – ${vtName} (${slot.status})`}
                       >
                         {slot.code}

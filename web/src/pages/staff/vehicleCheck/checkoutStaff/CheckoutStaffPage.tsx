@@ -6,7 +6,7 @@ export default function CheckoutStaffPage({ onFlagException }: { onFlagException
   const [plate, setPlate] = useState("");
   const [session, setSession] = useState<any>(null);
   const [fee, setFee] = useState<any>(null);
-  const [gateOut, setGateOut] = useState("GATE-A");
+  const [gateOut, _setGateOut] = useState("GATE-A");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"search" | "bill" | "success">("search");
   const [error, setError] = useState("");
