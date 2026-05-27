@@ -650,69 +650,87 @@ export class SessionService {
 
   /**
    * Thuật toán tính phí theo khung giờ trong ngày (Time-Window)
-   * Chia khoảng thời gian gửi thành từng segment theo ngày lịch,
-   * rồi check overlap từng segment với từng khung giờ rate → cộng dồn.
+   * Đi từ checkIn → checkOut, xác định mỗi thời điểm nằm trong khung giờ nào,
+   * tính số giờ thực tế (ceil) × đơn giá khung đó → cộng dồn.
+   *
+   * VD: rates = [
+   *   { startTime: "06:00", endTime: "12:00", amount: 5000 },   // 5k/giờ
+   *   { startTime: "12:00", endTime: "22:00", amount: 10000 },  // 10k/giờ
+   *   { startTime: "22:00", endTime: "06:00", amount: 100000 }, // 100k/giờ (phạt qua đêm)
+   * ]
+   * Gửi 21:00 → 23:00:
+   *   - 21:00-22:00 (1h trong khung 10k) = 10k
+   *   - 22:00-23:00 (1h trong khung 100k) = 100k
+   *   - Tổng = 110k
    */
   private static calculateTimeWindowFee(
     checkIn: Date, checkOut: Date,
     rates: Array<{ startTime?: string; endTime?: string; amount: number }>,
     maxDailyFee: number
   ): number {
+    // ── Bước 1: Flatten rates thành các interval [from, to) trong khoảng [0, 1440) phút ──
+    // Khung qua đêm (VD: 22:00-06:00) được tách thành 2 interval: [1320,1440) và [0,360)
+    const flatIntervals: Array<{ from: number; to: number; amount: number }> = [];
+    for (const r of rates) {
+      if (!r.startTime || !r.endTime) continue;
+      const [sH, sM] = r.startTime.split(':').map(Number);
+      const [eH, eM] = r.endTime.split(':').map(Number);
+      const start = sH * 60 + sM;
+      const end = eH * 60 + eM;
+      if (start < end) {
+        flatIntervals.push({ from: start, to: end, amount: r.amount });
+      } else if (start > end) {
+        // Khung qua đêm → tách thành 2 khoảng
+        flatIntervals.push({ from: start, to: 1440, amount: r.amount });
+        flatIntervals.push({ from: 0, to: end, amount: r.amount });
+      }
+    }
+    flatIntervals.sort((a, b) => a.from - b.from);
+
+    // ── Bước 2: Đi từ checkIn → checkOut, từng segment theo ranh giới khung giờ ──
     let totalFee = 0;
-
-    // Chia thành segments theo ngày lịch
     const current = new Date(checkIn);
+
     while (current < checkOut) {
-      // Xác định cuối ngày hiện tại (23:59:59.999) hoặc checkOut nếu sớm hơn
-      const endOfDay = new Date(current.getFullYear(), current.getMonth(), current.getDate(), 23, 59, 59, 999);
-      const segmentEnd = checkOut < endOfDay ? checkOut : endOfDay;
+      const minuteOfDay = current.getHours() * 60 + current.getMinutes();
 
-      // Lấy thời gian HH:MM dạng phút trong ngày
-      const segStartMinutes = current.getHours() * 60 + current.getMinutes();
-      const segEndMinutes = segmentEnd.getHours() * 60 + segmentEnd.getMinutes();
-
-      let dailyFee = 0;
-
-      for (const rate of rates) {
-        if (!rate.startTime || !rate.endTime) continue;
-
-        const [rStartH, rStartM] = rate.startTime.split(':').map(Number);
-        const [rEndH, rEndM] = rate.endTime.split(':').map(Number);
-        const rStartMinutes = rStartH * 60 + rStartM;
-        const rEndMinutes = rEndH * 60 + rEndM;
-
-        let hasOverlap = false;
-
-        if (rStartMinutes < rEndMinutes) {
-          // Khung giờ bình thường (VD: 06:00 - 16:00)
-          hasOverlap = segStartMinutes < rEndMinutes && segEndMinutes > rStartMinutes;
-        } else {
-          // Khung giờ qua đêm (VD: 22:00 - 06:00)
-          // Segment overlap nếu nó nằm trước rEndMinutes HOẶC sau rStartMinutes
-          hasOverlap = segStartMinutes >= rStartMinutes || segEndMinutes <= rEndMinutes
-            || segStartMinutes < rEndMinutes || segEndMinutes > rStartMinutes;
-          // Simplified: khung qua đêm thì check if NOT trong khoảng giữa
-          const gapStart = rEndMinutes;
-          const gapEnd = rStartMinutes;
-          // Nằm hoàn toàn trong gap (không overlap) nếu: segStart >= gapStart AND segEnd <= gapEnd
-          const inGap = segStartMinutes >= gapStart && segEndMinutes <= gapEnd;
-          hasOverlap = !inGap;
-        }
-
-        if (hasOverlap) {
-          dailyFee += rate.amount;
-        }
+      // Tìm interval hiện tại
+      const interval = flatIntervals.find(fi => minuteOfDay >= fi.from && minuteOfDay < fi.to);
+      if (!interval) {
+        // Không tìm thấy khung (không nên xảy ra nếu đã validate 24h coverage)
+        current.setTime(current.getTime() + 60000); // skip 1 phút
+        continue;
       }
 
-      // Áp dụng maxDailyFee cho từng ngày
-      if (maxDailyFee > 0 && dailyFee > maxDailyFee) {
-        dailyFee = maxDailyFee;
+      // Xác định thời điểm kết thúc segment: ranh giới khung giờ hoặc checkOut
+      const segEndDate = new Date(current);
+      if (interval.to === 1440) {
+        // Khung kết thúc lúc nửa đêm → chuyển sang 00:00 ngày hôm sau
+        segEndDate.setDate(segEndDate.getDate() + 1);
+        segEndDate.setHours(0, 0, 0, 0);
+      } else {
+        segEndDate.setHours(Math.floor(interval.to / 60), interval.to % 60, 0, 0);
       }
+      const segmentEnd = checkOut < segEndDate ? checkOut : segEndDate;
 
-      totalFee += dailyFee;
+      // Tính số giờ (làm tròn lên) × đơn giá
+      const durationMs = segmentEnd.getTime() - current.getTime();
+      const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
+      totalFee += durationHours * interval.amount;
 
-      // Chuyển sang đầu ngày tiếp theo
-      current.setTime(new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1, 0, 0, 0, 0).getTime());
+      // Chuyển sang segment tiếp theo
+      current.setTime(segmentEnd.getTime());
+    }
+
+    // ── Bước 3: Áp dụng maxDailyFee (giá trần) nếu có ──
+    if (maxDailyFee > 0) {
+      const startDay = new Date(checkIn.getFullYear(), checkIn.getMonth(), checkIn.getDate());
+      const endDay = new Date(checkOut.getFullYear(), checkOut.getMonth(), checkOut.getDate());
+      const totalDays = Math.max(1, Math.round((endDay.getTime() - startDay.getTime()) / 86400000) + 1);
+      const maxTotal = maxDailyFee * totalDays;
+      if (totalFee > maxTotal) {
+        totalFee = maxTotal;
+      }
     }
 
     return totalFee;
