@@ -361,6 +361,21 @@
   - Fallback: `AVG(duration)` theo loại xe
   - **Service file:** `server/services/ai/durationPredictor.service.js`
   - **API:** `GET /api/ai/predict-duration`
+- [ ] 🤖 **[RQ5]** Implement AI Chatbot Query cho Manager/Admin (FR-6.5):
+  - Tham khảo: **NLI survey** [P11] (Quamar et al., *FnTDB* 2022), **Chatbot FM** [P12] (Chen & Tsai, *Sensors* 2021)
+  - Đánh giá acceptance: **TAM** [P13] (Alhammadi, *AJSTS* 2023), **SLR** [P14] (Delgado et al., *JISEM* 2025)
+  - Phương pháp: **Intent-based NLQ** — keyword matching + entity extraction + template MongoDB query
+  - Kiến trúc 4-module [P12]: Intent Analysis, Parking Dataset, Decision Mechanism, Response Generation
+  - Intents hỗ trợ: revenue_report, traffic_report, occupancy_report, peak_hours, facility_info, exception_summary
+  - Entity extraction: timeRange, facilityName, floorName, vehicleType
+  - Fallback: intent không nhận diện → trả danh sách câu hỏi gợi ý
+  - **Service files tạo mới:**
+    - `server/services/ai/chatbotQuery.service.js` ← RQ5: Intent-based NLQ orchestrator
+    - `server/services/ai/intentClassifier.service.js` ← RQ5: Intent classification [P12]
+    - `server/services/ai/entityExtractor.service.js` ← RQ5: Entity extraction [P11]
+  - **Schema:** `SystemConfig.chatbotEnabled` (Boolean), `ChatHistory` collection
+  - **API:** `POST /api/ai/chat-query`, `GET /api/ai/chat-history`
+  - **Nâng cấp tương lai:** LLM-based Text-to-SQL [P11], multi-turn conversation context [P11]
 
 #### BE2
 
@@ -392,7 +407,7 @@
 - [ ] Màn hình Tài khoản: thông tin cá nhân, đổi mật khẩu, lịch sử
 - [ ] Nhận push notification
 
-**✅ Deliverable tuần 6–7:** Đặt chỗ trước, báo cáo thống kê, ngoại lệ nâng cao, phản hồi, realtime, push notification. **+ WSM scoring [P5 Amari 2023, P6 Shirazi 2025] và Threshold Load Balancing [P8 Zhang 2024, P9 Chen 2024, P10 Wang 2022].**
+**✅ Deliverable tuần 6–7:** Đặt chỗ trước, báo cáo thống kê, ngoại lệ nâng cao, phản hồi, realtime, push notification. **+ WSM scoring [P5 Amari 2023, P6 Shirazi 2025], Threshold Load Balancing [P8 Zhang 2024, P9 Chen 2024, P10 Wang 2022], và AI Chatbot Query [P11 Quamar 2022, P12 Chen & Tsai 2021].**
 
 ---
 
@@ -596,6 +611,9 @@ server/services/ai/
 ├── peakHourPredictor.service.js    ← 🤖 AI: Peak Hour Prediction
 ├── durationPredictor.service.js    ← 🤖 AI: Duration Prediction
 ├── modelTrainer.service.js         ← 🤖 AI: Training pipeline (cron weekly)
+├── chatbotQuery.service.js         ← 🤖 RQ5: Intent-based NLQ [P11][P12]
+├── intentClassifier.service.js     ← 🤖 RQ5: Intent classification [P12]
+├── entityExtractor.service.js      ← 🤖 RQ5: Entity extraction [P11]
 └── models/                         ← Trained model files (.json)
 ```
 
@@ -650,6 +668,8 @@ Fallback: AI model chưa train → rule-based (rate > avg × 1.5) + AVG(duration
 | GET | `/api/ai/model-status` | Trạng thái model: accuracy, lastTrained | AI |
 | GET | `/api/ai/predict-peak` | Dự đoán giờ cao điểm (test) | AI |
 | GET | `/api/ai/predict-duration` | Dự đoán thời gian gửi (test) | AI |
+| POST | `/api/ai/chat-query` | Chatbot truy vấn báo cáo bằng NL | RQ5 |
+| GET | `/api/ai/chat-history` | Lịch sử hội thoại chatbot | RQ5 |
 
 ### Thuật toán đã chọn — tóm tắt
 
@@ -659,6 +679,7 @@ Fallback: AI model chưa train → rule-based (rate > avg × 1.5) + AVG(duration
 | RQ2 | [P3] arXiv 2025 + [P4] Wang 2021 | Preprint + Q1/IF=7.9 | Greedy Matching | Full Hungarian O(n³) |
 | RQ3 | [P5] Amari 2023 + [P7] Zhang 2022 | Q2 + Q1/IF=7.9 | WSM 4-criteria | Full TOPSIS + COA [P6] |
 | RQ4 | [P8] Zhang 2024 + [P10] Wang 2022 | Q1-JCR + Q1/IF=7.9 | Threshold Load Balancing | DQN [P9] / MARL [P7] |
+| RQ5 | [P12] Chen & Tsai 2021 + [P11] Quamar 2022 | Q1/IF=3.4 + Top-tier survey | Intent-based NLQ | LLM Text-to-SQL [P11] |
 
 ---
 

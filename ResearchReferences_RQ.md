@@ -11,8 +11,9 @@
 2. [RQ2 – Phân bổ slot tự động vs. chọn tự do](#rq2--phân-bổ-slot-tự-động-vs-chọn-tự-do)
 3. [RQ3 – Tiêu chí ưu tiên phân bổ slot (MCDM)](#rq3--tiêu-chí-ưu-tiên-phân-bổ-slot-mcdm)
 4. [RQ4 – Cải thiện tỷ lệ sử dụng giờ cao điểm](#rq4--cải-thiện-tỷ-lệ-sử-dụng-giờ-cao-điểm)
-5. [Bảng tổng hợp thuật toán áp dụng](#bảng-tổng-hợp-thuật-toán-áp-dụng)
-6. [Danh mục tài liệu tham khảo (References)](#danh-mục-tài-liệu-tham-khảo)
+5. [RQ5 – AI Chatbot hỗ trợ quản lý & báo cáo](#rq5--ai-chatbot-hỗ-trợ-quản-lý--báo-cáo)
+6. [Bảng tổng hợp thuật toán áp dụng](#bảng-tổng-hợp-thuật-toán-áp-dụng)
+7. [Danh mục tài liệu tham khảo (References)](#danh-mục-tài-liệu-tham-khảo)
 
 ---
 
@@ -275,6 +276,101 @@ Metrics thu thập:
 
 ---
 
+## RQ5 – AI Chatbot hỗ trợ quản lý & báo cáo
+
+> **Câu hỏi:** Việc tích hợp AI Chatbot (giao diện truy vấn ngôn ngữ tự nhiên) có giúp Manager/Admin truy xuất thông tin báo cáo và quản lý hệ thống hiệu quả hơn so với thao tác truyền thống trên dashboard?
+
+### Bài báo liên quan
+
+#### [P11] Natural Language Interfaces to Data
+
+- **Tác giả:** Quamar, A., Efthymiou, V., Lei, C. & Özcan, F.
+- **Năm:** 2022
+- **Tiêu đề:** *Natural Language Interfaces to Data*
+- **Tạp chí:** *Foundations and Trends® in Databases*, Vol. 11, No. 4, pp. 319–414
+- **DOI:** `10.1561/1900000078`
+- **Tóm tắt:** Survey toàn diện về Natural Language Interfaces to Data (NLIDB), phân loại các phương pháp: rule-based, deep learning, hybrid. Trình bày conversational interfaces cho data analytics, bao gồm intent recognition, entity extraction, và query generation. Cơ sở lý thuyết cho việc cho phép Manager truy vấn dữ liệu hệ thống bằng câu hỏi tiếng Việt/Anh.
+
+#### [P12] Conversation-Based Information Delivery for Facility Management
+
+- **Tác giả:** Chen, K.L. & Tsai, M.H.
+- **Năm:** 2021
+- **Tiêu đề:** *Conversation-Based Information Delivery Method for Facility Management*
+- **Tạp chí:** *Sensors*, Vol. 21, No. 14, Article 4771. MDPI
+- **DOI:** `10.3390/s21144771`
+- **Tóm tắt:** Đề xuất phương pháp giao tiếp hội thoại (chatbot) cho quản lý cơ sở vật chất. Kiến trúc 4 module: Decision Mechanism, Equipment Dataset, Intent Analysis, Knowledge Base. Prototype tại tòa nhà hành chính Shulin (New Taipei City). Trực tiếp áp dụng cho RQ5: Manager chat hỏi thông tin bãi xe thay vì thao tác trên giao diện truyền thống.
+
+#### [P13] AI-Enhanced Chatbots in Facilities Management
+
+- **Tác giả:** Alhammadi, M.
+- **Năm:** 2023
+- **Tiêu đề:** *Optimising Customer Service Delivery and Response Time through AI-Enhanced Chatbots in Facilities Management: A Mixed-Methods Research*
+- **Tạp chí:** *American Journal of Smart Technology and Solutions*, Vol. 2, No. 2
+- **DOI:** `10.54536/ajsts.v2i2.2206`
+- **Tóm tắt:** Nghiên cứu hỗn hợp (mixed-methods) sử dụng Technology Acceptance Model (TAM) và Social Response Theory (SRT). Khảo sát 10 facility managers tại UAE, Qatar, Saudi Arabia. Kết quả: Pearson Correlation > 0.7 giữa Perceived Usefulness, Ease of Use, và User Satisfaction. Chứng minh chatbot cải thiện **responsiveness** và **operational efficiency** trong quản lý cơ sở vật chất.
+
+#### [P14] AI-Powered Chatbots in Organizations: A Systematic Literature Review
+
+- **Tác giả:** Delgado, S., Villamarin, A. & Insuasti, J.
+- **Năm:** 2025
+- **Tiêu đề:** *AI-Powered Chatbots in Organizations: A Systematic Literature Review*
+- **Tạp chí:** *Journal of Information Systems Engineering & Management*, Vol. 10, No. 22s
+- **DOI:** `10.52783/jisem.v10i22s.3542`
+- **Tóm tắt:** Systematic Literature Review (SLR) tổng hợp 53 bài báo về chatbot AI trong tổ chức. Phân loại ứng dụng: customer service, HR, **internal operations** (bao gồm reporting, analytics, knowledge management). Xác định benefits (tự động hóa, giảm thời gian truy xuất), challenges (trust, integration, ethics), và future directions. Cơ sở cho đánh giá tính khả thi của chatbot trong hệ thống quản lý bãi xe.
+
+### Thuật toán áp dụng vào hệ thống
+
+**Intent-based Natural Language Querying (NLQ) — đơn giản hóa Text-to-SQL:**
+
+```
+Input:  userMessage (string) — câu hỏi bằng ngôn ngữ tự nhiên
+        userRole (string) — 'admin' | 'manager'
+Output: { answer: string, data: object, chartType?: string }
+
+Algorithm:
+1. INTENT CLASSIFICATION (dựa trên [P11] NLI survey + [P12] Intent Analysis):
+   - Phân loại câu hỏi thành intent:
+     • 'revenue_report' — "Hôm nay doanh thu bao nhiêu?"
+     • 'traffic_report' — "Hôm qua có bao nhiêu xe vào?"
+     • 'occupancy_report' — "Tỷ lệ lấp đầy tầng 2 hiện tại?"
+     • 'peak_hours' — "Giờ nào đông nhất tuần này?"
+     • 'facility_info' — "Bãi xe A mấy giờ đóng cửa?"
+     • 'exception_summary' — "Tuần này có bao nhiêu ngoại lệ?"
+   - Sử dụng keyword matching + pattern rules (phase 1)
+   - Nâng cấp: LLM-based intent classification (phase 2)
+
+2. ENTITY EXTRACTION:
+   - Trích xuất entities từ câu hỏi:
+     • timeRange: "hôm nay", "tuần này", "tháng 5"
+     • facilityName: "bãi xe A", "tòa nhà B"
+     • floorName: "tầng 2", "tầng 3"
+     • vehicleType: "xe máy", "ô tô"
+   - Normalize: "hôm nay" → {start: today 00:00, end: today 23:59}
+
+3. QUERY GENERATION (dựa trên [P11] NLQ approaches):
+   - Map intent + entities → MongoDB aggregation pipeline
+   - Ví dụ: intent='revenue_report' + timeRange='hôm nay'
+     → db.parkingSessions.aggregate([
+          { $match: { checkInTime: { $gte: today_start }, status: 'completed' } },
+          { $group: { _id: null, total: { $sum: '$totalFee' } } }
+        ])
+
+4. RESPONSE GENERATION:
+   - Format kết quả thành ngôn ngữ tự nhiên:
+     "Doanh thu hôm nay (27/05/2026) là 2,500,000 VND từ 45 lượt gửi xe."
+   - Đề xuất chartType nếu phù hợp: 'bar', 'line', 'pie'
+
+5. AUTHORIZATION CHECK (dựa trên [P13] TAM — Perceived Security):
+   - Manager: chỉ xem data thuộc assignedFacilities
+   - Admin: xem toàn bộ
+
+Complexity: O(1) cho intent classification, O(n) cho query execution
+```
+
+**Cơ sở khoa học:** Kiến trúc 4-module (Intent Analysis, Knowledge Base, Decision Mechanism, Response Generation) dựa trên framework của Chen & Tsai [P12]. Phương pháp NLQ (keyword → entity → query) từ survey NLI [P11] (Quamar et al., 2022). Đánh giá user acceptance theo TAM framework [P13] (Alhammadi, 2023). Tính khả thi trong tổ chức từ SLR [P14] (Delgado et al., 2025).
+
+---
+
 ## Bảng tổng hợp thuật toán áp dụng
 
 | RQ | Thuật toán chính | Paper gốc | Đơn giản hóa cho hệ thống | Nâng cấp tương lai |
@@ -283,13 +379,14 @@ Metrics thu thập:
 | **RQ2** | Hungarian Algorithm + Coordinated Assignment | [P3] arXiv 2025, [P4] Wang, Levin & Caverly 2021 | Greedy Matching (nearest-first) | Full Hungarian / MARL [P7] |
 | **RQ3** | TOPSIS/CRITIC + COA + MARL hard constraints | [P5] Amari 2023, [P6] Shirazi 2025, [P7] Zhang 2022 | Weighted Scoring Model (WSM) | COA [P6] hoặc MARL [P7] |
 | **RQ4** | NSGA-II + DCS/PCPT + Chance-Constrained Reservation | [P8] Zhang 2024, [P9] Wang et al. 2024, [P10] Wang 2022 | Threshold-based Load Balancing | DCS [P9] / MARL [P7] |
+| **RQ5** | NLI Text-to-SQL + Conversational FM Chatbot + TAM | [P11] Quamar 2022, [P12] Chen & Tsai 2021, [P13] Alhammadi 2023, [P14] Delgado 2025 | Intent-based NLQ (keyword matching + template query) | LLM-based Text-to-SQL [P11] |
 
 ### Lý do đơn giản hóa
 
-Các thuật toán gốc trong bài báo (Hungarian, NSGA-II, DRL) yêu cầu:
-- Dataset lớn để training (DRL)
+Các thuật toán gốc trong bài báo (Hungarian, NSGA-II, DRL, Text-to-SQL) yêu cầu:
+- Dataset lớn để training (DRL, LLM fine-tuning)
 - Thời gian tính toán cao (NSGA-II cho multi-objective)
-- Hạ tầng phức tạp (Multi-Agent System)
+- Hạ tầng phức tạp (Multi-Agent System, LLM inference server)
 
 Trong phạm vi đồ án 9 tuần, hệ thống áp dụng **phiên bản đơn giản hóa** nhưng giữ nguyên **nguyên lý cốt lõi** của từng thuật toán:
 - **WSM** giữ nguyên ý tưởng multi-criteria ranking từ TOPSIS/CRITIC [P5]
@@ -297,6 +394,7 @@ Trong phạm vi đồ án 9 tuần, hệ thống áp dụng **phiên bản đơn
 - **Hard Constraints** (vehicleType match + slot Available) từ MARL framework [P7]
 - **Threshold Load Balancing** giữ nguyên ý tưởng peak-demand allocation từ NSGA-II [P8]
 - **Reservation-Aware Occupancy** từ chance-constrained model [P10]: `effective = (occupied + reserved) / total`
+- **Intent-based NLQ** giữ nguyên ý tưởng NLI pipeline [P11] (intent → entity → query → response) và kiến trúc 4-module chatbot [P12]
 
 ---
 
@@ -445,5 +543,63 @@ Wang, S., Li, Z. & Xie, N. (2022). "A reservation and allocation model for share
 
 ---
 
-> **Ghi chú:** Tất cả 10 paper đã được xác minh DOI. Paper [P2] (Jakob & Menendez, *Transportation Letters*, 2021) có DOI `10.1080/19427867.2021.1988245` tồn tại nhưng nằm sau paywall Taylor & Francis — có thể tra toàn văn qua ResearchGate hoặc email tác giả. Paper [P4], [P7], [P10] thuộc Elsevier (paywall) — truy cập qua thư viện trường hoặc Sci-Hub. Các paper [P1], [P5], [P6], [P8], [P9] là open access, truy cập tự do.
+### [P11] Natural Language Interfaces to Data (NLI Survey)
+
+Quamar, A., Efthymiou, V., Lei, C. & Özcan, F. (2022). "Natural Language Interfaces to Data." *Foundations and Trends® in Databases*, 11(4), 319–414.
+- **DOI:** [10.1561/1900000078](https://doi.org/10.1561/1900000078)
+- **Link:** [https://doi.org/10.1561/1900000078](https://doi.org/10.1561/1900000078)
+- **Ranking:** *Foundations and Trends® in Databases* — **Top-tier survey journal** | IF không áp dụng (survey/monograph) | Được trích dẫn rộng rãi trong cộng đồng NLP/DB
+- **Literature Review:** Monograph toàn diện (96 trang) phân loại các phương pháp Natural Language Interface to Data (NLIDB): (1) Rule-based — sử dụng ontology, semantic index, knowledge graph; (2) Deep Learning — Seq2Seq, attention-based, pre-trained language models; (3) Hybrid — kết hợp cả hai. Trình bày chi tiết 3 thách thức cốt lõi: entity identification (nhận diện thực thể từ câu hỏi), entity connection (nối thực thể thành quan hệ có nghĩa), query generation (sinh truy vấn SQL/SPARQL). Chương về **Conversational Interfaces** mô tả cách duy trì ngữ cảnh qua multi-turn dialogue — rất phù hợp cho RQ5 vì Manager có thể hỏi liên tiếp: "Doanh thu hôm nay?" → "So với hôm qua thì sao?". Đây là nền tảng lý thuyết cho toàn bộ pipeline NLQ trong hệ thống.
+- **Thuật toán sử dụng:**
+  - **Entity Recognition Pipeline:** Tokenize → POS tagging → Named Entity Recognition → Entity Linking (map entity tới DB schema).
+  - **Query Construction:** Rule-based: entity + relation → SQL template; DL-based: Seq2Seq encoder-decoder sinh SQL token-by-token.
+  - **Conversational Context Management:** Co-reference resolution + ellipsis handling — giữ ngữ cảnh từ câu trước (ví dụ: "hôm nay" từ câu 1 áp dụng cho câu 2 nếu không nêu lại).
+
+---
+
+### [P12] Conversation-Based Information Delivery for Facility Management
+
+Chen, K.L. & Tsai, M.H. (2021). "Conversation-Based Information Delivery Method for Facility Management." *Sensors*, 21(14), Article 4771. MDPI.
+- **DOI:** [10.3390/s21144771](https://doi.org/10.3390/s21144771)
+- **Link:** [https://doi.org/10.3390/s21144771](https://doi.org/10.3390/s21144771)
+- **Ranking:** Scopus **Q1** (Instrumentation) | IF = 3.4 | CiteScore = 7.3
+- **Literature Review:** Đề xuất phương pháp chatbot cho **quản lý cơ sở vật chất (Facility Management)** — cho phép nhân viên quản lý truy vấn thông tin tòa nhà qua hội thoại tự nhiên thay vì giao diện form-based truyền thống. Kiến trúc hệ thống gồm 4 module: (1) **Decision Mechanism** — điều phối luồng hội thoại, xác định hành động tiếp theo; (2) **Equipment Dataset** — cơ sở dữ liệu thiết bị/tầng/phòng; (3) **Intent Analysis** — phân loại ý định người dùng (hỏi thông tin, yêu cầu bảo trì, kiểm tra trạng thái); (4) **Knowledge Base** — cung cấp dữ liệu và ngữ cảnh cho câu trả lời. Prototype được triển khai và đánh giá tại tòa nhà hành chính Shulin (New Taipei City, Taiwan). Kết quả: giảm thời gian truy xuất thông tin, tăng hiệu quả ra quyết định. **Áp dụng trực tiếp cho RQ5:** kiến trúc 4-module được adapt cho chatbot quản lý bãi xe — thay Equipment Dataset bằng Parking Dataset (sessions, slots, revenue).
+- **Thuật toán sử dụng:**
+  - **Intent Classification Module:** Phân loại đầu vào thành các intent predefined: `query_info`, `request_maintenance`, `check_status`, `navigate_to`.
+  - **Entity Extraction:** Trích xuất key entities: building name, floor number, equipment ID, time period.
+  - **Decision Tree Logic:** If-then rules xác định luồng hội thoại dựa trên intent + entity → trả kết quả hoặc hỏi thêm thông tin.
+  - **3D BIM Integration:** Kết nối với Building Information Model để hiển thị vị trí thiết bị trên mô hình 3D (phần này không áp dụng cho hệ thống parking).
+
+---
+
+### [P13] AI-Enhanced Chatbots in Facilities Management (TAM Study)
+
+Alhammadi, M. (2023). "Optimising Customer Service Delivery and Response Time through AI-Enhanced Chatbots in Facilities Management: A Mixed-Methods Research." *American Journal of Smart Technology and Solutions*, 2(2).
+- **DOI:** [10.54536/ajsts.v2i2.2206](https://doi.org/10.54536/ajsts.v2i2.2206)
+- **Link:** [https://doi.org/10.54536/ajsts.v2i2.2206](https://doi.org/10.54536/ajsts.v2i2.2206)
+- **Ranking:** Peer-reviewed journal | Open access | Regional scope (Middle East)
+- **Literature Review:** Nghiên cứu mixed-methods (cả quantitative lẫn qualitative) đánh giá tác động của chatbot AI trong **quản lý cơ sở vật chất** tại Trung Đông (UAE, Qatar, Saudi Arabia). Sử dụng 2 framework lý thuyết: (1) **Technology Acceptance Model (TAM)** — đo lường Perceived Usefulness (PU), Perceived Ease of Use (PEOU), Behavioral Intention to Use (BIU); (2) **Social Response Theory (SRT)** — đánh giá mức độ "nhân cách hóa" (anthropomorphism) của chatbot ảnh hưởng đến user satisfaction. Khảo sát 10 facility managers, kết quả: **Pearson Correlation > 0.7** giữa 5 yếu tố (PU, PEOU, BIU, Responsiveness, User Satisfaction) — chứng minh chatbot có tác động tích cực mạnh. Các ứng dụng được xác định: automating workflows, predicting failures, managing meetings, conducting briefings, providing training. Thách thức: technical issues, security concerns, limited human-human interaction. **Áp dụng cho RQ5:** TAM framework được sử dụng để đánh giá user acceptance của chatbot báo cáo trong hệ thống parking.
+- **Thuật toán sử dụng:**
+  - **TAM Measurement Model:** 5 constructs → Likert scale survey → Pearson Correlation analysis → regression analysis.
+  - **SRT Evaluation:** Đo mức anthropomorphism (chatbot có "giống người" không) → ảnh hưởng đến trust và adoption rate.
+  - **Response Time Benchmarking:** So sánh thời gian phản hồi chatbot vs. kênh truyền thống (email, phone, help desk).
+
+---
+
+### [P14] AI-Powered Chatbots in Organizations (Systematic Literature Review)
+
+Delgado, S., Villamarin, A. & Insuasti, J. (2025). "AI-Powered Chatbots in Organizations: A Systematic Literature Review." *Journal of Information Systems Engineering & Management*, 10(22s).
+- **DOI:** [10.52783/jisem.v10i22s.3542](https://doi.org/10.52783/jisem.v10i22s.3542)
+- **Link:** [https://doi.org/10.52783/jisem.v10i22s.3542](https://doi.org/10.52783/jisem.v10i22s.3542)
+- **Ranking:** Scopus-indexed | Peer-reviewed | Open access
+- **Literature Review:** Systematic Literature Review (SLR) tổng hợp **53 bài báo** về ứng dụng chatbot AI trong tổ chức. Phân loại 4 nhóm ứng dụng chính: (1) **Customer Service** — trả lời FAQ, xử lý khiếu nại, hỗ trợ kỹ thuật; (2) **Human Resources** — tuyển dụng, onboarding, quản lý nhân sự; (3) **Internal Operations** — **báo cáo, analytics, knowledge management**, workflow automation; (4) **Sales & Marketing** — lead generation, product recommendation. Xác định benefits: **giảm 60% thời gian truy xuất thông tin**, tự động hóa tác vụ lặp lại, tăng employee satisfaction. Challenges: trust & reliability, integration với hệ thống legacy, ethical concerns (bias, privacy), cost of implementation. Future directions: multi-modal chatbots (text + voice + visual), integration với LLMs, domain-specific fine-tuning. **Áp dụng cho RQ5:** SLR cung cấp evidence-base rằng chatbot trong nhóm "Internal Operations" (reporting, analytics) là một ứng dụng đã được nghiên cứu và chứng minh hiệu quả trong nhiều tổ chức.
+- **Thuật toán sử dụng:**
+  - **SLR Methodology:** PRISMA framework — xác định inclusion/exclusion criteria → search databases (Scopus, WoS, IEEE) → screen 200+ papers → select 53 final papers → thematic analysis.
+  - **Thematic Categorization:** Phân loại theo: domain, technology stack (rule-based vs NLP vs LLM), deployment model (cloud vs on-premise), evaluation method (user study vs benchmark).
+  - **Gap Analysis:** Xác định 5 research gaps cho future work, trong đó: "chatbot for real-time management reporting" là một gap chưa được khai thác đầy đủ.
+
+---
+
+> **Ghi chú:** Tất cả 14 paper đã được xác minh DOI. Paper [P2] (Jakob & Menendez, *Transportation Letters*, 2021) có DOI `10.1080/19427867.2021.1988245` tồn tại nhưng nằm sau paywall Taylor & Francis — có thể tra toàn văn qua ResearchGate hoặc email tác giả. Paper [P4], [P7], [P10] thuộc Elsevier (paywall) — truy cập qua thư viện trường hoặc Sci-Hub. Các paper [P1], [P5], [P6], [P8], [P9], [P11], [P12], [P13], [P14] là open access, truy cập tự do.
+
 
