@@ -1,8 +1,31 @@
-import { PricingPlan, IPricingPlan } from '../models/pricingPlan.model';
+import { PricingPlan, IPricingPlan, FeeMethod } from '../models/pricingPlan.model';
+import { VehicleType } from '../models/vehicleType.model';
+import { ParkingFacility } from '../models/parkingFacility.model';
 import { AppError } from '../middlewares/error.middleware';
 
 export class PricingService {
   static async createPricingPlan(data: Partial<IPricingPlan>): Promise<IPricingPlan> {
+    // Validate vehicleType tồn tại
+    const vehicleType = await VehicleType.findById(data.vehicleTypeId);
+    if (!vehicleType || vehicleType.isDeleted) {
+      throw new AppError('Loại phương tiện không tồn tại hoặc đã bị xoá', 400);
+    }
+
+    // Validate facility tồn tại
+    const facility = await ParkingFacility.findById(data.facilityId);
+    if (!facility) {
+      throw new AppError('Bãi xe không tồn tại', 400);
+    }
+
+    // Auto-set feeMethod nếu không truyền
+    if (!data.feeMethod) {
+      if (data.feeType === 'per_turn') {
+        data.feeMethod = FeeMethod.FLAT_RATE;
+      } else {
+        data.feeMethod = FeeMethod.DURATION_BASED;
+      }
+    }
+
     // If the new plan is set to active, deactivate existing active plans for the same facility and vehicle type
     if (data.status === 'active') {
       await PricingPlan.updateMany(
