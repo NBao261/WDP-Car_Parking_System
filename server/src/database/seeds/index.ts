@@ -8,7 +8,7 @@ import { ParkingFacility, FacilityStatus } from '../../models/parkingFacility.mo
 import { VehicleType, SlotSize } from '../../models/vehicleType.model';
 import { Floor } from '../../models/floor.model';
 import { ParkingSlot, SlotStatus } from '../../models/parkingSlot.model';
-import { PricingPlan, FeeType } from '../../models/pricingPlan.model';
+import { PricingPlan, FeeType, FeeMethod } from '../../models/pricingPlan.model';
 import { Role } from '../../models/role.model';
 import { DEFAULT_PERMISSIONS } from '../../config/permissions';
 
@@ -47,6 +47,7 @@ const seed = async () => {
             'Ô tô 4 chỗ - Theo giờ',
             'Ô tô 7 chỗ - Theo giờ',
             'Xe Đạp - Theo lượt',
+            'Xe Máy - Khung giờ Sunrise',
           ],
         },
       }),
@@ -298,6 +299,7 @@ const seed = async () => {
         vehicleTypeId: motoType._id,
         facilityId: facility1._id,
         feeType: FeeType.HOURLY,
+        feeMethod: FeeMethod.DURATION_BASED,
         rates: [
           { label: 'Giờ đầu', amount: 5000, unit: 'VND' },
           { label: 'Giờ tiếp theo', amount: 3000, unit: 'VND/giờ' },
@@ -305,6 +307,7 @@ const seed = async () => {
         overnightFee: 10000,
         overtimeFeePerHour: 5000,
         lostCardFee: 50000,
+        gracePeriodMinutes: 15,
         status: 'active',
       },
       {
@@ -312,10 +315,12 @@ const seed = async () => {
         vehicleTypeId: motoType._id,
         facilityId: facility2._id,
         feeType: FeeType.PER_TURN,
+        feeMethod: FeeMethod.FLAT_RATE,
         rates: [{ label: 'Phí lượt', amount: 5000, unit: 'VND/lượt' }],
         overnightFee: 10000,
         overtimeFeePerHour: 0,
         lostCardFee: 50000,
+        gracePeriodMinutes: 10,
         status: 'active',
       },
       {
@@ -323,6 +328,7 @@ const seed = async () => {
         vehicleTypeId: car4Type._id,
         facilityId: facility1._id,
         feeType: FeeType.HOURLY,
+        feeMethod: FeeMethod.DURATION_BASED,
         rates: [
           { label: 'Giờ đầu', amount: 20000, unit: 'VND' },
           { label: 'Giờ tiếp theo', amount: 10000, unit: 'VND/giờ' },
@@ -330,6 +336,8 @@ const seed = async () => {
         overnightFee: 50000,
         overtimeFeePerHour: 15000,
         lostCardFee: 200000,
+        gracePeriodMinutes: 15,
+        maxDailyFee: 100000,
         status: 'active',
       },
       {
@@ -337,6 +345,7 @@ const seed = async () => {
         vehicleTypeId: car7Type._id,
         facilityId: facility1._id,
         feeType: FeeType.HOURLY,
+        feeMethod: FeeMethod.DURATION_BASED,
         rates: [
           { label: 'Giờ đầu', amount: 30000, unit: 'VND' },
           { label: 'Giờ tiếp theo', amount: 15000, unit: 'VND/giờ' },
@@ -344,6 +353,8 @@ const seed = async () => {
         overnightFee: 80000,
         overtimeFeePerHour: 20000,
         lostCardFee: 300000,
+        gracePeriodMinutes: 15,
+        maxDailyFee: 150000,
         status: 'active',
       },
       {
@@ -351,14 +362,32 @@ const seed = async () => {
         vehicleTypeId: bikeType._id,
         facilityId: facility1._id,
         feeType: FeeType.PER_TURN,
+        feeMethod: FeeMethod.FLAT_RATE,
         rates: [{ label: 'Phí lượt', amount: 2000, unit: 'VND/lượt' }],
         overnightFee: 5000,
         overtimeFeePerHour: 0,
         lostCardFee: 20000,
+        gracePeriodMinutes: 10,
+        status: 'active',
+      },
+      {
+        name: 'Xe Máy - Khung giờ Sunrise',
+        vehicleTypeId: motoType._id,
+        facilityId: facility2._id,
+        feeType: FeeType.HOURLY,
+        feeMethod: FeeMethod.TIME_WINDOW,
+        rates: [
+          { label: 'Sáng - Chiều', amount: 4000, unit: 'VND', startTime: '06:00', endTime: '16:00' },
+          { label: 'Chiều - Tối', amount: 6000, unit: 'VND', startTime: '16:00', endTime: '22:00' },
+        ],
+        overnightFee: 0,
+        overtimeFeePerHour: 0,
+        lostCardFee: 50000,
+        gracePeriodMinutes: 10,
         status: 'active',
       },
     ]);
-    logger.info(`✅ 5 pricing plans created`);
+    logger.info(`✅ 6 pricing plans created (including 1 time_window)`);
 
     // ═══════════════════════════════════════════════════
     // 9. Two-way sync: Assign staff to facilities + sync ParkingFacility.assignedUsers
@@ -393,7 +422,7 @@ const seed = async () => {
     logger.info('  • 2 Facilities');
     logger.info('  • 5 Floors');
     logger.info('  • 25 Slots (5 per floor)');
-    logger.info('  • 5 Pricing Plans');
+    logger.info('  • 6 Pricing Plans (incl. 1 time_window)');
     logger.info('  • Two-way refs: VehicleType↔Floor, User↔ParkingFacility');
     logger.info('────────────────────────────────────────');
     logger.info(`🔐 Login credentials: any email / ${defaultPassword}`);
