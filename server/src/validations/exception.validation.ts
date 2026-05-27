@@ -26,13 +26,14 @@ export const getExceptionsSchema = z.object({
 
 export const resolveExceptionSchema = z.object({
   body: z.object({
-    status: z.enum([ExceptionStatus.RESOLVED, ExceptionStatus.REJECTED], { required_error: 'Trạng thái xử lý không hợp lệ' }),
-    managerNote: z.string().optional().default(''),
+    staffNote: z.string().optional().default(''),
     newLicensePlate: z.string().optional(),
     newSlotId: z.string().regex(objectIdRegex, 'Invalid slot ID format').optional(),
-  }).refine((data) => {
-    // We cannot easily check `type` from the request body as it's not provided, it's fetched from the DB.
-    // If we wanted to enforce newLicensePlate when type=wrong_plate, we'd have to do it in the service or pass type in body.
-    return true;
+  }),
+});
+
+export const managerReviewSchema = z.object({
+  body: z.object({
+    managerNote: z.string({ required_error: 'Vui lòng cung cấp ghi chú' }).min(1, 'Ghi chú không được để trống'),
   }),
 });

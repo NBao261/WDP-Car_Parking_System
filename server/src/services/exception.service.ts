@@ -13,16 +13,21 @@ interface CreateExceptionDto {
 }
 
 interface ResolveExceptionDto {
-  managerId: string;
-  status: ExceptionStatus;
-  managerNote: string;
+  staffId: string;
+  staffNote: string;
   newLicensePlate?: string; // For WRONG_PLATE
   newSlotId?: string;       // For WRONG_ZONE
+}
+
+interface ManagerReviewDto {
+  managerId: string;
+  managerNote: string;
 }
 
 export class ExceptionService {
   /**
    * Tạo ngoại lệ mới (Staff)
+   * → Khóa session nếu cần (LOST_CARD, WRONG_PLATE, WRONG_ZONE)
    */
   static async createException(data: CreateExceptionDto): Promise<IException> {
     const session = await ParkingSession.findById(data.sessionId);
@@ -45,7 +50,6 @@ export class ExceptionService {
     await exception.save();
 
     // Khoá session (không cho checkout cho đến khi exception được resolve)
-    // WRONG_ZONE cũng cần khoá vì xe chưa có chỗ đậu hợp lệ
     if (
       data.type === ExceptionType.LOST_CARD ||
       data.type === ExceptionType.WRONG_PLATE ||
@@ -78,6 +82,7 @@ export class ExceptionService {
         .skip(skip)
         .limit(Number(limit))
         .populate('staffId', 'name email')
+        .populate('resolvedByStaffId', 'name email')
         .populate('managerId', 'name email')
         .populate({
           path: 'sessionId',
@@ -99,7 +104,8 @@ export class ExceptionService {
   }
 
   /**
-   * Manager xử lý / duyệt ngoại lệ
+   * Staff xử lý ngoại lệ
+   * → Thực hiện hành động tương ứng (đổi biển số, chuyển slot, mở khoá session)
    */
   static async resolveException(exceptionId: string, data: ResolveExceptionDto): Promise<IException> {
     const exception = await Exception.findById(exceptionId);
@@ -107,99 +113,90 @@ export class ExceptionService {
       throw new AppError('Không tìm thấy ngoại lệ', 404);
     }
 
-    if (exception.status === ExceptionStatus.RESOLVED || exception.status === ExceptionStatus.REJECTED) {
+    if (exception.status === ExceptionStatus.RESOLVED) {
       throw new AppError('Ngoại lệ đã được xử lý trước đó', 400);
     }
 
-    if (data.status !== ExceptionStatus.RESOLVED && data.status !== ExceptionStatus.REJECTED) {
-      throw new AppError('Trạng thái không hợp lệ', 400);
+    exception.resolvedByStaffId = new mongoose.Types.ObjectId(data.staffId);
+    exception.staffNote = data.staffNote || '';
+    exception.status = ExceptionStatus.RESOLVED;
+
+    // Thực hiện các hành động tương ứng với loại ngoại lệ
+    const session = await ParkingSession.findById(exception.sessionId);
+    if (!session) throw new AppError('Lượt gửi xe liên quan không tồn tại', 404);
+
+    if (exception.type === ExceptionType.WRONG_PLATE) {
+      if (!data.newLicensePlate) {
+        throw new AppError('Vui lòng cung cấp biển số mới khi xử lý ngoại lệ sai biển số', 400);
+      }
+      // Cập nhật lại biển số đúng + mở khoá session
+      session.licensePlate = data.newLicensePlate.toUpperCase();
+      session.status = SessionStatus.ACTIVE;
+      await session.save();
     }
-
-    exception.managerId = new mongoose.Types.ObjectId(data.managerId);
-    exception.managerNote = data.managerNote || '';
-    exception.status = data.status;
-
-    // Nếu duyệt xử lý, thực hiện các hành động tương ứng với loại ngoại lệ
-    if (data.status === ExceptionStatus.RESOLVED) {
-      const session = await ParkingSession.findById(exception.sessionId);
-      if (!session) throw new AppError('Lượt gửi xe liên quan không tồn tại', 404);
-
-      if (exception.type === ExceptionType.WRONG_PLATE) {
-        if (!data.newLicensePlate) {
-          throw new AppError('Vui lòng cung cấp biển số mới khi xử lý ngoại lệ sai biển số', 400);
-        }
-        // Cập nhật lại biển số đúng + mở khoá session
-        session.licensePlate = data.newLicensePlate.toUpperCase();
-        session.status = SessionStatus.ACTIVE;
-        await session.save();
+    else if (exception.type === ExceptionType.WRONG_ZONE) {
+      if (!data.newSlotId) {
+        throw new AppError('Vui lòng chọn slot mới khi xử lý ngoại lệ sai khu vực', 400);
       }
-      else if (exception.type === ExceptionType.WRONG_ZONE) {
-        if (!data.newSlotId) {
-          throw new AppError('Vui lòng chọn slot mới khi xử lý ngoại lệ sai khu vực', 400);
-        }
 
-        // Cập nhật lại slot thực tế
-        const newSlot = await ParkingSlot.findById(data.newSlotId);
-        if (!newSlot) throw new AppError('Slot mới không tồn tại', 404);
+      // Cập nhật lại slot thực tế
+      const newSlot = await ParkingSlot.findById(data.newSlotId);
+      if (!newSlot) throw new AppError('Slot mới không tồn tại', 404);
 
-        // 1. Chỉ được đổi những slot thực sự còn trống (AVAILABLE) hoặc đang khóa tạm (LOCKED)
-        if (newSlot.status !== SlotStatus.AVAILABLE && newSlot.status !== SlotStatus.LOCKED) {
-          throw new AppError('Slot mới không còn trống hoặc không khả dụng', 400);
-        }
+      // 1. Chỉ được đổi những slot thực sự còn trống (AVAILABLE) hoặc đang khóa tạm (LOCKED)
+      if (newSlot.status !== SlotStatus.AVAILABLE && newSlot.status !== SlotStatus.LOCKED) {
+        throw new AppError('Slot mới không còn trống hoặc không khả dụng', 400);
+      }
 
-        // 2. Không được đổi sang tòa khác (cùng facilityId)
-        if (newSlot.facilityId.toString() !== session.facilityId.toString()) {
-          throw new AppError('Slot mới phải thuộc cùng một tòa nhà/bãi xe', 400);
-        }
+      // 2. Không được đổi sang tòa khác (cùng facilityId)
+      if (newSlot.facilityId.toString() !== session.facilityId.toString()) {
+        throw new AppError('Slot mới phải thuộc cùng một tòa nhà/bãi xe', 400);
+      }
 
-        // 3. Phải cùng loại xe (không cho ô tô đổi sang slot xe máy)
-        if (newSlot.vehicleTypeId.toString() !== session.vehicleTypeId.toString()) {
-          throw new AppError('Slot mới phải phù hợp với loại xe của lượt gửi', 400);
-        }
+      // 3. Phải cùng loại xe (không cho ô tô đổi sang slot xe máy)
+      if (newSlot.vehicleTypeId.toString() !== session.vehicleTypeId.toString()) {
+        throw new AppError('Slot mới phải phù hợp với loại xe của lượt gửi', 400);
+      }
 
-        const oldSlotId = session.slotId;
+      const oldSlotId = session.slotId;
 
-        // Lưu trạng thái gốc của slot mới TRƯỚC khi thay đổi
-        // Dùng để quyết định xử lý slot cũ:
-        //   - newSlot đang Available → đang dời xe sang chỗ mới → slot cũ có xe lạ → LOCKED
-        //   - newSlot đang Locked → đang gán xe vào chỗ nó đậu nhầm → slot cũ trống → AVAILABLE
-        const newSlotWasLocked = newSlot.status === SlotStatus.LOCKED;
+      // Lưu trạng thái gốc của slot mới TRƯỚC khi thay đổi
+      const newSlotWasLocked = newSlot.status === SlotStatus.LOCKED;
 
-        // Cập nhật session (giữ nguyên mọi thông tin, chỉ đổi slot + floor + mở khoá)
-        session.slotId = newSlot._id as mongoose.Types.ObjectId;
-        session.floorId = newSlot.floorId;
-        session.status = SessionStatus.ACTIVE; // Mở khoá session sau khi đã có chỗ mới
-        await session.save();
+      // Cập nhật session (giữ nguyên mọi thông tin, chỉ đổi slot + floor + mở khoá)
+      session.slotId = newSlot._id as mongoose.Types.ObjectId;
+      session.floorId = newSlot.floorId;
+      session.status = SessionStatus.ACTIVE; // Mở khoá session sau khi đã có chỗ mới
+      await session.save();
 
-        // Cập nhật slot mới -> Occupied (xoá ghi chú cũ nếu có)
-        newSlot.status = SlotStatus.OCCUPIED;
-        newSlot.currentSessionId = session._id as mongoose.Types.ObjectId;
-        newSlot.maintenanceReason = '';
-        await newSlot.save();
+      // Cập nhật slot mới -> Occupied (xoá ghi chú cũ nếu có)
+      newSlot.status = SlotStatus.OCCUPIED;
+      newSlot.currentSessionId = session._id as mongoose.Types.ObjectId;
+      newSlot.maintenanceReason = '';
+      await newSlot.save();
 
-        // Xử lý slot cũ dựa trên trạng thái gốc của slot MỚI  
-        if (oldSlotId) {
-          const oldSlot = await ParkingSlot.findById(oldSlotId);
-          if (oldSlot) {
-            if (newSlotWasLocked) {
-              // newSlot đang Locked → xe đậu nhầm được hợp lệ hoá tại chỗ → slot cũ trống
-              oldSlot.status = SlotStatus.AVAILABLE;
-              oldSlot.maintenanceReason = '';
-            } else {
-              // newSlot đang Available → dời xe sang chỗ mới → slot cũ có xe lạ chiếm → khoá
-              oldSlot.status = SlotStatus.LOCKED;
-              oldSlot.maintenanceReason = 'Đang có xe đậu sai chỗ, chờ xác minh';
-            }
-            oldSlot.currentSessionId = null;
-            await oldSlot.save();
+      // Xử lý slot cũ dựa trên trạng thái gốc của slot MỚI  
+      if (oldSlotId) {
+        const oldSlot = await ParkingSlot.findById(oldSlotId);
+        if (oldSlot) {
+          if (newSlotWasLocked) {
+            // newSlot đang Locked → xe đậu nhầm được hợp lệ hoá tại chỗ → slot cũ trống
+            oldSlot.status = SlotStatus.AVAILABLE;
+            oldSlot.maintenanceReason = '';
+          } else {
+            // newSlot đang Available → dời xe sang chỗ mới → slot cũ có xe lạ chiếm → khoá
+            oldSlot.status = SlotStatus.LOCKED;
+            oldSlot.maintenanceReason = 'Đang có xe đậu sai chỗ, chờ xác minh';
           }
+          oldSlot.currentSessionId = null;
+          await oldSlot.save();
         }
       }
-      else if (exception.type === ExceptionType.LOST_CARD) {
-        // Mở khoá session khi exception lost card được resolve → cho phép checkout
-        session.status = SessionStatus.ACTIVE;
-        await session.save();
-      }
+    }
+    else if (exception.type === ExceptionType.LOST_CARD) {
+      // Mở khoá session khi exception lost card được resolve → cho phép checkout
+      session.status = SessionStatus.ACTIVE;
+      await session.save();
     }
 
     await exception.save();
@@ -207,8 +204,39 @@ export class ExceptionService {
     // Lấy lại dữ liệu đã populate
     const updatedException = await Exception.findById(exception._id)
       .populate('staffId', 'name email')
+      .populate('resolvedByStaffId', 'name email')
       .populate('managerId', 'name email')
       .populate('sessionId');
+
+    return updatedException!;
+  }
+
+  /**
+   * Manager review + thêm ghi chú cho ngoại lệ đã xử lý
+   * → Không thay đổi status hay session, chỉ ghi nhận review
+   */
+  static async addManagerReview(exceptionId: string, data: ManagerReviewDto): Promise<IException> {
+    const exception = await Exception.findById(exceptionId);
+    if (!exception) {
+      throw new AppError('Không tìm thấy ngoại lệ', 404);
+    }
+
+    exception.managerId = new mongoose.Types.ObjectId(data.managerId);
+    exception.managerNote = data.managerNote || '';
+    await exception.save();
+
+    const updatedException = await Exception.findById(exception._id)
+      .populate('staffId', 'name email')
+      .populate('resolvedByStaffId', 'name email')
+      .populate('managerId', 'name email')
+      .populate({
+        path: 'sessionId',
+        populate: [
+          { path: 'vehicleTypeId', select: 'name code' },
+          { path: 'slotId', select: 'code' },
+          { path: 'floorId', select: 'name' }
+        ]
+      });
 
     return updatedException!;
   }
@@ -232,13 +260,10 @@ export class ExceptionService {
       const existingException = await Exception.findOne({
         sessionId: session._id,
         type: ExceptionType.OVERTIME,
-        status: { $in: [ExceptionStatus.NEW, ExceptionStatus.PROCESSING] }
+        status: ExceptionStatus.NEW
       });
 
       if (!existingException) {
-        // Lấy admin user ảo để làm staffId (hoặc cấu hình system user)
-        // Ở đây giả lập lấy 1 user Admin hoặc Staff bất kỳ, hoặc có thể thay staffId thành optional trong trường hợp system auto
-        // Để giữ schema không đổi, lấy user có role admin đầu tiên
         const mongooseUser = mongoose.model('User');
         const adminUser = await mongooseUser.findOne({ role: 'admin' });
 
