@@ -24,6 +24,14 @@ router.get(
   FacilityController.getFacilityById
 );
 
+// Cấu hình vận hành (Admin, Manager, Staff) — BFF endpoint cho Staff Check-in
+router.get(
+  '/:id/operations-config',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
+  checkPermission(PERMISSIONS.FACILITY_READ),
+  FacilityController.getOperationsConfig
+);
+
 // Tạo/Sửa/Xóa tòa nhà (chỉ Admin + Manager theo SRS 3.1)
 router.post(
   '/',
