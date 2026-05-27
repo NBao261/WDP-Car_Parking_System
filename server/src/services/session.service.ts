@@ -506,7 +506,7 @@ export class SessionService {
 
   /**
    * FR-10.2: Tính phí tự động
-   * Tính phí dựa trên bảng giá áp dụng
+   * Hỗ trợ 3 phương thức: flat_rate, duration_based, time_window
    */
   static async calculateFee(sessionId: string, checkOutTime: Date = new Date()): Promise<{ totalFee: number, details: any }> {
     const session = await ParkingSession.findById(sessionId).populate('pricingPlanId');
@@ -520,47 +520,99 @@ export class SessionService {
     if (durationMs < 0) {
       throw new AppError('Thời gian ra phải sau thời gian vào', 400);
     }
-    const durationHours = Math.ceil(durationMs / (1000 * 60 * 60)); // làm tròn lên
 
-    let totalFee = 0;
+    const durationMinutes = durationMs / (1000 * 60);
+    const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
+
+    // ── Grace Period: miễn phí nếu gửi trong thời gian cho phép ──
+    if (pricingPlan.gracePeriodMinutes > 0 && durationMinutes <= pricingPlan.gracePeriodMinutes) {
+      // Vẫn tính exception surcharge nếu có
+      let exceptionSurcharge = 0;
+      let lostCardFeeTotal = 0;
+      const resolvedExceptions = await Exception.find({ sessionId, status: ExceptionStatus.RESOLVED });
+      for (const exc of resolvedExceptions) {
+        exceptionSurcharge += exc.surcharge || 0;
+        if (exc.type === ExceptionType.LOST_CARD) lostCardFeeTotal += pricingPlan.lostCardFee || 0;
+      }
+      return {
+        totalFee: exceptionSurcharge + lostCardFeeTotal,
+        details: {
+          durationHours: 0, durationMinutes: Math.round(durationMinutes),
+          baseFee: 0, overnightFee: 0, overtimeFee: 0,
+          exceptionSurcharge, lostCardFee: lostCardFeeTotal,
+          pricingPlanName: pricingPlan.name, feeMethod: pricingPlan.feeMethod || 'duration_based',
+          gracePeriodApplied: true, daysDiff: 0,
+        }
+      };
+    }
+
     let baseFee = 0;
     let overnightFee = 0;
     let overtimeFee = 0;
 
-    // Check if overnight (crosses 00:00) - simple calculation: check days diff
+    // Tính số ngày chênh lệch (dùng cho flat_rate / duration_based overnight)
     const startDay = new Date(checkInTime.getFullYear(), checkInTime.getMonth(), checkInTime.getDate());
     const endDay = new Date(checkOutTime.getFullYear(), checkOutTime.getMonth(), checkOutTime.getDate());
     const daysDiff = Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (pricingPlan.feeType === 'per_turn') {
+
+    // Xác định feeMethod (backward compat: nếu chưa có feeMethod thì suy từ feeType)
+    const feeMethod = pricingPlan.feeMethod || 
+      (pricingPlan.feeType === 'per_turn' ? 'flat_rate' : 'duration_based');
+
+    // ═══════════════════════════════════════════════════
+    // NHÁNH 1: FLAT_RATE (đồng giá theo lượt)
+    // ═══════════════════════════════════════════════════
+    if (feeMethod === 'flat_rate') {
       baseFee = pricingPlan.rates[0]?.amount || 0;
       if (daysDiff > 0 && pricingPlan.overnightFee > 0) {
         overnightFee = pricingPlan.overnightFee * daysDiff;
       }
-    } else if (pricingPlan.feeType === 'hourly') {
-      const firstHourRate = pricingPlan.rates.find((r: any) => r.label === 'Giờ đầu' || r.label === 'first_hour')?.amount || pricingPlan.rates[0]?.amount || 0;
-      const nextHourRate = pricingPlan.rates.find((r: any) => r.label === 'Giờ tiếp theo' || r.label === 'next_hour')?.amount || pricingPlan.rates[1]?.amount || firstHourRate;
-      
-      if (durationHours <= 1) {
-        baseFee = firstHourRate;
+    }
+    // ═══════════════════════════════════════════════════
+    // NHÁNH 2: DURATION_BASED (theo thời gian gửi)
+    // ═══════════════════════════════════════════════════
+    else if (feeMethod === 'duration_based') {
+      // Dùng index thay vì .find() label text — rates[0] = giờ đầu, rates[1] = giờ tiếp theo
+      const firstRate = pricingPlan.rates[0]?.amount || 0;
+      const nextRate = pricingPlan.rates[1]?.amount || firstRate;
+      const firstBlock = pricingPlan.firstBlockHours || 1;
+
+      if (durationHours <= firstBlock) {
+        baseFee = firstRate;
       } else {
-        baseFee = firstHourRate + (durationHours - 1) * nextHourRate;
+        baseFee = firstRate + (durationHours - firstBlock) * nextRate;
       }
-      
+
+      // Áp dụng maxDailyFee (giá trần mỗi ngày)
+      if (pricingPlan.maxDailyFee > 0) {
+        const totalDays = Math.max(1, daysDiff + 1); // ít nhất 1 ngày
+        const maxTotal = pricingPlan.maxDailyFee * totalDays;
+        if (baseFee > maxTotal) {
+          baseFee = maxTotal;
+        }
+      }
+
       if (daysDiff > 0 && pricingPlan.overnightFee > 0) {
         overnightFee = pricingPlan.overnightFee * daysDiff;
       }
-    } else {
-      // Default fallback
+
+      // Phí quá giờ (nếu durationHours > 24)
+      if (durationHours > 24 && pricingPlan.overtimeFeePerHour > 0) {
+        overtimeFee = (durationHours - 24) * pricingPlan.overtimeFeePerHour;
+      }
+    }
+    // ═══════════════════════════════════════════════════
+    // NHÁNH 3: TIME_WINDOW (theo khung giờ trong ngày)
+    // ═══════════════════════════════════════════════════
+    else if (feeMethod === 'time_window') {
+      baseFee = this.calculateTimeWindowFee(checkInTime, checkOutTime, pricingPlan.rates, pricingPlan.maxDailyFee || 0);
+    }
+    // Fallback
+    else {
       baseFee = pricingPlan.rates[0]?.amount || 0;
     }
 
-    // Phí quá giờ (nếu durationHours > 24)
-    if (durationHours > 24 && pricingPlan.overtimeFeePerHour > 0) {
-      overtimeFee = (durationHours - 24) * pricingPlan.overtimeFeePerHour;
-    }
-
-    // Cộng phí từ exception đã resolved (surcharge + lostCardFee)
+    // ── Cộng phí từ exception đã resolved (surcharge + lostCardFee) ──
     let exceptionSurcharge = 0;
     let lostCardFeeTotal = 0;
 
@@ -576,21 +628,94 @@ export class SessionService {
       }
     }
 
-    totalFee = baseFee + overnightFee + overtimeFee + exceptionSurcharge + lostCardFeeTotal;
+    const totalFee = baseFee + overnightFee + overtimeFee + exceptionSurcharge + lostCardFeeTotal;
 
     return {
       totalFee,
       details: {
         durationHours,
+        durationMinutes: Math.round(durationMinutes),
         baseFee,
         overnightFee,
         overtimeFee,
         exceptionSurcharge,
         lostCardFee: lostCardFeeTotal,
         pricingPlanName: pricingPlan.name,
+        feeMethod,
+        gracePeriodApplied: false,
         daysDiff
       }
     };
+  }
+
+  /**
+   * Thuật toán tính phí theo khung giờ trong ngày (Time-Window)
+   * Chia khoảng thời gian gửi thành từng segment theo ngày lịch,
+   * rồi check overlap từng segment với từng khung giờ rate → cộng dồn.
+   */
+  private static calculateTimeWindowFee(
+    checkIn: Date, checkOut: Date,
+    rates: Array<{ startTime?: string; endTime?: string; amount: number }>,
+    maxDailyFee: number
+  ): number {
+    let totalFee = 0;
+
+    // Chia thành segments theo ngày lịch
+    const current = new Date(checkIn);
+    while (current < checkOut) {
+      // Xác định cuối ngày hiện tại (23:59:59.999) hoặc checkOut nếu sớm hơn
+      const endOfDay = new Date(current.getFullYear(), current.getMonth(), current.getDate(), 23, 59, 59, 999);
+      const segmentEnd = checkOut < endOfDay ? checkOut : endOfDay;
+
+      // Lấy thời gian HH:MM dạng phút trong ngày
+      const segStartMinutes = current.getHours() * 60 + current.getMinutes();
+      const segEndMinutes = segmentEnd.getHours() * 60 + segmentEnd.getMinutes();
+
+      let dailyFee = 0;
+
+      for (const rate of rates) {
+        if (!rate.startTime || !rate.endTime) continue;
+
+        const [rStartH, rStartM] = rate.startTime.split(':').map(Number);
+        const [rEndH, rEndM] = rate.endTime.split(':').map(Number);
+        const rStartMinutes = rStartH * 60 + rStartM;
+        const rEndMinutes = rEndH * 60 + rEndM;
+
+        let hasOverlap = false;
+
+        if (rStartMinutes < rEndMinutes) {
+          // Khung giờ bình thường (VD: 06:00 - 16:00)
+          hasOverlap = segStartMinutes < rEndMinutes && segEndMinutes > rStartMinutes;
+        } else {
+          // Khung giờ qua đêm (VD: 22:00 - 06:00)
+          // Segment overlap nếu nó nằm trước rEndMinutes HOẶC sau rStartMinutes
+          hasOverlap = segStartMinutes >= rStartMinutes || segEndMinutes <= rEndMinutes
+            || segStartMinutes < rEndMinutes || segEndMinutes > rStartMinutes;
+          // Simplified: khung qua đêm thì check if NOT trong khoảng giữa
+          const gapStart = rEndMinutes;
+          const gapEnd = rStartMinutes;
+          // Nằm hoàn toàn trong gap (không overlap) nếu: segStart >= gapStart AND segEnd <= gapEnd
+          const inGap = segStartMinutes >= gapStart && segEndMinutes <= gapEnd;
+          hasOverlap = !inGap;
+        }
+
+        if (hasOverlap) {
+          dailyFee += rate.amount;
+        }
+      }
+
+      // Áp dụng maxDailyFee cho từng ngày
+      if (maxDailyFee > 0 && dailyFee > maxDailyFee) {
+        dailyFee = maxDailyFee;
+      }
+
+      totalFee += dailyFee;
+
+      // Chuyển sang đầu ngày tiếp theo
+      current.setTime(new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1, 0, 0, 0, 0).getTime());
+    }
+
+    return totalFee;
   }
 
   /**

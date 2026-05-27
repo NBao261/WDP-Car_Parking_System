@@ -1,8 +1,32 @@
-import { PricingPlan, IPricingPlan } from '../models/pricingPlan.model';
+import { PricingPlan, IPricingPlan, FeeMethod } from '../models/pricingPlan.model';
+import { VehicleType } from '../models/vehicleType.model';
+import { ParkingFacility } from '../models/parkingFacility.model';
+import { ParkingSession } from '../models/parkingSession.model';
 import { AppError } from '../middlewares/error.middleware';
 
 export class PricingService {
   static async createPricingPlan(data: Partial<IPricingPlan>): Promise<IPricingPlan> {
+    // Validate vehicleType tồn tại
+    const vehicleType = await VehicleType.findById(data.vehicleTypeId);
+    if (!vehicleType || vehicleType.isDeleted) {
+      throw new AppError('Loại phương tiện không tồn tại hoặc đã bị xoá', 400);
+    }
+
+    // Validate facility tồn tại
+    const facility = await ParkingFacility.findById(data.facilityId);
+    if (!facility) {
+      throw new AppError('Bãi xe không tồn tại', 400);
+    }
+
+    // Auto-set feeMethod nếu không truyền
+    if (!data.feeMethod) {
+      if (data.feeType === 'per_turn') {
+        data.feeMethod = FeeMethod.FLAT_RATE;
+      } else {
+        data.feeMethod = FeeMethod.DURATION_BASED;
+      }
+    }
+
     // If the new plan is set to active, deactivate existing active plans for the same facility and vehicle type
     if (data.status === 'active') {
       await PricingPlan.updateMany(
@@ -17,6 +41,19 @@ export class PricingService {
   }
 
   static async updatePricingPlan(id: string, data: Partial<IPricingPlan>): Promise<IPricingPlan | null> {
+    // 1. Kiểm tra xem bảng giá đã từng được sử dụng chưa (đã có session trỏ tới)
+    const isUsed = await ParkingSession.exists({ pricingPlanId: id });
+    
+    if (isUsed) {
+      // Nếu đã sử dụng, không cho phép sửa các trường liên quan đến giá tiền
+      const pricingFields = ['rates', 'overnightFee', 'overtimeFeePerHour', 'lostCardFee', 'feeType', 'feeMethod', 'gracePeriodMinutes', 'maxDailyFee'];
+      const fieldsAttemptedToModify = pricingFields.filter(field => data[field as keyof IPricingPlan] !== undefined);
+      
+      if (fieldsAttemptedToModify.length > 0) {
+        throw new AppError(`Không thể sửa các thông tin giá tiền (${fieldsAttemptedToModify.join(', ')}) vì bảng giá này đã từng được áp dụng cho xe. Vui lòng tạo bảng giá mới.`, 400);
+      }
+    }
+
     // If the plan is being set to active, deactivate others
     if (data.status === 'active') {
       const planToUpdate = await PricingPlan.findById(id);
