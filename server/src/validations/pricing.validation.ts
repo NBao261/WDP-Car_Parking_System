@@ -35,6 +35,7 @@ export const createPricingPlanSchema = z.object({
     lostCardFee: z.number().min(0, 'Lost card fee must be non-negative').optional(),
     gracePeriodMinutes: z.number().min(0, 'Grace period must be non-negative').max(60, 'Grace period cannot exceed 60 minutes').optional(),
     maxDailyFee: z.number().min(0, 'Max daily fee must be non-negative').optional(),
+    firstBlockHours: z.number().min(1, 'First block hours must be at least 1').optional(),
   }).refine((data) => {
     // Cross-field validation: time_window rates phải có startTime + endTime
     if (data.feeMethod === FeeMethod.TIME_WINDOW) {
@@ -77,6 +78,7 @@ export const updatePricingPlanSchema = z.object({
     lostCardFee: z.number().min(0).optional(),
     gracePeriodMinutes: z.number().min(0).max(60).optional(),
     maxDailyFee: z.number().min(0).optional(),
+    firstBlockHours: z.number().min(1).optional(),
     status: z.enum(['active', 'inactive']).optional(),
   }).refine((data) => {
     // Cross-field validation khi cập nhật rates với feeMethod time_window

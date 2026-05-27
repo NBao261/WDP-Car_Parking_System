@@ -32,6 +32,7 @@ export interface IPricingPlan extends Document {
   lostCardFee: number;
   gracePeriodMinutes: number;
   maxDailyFee: number;
+  firstBlockHours: number;
   status: 'active' | 'inactive';
   isDeleted: boolean;
   createdAt: Date;
@@ -59,6 +60,7 @@ const pricingPlanSchema = new Schema<IPricingPlan>(
     lostCardFee: { type: Number, default: 50000, min: 0 },
     gracePeriodMinutes: { type: Number, default: 0, min: 0, max: 60 },
     maxDailyFee: { type: Number, default: 0, min: 0 }, // 0 = không giới hạn
+    firstBlockHours: { type: Number, default: 1, min: 1 }, // Số giờ của mốc đầu tiên (mặc định là 1)
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     isDeleted: { type: Boolean, default: false },
   },

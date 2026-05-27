@@ -146,6 +146,10 @@ paths:
                   type: number
                   description: "Giá trần mỗi ngày. 0 = không giới hạn."
                   example: 0
+                firstBlockHours:
+                  type: number
+                  description: "Số giờ của mốc tính tiền đầu tiên. Mặc định là 1."
+                  example: 2
       responses:
         '201':
           description: Created
@@ -271,6 +275,8 @@ paths:
                   type: number
                 maxDailyFee:
                   type: number
+                firstBlockHours:
+                  type: number
       responses:
         '200':
           description: OK
@@ -390,6 +396,9 @@ components:
         maxDailyFee:
           type: number
           description: Giá trần mỗi ngày (0 = không giới hạn)
+        firstBlockHours:
+          type: number
+          description: Số giờ của mốc tính tiền đầu tiên (chỉ dùng cho duration_based)
         status:
           type: string
           enum: [active, inactive]
@@ -438,6 +447,7 @@ components:
         overnightFee: 50000
         overtimeFeePerHour: 15000
         maxDailyFee: 100000
+        firstBlockHours: 2
         gracePeriodMinutes: 15
 
     PricingPlanExampleTimeWindow:

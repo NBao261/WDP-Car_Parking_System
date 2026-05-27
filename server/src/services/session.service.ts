@@ -575,11 +575,12 @@ export class SessionService {
       // Dùng index thay vì .find() label text — rates[0] = giờ đầu, rates[1] = giờ tiếp theo
       const firstRate = pricingPlan.rates[0]?.amount || 0;
       const nextRate = pricingPlan.rates[1]?.amount || firstRate;
+      const firstBlock = pricingPlan.firstBlockHours || 1;
 
-      if (durationHours <= 1) {
+      if (durationHours <= firstBlock) {
         baseFee = firstRate;
       } else {
-        baseFee = firstRate + (durationHours - 1) * nextRate;
+        baseFee = firstRate + (durationHours - firstBlock) * nextRate;
       }
 
       // Áp dụng maxDailyFee (giá trần mỗi ngày)
