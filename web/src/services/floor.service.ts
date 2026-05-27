@@ -6,7 +6,7 @@ export interface Floor {
   _id: string;
   facilityId: string;
   name: string;
-  allowedVehicleTypes: string[]; // VehicleType IDs
+  allowedVehicleTypes: string[];
   totalSlots: number;
   status: FloorStatus;
   isDeleted: boolean;

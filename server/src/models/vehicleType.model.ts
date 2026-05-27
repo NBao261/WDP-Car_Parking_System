@@ -12,7 +12,7 @@ export interface IVehicleType extends Document {
   slotSize: SlotSize;
   description: string;
   icon: string;
-  floors: mongoose.Types.ObjectId[]; // Two-way ref: các tầng cho phép loại xe này
+  floors: mongoose.Types.ObjectId[]; 
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -25,7 +25,7 @@ const vehicleTypeSchema = new Schema<IVehicleType>(
     slotSize: { type: String, enum: Object.values(SlotSize), required: true },
     description: { type: String, default: '' },
     icon: { type: String, default: '' },
-    floors: [{ type: Schema.Types.ObjectId, ref: 'Floor' }], // Two-way ref ↔ Floor.allowedVehicleTypes
+    floors: [{ type: Schema.Types.ObjectId, ref: 'Floor' }], 
     isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }

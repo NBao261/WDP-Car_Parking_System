@@ -47,11 +47,21 @@ router.patch(
   checkPermission(PERMISSIONS.FACILITY_UPDATE),
   FacilityController.updateFacility
 );
+
+// Vô hiệu hoá facility (status → inactive, cascade floors/slots)
+router.patch(
+  '/:id/deactivate',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER]),
+  checkPermission(PERMISSIONS.FACILITY_UPDATE),
+  FacilityController.deactivateFacility
+);
+
+// Xoá mềm facility (isDeleted = true, cascade floors/slots/staff)
 router.delete(
   '/:id',
   checkRole([UserRole.ADMIN, UserRole.MANAGER]),
   checkPermission(PERMISSIONS.FACILITY_DELETE),
-  FacilityController.deactivateFacility
+  FacilityController.softDeleteFacility
 );
 
 export default router;

@@ -12,7 +12,7 @@ import UnauthorizedPage from '../pages/error/UnauthorizedPage';
 import DashboardPage from '../pages/admin/dashboard/DashboardPage';
 const FacilitiesPage = lazy(() => import('../pages/admin/facilities/FacilitiesPage'));
 const VehiclesPage = lazy(() => import('../pages/admin/vehicles/VehiclesPage'));
-const SlotsPage = lazy(() => import('../pages/admin/slots/SlotsPage'));
+
 const PricingPage = lazy(() => import('../pages/admin/pricing/PricingPage'));
 const BillingPage = lazy(() => import('../pages/admin/billing/BillingPage'));
 const ConfigPage = lazy(() => import('../pages/admin/config/ConfigPage'));
@@ -77,8 +77,6 @@ export const router = createBrowserRouter([
               { index: true, element: <DashboardPage /> },
               { path: 'facilities', element: <S><FacilitiesPage /></S> },
               { path: 'vehicles', element: <S><VehiclesPage /></S> },
-              // FR-4: Quản lý Slot đỗ xe
-              { path: 'slots', element: <S><SlotsPage /></S> },
               // FR-5: Quản lý Bảng giá
               { path: 'pricing', element: <S><PricingPage /></S> },
               { path: 'billing', element: <S><BillingPage /></S> },

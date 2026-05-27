@@ -16,20 +16,25 @@ export const checkConditionsSchema = z.object({
 });
 
 // FR-9.1: Tạo lượt gửi xe (check-in)
+// Hai chế độ:
+//   1. Có reservationCode → chỉ cần gateIn, hệ thống tự fill từ reservation
+//   2. Không có reservationCode → bắt buộc facilityId + vehicleTypeId + licensePlate + gateIn
 export const checkInSchema = z.object({
   body: z.object({
     facilityId: z
-      .string({ required_error: 'Facility ID is required' })
-      .regex(objectIdRegex, 'Invalid facility ID format'),
+      .string()
+      .regex(objectIdRegex, 'Invalid facility ID format')
+      .optional(),
     vehicleTypeId: z
-      .string({ required_error: 'Vehicle type ID is required' })
-      .regex(objectIdRegex, 'Invalid vehicle type ID format'),
+      .string()
+      .regex(objectIdRegex, 'Invalid vehicle type ID format')
+      .optional(),
     licensePlate: z
-      .string({ required_error: 'License plate is required' })
+      .string()
       .min(4, 'License plate must be at least 4 characters')
       .max(15, 'License plate must be at most 15 characters')
-      .regex(licensePlateRegex, 'Invalid license plate format')
-      .transform((val) => val.toUpperCase().trim()),
+      .transform((val) => val.toUpperCase().trim())
+      .optional(),
     gateIn: z
       .string({ required_error: 'Gate in is required' })
       .min(1, 'Gate in is required'),
@@ -41,7 +46,16 @@ export const checkInSchema = z.object({
       .string()
       .regex(objectIdRegex, 'Invalid slot ID format')
       .optional(),
-  }),
+    reservationCode: z
+      .string()
+      .min(1, 'Reservation code is required')
+      .optional(),
+  }).refine(
+    (data) => data.reservationCode || (data.facilityId && data.vehicleTypeId && data.licensePlate),
+    {
+      message: 'Cần truyền reservationCode HOẶC đầy đủ facilityId + vehicleTypeId + licensePlate',
+    }
+  ),
 });
 
 // FR-8.3: Gợi ý tầng/khu vực

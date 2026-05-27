@@ -169,6 +169,13 @@ paths:
                   code: "MOTO"
                   isDeleted: true
                   floors: []
+        '400':
+          description: Lỗi validation (đang được gán cho tầng hoặc đang có lượt gửi/đặt chỗ hoạt động)
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Không thể xoá loại xe này do đang có lượt gửi xe hoạt động"
 
 components:
   schemas:

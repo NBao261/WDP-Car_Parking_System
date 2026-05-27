@@ -8,6 +8,7 @@ import { PricingPlan } from '../models/pricingPlan.model';
 import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 import { Exception, ExceptionStatus, ExceptionType } from '../models/exception.model';
+import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { generateSessionCode, generateCardCode } from '../utils/codeGenerator';
 import { getIO } from '../config/socket';
 
@@ -25,13 +26,14 @@ interface SuggestedFloor {
 }
 
 interface CheckInData {
-  facilityId: string;
-  vehicleTypeId: string;
-  licensePlate: string;
+  facilityId?: string;
+  vehicleTypeId?: string;
+  licensePlate?: string;
   gateIn: string;
   staffInId: string;
   floorId?: string;
   slotId?: string;
+  reservationCode?: string;
 }
 
 export class SessionService {
@@ -52,8 +54,22 @@ export class SessionService {
     // 2. Kiểm tra giờ hoạt động
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    if (currentTime < facility.openTime || currentTime >= facility.closeTime) {
-      return { eligible: false, reason: `Bãi xe đang đóng. Giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, availableSlotCount: 0 };
+
+    // Nếu openTime == closeTime → hoạt động 24h, bỏ qua check
+    if (facility.openTime !== facility.closeTime) {
+      let isClosed = false;
+
+      if (facility.openTime < facility.closeTime) {
+        // Trường hợp bình thường: vd 06:00 - 22:00
+        isClosed = currentTime < facility.openTime || currentTime >= facility.closeTime;
+      } else {
+        // Trường hợp qua đêm: vd 22:00 - 06:00
+        isClosed = currentTime < facility.openTime && currentTime >= facility.closeTime;
+      }
+
+      if (isClosed) {
+        return { eligible: false, reason: `Bãi xe đang đóng. Giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, availableSlotCount: 0 };
+      }
     }
 
     // 3. Kiểm tra vehicleType tồn tại
@@ -97,6 +113,48 @@ export class SessionService {
    * Tạo session + cập nhật slot → Occupied + sinh mã thẻ
    */
   static async checkIn(data: CheckInData): Promise<IParkingSession> {
+    let matchedReservation = null;
+
+    // 0. BR-6.6: Nếu có reservationCode → auto-fill facilityId, vehicleTypeId, licensePlate từ reservation
+    if (data.reservationCode) {
+      matchedReservation = await Reservation.findOne({
+        code: data.reservationCode,
+        status: ReservationStatus.CONFIRMED,
+      });
+
+      if (!matchedReservation) {
+        throw new AppError('Mã đặt chỗ không tồn tại hoặc đã được sử dụng/hủy', 404);
+      }
+
+      // Validate thời gian check-in: chỉ cho phép trong khoảng 30 phút trước startTime → endTime
+      const now = new Date();
+      const earlyWindow = 30 * 60 * 1000; // 30 phút
+      const earliestCheckIn = new Date(matchedReservation.startTime.getTime() - earlyWindow);
+
+      if (now < earliestCheckIn) {
+        const startTimeStr = matchedReservation.startTime.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+        const minutesEarly = Math.ceil((earliestCheckIn.getTime() - now.getTime()) / 60000);
+        throw new AppError(
+          `Chưa đến giờ check-in. Đặt chỗ bắt đầu lúc ${startTimeStr}. Bạn có thể check-in sớm nhất trước 30 phút (còn ${minutesEarly} phút nữa).`,
+          400
+        );
+      }
+
+      if (now > matchedReservation.endTime) {
+        throw new AppError('Đặt chỗ đã hết hạn. Vui lòng tạo đặt chỗ mới hoặc check-in walk-in.', 400);
+      }
+
+      // Auto-fill các trường từ reservation
+      data.facilityId = matchedReservation.facilityId.toString();
+      data.vehicleTypeId = matchedReservation.vehicleTypeId.toString();
+      data.licensePlate = matchedReservation.licensePlate;
+    }
+
+    // Đảm bảo các trường bắt buộc đã có (dù từ reservation hay từ request)
+    if (!data.facilityId || !data.vehicleTypeId || !data.licensePlate) {
+      throw new AppError('Thiếu thông tin bắt buộc: facilityId, vehicleTypeId, licensePlate', 400);
+    }
+
     // 1. Kiểm tra điều kiện
     const conditions = await this.checkConditions(data.facilityId, data.vehicleTypeId);
     if (!conditions.eligible) {
@@ -137,66 +195,98 @@ export class SessionService {
       throw new AppError('Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này', 400);
     }
 
-    // 5. Tìm slot — nếu user chọn cụ thể thì validate, nếu không thì auto-assign
+    // 5. Tìm slot — dùng slot từ reservation nếu có, không thì auto-assign
     let slot;
 
-    if (data.slotId) {
-      // User chọn slot cụ thể
+    // Nếu có reservation → dùng slot đã reserved
+    if (matchedReservation && matchedReservation.slotId) {
       slot = await ParkingSlot.findOne({
-        _id: data.slotId,
-        facilityId: data.facilityId,
-        vehicleTypeId: data.vehicleTypeId,
-        status: SlotStatus.AVAILABLE,
+        _id: matchedReservation.slotId,
+        status: SlotStatus.RESERVED,
         isDeleted: false,
       });
+      // Nếu slot reserved bị lỗi → fallback auto-assign bên dưới
+    }
 
-      if (!slot) {
-        throw new AppError('Slot đã chọn không khả dụng', 400);
-      }
-    } else {
-      // Auto-assign: tìm slot available, ưu tiên floor ít xe nhất
-      const floorQuery: any = {
+    // Nếu không có reservationCode → kiểm tra xem có reservation nào match theo biển số không
+    if (!matchedReservation) {
+      const autoMatchReservation = await Reservation.findOne({
+        licensePlate: data.licensePlate.toUpperCase(),
         facilityId: data.facilityId,
-        allowedVehicleTypes: data.vehicleTypeId,
-        isDeleted: false,
-        status: 'active',
-      };
+        status: ReservationStatus.CONFIRMED,
+        startTime: { $lte: new Date(Date.now() + 30 * 60 * 1000) },
+      });
 
-      if (data.floorId) {
-        floorQuery._id = data.floorId;
+      if (autoMatchReservation && autoMatchReservation.slotId) {
+        matchedReservation = autoMatchReservation;
+        slot = await ParkingSlot.findOne({
+          _id: autoMatchReservation.slotId,
+          status: SlotStatus.RESERVED,
+          isDeleted: false,
+        });
       }
+    }
 
-      // Aggregate: tìm floor có nhiều slot trống nhất
-      const floorSlotCounts = await ParkingSlot.aggregate([
-        {
-          $match: {
-            facilityId: new mongoose.Types.ObjectId(data.facilityId),
-            vehicleTypeId: new mongoose.Types.ObjectId(data.vehicleTypeId),
-            status: SlotStatus.AVAILABLE,
-            isDeleted: false,
-            ...(data.floorId ? { floorId: new mongoose.Types.ObjectId(data.floorId) } : {}),
+    // Nếu vẫn chưa có slot (không có reservation hoặc slot reserved bị lỗi) → fallback
+    if (!slot) {
+      if (data.slotId) {
+        // User chọn slot cụ thể
+        slot = await ParkingSlot.findOne({
+          _id: data.slotId,
+          facilityId: data.facilityId,
+          vehicleTypeId: data.vehicleTypeId,
+          status: SlotStatus.AVAILABLE,
+          isDeleted: false,
+        });
+
+        if (!slot) {
+          throw new AppError('Slot đã chọn không khả dụng', 400);
+        }
+      } else {
+        // Auto-assign: tìm slot available, ưu tiên floor ít xe nhất
+        const floorQuery: any = {
+          facilityId: data.facilityId,
+          allowedVehicleTypes: data.vehicleTypeId,
+          isDeleted: false,
+          status: 'active',
+        };
+
+        if (data.floorId) {
+          floorQuery._id = data.floorId;
+        }
+
+        // Aggregate: tìm floor có nhiều slot trống nhất
+        const floorSlotCounts = await ParkingSlot.aggregate([
+          {
+            $match: {
+              facilityId: new mongoose.Types.ObjectId(data.facilityId),
+              vehicleTypeId: new mongoose.Types.ObjectId(data.vehicleTypeId),
+              status: SlotStatus.AVAILABLE,
+              isDeleted: false,
+              ...(data.floorId ? { floorId: new mongoose.Types.ObjectId(data.floorId) } : {}),
+            },
           },
-        },
-        { $group: { _id: '$floorId', count: { $sum: 1 } } },
-        { $sort: { count: -1 } },
-      ]);
+          { $group: { _id: '$floorId', count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
+        ]);
 
-      if (floorSlotCounts.length === 0) {
-        throw new AppError('Không còn slot trống phù hợp', 400);
-      }
+        if (floorSlotCounts.length === 0) {
+          throw new AppError('Không còn slot trống phù hợp', 400);
+        }
 
-      // Lấy slot đầu tiên từ floor có nhiều chỗ trống nhất
-      const bestFloorId = floorSlotCounts[0]._id;
-      slot = await ParkingSlot.findOne({
-        floorId: bestFloorId,
-        facilityId: data.facilityId,
-        vehicleTypeId: data.vehicleTypeId,
-        status: SlotStatus.AVAILABLE,
-        isDeleted: false,
-      }).sort({ code: 1 });
+        // Lấy slot đầu tiên từ floor có nhiều chỗ trống nhất
+        const bestFloorId = floorSlotCounts[0]._id;
+        slot = await ParkingSlot.findOne({
+          floorId: bestFloorId,
+          facilityId: data.facilityId,
+          vehicleTypeId: data.vehicleTypeId,
+          status: SlotStatus.AVAILABLE,
+          isDeleted: false,
+        }).sort({ code: 1 });
 
-      if (!slot) {
-        throw new AppError('Không còn slot trống phù hợp', 400);
+        if (!slot) {
+          throw new AppError('Không còn slot trống phù hợp', 400);
+        }
       }
     }
 
@@ -240,6 +330,12 @@ export class SessionService {
     slot.status = SlotStatus.OCCUPIED;
     slot.currentSessionId = session._id as mongoose.Types.ObjectId;
     await slot.save();
+
+    // 8. BR-6.6: Nếu check-in từ reservation → chuyển reservation sang USED
+    if (matchedReservation) {
+      matchedReservation.status = ReservationStatus.USED;
+      await matchedReservation.save();
+    }
 
     // 8. Return session populated
     const populatedSession = await ParkingSession.findById(session._id)
@@ -410,7 +506,7 @@ export class SessionService {
 
   /**
    * FR-10.2: Tính phí tự động
-   * Tính phí dựa trên bảng giá áp dụng
+   * Hỗ trợ 3 phương thức: flat_rate, duration_based, time_window
    */
   static async calculateFee(sessionId: string, checkOutTime: Date = new Date()): Promise<{ totalFee: number, details: any }> {
     const session = await ParkingSession.findById(sessionId).populate('pricingPlanId');
@@ -424,47 +520,99 @@ export class SessionService {
     if (durationMs < 0) {
       throw new AppError('Thời gian ra phải sau thời gian vào', 400);
     }
-    const durationHours = Math.ceil(durationMs / (1000 * 60 * 60)); // làm tròn lên
 
-    let totalFee = 0;
+    const durationMinutes = durationMs / (1000 * 60);
+    const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
+
+    // ── Grace Period: miễn phí nếu gửi trong thời gian cho phép ──
+    if (pricingPlan.gracePeriodMinutes > 0 && durationMinutes <= pricingPlan.gracePeriodMinutes) {
+      // Vẫn tính exception surcharge nếu có
+      let exceptionSurcharge = 0;
+      let lostCardFeeTotal = 0;
+      const resolvedExceptions = await Exception.find({ sessionId, status: ExceptionStatus.RESOLVED });
+      for (const exc of resolvedExceptions) {
+        exceptionSurcharge += exc.surcharge || 0;
+        if (exc.type === ExceptionType.LOST_CARD) lostCardFeeTotal += pricingPlan.lostCardFee || 0;
+      }
+      return {
+        totalFee: exceptionSurcharge + lostCardFeeTotal,
+        details: {
+          durationHours: 0, durationMinutes: Math.round(durationMinutes),
+          baseFee: 0, overnightFee: 0, overtimeFee: 0,
+          exceptionSurcharge, lostCardFee: lostCardFeeTotal,
+          pricingPlanName: pricingPlan.name, feeMethod: pricingPlan.feeMethod || 'duration_based',
+          gracePeriodApplied: true, daysDiff: 0,
+        }
+      };
+    }
+
     let baseFee = 0;
     let overnightFee = 0;
     let overtimeFee = 0;
 
-    // Check if overnight (crosses 00:00) - simple calculation: check days diff
+    // Tính số ngày chênh lệch (dùng cho flat_rate / duration_based overnight)
     const startDay = new Date(checkInTime.getFullYear(), checkInTime.getMonth(), checkInTime.getDate());
     const endDay = new Date(checkOutTime.getFullYear(), checkOutTime.getMonth(), checkOutTime.getDate());
     const daysDiff = Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (pricingPlan.feeType === 'per_turn') {
+
+    // Xác định feeMethod (backward compat: nếu chưa có feeMethod thì suy từ feeType)
+    const feeMethod = pricingPlan.feeMethod || 
+      (pricingPlan.feeType === 'per_turn' ? 'flat_rate' : 'duration_based');
+
+    // ═══════════════════════════════════════════════════
+    // NHÁNH 1: FLAT_RATE (đồng giá theo lượt)
+    // ═══════════════════════════════════════════════════
+    if (feeMethod === 'flat_rate') {
       baseFee = pricingPlan.rates[0]?.amount || 0;
       if (daysDiff > 0 && pricingPlan.overnightFee > 0) {
         overnightFee = pricingPlan.overnightFee * daysDiff;
       }
-    } else if (pricingPlan.feeType === 'hourly') {
-      const firstHourRate = pricingPlan.rates.find((r: any) => r.label === 'Giờ đầu' || r.label === 'first_hour')?.amount || pricingPlan.rates[0]?.amount || 0;
-      const nextHourRate = pricingPlan.rates.find((r: any) => r.label === 'Giờ tiếp theo' || r.label === 'next_hour')?.amount || pricingPlan.rates[1]?.amount || firstHourRate;
-      
-      if (durationHours <= 1) {
-        baseFee = firstHourRate;
+    }
+    // ═══════════════════════════════════════════════════
+    // NHÁNH 2: DURATION_BASED (theo thời gian gửi)
+    // ═══════════════════════════════════════════════════
+    else if (feeMethod === 'duration_based') {
+      // Dùng index thay vì .find() label text — rates[0] = giờ đầu, rates[1] = giờ tiếp theo
+      const firstRate = pricingPlan.rates[0]?.amount || 0;
+      const nextRate = pricingPlan.rates[1]?.amount || firstRate;
+      const firstBlock = pricingPlan.firstBlockHours || 1;
+
+      if (durationHours <= firstBlock) {
+        baseFee = firstRate;
       } else {
-        baseFee = firstHourRate + (durationHours - 1) * nextHourRate;
+        baseFee = firstRate + (durationHours - firstBlock) * nextRate;
       }
-      
+
+      // Áp dụng maxDailyFee (giá trần mỗi ngày)
+      if (pricingPlan.maxDailyFee > 0) {
+        const totalDays = Math.max(1, daysDiff + 1); // ít nhất 1 ngày
+        const maxTotal = pricingPlan.maxDailyFee * totalDays;
+        if (baseFee > maxTotal) {
+          baseFee = maxTotal;
+        }
+      }
+
       if (daysDiff > 0 && pricingPlan.overnightFee > 0) {
         overnightFee = pricingPlan.overnightFee * daysDiff;
       }
-    } else {
-      // Default fallback
+
+      // Phí quá giờ (nếu durationHours > 24)
+      if (durationHours > 24 && pricingPlan.overtimeFeePerHour > 0) {
+        overtimeFee = (durationHours - 24) * pricingPlan.overtimeFeePerHour;
+      }
+    }
+    // ═══════════════════════════════════════════════════
+    // NHÁNH 3: TIME_WINDOW (theo khung giờ trong ngày)
+    // ═══════════════════════════════════════════════════
+    else if (feeMethod === 'time_window') {
+      baseFee = this.calculateTimeWindowFee(checkInTime, checkOutTime, pricingPlan.rates, pricingPlan.maxDailyFee || 0);
+    }
+    // Fallback
+    else {
       baseFee = pricingPlan.rates[0]?.amount || 0;
     }
 
-    // Phí quá giờ (nếu durationHours > 24)
-    if (durationHours > 24 && pricingPlan.overtimeFeePerHour > 0) {
-      overtimeFee = (durationHours - 24) * pricingPlan.overtimeFeePerHour;
-    }
-
-    // Cộng phí từ exception đã resolved (surcharge + lostCardFee)
+    // ── Cộng phí từ exception đã resolved (surcharge + lostCardFee) ──
     let exceptionSurcharge = 0;
     let lostCardFeeTotal = 0;
 
@@ -480,21 +628,94 @@ export class SessionService {
       }
     }
 
-    totalFee = baseFee + overnightFee + overtimeFee + exceptionSurcharge + lostCardFeeTotal;
+    const totalFee = baseFee + overnightFee + overtimeFee + exceptionSurcharge + lostCardFeeTotal;
 
     return {
       totalFee,
       details: {
         durationHours,
+        durationMinutes: Math.round(durationMinutes),
         baseFee,
         overnightFee,
         overtimeFee,
         exceptionSurcharge,
         lostCardFee: lostCardFeeTotal,
         pricingPlanName: pricingPlan.name,
+        feeMethod,
+        gracePeriodApplied: false,
         daysDiff
       }
     };
+  }
+
+  /**
+   * Thuật toán tính phí theo khung giờ trong ngày (Time-Window)
+   * Chia khoảng thời gian gửi thành từng segment theo ngày lịch,
+   * rồi check overlap từng segment với từng khung giờ rate → cộng dồn.
+   */
+  private static calculateTimeWindowFee(
+    checkIn: Date, checkOut: Date,
+    rates: Array<{ startTime?: string; endTime?: string; amount: number }>,
+    maxDailyFee: number
+  ): number {
+    let totalFee = 0;
+
+    // Chia thành segments theo ngày lịch
+    const current = new Date(checkIn);
+    while (current < checkOut) {
+      // Xác định cuối ngày hiện tại (23:59:59.999) hoặc checkOut nếu sớm hơn
+      const endOfDay = new Date(current.getFullYear(), current.getMonth(), current.getDate(), 23, 59, 59, 999);
+      const segmentEnd = checkOut < endOfDay ? checkOut : endOfDay;
+
+      // Lấy thời gian HH:MM dạng phút trong ngày
+      const segStartMinutes = current.getHours() * 60 + current.getMinutes();
+      const segEndMinutes = segmentEnd.getHours() * 60 + segmentEnd.getMinutes();
+
+      let dailyFee = 0;
+
+      for (const rate of rates) {
+        if (!rate.startTime || !rate.endTime) continue;
+
+        const [rStartH, rStartM] = rate.startTime.split(':').map(Number);
+        const [rEndH, rEndM] = rate.endTime.split(':').map(Number);
+        const rStartMinutes = rStartH * 60 + rStartM;
+        const rEndMinutes = rEndH * 60 + rEndM;
+
+        let hasOverlap = false;
+
+        if (rStartMinutes < rEndMinutes) {
+          // Khung giờ bình thường (VD: 06:00 - 16:00)
+          hasOverlap = segStartMinutes < rEndMinutes && segEndMinutes > rStartMinutes;
+        } else {
+          // Khung giờ qua đêm (VD: 22:00 - 06:00)
+          // Segment overlap nếu nó nằm trước rEndMinutes HOẶC sau rStartMinutes
+          hasOverlap = segStartMinutes >= rStartMinutes || segEndMinutes <= rEndMinutes
+            || segStartMinutes < rEndMinutes || segEndMinutes > rStartMinutes;
+          // Simplified: khung qua đêm thì check if NOT trong khoảng giữa
+          const gapStart = rEndMinutes;
+          const gapEnd = rStartMinutes;
+          // Nằm hoàn toàn trong gap (không overlap) nếu: segStart >= gapStart AND segEnd <= gapEnd
+          const inGap = segStartMinutes >= gapStart && segEndMinutes <= gapEnd;
+          hasOverlap = !inGap;
+        }
+
+        if (hasOverlap) {
+          dailyFee += rate.amount;
+        }
+      }
+
+      // Áp dụng maxDailyFee cho từng ngày
+      if (maxDailyFee > 0 && dailyFee > maxDailyFee) {
+        dailyFee = maxDailyFee;
+      }
+
+      totalFee += dailyFee;
+
+      // Chuyển sang đầu ngày tiếp theo
+      current.setTime(new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1, 0, 0, 0, 0).getTime());
+    }
+
+    return totalFee;
   }
 
   /**

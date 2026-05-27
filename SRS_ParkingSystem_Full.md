@@ -437,6 +437,18 @@ _Kết thúc Phần 1 – Tiếp theo: Phần 2 – Yêu cầu Chức năng (Fun
 | **Actor**  | Parking Manager                                                                     |
 | **Mô tả**  | Hiển thị tất cả bảng giá kèm trạng thái (Active/Inactive), loại xe, tòa nhà áp dụng |
 
+### FR-5.5: AI gợi ý điều chỉnh bảng giá (RQ6)
+
+| Thuộc tính         | Mô tả                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Mã**           | FR-5.5                                                                                                                         |
+| **Actor**        | Parking Manager                                                                                                                |
+| **Mô tả**        | AI phân tích tần suất gửi xe, tỷ lệ lấp đầy, khung giờ cao điểm của từng tòa nhà → đề xuất điều chỉnh mức giá phù hợp          |
+| **Đầu vào**      | Facility ID, khoảng thời gian phân tích (7 ngày / 30 ngày / 90 ngày)                                                          |
+| **Đầu ra**       | Danh sách gợi ý: loại xe, giá hiện tại, giá đề xuất, lý do, độ tin cậy                                                      |
+| **Cơ sở khoa học** | Prediction-based Pricing [P15] (Hong et al., CIKM 2022), DRL-DP [P16] (Poh et al., 2023), ML Pricing Framework [P17] (Saharan et al., 2020), Review [P18] (Bayih & Tilahun, 2024) |
+| **Ghi chú**      | Manager chỉ xem suggestion, tự quyết định có áp dụng hay không (không tự động thay đổi giá)                                    |
+
 ---
 
 ## FR-6: Xem báo cáo thống kê
@@ -478,6 +490,17 @@ _Kết thúc Phần 1 – Tiếp theo: Phần 2 – Yêu cầu Chức năng (Fun
 | **Actor**    | Parking Manager                                      |
 | **Mô tả**    | Xác định các khung giờ có lượng xe vào/ra nhiều nhất |
 | **Hiển thị** | Biểu đồ phân bố theo giờ trong ngày                  |
+
+### FR-6.5: AI Chatbot hỗ trợ xem báo cáo (RQ5)
+
+| Thuộc tính       | Mô tả                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Mã**           | FR-6.5                                                                                                                   |
+| **Actor**        | Parking Manager, System Administrator                                                                                    |
+| **Mô tả**        | Chatbot AI cho phép Manager/Admin truy vấn thông tin báo cáo bằng ngôn ngữ tự nhiên (tiếng Việt/Anh) thay vì thao tác trên dashboard |
+| **Ví dụ câu hỏi** | "Hôm nay doanh thu bao nhiêu?", "Tỷ lệ lấp đầy tầng 2?", "Tuần này có bao nhiêu ngoại lệ?", "Giờ nào đông nhất hôm qua?" |
+| **Đầu ra**       | Câu trả lời ngôn ngữ tự nhiên + dữ liệu số + đề xuất biểu đồ (nếu phù hợp)                                              |
+| **Cơ sở khoa học** | NLI pipeline [P11] (Quamar et al., 2022), Chatbot FM [P12] (Chen & Tsai, 2021), TAM [P13] (Alhammadi, 2023), SLR [P14] (Delgado et al., 2025) |
 
 ---
 
@@ -1536,19 +1559,10 @@ Output: suggestedFloor, loadBalancingApplied, isPeakHour
      floor.effective_occ = (countOccupied + countReserved) / totalSlots
      // Tính cả slot Reserved → tránh over-allocation
 
-2. PEAK HOUR DETECTION — AI-Enhanced (thay thế rule-based):
-   // TRƯỚC (rule-based): isPeakHour = hourly_rate > avg × 1.5
-   // SAU (AI prediction):
-   isPeakHour = PeakHourModel.predict({
-     hour: currentHour,
-     weekday: dayOfWeek,       // 0-6
-     month: currentMonth,
-     isHoliday: checkHoliday(today),
-     recentRate: countCheckIns(last_30_min)
-   })
-   // Model: Linear Regression / Random Forest
-   // Training data: lịch sử check-in (≥ 30 ngày)
-   // Fallback: nếu model chưa train → dùng rule-based isPeakHour = rate > avg × 1.5
+2. PEAK HOUR DETECTION ([P8] NSGA-II inspired):
+   hourly_rate = countCheckIns(last_60_min)
+   avg_hourly = AVG(checkIns_per_hour, last_30_days, same_weekday)
+   isPeakHour = hourly_rate > avg_hourly × 1.5
 
 3. LOAD BALANCING DECISION:
    IF isPeakHour AND anyFloor.effective_occ >= 0.85:
@@ -1609,12 +1623,14 @@ Complexity: O(F) — F = số tầng
 | **RQ2:** Auto-assign vs. Free-choice | FR-8.3, FR-9.1, FR-4.2 | BR-3.2, BR-3.4, BR-5.1 | Hungarian Algorithm (Kuhn-Munkres), LQR Centralized Control | Greedy Matching (nearest optimal slot) | [P3], [P4] |
 | **RQ3:** Tiêu chí ưu tiên phân bổ | FR-8.3, FR-6.3, FR-6.4 | BR-2.3, BR-3.2 | TOPSIS + CRITIC Weighting, CODAS, Cheetah Optimization (COA) | Weighted Scoring Model (WSM) 4 tiêu chí | [P5], [P6] |
 | **RQ4:** Cải thiện giờ cao điểm | FR-8.1, FR-8.3, FR-9.1, FR-6.3, FR-6.4, FR-14 | BR-3.3, BR-6.1 | MILP (Branch-and-Bound), NSGA-II, PCPT, DRL (DQN), Reservation-Aware Capacity | Threshold-based Load Balancing + Effective Occupancy | [P7], [P8], [P9], [P10] |
+| **RQ5:** AI Chatbot hỗ trợ quản lý & báo cáo | FR-6.1, FR-6.2, FR-6.3, FR-6.4, FR-6.5, FR-20.4 | BR-10.1, BR-10.2 | NLI Text-to-SQL [P11], Conversational FM Chatbot [P12], TAM [P13] | Intent-based NLQ (keyword matching + template query) | [P11], [P12], [P13], [P14] |
+| **RQ6:** AI điều chỉnh bảng giá dựa trên tần suất gửi xe | FR-5.1, FR-5.2, FR-5.5, FR-6.2 | BR-4.1, BR-4.2 | NODE Prediction + DRL Dynamic Pricing [P15][P16], ML Pricing Framework [P17] | Demand-based Pricing Suggestion (rule-based + statistics) | [P15], [P16], [P17], [P18] |
 
 ---
 
 ## Kiến Trúc Thuật Toán Tích Hợp
 
-### Pipeline xử lý khi xe vào bãi (FR-8.3) — AI-Enhanced
+### Pipeline xử lý khi xe vào bãi (FR-8.3)
 
 ```
 🚗 Xe vào bãi (FR-8.1)
@@ -1624,9 +1640,8 @@ Complexity: O(F) — F = số tầng
     │ vehicleType match + slot.status == 'Available'
     │
     ▼
-[STEP 2] 🤖 AI: Peak Hour Prediction (Linear Regression / Random Forest)
-    │ isPeakHour = ML_model.predict(hour, weekday, month, isHoliday, recentRate)
-    │ Fallback: isPeakHour = hourly_rate > avg × 1.5 (nếu model chưa train)
+[STEP 2] Peak Detection — [P8] NSGA-II inspired
+    │ isPeakHour = hourly_rate > avg × 1.5
     │
     ├── isPeakHour = true & floor ≥ 85%
     │       ▼
@@ -1637,12 +1652,8 @@ Complexity: O(F) — F = số tầng
     │
     └── Normal hours
             ▼
-        🤖 AI: Duration Prediction → estimatedDuration
-            │ ML_model.predict(vehicleType, hour, weekday)
-            │ Fallback: user_input hoặc AVG(duration) theo loại xe
-            ▼
         WSM Scoring — [P5] TOPSIS/CRITIC
-            │ Score = W1×D + W2×F + W3×M(AI_duration) + W4×L
+            │ Score = W1×D + W2×F + W3×M + W4×L
             ▼
         Target Floor (highest WSM score)
             │
@@ -1664,6 +1675,8 @@ Complexity: O(F) — F = số tầng
 | RQ2 | [P3] arXiv 2025 + [P4] Wang 2021 | Preprint + Q1/IF=7.9 | **4.2/5** | Giảm 72–76% search time; Centralized > decentralized | [P7] MARL constraints |
 | RQ3 | [P5] Amari 2023 + [P7] Zhang 2022 | Q2/IF=3.3 + Q1/IF=7.9 | **4.4/5** | CRITIC trọng số khách quan; TOPSIS ranking ổn định | [P6] COA (nâng cấp) |
 | RQ4 | [P8] Zhang 2024 + [P10] Wang 2022 | Q1-JCR + Q1/IF=7.9 | **4.3/5** | Peak demand allocation giảm 4.5% delay; Reservation-aware | [P9] DCS (nâng cấp) |
+| RQ5 | [P12] Chen & Tsai 2021 + [P11] Quamar 2022 | Q1/IF=3.4 + Top-tier survey | **4.1/5** | Chatbot FM kiến trúc 4-module áp dụng trực tiếp; NLI survey toàn diện | [P13] TAM, [P14] SLR |
+| RQ6 | [P15] Hong 2022 + [P17] Saharan 2020 | CIKM-A + Q1/IF=7.5 | **4.0/5** | Prediction→pricing framework trực tiếp; ML pricing 3 tầng cải thiện 23% revenue | [P16] DRL-DP, [P18] Review |
 
 **Papers KHÔNG được chọn làm chính:** [P1] CNP/MAS quá phức tạp cho 9 tuần; [P6] COA metaheuristic khó implement; [P9] DQN/DRL cần training data lớn + GPU.
 
@@ -1676,15 +1689,13 @@ server/services/algorithms/
 ├── greedyMatching.service.js   ← RQ2: Hungarian → Greedy [P3]
 ├── loadBalancer.service.js     ← RQ4: NSGA-II → Threshold LB [P8]
 ├── peakDetection.service.js    ← RQ4: Peak hour detection [P8]
-├── slotAssignment.service.js   ← Orchestrator (tích hợp tất cả)
+└── slotAssignment.service.js   ← Orchestrator (tích hợp tất cả)
 │
 server/services/ai/
-├── peakHourPredictor.service.js    ← 🤖 AI: Linear Regression / Random Forest
-├── durationPredictor.service.js    ← 🤖 AI: Duration Prediction
-├── modelTrainer.service.js         ← 🤖 AI: Training pipeline (cron weekly)
-└── models/                         ← Trained model files (.json)
-    ├── peak_hour_model.json
-    └── duration_model.json
+├── chatbotQuery.service.js     ← RQ5: Intent-based NLQ [P11][P12]
+├── intentClassifier.service.js ← RQ5: Intent classification [P12]
+├── entityExtractor.service.js  ← RQ5: Entity extraction [P11]
+└── pricingSuggestion.service.js ← RQ6: Demand-based Pricing [P15][P17]
 ```
 
 ### Schema Changes cần thiết
@@ -1696,10 +1707,11 @@ server/services/ai/
 | `ParkingSession` | `suggestedSlotId` | ObjectId | null | So sánh suggested vs actual slot | RQ2, RQ3 |
 | `SystemConfig` | `algorithmWeights` | Object {W1,W2,W3,W4} | {0.25,0.30,0.25,0.20} | Trọng số WSM cấu hình | RQ3 |
 | `SystemConfig` | `loadBalancingThreshold` | Number | 0.85 | Ngưỡng kích hoạt LB | RQ4 |
-| `SystemConfig` | `peakHourMultiplier` | Number | 1.5 | Hệ số phát hiện giờ cao điểm (fallback) | RQ4 |
-| `SystemConfig` | `aiPredictionEnabled` | Boolean | false | Bật/tắt AI prediction (fallback về rule-based) | AI |
-| `AIModelMeta` | `peakHourModel` | Object | null | Metadata model peak hour: accuracy, lastTrained, features | AI |
-| `AIModelMeta` | `durationModel` | Object | null | Metadata model duration: MAE, lastTrained, features | AI |
+| `SystemConfig` | `peakHourMultiplier` | Number | 1.5 | Hệ số phát hiện giờ cao điểm | RQ4 |
+| `SystemConfig` | `chatbotEnabled` | Boolean | false | Bật/tắt AI chatbot query | RQ5 |
+| `ChatHistory` | `userId, message, intent, response, timestamp` | Mixed | — | Lưu lịch sử hội thoại chatbot | RQ5 |
+| `PricingSuggestion` | `facilityId, vehicleType, currentPrice, suggestedPrice, reason, confidence, status, createdAt` | Mixed | — | Lưu lịch sử gợi ý giá | RQ6 |
+| `SystemConfig` | `pricingSuggestionEnabled` | Boolean | false | Bật/tắt AI pricing suggestion | RQ6 |
 
 ### API Endpoints cho thuật toán
 
@@ -1710,10 +1722,10 @@ server/services/ai/
 | `GET` | `/api/reports/peak-hours` | Phân tích giờ cao điểm tự động | RQ4 | FR-6.4 |
 | `GET` | `/api/reports/load-imbalance` | Load Imbalance Index giữa các tầng | RQ4 | FR-6.3 |
 | `PUT` | `/api/system-config/algorithm-weights` | Manager điều chỉnh W1–W4 | RQ3 | FR-20.1 |
-| `POST` | `/api/ai/train-models` | Trigger re-train AI models (admin) | AI | FR-20.1 |
-| `GET` | `/api/ai/model-status` | Xem trạng thái model: accuracy, lastTrained | AI | FR-20.4 |
-| `GET` | `/api/ai/predict-peak?hour=&weekday=` | Dự đoán giờ cao điểm (test/debug) | AI | FR-6.4 |
-| `GET` | `/api/ai/predict-duration?vehicleType=&hour=&weekday=` | Dự đoán thời gian gửi (test/debug) | AI | FR-8.3 |
+| `POST` | `/api/ai/chat-query` | Chatbot truy vấn báo cáo bằng ngôn ngữ tự nhiên | RQ5 | FR-6.5 |
+| `GET` | `/api/ai/chat-history` | Lịch sử hội thoại chatbot của user | RQ5 | FR-6.5 |
+| `GET` | `/api/ai/pricing-suggestion/:facilityId` | Gợi ý điều chỉnh bảng giá cho tòa nhà | RQ6 | FR-5.5 |
+| `GET` | `/api/ai/pricing-suggestion/compare` | So sánh giá giữa các tòa nhà | RQ6 | FR-5.5 |
 
 ---
 
@@ -1724,81 +1736,9 @@ server/services/ai/
 | Phase 1 (Tuần 1) | 1 | Thiết kế DB schema với các field RQ-ready: `Floor.distanceToGate`, `ParkingSession.assignmentMode` |
 | Phase 3 (Tuần 4) | 4 | Implement API gợi ý tầng cơ bản (FR-8.3) hỗ trợ 2 mode: `auto` / `manual`. Thu thập dữ liệu baseline |
 | Phase 4 (Tuần 6) | 6 | Implement WSM Scoring [P5], Zone Filtering [P2], Greedy Matching [P3]. Schema changes + API weights |
-| Phase 4 (Tuần 7) | 7 | Implement Threshold Load Balancing [P8], Peak Detection [P8], Reservation-Aware [P10]. **🤖 AI: Peak Hour Prediction + Duration Prediction** |
-| Phase 5 (Tuần 8) | 8 | A/B testing (4 scenario × 500 sessions + AI vs rule-based), thu thập metrics, đánh giá giả thuyết H1–H4 |
-| Phase 6 (Tuần 9) | 9 | Tổng hợp Research Report: kết quả RQ, mapping thuật toán gốc → đơn giản hóa, **AI accuracy report**, đề xuất cải tiến |
-
----
-
-## 🤖 AI Prediction Modules
-
-Hệ thống bổ sung 2 module AI nhẹ để nâng cao chất lượng quyết định, **không thay đổi kiến trúc pipeline hiện tại**.
-
-### Module 1: Peak Hour Prediction
-
-| Thuộc tính | Mô tả |
-|-----------|-------|
-| **Mục đích** | Dự đoán giờ cao điểm chính xác hơn rule-based (thay thế `isPeakHour = rate > avg × 1.5`) |
-| **Input features** | `hour` (0-23), `weekday` (0-6), `month` (1-12), `isHoliday` (boolean), `recentCheckInRate` (last 30 min) |
-| **Output** | `isPeakHour` (boolean) + `confidence` (0-1) |
-| **Model** | Linear Regression → Random Forest (nâng cấp khi có đủ data) |
-| **Training data** | Lịch sử check-in sessions (≥ 30 ngày, aggregate theo giờ) |
-| **Training schedule** | Cron job chạy 1 lần/tuần (Chủ nhật 2:00 AM) |
-| **Thư viện** | `ml-regression` (Linear) hoặc `ml-random-forest` (RF) — JavaScript native, không cần Python |
-| **Fallback** | Nếu model chưa train hoặc accuracy < 70% → dùng rule-based `rate > avg × 1.5` |
-| **Metric đánh giá** | Accuracy, Precision, Recall so với actual peak hours |
-
-```
-TRƯỚC (rule-based):
-  isPeakHour = hourly_rate > avg × 1.5    ← threshold cứng, không học từ dữ liệu
-
-SAU (AI-enhanced):
-  isPeakHour = PeakHourModel.predict({    ← học từ patterns lịch sử
-    hour: 17,
-    weekday: 1,        // Thứ 2
-    month: 6,
-    isHoliday: false,
-    recentRate: 45      // 45 xe/30 phút
-  })
-  // → { isPeakHour: true, confidence: 0.87 }
-```
-
-### Module 2: Parking Duration Prediction
-
-| Thuộc tính | Mô tả |
-|-----------|-------|
-| **Mục đích** | Dự đoán thời gian gửi xe → cải thiện WSM scoring W3 (duration match) |
-| **Input features** | `vehicleType` (encoded), `checkInHour` (0-23), `weekday` (0-6), `month` (1-12) |
-| **Output** | `estimatedDuration` (phút) |
-| **Model** | Linear Regression → Random Forest |
-| **Training data** | Lịch sử parking sessions hoàn thành (≥ 200 records) |
-| **Training schedule** | Cron job chạy 1 lần/tuần (Chủ nhật 2:30 AM) |
-| **Thư viện** | `ml-regression` / `ml-random-forest` — JavaScript native |
-| **Fallback** | Nếu model chưa train → dùng `AVG(duration)` theo loại xe từ dữ liệu lịch sử |
-| **Metric đánh giá** | MAE (Mean Absolute Error), RMSE so với actual duration |
-
-```
-TRƯỚC (manual):
-  estimatedDuration = user_input           ← Staff đoán hoặc không nhập
-
-SAU (AI-enhanced):
-  estimatedDuration = DurationModel.predict({
-    vehicleType: 'car',
-    checkInHour: 8,
-    weekday: 1,        // Thứ 2
-    month: 6
-  })
-  // → { estimatedDuration: 480, unit: 'minutes' }  // ~8 tiếng (đi làm)
-```
-
-### So sánh TRƯỚC vs SAU khi thêm AI
-
-| Component | TRƯỚC (Rule-based) | SAU (AI-enhanced) | Cải thiện |
-|-----------|-------------------|-------------------|----------|
-| Peak Detection | `rate > avg × 1.5` (threshold cứng) | ML model học từ patterns (giờ, ngày, tháng, ngày lễ) | Chính xác hơn, tự adapt theo mùa/sự kiện |
-| Duration Estimate | Staff nhập tay / không nhập | ML model dự đoán từ lịch sử | WSM scoring W3 chính xác hơn → slot assignment tốt hơn |
-| Fallback | N/A | Tự động fallback về rule-based nếu model chưa sẵn sàng | Không bao giờ fail |
-| Training | N/A | Cron weekly, JavaScript native (không cần Python/GPU) | Tự cập nhật |
+| Phase 4 (Tuần 7) | 7 | Implement Threshold Load Balancing [P8], Peak Detection [P8], Reservation-Aware [P10]. **Implement AI Chatbot Query [P11][P12] (RQ5). Implement AI Pricing Suggestion [P15][P17] (RQ6)** |
+| Phase 5 (Tuần 8) | 8 | A/B testing (4+2 scenario × 500 sessions), thu thập metrics, đánh giá giả thuyết H1–H6 |
+| Phase 6 (Tuần 9) | 9 | Tổng hợp Research Report: kết quả RQ1–RQ6, mapping thuật toán gốc → đơn giản hóa, đề xuất cải tiến |
 
 ---
 

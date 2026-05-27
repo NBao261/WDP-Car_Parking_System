@@ -1,6 +1,64 @@
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit-table';
 
+// ── Interfaces for type-safety ──────────────────────────────────────────
+
+interface RevenueTimePeriod {
+  label: string;
+  totalRevenue: number;
+  transactionCount: number;
+  avgRevenue: number;
+}
+
+interface RevenueMethod {
+  method: string;
+  totalRevenue: number;
+  count: number;
+}
+
+interface RevenueReportData {
+  byTimePeriod?: RevenueTimePeriod[];
+  byMethod?: RevenueMethod[];
+}
+
+interface TrafficRow {
+  label: string;
+  checkIn: number;
+  checkOut: number;
+}
+
+interface TrafficReportData {
+  data?: TrafficRow[];
+}
+
+interface OccupancyRow {
+  facilityName: string;
+  floorName: string;
+  total: number;
+  occupied: number;
+  available: number;
+  occupancyRate: number;
+}
+
+interface OccupancyReportData {
+  floors?: OccupancyRow[];
+}
+
+interface PeakHourRow {
+  label: string;
+  checkIn: number;
+  checkOut: number;
+  totalActivity: number;
+}
+
+interface PeakHoursReportData {
+  hourlyDistribution?: PeakHourRow[];
+}
+
+type ReportData = RevenueReportData | TrafficReportData | OccupancyReportData | PeakHoursReportData;
+
+// ── Export Service ──────────────────────────────────────────────────────
+
 export class ExportService {
   static async generateReport(reportType: string, format: string, data: any): Promise<Buffer> {
     if (format === 'excel') {
@@ -63,7 +121,7 @@ export class ExportService {
     }
 
     const buffer = await workbook.xlsx.writeBuffer();
-    return buffer as Buffer;
+    return Buffer.from(buffer as ArrayBuffer);
   }
 
   private static async generatePdf(reportType: string, data: any): Promise<Buffer> {

@@ -5,7 +5,7 @@ import { useCheckinFlow } from "./hooks/useCheckinFlow";
 
 export default function CheckinStaffPage({ onFlagException }: { onFlagException?: () => void }) {
   const {
-    gate, setGate,
+    gate: _gate, setGate: _setGate,
     vehicleTypeId, setVehicleTypeId,
     plate, setPlate,
     loading,

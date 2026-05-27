@@ -39,17 +39,35 @@ export class ExceptionController {
   }
 
   /**
-   * Duyệt / Xử lý ngoại lệ (Manager)
+   * Staff xử lý ngoại lệ
    */
   static async resolveException(req: Request, res: Response, next: NextFunction) {
     try {
       const exceptionId = req.params.id as string;
       const data = {
         ...req.body,
-        managerId: req.user?.userId,
+        staffId: req.user?.userId,
       };
 
       const exception = await ExceptionService.resolveException(exceptionId, data);
+      res.status(200).json({ success: true, data: exception });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Manager review + thêm ghi chú
+   */
+  static async addManagerReview(req: Request, res: Response, next: NextFunction) {
+    try {
+      const exceptionId = req.params.id as string;
+      const data = {
+        managerNote: req.body.managerNote,
+        managerId: req.user!.userId,
+      };
+
+      const exception = await ExceptionService.addManagerReview(exceptionId, data);
       res.status(200).json({ success: true, data: exception });
     } catch (error) {
       next(error);

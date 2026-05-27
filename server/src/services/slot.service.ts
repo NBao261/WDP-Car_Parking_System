@@ -4,6 +4,25 @@ import { AppError } from '../middlewares/error.middleware';
 
 export class SlotService {
   static async createSlot(data: Partial<IParkingSlot>): Promise<IParkingSlot> {
+    // Validate slot count against floor maxSlots
+    const floor = await Floor.findById(data.floorId);
+    if (!floor) {
+      throw new AppError('Floor not found', 404);
+    }
+
+    if (!floor.allowedVehicleTypes.includes(data.vehicleTypeId as any)) {
+      throw new AppError('Loại phương tiện này không được hỗ trợ tại tầng này', 400);
+    }
+
+    const currentSlotCount = await ParkingSlot.countDocuments({
+      floorId: data.floorId,
+      isDeleted: false,
+    });
+
+    if (currentSlotCount >= floor.totalSlots) {
+      throw new AppError(`Tầng "${floor.name}" đã đạt tối đa ${floor.totalSlots} slot. Không thể thêm slot mới.`, 400);
+    }
+
     const existingSlot = await ParkingSlot.findOne({ code: data.code, facilityId: data.facilityId });
     if (existingSlot) {
       throw new AppError('Slot code already exists in this facility', 400);
@@ -12,13 +31,33 @@ export class SlotService {
     const newSlot = new ParkingSlot(data);
     await newSlot.save();
 
-    // Update floor totalSlots
-    await Floor.findByIdAndUpdate(data.floorId, { $inc: { totalSlots: 1 } });
-
     return newSlot;
   }
 
   static async createBulkSlots(facilityId: string, floorId: string, vehicleType: string, prefix: string, startNumber: number, count: number): Promise<any[]> {
+    // Validate slot count against floor maxSlots
+    const floor = await Floor.findById(floorId);
+    if (!floor) {
+      throw new AppError('Floor not found', 404);
+    }
+
+    if (!floor.allowedVehicleTypes.includes(vehicleType as any)) {
+      throw new AppError('Loại phương tiện này không được hỗ trợ tại tầng này', 400);
+    }
+
+    const currentSlotCount = await ParkingSlot.countDocuments({
+      floorId,
+      isDeleted: false,
+    });
+
+    if (currentSlotCount + count > floor.totalSlots) {
+      const remaining = floor.totalSlots - currentSlotCount;
+      throw new AppError(
+        `Tầng "${floor.name}" chỉ còn ${remaining} slot trống (max: ${floor.totalSlots}, hiện có: ${currentSlotCount}). Không thể thêm ${count} slot.`,
+        400
+      );
+    }
+
     const slotsToCreate = [];
     for (let i = 0; i < count; i++) {
       const code = `${prefix}${startNumber + i}`;
@@ -43,11 +82,9 @@ export class SlotService {
 
     const createdSlots = await ParkingSlot.insertMany(slotsToCreate);
 
-    // Update floor totalSlots
-    await Floor.findByIdAndUpdate(floorId, { $inc: { totalSlots: count } });
-
     return createdSlots;
   }
+
 
   static async updateSlotStatus(id: string, status: string, reason?: string, userRole?: string): Promise<IParkingSlot | null> {
     const slot = await ParkingSlot.findById(id);
@@ -87,14 +124,14 @@ export class SlotService {
       throw new AppError('Cannot delete a slot that is currently occupied or reserved', 400);
     }
 
-    await ParkingSlot.findByIdAndDelete(id);
-
-    // Update floor totalSlots
-    await Floor.findByIdAndUpdate(slot.floorId, { $inc: { totalSlots: -1 } });
+    // Soft delete (giữ totalSlots cố định vì đó là max capacity)
+    slot.isDeleted = true;
+    slot.status = 'maintenance' as any;
+    await slot.save();
   }
 
   static async getSlotById(id: string): Promise<IParkingSlot | null> {
-    const slot = await ParkingSlot.findById(id).populate('vehicleTypeId');
+    const slot = await ParkingSlot.findById(id).populate('vehicleTypeId').populate('currentSessionId');
     if (!slot) {
       throw new AppError('Slot not found', 404);
     }
@@ -102,6 +139,6 @@ export class SlotService {
   }
 
   static async getSlotsByFloor(floorId: string): Promise<IParkingSlot[]> {
-    return ParkingSlot.find({ floorId }).populate('vehicleTypeId').sort({ code: 1 });
+    return ParkingSlot.find({ floorId, isDeleted: false }).populate('vehicleTypeId').populate('currentSessionId').sort({ code: 1 });
   }
 }
