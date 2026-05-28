@@ -45,13 +45,6 @@ function hasTimeWindowOverlap(rates: RateWithTime[]): boolean {
   return false;
 }
 
-function isFullDayCoverage(rates: RateWithTime[]): boolean {
-  const intervals = getTimeWindowIntervals(rates);
-  let totalMinutes = 0;
-  for (const [s, e] of intervals) totalMinutes += e - s;
-  return totalMinutes === 1440;
-}
-
 // FR-5.1: Tạo bảng giá
 export const createPricingPlanSchema = z.object({
   body: z.object({
@@ -109,15 +102,6 @@ export const createPricingPlanSchema = z.object({
   }, {
     message: 'Các khung giờ trong time_window không được chồng chéo nhau',
     path: ['rates'],
-  }).refine((data) => {
-    // time_window: phải phủ kín 24 giờ
-    if (data.feeMethod === FeeMethod.TIME_WINDOW) {
-      return isFullDayCoverage(data.rates);
-    }
-    return true;
-  }, {
-    message: 'Các khung giờ trong time_window phải phủ kín 24 giờ (không được có khoảng trống)',
-    path: ['rates'],
   }),
 });
 
@@ -152,15 +136,6 @@ export const updatePricingPlanSchema = z.object({
     return true;
   }, {
     message: 'Các khung giờ trong time_window không được chồng chéo nhau',
-    path: ['rates'],
-  }).refine((data) => {
-    // time_window: phải phủ kín 24 giờ
-    if (data.feeMethod === FeeMethod.TIME_WINDOW && data.rates) {
-      return isFullDayCoverage(data.rates);
-    }
-    return true;
-  }, {
-    message: 'Các khung giờ trong time_window phải phủ kín 24 giờ (không được có khoảng trống)',
     path: ['rates'],
   }),
 });
