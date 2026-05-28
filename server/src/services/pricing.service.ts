@@ -4,6 +4,81 @@ import { ParkingFacility } from '../models/parkingFacility.model';
 import { ParkingSession } from '../models/parkingSession.model';
 import { AppError } from '../middlewares/error.middleware';
 
+// ── Helper: Validate time_window rates phủ kín giờ hoạt động ──
+function getTimeWindowIntervals(rates: Array<{ startTime?: string; endTime?: string }>): Array<[number, number]> {
+  const intervals: Array<[number, number]> = [];
+  for (const rate of rates) {
+    if (!rate.startTime || !rate.endTime) continue;
+    const [sH, sM] = rate.startTime.split(':').map(Number);
+    const [eH, eM] = rate.endTime.split(':').map(Number);
+    const start = sH * 60 + sM;
+    const end = eH * 60 + eM;
+    if (start < end) {
+      intervals.push([start, end]);
+    } else if (start > end) {
+      intervals.push([start, 1440]);
+      intervals.push([0, end]);
+    }
+  }
+  return intervals.sort((a, b) => a[0] - b[0]);
+}
+
+function validateTimeWindowCoverage(
+  rates: Array<{ startTime?: string; endTime?: string }>,
+  openTime: string,
+  closeTime: string
+): void {
+  const [oH, oM] = openTime.split(':').map(Number);
+  const [cH, cM] = closeTime.split(':').map(Number);
+  const openMin = oH * 60 + oM;
+  const closeMin = cH * 60 + cM;
+  const is24h = openMin === closeMin;
+
+  // Tính tổng phút giờ hoạt động
+  let operatingMinutes: number;
+  let operatingIntervals: Array<[number, number]>;
+
+  if (is24h) {
+    operatingMinutes = 1440;
+    operatingIntervals = [[0, 1440]];
+  } else if (openMin < closeMin) {
+    // Bình thường: VD 06:00-22:00
+    operatingMinutes = closeMin - openMin;
+    operatingIntervals = [[openMin, closeMin]];
+  } else {
+    // Qua đêm: VD 22:00-06:00
+    operatingMinutes = (1440 - openMin) + closeMin;
+    operatingIntervals = [[openMin, 1440], [0, closeMin]];
+  }
+
+  // Flatten rates thành intervals
+  const rateIntervals = getTimeWindowIntervals(rates);
+  const rateMinutes = rateIntervals.reduce((sum, [s, e]) => sum + (e - s), 0);
+
+  // Check tổng phút khớp
+  if (rateMinutes !== operatingMinutes) {
+    throw new AppError(
+      `Các khung giờ phải phủ kín giờ hoạt động (${openTime} - ${closeTime} = ${operatingMinutes} phút). Hiện tại rates chỉ phủ ${rateMinutes} phút.`,
+      400
+    );
+  }
+
+  // Check mỗi rate interval nằm trong giờ hoạt động
+  for (const [rStart, rEnd] of rateIntervals) {
+    const isWithinOperating = operatingIntervals.some(
+      ([oStart, oEnd]) => rStart >= oStart && rEnd <= oEnd
+    );
+    if (!isWithinOperating) {
+      const rStartStr = `${String(Math.floor(rStart / 60)).padStart(2, '0')}:${String(rStart % 60).padStart(2, '0')}`;
+      const rEndStr = rEnd === 1440 ? '00:00' : `${String(Math.floor(rEnd / 60)).padStart(2, '0')}:${String(rEnd % 60).padStart(2, '0')}`;
+      throw new AppError(
+        `Khung giờ ${rStartStr}-${rEndStr} vượt ngoài giờ hoạt động (${openTime} - ${closeTime}). Ngoài giờ hoạt động sẽ tính theo phí quá giờ (overtimeFeePerHour).`,
+        400
+      );
+    }
+  }
+}
+
 export class PricingService {
   static async createPricingPlan(data: Partial<IPricingPlan>): Promise<IPricingPlan> {
     // Validate vehicleType tồn tại
@@ -25,6 +100,11 @@ export class PricingService {
       } else {
         data.feeMethod = FeeMethod.DURATION_BASED;
       }
+    }
+
+    // Validate time_window: rates phải phủ kín giờ hoạt động
+    if (data.feeMethod === FeeMethod.TIME_WINDOW && data.rates) {
+      validateTimeWindowCoverage(data.rates, facility.openTime, facility.closeTime);
     }
 
     // If the new plan is set to active, deactivate existing active plans for the same facility and vehicle type
@@ -51,6 +131,18 @@ export class PricingService {
       
       if (fieldsAttemptedToModify.length > 0) {
         throw new AppError(`Không thể sửa các thông tin giá tiền (${fieldsAttemptedToModify.join(', ')}) vì bảng giá này đã từng được áp dụng cho xe. Vui lòng tạo bảng giá mới.`, 400);
+      }
+    }
+
+    // Validate time_window coverage khi cập nhật rates
+    const effectiveFeeMethod = data.feeMethod || (await PricingPlan.findById(id))?.feeMethod;
+    if (effectiveFeeMethod === FeeMethod.TIME_WINDOW && data.rates) {
+      const planForFacility = await PricingPlan.findById(id);
+      if (planForFacility) {
+        const facility = await ParkingFacility.findById(planForFacility.facilityId);
+        if (facility) {
+          validateTimeWindowCoverage(data.rates, facility.openTime, facility.closeTime);
+        }
       }
     }
 
