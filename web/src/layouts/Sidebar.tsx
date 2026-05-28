@@ -3,18 +3,21 @@ import { NavLink } from 'react-router-dom';
 import { ConfirmModal } from '../components/ConfirmModal';
 import {
   LayoutDashboard,
-  Map,
+  Building2,
   Car,
   Wallet,
   Users,
   Settings,
   ScrollText,
   LogOut,
-  ClipboardList,
   ScanLine,
   Shield,
-  type LucideIcon,
   AlertTriangle,
+  BarChart3,
+  TrendingUp,
+  ParkingSquare,
+  History,
+  type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '../store';
 import { UserRole } from '../../../shared/types';
@@ -24,14 +27,14 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   roles?: UserRole[];
+  section?: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
   // ── Admin ──
   { path: '/admin', label: 'Tổng Quan', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
-  { path: '/admin/facilities', label: 'Cơ Sở', icon: Map, roles: [UserRole.ADMIN] },
+  { path: '/admin/facilities', label: 'Cơ Sở', icon: Building2, roles: [UserRole.ADMIN] },
   { path: '/admin/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.ADMIN] },
-
   { path: '/admin/pricing', label: 'Bảng Giá & Doanh Thu', icon: Wallet, roles: [UserRole.ADMIN] },
   { path: '/admin/users', label: 'Người Dùng', icon: Users, roles: [UserRole.ADMIN] },
   { path: '/admin/roles', label: 'Phân Quyền', icon: Shield, roles: [UserRole.ADMIN] },
@@ -39,10 +42,15 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/admin/logs', label: 'Lịch Sử Hoạt Động', icon: ScrollText, roles: [UserRole.ADMIN] },
 
   // ── Manager ──
-  { path: '/manager', label: 'Tổng Quan', icon: LayoutDashboard, roles: [UserRole.MANAGER] },
-  { path: '/manager/zones', label: 'Khu Vực', icon: Map, roles: [UserRole.MANAGER] },
-  { path: '/manager/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.MANAGER] },
-  { path: '/manager/reports', label: 'Báo Cáo', icon: ClipboardList, roles: [UserRole.MANAGER] },
+  { path: '/manager', label: 'Tổng Quan', icon: LayoutDashboard, roles: [UserRole.MANAGER], section: '' },
+  { path: '/manager/buildings', label: 'Tòa Nhà & Tầng', icon: Building2, roles: [UserRole.MANAGER], section: 'QUẢN LÝ' },
+  { path: '/manager/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.MANAGER], section: 'QUẢN LÝ' },
+  { path: '/manager/slots', label: 'Quản Lý Slot', icon: ParkingSquare, roles: [UserRole.MANAGER], section: 'QUẢN LÝ' },
+  { path: '/manager/pricing', label: 'Bảng Giá & Chính Sách', icon: Wallet, roles: [UserRole.MANAGER], section: 'QUẢN LÝ' },
+  { path: '/manager/revenue-reports', label: 'Báo Cáo Doanh Thu', icon: BarChart3, roles: [UserRole.MANAGER], section: 'BÁO CÁO' },
+  { path: '/manager/traffic-reports', label: 'Lưu Lượng & Chiếm Dụng', icon: TrendingUp, roles: [UserRole.MANAGER], section: 'BÁO CÁO' },
+  { path: '/manager/exceptions', label: 'Xử Lý Ngoại Lệ', icon: AlertTriangle, roles: [UserRole.MANAGER], section: 'VẬN HÀNH' },
+  { path: '/manager/sessions', label: 'Lượt Gửi Xe', icon: History, roles: [UserRole.MANAGER], section: 'VẬN HÀNH' },
 
   // ── Staff ──
   { path: '/staff', label: 'Xe Ra Vào', icon: ScanLine, roles: [UserRole.STAFF] },
@@ -104,22 +112,38 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <span className="font-bold text-xl tracking-tight">LYNC PARK</span>
         </div>
 
-        <nav className="flex-1 px-4 pb-6 space-y-1.5 overflow-y-auto">
-          {visibleNavItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/admin' || item.path === '/manager' || item.path === '/staff'}
-              onClick={onClose}
-              className={({ isActive }) => `
-                flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 font-medium text-sm
-                ${isActive ? 'bg-white text-brand shadow-sm' : 'text-brand/70 hover:bg-brand/5 hover:text-brand'}
-              `}
-            >
-              <item.icon size={20} className="shrink-0" />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
+        <nav className="flex-1 px-4 pb-6 overflow-y-auto pt-2">
+          {(() => {
+            const rendered: React.ReactNode[] = [];
+            let lastSection: string | undefined = undefined;
+            visibleNavItems.forEach((item, idx) => {
+              const hasSection = item.section !== undefined;
+              if (hasSection && item.section !== lastSection && item.section !== '') {
+                rendered.push(
+                  <div key={`section-${idx}`} className="text-[10px] font-bold text-brand/40 uppercase tracking-widest px-2 pt-4 pb-1">
+                    {item.section}
+                  </div>
+                );
+              }
+              lastSection = item.section;
+              rendered.push(
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.path === '/admin' || item.path === '/manager' || item.path === '/staff'}
+                  onClick={onClose}
+                  className={({ isActive }) => `
+                    flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all duration-200 font-medium text-sm mb-0.5
+                    ${isActive ? 'bg-white text-brand shadow-sm' : 'text-brand/70 hover:bg-brand/5 hover:text-brand'}
+                  `}
+                >
+                  <item.icon size={18} className="shrink-0" />
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            });
+            return rendered;
+          })()}
         </nav>
 
         <div className="p-4 mt-auto shrink-0">

@@ -79,7 +79,10 @@ export default function ShiftSelectionPage() {
         {/* Actions */}
         <div className="flex gap-3 pt-8 mt-4">
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => {
+              useAuthStore.getState().logout();
+              navigate("/login");
+            }}
             className="flex-1 h-11 border border-[#e8e9e8] rounded-[8px] text-[#060606] font-medium hover:bg-gray-50 transition-colors"
           >
             Hủy

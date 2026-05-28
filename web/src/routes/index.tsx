@@ -22,6 +22,16 @@ const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
 
 // ── Manager / Staff Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
+const ManagerFacilitySelectionPage = lazy(() => import('../pages/manager/facilitySelection/ManagerFacilitySelectionPage'));
+
+
+// Manager Sub-pages (lazy)
+const SharedPlaceholder = lazy(() => import('../pages/manager/SharedPlaceholder'));
+const ManagerRevenueReportsPage = lazy(() => import('../pages/manager/reports/ManagerRevenueReportsPage'));
+const ManagerTrafficReportsPage = lazy(() => import('../pages/manager/reports/ManagerTrafficReportsPage'));
+const ManagerExceptionsPage = lazy(() => import('../pages/manager/exceptions/ManagerExceptionsPage'));
+const ManagerSessionsPage = lazy(() => import('../pages/manager/sessions/ManagerSessionsPage'));
+
 // Staff Pages ──
 const VehicleCheckPage = lazy(() => import('../pages/staff/vehicleCheck/VehicleCheckPage'));
 const ActiveSessionsPage = lazy(() => import('../pages/staff/activeSessions/ActiveSessionsPage'));
@@ -67,7 +77,15 @@ export const router = createBrowserRouter([
         children: [{ index: true, element: <S><ShiftSelectionPage /></S> }],
       },
       {
+        path: 'manager/facility-selection',
+        element: (
+          <ProtectedRoute allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]} />
+        ),
+        children: [{ index: true, element: <S><ManagerFacilitySelectionPage /></S> }],
+      },
+      {
         element: <MainLayout />,
+
         children: [
           // ── Admin Routes ──────────────────────────────────
           {
@@ -91,10 +109,21 @@ export const router = createBrowserRouter([
           },
 
           // ── Manager Routes ────────────────────────────────
+
           {
             path: 'manager',
             element: <ProtectedRoute allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]} />,
-            children: [{ index: true, element: <ManagerDashboard /> }],
+            children: [
+              { index: true, element: <ManagerDashboard /> },
+              { path: 'buildings', element: <S><SharedPlaceholder /></S> },
+              { path: 'vehicles', element: <S><SharedPlaceholder /></S> },
+              { path: 'slots', element: <S><SharedPlaceholder /></S> },
+              { path: 'pricing', element: <S><SharedPlaceholder /></S> },
+              { path: 'revenue-reports', element: <S><ManagerRevenueReportsPage /></S> },
+              { path: 'traffic-reports', element: <S><ManagerTrafficReportsPage /></S> },
+              { path: 'exceptions', element: <S><ManagerExceptionsPage /></S> },
+              { path: 'sessions', element: <S><ManagerSessionsPage /></S> },
+            ],
           },
 
           // ── Staff Routes ──────────────────────────────────
