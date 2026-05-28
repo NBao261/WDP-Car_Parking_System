@@ -603,9 +603,21 @@ export class SessionService {
     }
     // ═══════════════════════════════════════════════════
     // NHÁNH 3: TIME_WINDOW (theo khung giờ trong ngày)
+    // Rates chỉ phủ giờ hoạt động → ngoài giờ tính overtimeFeePerHour
     // ═══════════════════════════════════════════════════
     else if (feeMethod === 'time_window') {
-      baseFee = this.calculateTimeWindowFee(checkInTime, checkOutTime, pricingPlan.rates, pricingPlan.maxDailyFee || 0);
+      // Lookup facility operating hours
+      const facility = await ParkingFacility.findById(session.facilityId);
+      if (!facility) throw new AppError('Facility không tồn tại', 404);
+
+      const twResult = this.calculateTimeWindowFee(
+        checkInTime, checkOutTime, pricingPlan.rates,
+        pricingPlan.maxDailyFee || 0,
+        facility.openTime, facility.closeTime,
+        pricingPlan.overtimeFeePerHour || 0
+      );
+      baseFee = twResult.baseFee;
+      overtimeFee = twResult.overtimeFee;
     }
     // Fallback
     else {
@@ -650,27 +662,44 @@ export class SessionService {
 
   /**
    * Thuật toán tính phí theo khung giờ trong ngày (Time-Window)
-   * Đi từ checkIn → checkOut, xác định mỗi thời điểm nằm trong khung giờ nào,
-   * tính số giờ thực tế (ceil) × đơn giá khung đó → cộng dồn.
    *
-   * VD: rates = [
-   *   { startTime: "06:00", endTime: "12:00", amount: 5000 },   // 5k/giờ
-   *   { startTime: "12:00", endTime: "22:00", amount: 10000 },  // 10k/giờ
-   *   { startTime: "22:00", endTime: "06:00", amount: 100000 }, // 100k/giờ (phạt qua đêm)
-   * ]
-   * Gửi 21:00 → 23:00:
-   *   - 21:00-22:00 (1h trong khung 10k) = 10k
-   *   - 22:00-23:00 (1h trong khung 100k) = 100k
-   *   - Tổng = 110k
+   * Logic mới:
+   * - Rates chỉ phủ giờ hoạt động (openTime → closeTime)
+   * - Ngoài giờ hoạt động → tính theo overtimeFeePerHour
+   * - Hỗ trợ: bãi 24h (openTime === closeTime → không có overtime),
+   *   bãi bình thường (VD: 06:00-22:00), bãi qua đêm (VD: 22:00-06:00)
+   *
+   * VD: Bãi 06:00-22:00, overtimeFeePerHour = 50,000đ
+   *   rates = [
+   *     { startTime: "06:00", endTime: "12:00", amount: 5000 },
+   *     { startTime: "12:00", endTime: "22:00", amount: 10000 },
+   *   ]
+   *   Gửi 21:00 → 07:00 hôm sau:
+   *     - 21:00-22:00 (1h khung 10k) = 10,000đ
+   *     - 22:00-06:00 (8h overtime @ 50k) = 400,000đ
+   *     - 06:00-07:00 (1h khung 5k) = 5,000đ
+   *     - Tổng baseFee=15k, overtimeFee=400k → Total=415k
    */
   private static calculateTimeWindowFee(
     checkIn: Date, checkOut: Date,
     rates: Array<{ startTime?: string; endTime?: string; amount: number }>,
-    maxDailyFee: number
-  ): number {
-    // ── Bước 1: Flatten rates thành các interval [from, to) trong khoảng [0, 1440) phút ──
-    // Khung qua đêm (VD: 22:00-06:00) được tách thành 2 interval: [1320,1440) và [0,360)
-    const flatIntervals: Array<{ from: number; to: number; amount: number }> = [];
+    maxDailyFee: number,
+    openTime: string,
+    closeTime: string,
+    overtimeFeePerHour: number
+  ): { baseFee: number; overtimeFee: number } {
+    const [oH, oM] = openTime.split(':').map(Number);
+    const [cH, cM] = closeTime.split(':').map(Number);
+    const openMin = oH * 60 + oM;
+    const closeMin = cH * 60 + cM;
+    const is24h = openMin === closeMin;
+
+    // ── Bước 1: Xây dựng danh sách interval phủ kín 24h ──
+    // Mỗi interval có: from, to (phút trong ngày), amount, isOvertime
+    type Interval = { from: number; to: number; amount: number; isOvertime: boolean };
+    const allIntervals: Interval[] = [];
+
+    // 1a. Thêm rate intervals (trong giờ hoạt động)
     for (const r of rates) {
       if (!r.startTime || !r.endTime) continue;
       const [sH, sM] = r.startTime.split(':').map(Number);
@@ -678,34 +707,56 @@ export class SessionService {
       const start = sH * 60 + sM;
       const end = eH * 60 + eM;
       if (start < end) {
-        flatIntervals.push({ from: start, to: end, amount: r.amount });
+        allIntervals.push({ from: start, to: end, amount: r.amount, isOvertime: false });
       } else if (start > end) {
         // Khung qua đêm → tách thành 2 khoảng
-        flatIntervals.push({ from: start, to: 1440, amount: r.amount });
-        flatIntervals.push({ from: 0, to: end, amount: r.amount });
+        allIntervals.push({ from: start, to: 1440, amount: r.amount, isOvertime: false });
+        allIntervals.push({ from: 0, to: end, amount: r.amount, isOvertime: false });
       }
     }
-    flatIntervals.sort((a, b) => a.from - b.from);
 
-    // ── Bước 2: Đi từ checkIn → checkOut, từng segment theo ranh giới khung giờ ──
-    let totalFee = 0;
+    // 1b. Thêm overtime intervals (ngoài giờ hoạt động) — chỉ khi không phải 24h
+    if (!is24h) {
+      if (openMin < closeMin) {
+        // Bãi bình thường: VD 06:00-22:00
+        // Overtime: [0, openMin) và [closeMin, 1440)
+        if (openMin > 0) {
+          allIntervals.push({ from: 0, to: openMin, amount: overtimeFeePerHour, isOvertime: true });
+        }
+        if (closeMin < 1440) {
+          allIntervals.push({ from: closeMin, to: 1440, amount: overtimeFeePerHour, isOvertime: true });
+        }
+      } else {
+        // Bãi qua đêm: VD 22:00-06:00
+        // Overtime: [closeMin, openMin)
+        if (closeMin < openMin) {
+          allIntervals.push({ from: closeMin, to: openMin, amount: overtimeFeePerHour, isOvertime: true });
+        }
+      }
+    }
+
+    allIntervals.sort((a, b) => a.from - b.from);
+
+    // ── Bước 2: Duyệt từ checkIn → checkOut theo từng segment ──
+    let baseFee = 0;
+    let overtimeFee = 0;
     const current = new Date(checkIn);
 
     while (current < checkOut) {
       const minuteOfDay = current.getHours() * 60 + current.getMinutes();
 
-      // Tìm interval hiện tại
-      const interval = flatIntervals.find(fi => minuteOfDay >= fi.from && minuteOfDay < fi.to);
+      // Tìm interval chứa thời điểm hiện tại
+      const interval = allIntervals.find(fi => minuteOfDay >= fi.from && minuteOfDay < fi.to);
       if (!interval) {
-        // Không tìm thấy khung (không nên xảy ra nếu đã validate 24h coverage)
-        current.setTime(current.getTime() + 60000); // skip 1 phút
+        // Không tìm thấy khung — skip 1 phút (safety fallback)
+        current.setTime(current.getTime() + 60000);
         continue;
       }
 
-      // Xác định thời điểm kết thúc segment: ranh giới khung giờ hoặc checkOut
+      // Xác định thời điểm kết thúc segment: ranh giới interval hoặc checkOut
       const segEndDate = new Date(current);
       if (interval.to === 1440) {
-        // Khung kết thúc lúc nửa đêm → chuyển sang 00:00 ngày hôm sau
+        // Kết thúc lúc nửa đêm → 00:00 ngày hôm sau
         segEndDate.setDate(segEndDate.getDate() + 1);
         segEndDate.setHours(0, 0, 0, 0);
       } else {
@@ -716,24 +767,29 @@ export class SessionService {
       // Tính số giờ (làm tròn lên) × đơn giá
       const durationMs = segmentEnd.getTime() - current.getTime();
       const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
-      totalFee += durationHours * interval.amount;
+
+      if (interval.isOvertime) {
+        overtimeFee += durationHours * interval.amount;
+      } else {
+        baseFee += durationHours * interval.amount;
+      }
 
       // Chuyển sang segment tiếp theo
       current.setTime(segmentEnd.getTime());
     }
 
-    // ── Bước 3: Áp dụng maxDailyFee (giá trần) nếu có ──
+    // ── Bước 3: Áp dụng maxDailyFee (giá trần) chỉ lên baseFee ──
     if (maxDailyFee > 0) {
       const startDay = new Date(checkIn.getFullYear(), checkIn.getMonth(), checkIn.getDate());
       const endDay = new Date(checkOut.getFullYear(), checkOut.getMonth(), checkOut.getDate());
       const totalDays = Math.max(1, Math.round((endDay.getTime() - startDay.getTime()) / 86400000) + 1);
       const maxTotal = maxDailyFee * totalDays;
-      if (totalFee > maxTotal) {
-        totalFee = maxTotal;
+      if (baseFee > maxTotal) {
+        baseFee = maxTotal;
       }
     }
 
-    return totalFee;
+    return { baseFee, overtimeFee };
   }
 
   /**
