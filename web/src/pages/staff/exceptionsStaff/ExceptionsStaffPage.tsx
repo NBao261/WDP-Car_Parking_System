@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Plus } from "lucide-react";
 import ExceptionsList, { ExceptionData } from "./components/ExceptionsList";
 import ExceptionDetailDrawer from "./components/ExceptionDetailDrawer";
+import ReportExceptionModal from "./components/ReportExceptionModal";
 import {
   exceptionService,
   EXCEPTION_TYPE_LABELS,
@@ -46,12 +48,15 @@ function mapApiException(exc: IException): ExceptionData {
   };
 }
 
+
 export default function ExceptionsStaffPage() {
   const [selectedException, setSelectedException] = useState<ExceptionData | null>(null);
   const [exceptionsList, setExceptionsList] = useState<ExceptionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const [filterType, setFilterType] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchExceptions = useCallback(async () => {
@@ -78,14 +83,19 @@ export default function ExceptionsStaffPage() {
 
   // Search filter (client-side — trên dữ liệu đã fetch)
   const filteredList = exceptionsList.filter((exc) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
+    const q = searchQuery.toLowerCase().trim();
+    const matchSearch =
+      !q ||
       exc.plate.toLowerCase().includes(q) ||
       exc.code.toLowerCase().includes(q) ||
-      exc.type.toLowerCase().includes(q)
-    );
+      exc.type.toLowerCase().includes(q);
+    const matchType = filterType === "ALL" || exc.typeEnum === filterType;
+    return matchSearch && matchType;
   });
+
+  const pendingCount = exceptionsList.filter(
+    (e) => e.status === "NEW" || e.status === "PROCESSING"
+  ).length;
 
   const handleContinueCheckout = (plate: string) => {
     navigate("/staff", { state: { plate } });
@@ -95,18 +105,34 @@ export default function ExceptionsStaffPage() {
     <div className="h-full max-w-6xl mx-auto pb-10 p-6">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h2 className="text-[22px] font-bold text-[#060606]">Ngoại lệ của tôi</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-[22px] font-bold text-[#060606]">Ngoại lệ của tôi</h2>
+            {pendingCount > 0 && (
+              <span className="px-2.5 py-0.5 bg-[#fff3e0] text-[#c77700] text-[11px] font-bold uppercase rounded-full tracking-wide">
+                {pendingCount} chờ xử lý
+              </span>
+            )}
+          </div>
           <p className="text-sm text-[#6b6b6b] mt-1">
             Các ngoại lệ bạn đã báo cáo và trạng thái giải quyết.
           </p>
         </div>
-        <button
-          onClick={fetchExceptions}
-          disabled={isLoading}
-          className="px-4 py-2 text-[13px] font-medium border border-[#e8e9e8] rounded-[8px] hover:bg-gray-50 transition-colors disabled:opacity-50"
-        >
-          {isLoading ? "Đang tải..." : "↻ Làm mới"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchExceptions}
+            disabled={isLoading}
+            className="px-4 py-2 text-[13px] font-medium border border-[#e8e9e8] rounded-[8px] hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            {isLoading ? "Đang tải..." : "↻ Làm mới"}
+          </button>
+          <button
+            onClick={() => setIsReportModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-[#060606] text-white text-[13px] font-semibold rounded-[8px] hover:opacity-80 transition-all shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Báo cáo ngoại lệ
+          </button>
+        </div>
       </div>
 
       <ExceptionsList
@@ -114,8 +140,10 @@ export default function ExceptionsStaffPage() {
         isLoading={isLoading}
         searchQuery={searchQuery}
         filterStatus={filterStatus}
+        filterType={filterType}
         onSearchChange={setSearchQuery}
         onFilterChange={setFilterStatus}
+        onTypeFilterChange={setFilterType}
         onSelectException={setSelectedException}
         onContinueCheckout={handleContinueCheckout}
       />
@@ -125,6 +153,15 @@ export default function ExceptionsStaffPage() {
         onClose={() => setSelectedException(null)}
         onContinueCheckout={handleContinueCheckout}
       />
+
+      <ReportExceptionModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        onSuccess={() => {
+          setIsReportModalOpen(false);
+          fetchExceptions();
+        }}
+      />
     </div>
   );
-}
+}

@@ -1,5 +1,5 @@
 import { Search, ArrowRightCircle, Loader2 } from "lucide-react";
-import { ExceptionStatus } from "../../../../services/exception.service";
+import { ExceptionStatus, ExceptionType, EXCEPTION_TYPE_LABELS } from "../../../../services/exception.service";
 
 export interface ExceptionData {
   id: string;
@@ -28,8 +28,10 @@ interface ExceptionsListProps {
   isLoading: boolean;
   searchQuery: string;
   filterStatus: string;
+  filterType?: string;
   onSearchChange: (q: string) => void;
   onFilterChange: (status: string) => void;
+  onTypeFilterChange?: (type: string) => void;
   onSelectException: (exc: ExceptionData) => void;
   onContinueCheckout: (plate: string) => void;
 }
@@ -46,8 +48,10 @@ export default function ExceptionsList({
   isLoading,
   searchQuery,
   filterStatus,
+  filterType = "ALL",
   onSearchChange,
   onFilterChange,
+  onTypeFilterChange,
   onSelectException,
   onContinueCheckout,
 }: ExceptionsListProps) {
@@ -66,6 +70,18 @@ export default function ExceptionsList({
           />
         </div>
         <div className="flex gap-2">
+          {onTypeFilterChange && (
+            <select
+              value={filterType}
+              onChange={(e) => onTypeFilterChange(e.target.value)}
+              className="h-10 px-4 border border-[#e8e9e8] rounded-[8px] text-[13px] font-medium text-[#060606] outline-none focus:border-[#060606] cursor-pointer bg-white"
+            >
+              <option value="ALL">Tất cả loại</option>
+              {Object.entries(EXCEPTION_TYPE_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+          )}
           <select
             value={filterStatus}
             onChange={(e) => onFilterChange(e.target.value)}
