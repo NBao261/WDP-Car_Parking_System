@@ -54,6 +54,8 @@ export interface IException {
   managerNote: string;
   surcharge: number;
   status: ExceptionStatus;
+  /** Ảnh bằng chứng (camera lúc vào + giấy tờ do Staff tải lên). Optional — BE bổ sung sau. */
+  evidenceImages?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -71,6 +73,7 @@ export interface GetExceptionsParams {
   status?: ExceptionStatus;
   type?: ExceptionType;
   sessionId?: string;
+  facilityId?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
@@ -80,6 +83,11 @@ export interface ExceptionsResponse {
   total: number;
   page: number;
   totalPages: number;
+}
+
+export interface ReviewExceptionPayload {
+  managerNote: string;
+  status: ExceptionStatus.RESOLVED | ExceptionStatus.REJECTED;
 }
 
 // ─── Service ─────────────────────────────────────────────────────────────────
@@ -112,5 +120,28 @@ export const exceptionService = {
     sessionId: string
   ): Promise<{ success: boolean; data: ExceptionsResponse; message?: string }> => {
     return apiClient.get('/exceptions', { params: { sessionId } });
+  },
+
+  /**
+   * Manager: Review ngoại lệ — thêm ghi chú, duyệt/từ chối
+   * PATCH /api/v1/exceptions/:id/review
+   */
+  reviewException: async (
+    id: string,
+    payload: ReviewExceptionPayload
+  ): Promise<{ success: boolean; data: IException; message?: string }> => {
+    return apiClient.patch(`/exceptions/${id}/review`, payload);
+  },
+
+  /**
+   * Manager/Admin: Kích hoạt quét xe quá hạn
+   * POST /api/v1/exceptions/detect-overdue
+   */
+  detectOverdue: async (): Promise<{
+    success: boolean;
+    data: { detected: number; created: number };
+    message?: string;
+  }> => {
+    return apiClient.post('/exceptions/detect-overdue');
   },
 };

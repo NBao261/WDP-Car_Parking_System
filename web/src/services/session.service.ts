@@ -34,6 +34,15 @@ export interface CheckInPayload {
   slotId?: string;
 }
 
+export interface SessionsParams {
+  facilityId?: string;
+  floorId?: string;
+  vehicleTypeId?: string;
+  status?: SessionStatus;
+  page?: number;
+  limit?: number;
+}
+
 export const sessionService = {
   checkIn: async (payload: CheckInPayload): Promise<{ success: boolean; data: ParkingSession; message?: string }> => {
     return apiClient.post('/sessions/check-in', payload);
@@ -47,7 +56,12 @@ export const sessionService = {
   checkOut: async (id: string, payload: { gateOut: string }): Promise<{ success: boolean; data: ParkingSession; message?: string }> => {
     return apiClient.post(`/sessions/${id}/check-out`, payload);
   },
-  getActiveSessions: async (params: any): Promise<{ success: boolean; data: ParkingSession[]; pagination?: any }> => {
+  /**
+   * Staff / Manager / Admin: Lấy danh sách lượt gửi đang hoạt động
+   * GET /api/v1/sessions/active
+   * Manager dùng: lọc theo facilityId (bãi được gán)
+   */
+  getActiveSessions: async (params?: SessionsParams): Promise<{ success: boolean; data: ParkingSession[]; pagination?: any }> => {
     return apiClient.get('/sessions/active', { params });
   },
 };
