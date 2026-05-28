@@ -191,7 +191,7 @@
 #### FE1
 
 - [ ] Trang Quản lý Bảng giá nâng cao: nhiều mức giá, phí qua đêm, phí quá giờ
-- [ ] Dashboard Manager: tổng quan bãi xe (tổng slot, đang dùng, trống, bảo trì)
+- [x] **[feat/ui-manager]** Dashboard Manager: tổng quan bãi xe — FR-6 data thật từ API, fix crash khi data trống
 - [ ] Realtime: nhận Socket.IO event cập nhật dashboard
 
 #### FE2
@@ -300,13 +300,13 @@
 
 #### FE1
 
-- [ ] **Trang Báo cáo** (FR-6):
-  - Tab Lượt xe: biểu đồ đường/cột, bộ lọc thời gian
-  - Tab Doanh thu: tổng, trung bình, biểu đồ xu hướng
-  - Tab Lấp đầy: heatmap theo tầng, biểu đồ tròn theo loại xe
-  - Tab Cao điểm: biểu đồ phân bố theo giờ
-  - Nút xuất Excel/PDF
-- [ ] Sử dụng Chart.js hoặc Recharts
+- [x] **[feat/ui-manager]** **Trang Báo cáo** (FR-6) — build FE, kết nối API thật:
+  - [x] Tab Lượt xe / Traffic: biểu đồ cột, bộ lọc thời gian (`ManagerTrafficReportsPage`)
+  - [x] Tab Doanh thu: tổng, biểu đồ xu hướng (`ManagerRevenueReportsPage`)
+  - [ ] Tab Lấp đầy: heatmap theo tầng *(Backend chưa có endpoint heatmap — để lại)*
+  - [ ] Tab Cao điểm: cần API `/reports/peak-hours` BE bổ sung
+  - [ ] Nút xuất Excel/PDF *(để Phase 5)*
+- [x] **[feat/ui-manager]** Dùng Recharts cho biểu đồ
 
 #### FE2
 
@@ -404,9 +404,9 @@
 
 #### FE1
 
-- [ ] Trang Quản lý Ngoại lệ (FR-7): danh sách, filter, duyệt/từ chối
+- [x] **[feat/ui-manager]** Trang Quản lý Ngoại lệ (FR-7): danh sách + filter loại/trạng thái + Review Modal 2 cột (ảnh bằng chứng + form quyết định) + badge đếm ca chờ xử lý + nút quét xe quá hạn
 - [ ] Trang Xem phản hồi: danh sách feedback, trạng thái, trả lời
-- [ ] Hoàn thiện Dashboard: widget ngoại lệ, feedback mới
+- [x] **[feat/ui-manager]** Hoàn thiện Dashboard: widget ngoại lệ chờ xử lý — data thật từ API
 
 #### FE2
 
@@ -713,4 +713,49 @@ Fallback: AI model chưa train → rule-based (rate > avg × 1.5) + AVG(duration
 | 6   | Git commit convention        | `feat:`, `fix:`, `docs:`, `refactor:`, `test:`         |
 | 7   | Shared types                 | Tạo package `shared/types` dùng chung BE + FE + Mobile |
 | 8   | Research tracking            | Mỗi session phải ghi nhận `assignmentMode` để phục vụ phân tích RQ |
+
+---
+
+## 📝 GHI CHÚ KỸ THUẬT – NHÁNH `feat/ui-manager`
+
+> **Cập nhật lần cuối:** 2026-05-28 | **Branch:** `feat/ui-manager`
+
+### ✅ Những gì đã hoàn thành trong nhánh này
+
+| Module | File chính | Ghi chú |
+|--------|-----------|----------|
+| Shared UI Components | `src/components/ui/` | StatCard, PageHeader, LoadingState, EmptyState, ExceptionBadge — dùng chung toàn Manager |
+| Service Layer | `report.service.ts`, mở rộng `exception.service.ts` + `session.service.ts` | 4 report endpoints + reviewException + detectOverdue |
+| Manager FacilitySelector | `pages/manager/components/` | Dropdown chọn bãi xe từ `assignedFacilities`, dùng hook `useManagerFacility` |
+| Manager Onboarding | `pages/manager/facilitySelection/` | Màn hình chọn bãi xe sau đăng nhập, có nút Hủy logout tránh bị kẹt |
+| Manager Dashboard | `ManagerDashboard.tsx` | Kết nối API thật, fix crash khi `data.length === 0` |
+| Manager Exceptions (FR-7) | `pages/manager/exceptions/` | Review Modal 2 cột (thông tin + ảnh bằng chứng), badge đếm ca NEW, quét overdue |
+| Manager Sessions | `pages/manager/sessions/` | Bảng lượt gửi đang hoạt động, lọc theo bãi xe |
+| Manager Reports | `pages/manager/reports/` | Revenue + Traffic reports kết nối API thật |
+| Routes | `routes/index.tsx` | Đã mount đủ tất cả Manager routes mới |
+| SharedPlaceholder | `pages/manager/SharedPlaceholder.tsx` | Tạm thay thế buildings/slots/vehicles/pricing chờ Admin team migrate shared components |
+
+### ⚠️ Những điểm CẦN LƯU Ý cho lần tiếp theo
+
+1. **`evidenceImages` trên Exception chưa có từ BE:**
+   - Trường `evidenceImages?: string[]` đã thêm vào `IException` interface ở FE.
+   - ReviewModal đang dùng ảnh **placeholder** (Unsplash) theo từng `ExceptionType`.
+   - **Việc cần làm:** Khi BE bổ sung trường này vào `Exception` model và trả về URL ảnh thật → FE sẽ tự động hiển thị, không cần sửa code.
+
+2. **Bảng giá / Tòa nhà / Slot / Loại xe của Manager đang là `SharedPlaceholder`:**
+   - Anh đã xóa code trùng lặp (buildings, pricing, slots, vehicles).
+   - **Việc cần làm:** Thành viên FE1 (Admin) di chuyển các Table/Form/Modal tương ứng sang `src/components/shared/` → Manager import lại từ đó thay thế Placeholder.
+
+3. **Manager Exceptions Page — logic filter chưa pass `facilityId` lên API:**
+   - `ManagerExceptionsPage` có `FacilitySelector` nhưng hiện tại filter theo `facilityId` chưa được truyền vào `getExceptions(params)` (chỉ filter phía client).
+   - **Việc cần làm:** Uncomment và pass `facilityId` vào `params` khi BE confirm API `/exceptions` đã hỗ trợ filter theo `facilityId`.
+
+4. **Dashboard charts (Revenue trend / Traffic trend):**
+   - Dashboard hiện dùng mock data tĩnh cho các mini-chart xu hướng.
+   - **Việc cần làm:** Gọi `getRevenueReport({ groupBy: 'day', days: 7 })` và `getTrafficReport()` để lấy data thật cho charts Dashboard.
+
+5. **Quy trình test ngoại lệ (Staff → Manager):**
+   - Staff mở màn hình `/staff` → bấm **F9** → chọn loại ngoại lệ → gửi.
+   - Manager vào `/manager/exceptions` → tab **Chờ xử lý** (badge đỏ) → Review.
+   - Cần có ít nhất 1 Session active trong DB trước khi tạo Exception.
 
