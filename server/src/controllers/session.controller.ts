@@ -120,14 +120,17 @@ export class SessionController {
       const session = await ParkingSession.findById(id).select('facilityId status');
       if (!session) return next(new AppError('Session không tồn tại', 404));
 
-      // Validate staff thuộc facility của session
-      const staffUser = await User.findById(req.user!.userId).select('assignedFacilities');
+      // Validate staff thuộc facility của session (Admin và Manager được bỏ qua)
+      const staffUser = await User.findById(req.user!.userId).select('assignedFacilities role');
       if (!staffUser) return next(new AppError('User not found', 404));
-      const isAssigned = staffUser.assignedFacilities.some(
-        (fId) => fId.toString() === session.facilityId.toString()
-      );
-      if (!isAssigned) {
-        return next(new AppError('Bạn không được phân công tại bãi xe này', 403));
+      
+      if (staffUser.role !== 'admin' && staffUser.role !== 'manager') {
+        const isAssigned = staffUser.assignedFacilities.some(
+          (fId) => fId.toString() === session.facilityId.toString()
+        );
+        if (!isAssigned) {
+          return next(new AppError('Bạn không được phân công tại bãi xe này', 403));
+        }
       }
 
       const result = await SessionService.calculateFee(id as string);

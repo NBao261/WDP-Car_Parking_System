@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { X, Building2, MapPin, Clock, Layers, FileText, Calendar, Lock, Car } from 'lucide-react';
 import { Facility } from '../../../../services/facility.service';
 import { ICON_MAP } from '../../vehicles/components/constants';
@@ -26,7 +27,7 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
     ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5' }
     : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2' };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -39,7 +40,7 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div>
-              <h2 className="text-lg font-bold text-[#060606]">Chi tiết Cơ sở</h2>
+              <h2 className="text-lg font-bold text-[#060606]">Chi tiết tòa nhà / bãi đỗ</h2>
               <p className="text-xs text-gray-500 mt-0.5">Xem thông tin và thống kê sức chứa</p>
             </div>
             <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
@@ -49,29 +50,37 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
 
           {/* Content */}
           <div className="p-6 overflow-y-auto space-y-6">
-            <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-[#f4f9ea] flex items-center justify-center border border-[#e2edce] shrink-0 text-[#4a7c20]">
-                <Building2 size={32} strokeWidth={1.5} />
-              </div>
-              <div className="flex-1 min-w-0 pt-1">
-                <div className="flex items-center gap-3 flex-wrap mb-1.5">
-                  <h3 className="text-xl font-bold text-[#060606]">{facility.name}</h3>
-                  <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 600, ...badgeStyle }}>
-                    {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
-                  </span>
-                </div>
-                <p className="text-[14px] text-gray-500 flex items-start gap-1.5 leading-snug">
-                  <MapPin size={14} className="shrink-0 mt-[3px]" />
-                  <span>{facility.address}</span>
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5">
+                  Vị trí tòa nhà / bãi đỗ
                 </p>
-                <div className="flex items-center gap-1.5 text-[13px] text-gray-400 mt-2">
-                  <Calendar size={13} /> Ngày tạo: <span className="text-gray-600 font-medium">{new Date(facility.createdAt).toLocaleDateString('vi-VN')}</span>
-                  {!isActive && (
-                    <>
-                      <span className="mx-1.5 text-gray-300">•</span>
-                      <Lock size={13} className="text-red-400" /> <span className="text-red-500">Tạm khóa:</span> <span className="text-gray-600 font-medium">{new Date(facility.updatedAt).toLocaleDateString('vi-VN')}</span>
-                    </>
-                  )}
+                <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 5, ...badgeStyle }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
+                  {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
+                </span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-[#f4f9ea] flex items-center justify-center border border-[#e2edce] shrink-0 text-[#4a7c20]">
+                  <Building2 size={32} strokeWidth={1.5} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 flex-wrap mb-1.5">
+                    <h3 className="text-xl font-bold text-[#060606]">{facility.name}</h3>
+                  </div>
+                  <p className="text-[14px] text-gray-500 flex items-start gap-1.5 leading-snug">
+                    <MapPin size={14} className="shrink-0 mt-[3px]" />
+                    <span>{facility.address}</span>
+                  </p>
+                  <div className="flex items-center gap-1.5 text-[13px] text-gray-400 mt-2">
+                    <Calendar size={13} /> Ngày tạo: <span className="text-gray-600 font-medium">{new Date(facility.createdAt).toLocaleDateString('vi-VN')}</span>
+                    {!isActive && (
+                      <>
+                        <span className="mx-1.5 text-gray-300">•</span>
+                        <Lock size={13} className="text-red-400" /> <span className="text-red-500">Tạm khóa:</span> <span className="text-gray-600 font-medium">{new Date(facility.updatedAt).toLocaleDateString('vi-VN')}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -154,7 +163,7 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
                 {facility.description ? (
                   <span className="whitespace-pre-wrap">{facility.description}</span>
                 ) : (
-                  <span className="text-gray-400 italic">Không có mô tả cho cơ sở này.</span>
+                  <span className="text-gray-400 italic">Không có mô tả cho tòa nhà / bãi đỗ này.</span>
                 )}
               </div>
             </div>
@@ -169,6 +178,7 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

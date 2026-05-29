@@ -6,6 +6,8 @@ export interface PricingRate {
   label: string;
   amount: number;
   unit: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface PricingPlan {
@@ -14,10 +16,14 @@ export interface PricingPlan {
   vehicleTypeId: string | { _id: string; name: string; code: string; icon: string };
   facilityId: string | { _id: string; name: string };
   feeType: FeeType;
+  feeMethod?: string;
   rates: PricingRate[];
   overnightFee: number;
   overtimeFeePerHour: number;
   lostCardFee: number;
+  gracePeriodMinutes: number;
+  maxDailyFee: number;
+  firstBlockHours: number;
   status: 'active' | 'inactive';
   isDeleted: boolean;
   createdAt: string;
@@ -40,19 +46,27 @@ export interface CreatePricingPlanPayload {
   vehicleTypeId: string;
   facilityId: string;
   feeType: FeeType;
+  feeMethod?: string;
   rates: PricingRate[];
   overnightFee?: number;
   overtimeFeePerHour?: number;
   lostCardFee?: number;
+  gracePeriodMinutes?: number;
+  maxDailyFee?: number;
+  firstBlockHours?: number;
 }
 
 export interface UpdatePricingPlanPayload {
   name?: string;
   feeType?: FeeType;
+  feeMethod?: string;
   rates?: PricingRate[];
   overnightFee?: number;
   overtimeFeePerHour?: number;
   lostCardFee?: number;
+  gracePeriodMinutes?: number;
+  maxDailyFee?: number;
+  firstBlockHours?: number;
   status?: 'active' | 'inactive';
 }
 
@@ -84,7 +98,7 @@ export const pricingService = {
     return apiClient.patch(`/pricing/${id}`, payload);
   },
 
-  deactivate: async (id: string): Promise<{ success: boolean }> => {
+  delete: async (id: string): Promise<{ success: boolean }> => {
     return apiClient.delete(`/pricing/${id}`);
   },
 };

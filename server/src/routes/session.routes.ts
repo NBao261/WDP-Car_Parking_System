@@ -65,8 +65,8 @@ router.get(
 // FR-10.2: Tính phí tự động
 router.get(
   '/:id/fee',
-  checkRole([UserRole.STAFF]),
-  checkPermission(PERMISSIONS.SESSION_CLOSE),
+  checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
+  checkPermission(PERMISSIONS.SESSION_READ),
   SessionController.calculateFee
 );
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { X, Check, Loader2, Search, AlertTriangle, Car } from 'lucide-react';
@@ -109,7 +110,7 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -234,6 +235,7 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
           </form>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

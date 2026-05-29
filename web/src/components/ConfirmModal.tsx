@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, RefreshCw, AlertCircle } from 'lucide-react';
 
@@ -12,6 +13,7 @@ interface ConfirmModalProps {
   variant?: 'primary' | 'danger' | 'warning';
   isLoading?: boolean;
   error?: string;
+  icon?: React.ReactNode;
 }
 
 export function ConfirmModal({
@@ -25,10 +27,11 @@ export function ConfirmModal({
   variant = 'primary',
   isLoading = false,
   error = '',
+  icon,
 }: ConfirmModalProps) {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
         <motion.div
@@ -54,7 +57,7 @@ export function ConfirmModal({
                 'bg-[#d7ee46]/20 text-[#96a827]'
               }`}
             >
-              <AlertTriangle size={24} />
+              {icon || <AlertTriangle size={24} />}
             </div>
             <h2 className="text-lg font-bold text-[#060606] mb-2">{title}</h2>
             <p className="text-sm text-gray-500 leading-relaxed">{message}</p>
@@ -99,6 +102,7 @@ export function ConfirmModal({
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

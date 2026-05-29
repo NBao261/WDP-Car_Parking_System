@@ -48,7 +48,7 @@ export default function FacilitiesPage() {
   const vtMap = Object.fromEntries(data.vehicleTypes.map((v) => [v._id, v.name]));
 
   return (
-    <div className="space-y-6 pb-12 max-w-7xl mx-auto">
+    <div className="space-y-6 pb-12">
       {/* ══ View 1: Facility List ══ */}
       {!data.viewFacility && (
         <motion.div
@@ -69,7 +69,7 @@ export default function FacilitiesPage() {
               onClick={() => { setEditingFacility(undefined); setIsFacilityModalOpen(true); }}
               className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
             >
-              <Plus size={20} /> Thêm Cơ Sở
+              <Plus size={20} /> Thêm Tòa Nhà
             </button>
           </div>
 
@@ -205,6 +205,7 @@ export default function FacilitiesPage() {
             vtMap={vtMap}
             vehicleTypes={data.vehicleTypes}
             loading={data.mapLoading}
+            isFacilityActive={data.viewFacility.status !== 'inactive'}
             onRefreshSlots={async () => {
               data.setMapLoading(true);
               try {

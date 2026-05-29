@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { X, Loader2, Plus, Copy, Check, Car, Search } from 'lucide-react';
@@ -82,7 +83,7 @@ export function SlotFormModal({ facilityId, floorId, vehicleTypes, totalSlots, c
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -263,6 +264,7 @@ export function SlotFormModal({ facilityId, floorId, vehicleTypes, totalSlots, c
         </div>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 }

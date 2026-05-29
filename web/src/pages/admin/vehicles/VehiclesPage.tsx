@@ -250,7 +250,7 @@ export default function VehiclesPage() {
 
 
   return (
-    <motion.div className="space-y-6 max-w-[1400px] mx-auto pb-12" initial="hidden" animate="visible" variants={containerVariants}>
+    <motion.div className="space-y-6 pb-12" initial="hidden" animate="visible" variants={containerVariants}>
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -331,11 +331,11 @@ export default function VehiclesPage() {
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-lime-50/50 text-lime-700 font-semibold border-b border-lime-100/50">
               <tr>
-                <th className="px-6 py-4 rounded-tl-2xl w-[20%]">Loại Xe</th>
-                <th className="px-6 py-4 w-[15%]">Mã Xe</th>
+                <th className="px-6 py-4 rounded-tl-2xl w-[25%]">Loại Xe</th>
+                <th className="px-6 py-4 w-[20%]">Mã Xe</th>
                 <th className="px-6 py-4 w-[20%]">Kích Thước Slot</th>
-                <th className="px-6 py-4 w-[10%]">Ngày Tạo</th>
-                <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Thao Tác</th>
+                <th className="px-6 py-4 w-[20%]">Ngày Tạo</th>
+                <th className="px-6 py-4 text-right rounded-tr-2xl w-[15%]">Thao Tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
