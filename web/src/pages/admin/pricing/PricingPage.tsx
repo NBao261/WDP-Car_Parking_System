@@ -9,6 +9,7 @@ import { pricingService, type PricingPlan } from '../../../services/pricing.serv
 
 import { PlanCard } from './components/PlanCard';
 import { PricingFormModal } from './components/PricingFormModal';
+import { PricingDetailModal } from './components/PricingDetailModal';
 import { PricingFilterBar } from './components/PricingFilterBar';
 import { PricingPagination } from './components/PricingPagination';
 
@@ -19,6 +20,8 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<PricingPlan | undefined>();
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [viewingPlan, setViewingPlan] = useState<PricingPlan | undefined>();
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [filterFacility, setFilterFacility] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,7 +62,7 @@ export default function PricingPage() {
   const totalPages = Math.ceil(displayed.length / pageLimit);
   const paginatedPlans = displayed.slice((currentPage - 1) * pageLimit, currentPage * pageLimit);
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -113,6 +116,7 @@ export default function PricingPage() {
                 facilities={facilities}
                 vehicleTypes={vehicleTypes}
                 onEdit={(p) => { setEditingPlan(p); setModalOpen(true); }}
+                onViewDetail={(p) => { setViewingPlan(p); setDetailModalOpen(true); }}
                 onRefresh={fetchAll}
               />
             ))}
@@ -138,6 +142,16 @@ export default function PricingPage() {
             vehicleTypes={vehicleTypes}
             onClose={() => setModalOpen(false)}
             onSuccess={fetchAll}
+          />
+        )}
+        
+        {detailModalOpen && (
+          <PricingDetailModal
+            isOpen={detailModalOpen}
+            onClose={() => setDetailModalOpen(false)}
+            plan={viewingPlan}
+            facilities={facilities}
+            vehicleTypes={vehicleTypes}
           />
         )}
       </AnimatePresence>

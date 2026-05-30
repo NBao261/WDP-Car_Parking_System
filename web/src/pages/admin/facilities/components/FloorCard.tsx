@@ -27,6 +27,7 @@ interface FloorCardProps {
   onUpdate: (updated: Floor) => void;
   onRemove: (id: string) => void;
   onViewMap: (floor: Floor) => void;
+  isFacilityActive?: boolean;
 }
 
 interface FloorGridProps {
@@ -41,6 +42,7 @@ interface FloorGridProps {
   onRemove: (id: string) => void;
   onRefresh: () => void;   // only needed for create/edit
   onViewMap: (floor: Floor) => void;
+  isFacilityActive?: boolean;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -89,6 +91,7 @@ export const FloorCard = React.memo(function FloorCard({
   onUpdate,
   onRemove,
   onViewMap,
+  isFacilityActive = true,
 }: FloorCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -151,8 +154,8 @@ export const FloorCard = React.memo(function FloorCard({
   const isActive = floor.status === 'active';
 
   const badgeStyle = isActive
-    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5', fontWeight: 600 }
-    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2', fontWeight: 600 };
+    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5', fontWeight: 'bold' }
+    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2', fontWeight: 'bold' };
 
   // Vehicle type name pills - Optimized with useMemo
   const vtNames = useMemo(() => {
@@ -229,8 +232,9 @@ export const FloorCard = React.memo(function FloorCard({
           </span>
 
           {/* Menu dropdown */}
-          <div className="relative -mr-2" onClick={(e) => e.stopPropagation()}>
-            {loading ? (
+          {isFacilityActive && (
+            <div className="relative -mr-2" onClick={(e) => e.stopPropagation()}>
+              {loading ? (
               <div className="w-7 h-7 flex items-center justify-center">
                 <Loader2 size={14} className="animate-spin text-gray-400" />
               </div>
@@ -297,6 +301,7 @@ export const FloorCard = React.memo(function FloorCard({
               )}
             </AnimatePresence>
           </div>
+          )}
         </div>
       </div>
 
@@ -386,6 +391,7 @@ export function FloorGrid({
   onUpdate,
   onRemove,
   onViewMap,
+  isFacilityActive = true,
 }: FloorGridProps) {
   if (isLoading) {
     return (
@@ -408,15 +414,19 @@ export function FloorGrid({
         </div>
         <div className="text-center">
           <p className="text-sm font-semibold text-[#060606]">Không có tầng nào trong cơ sở này</p>
-          <p className="text-xs text-gray-400 mt-1">Thêm tầng đầu tiên để bắt đầu quản lý chỗ đỗ xe</p>
+          {isFacilityActive && (
+            <p className="text-xs text-gray-400 mt-1">Thêm tầng đầu tiên để bắt đầu quản lý chỗ đỗ xe</p>
+          )}
         </div>
-        <button
-          onClick={onAddFloor}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors hover:bg-[#c4dc32]"
-          style={{ background: '#d7ee46', color: '#1a1a0a' }}
-        >
-          <Plus size={20} /> Thêm Tầng
-        </button>
+        {isFacilityActive && (
+          <button
+            onClick={onAddFloor}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors hover:bg-[#c4dc32]"
+            style={{ background: '#d7ee46', color: '#1a1a0a' }}
+          >
+            <Plus size={20} /> Thêm Tầng
+          </button>
+        )}
       </div>
     );
   }
@@ -434,6 +444,7 @@ export function FloorGrid({
           onUpdate={onUpdate}
           onRemove={onRemove}
           onViewMap={onViewMap}
+          isFacilityActive={isFacilityActive}
         />
       ))}
     </div>

@@ -11,7 +11,6 @@ import UnauthorizedPage from '../pages/error/UnauthorizedPage';
 // ── Admin Pages ──
 import DashboardPage from '../pages/admin/dashboard/DashboardPage';
 const FacilitiesPage = lazy(() => import('../pages/admin/facilities/FacilitiesPage'));
-const VehiclesPage = lazy(() => import('../pages/admin/vehicles/VehiclesPage'));
 
 const PricingPage = lazy(() => import('../pages/admin/pricing/PricingPage'));
 const BillingPage = lazy(() => import('../pages/admin/billing/BillingPage'));
@@ -22,6 +21,7 @@ const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
 
 // ── Manager / Staff Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
+const VehiclesPage = lazy(() => import('../pages/manager/vehicles/VehiclesPage'));
 // Staff Pages ──
 const VehicleCheckPage = lazy(() => import('../pages/staff/vehicleCheck/VehicleCheckPage'));
 const ActiveSessionsPage = lazy(() => import('../pages/staff/activeSessions/ActiveSessionsPage'));
@@ -76,7 +76,6 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <DashboardPage /> },
               { path: 'facilities', element: <S><FacilitiesPage /></S> },
-              { path: 'vehicles', element: <S><VehiclesPage /></S> },
               // FR-5: Quản lý Bảng giá
               { path: 'pricing', element: <S><PricingPage /></S> },
               { path: 'billing', element: <S><BillingPage /></S> },
@@ -94,7 +93,10 @@ export const router = createBrowserRouter([
           {
             path: 'manager',
             element: <ProtectedRoute allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]} />,
-            children: [{ index: true, element: <ManagerDashboard /> }],
+            children: [
+              { index: true, element: <ManagerDashboard /> },
+              { path: 'vehicles', element: <S><VehiclesPage /></S> },
+            ],
           },
 
           // ── Staff Routes ──────────────────────────────────

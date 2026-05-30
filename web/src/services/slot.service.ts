@@ -2,6 +2,26 @@ import { apiClient } from './api';
 
 export type SlotStatus = 'available' | 'occupied' | 'reserved' | 'maintenance' | 'locked';
 
+export interface ParkingSessionPopulated {
+  _id: string;
+  code: string;
+  licensePlate: string;
+  checkInTime: string;
+  checkOutTime: string | null;
+  gateIn: string;
+  gateOut: string;
+  status: 'active' | 'pending_payment' | 'completed' | 'exception';
+  totalFee: number;
+  assignmentMode: 'auto' | 'manual';
+  cardCode: string;
+  vehicleTypeId: { _id: string; name: string; code: string; icon: string } | string;
+  facilityId: { _id: string; name: string } | string;
+  floorId: { _id: string; name: string } | string;
+  staffInId: { _id: string; name: string; email: string } | string;
+  staffOutId: { _id: string; name: string; email: string } | string | null;
+  pricingPlanId: { _id: string; name: string } | string;
+}
+
 export interface ParkingSlot {
   _id: string;
   code: string;
@@ -9,7 +29,7 @@ export interface ParkingSlot {
   facilityId: string;
   vehicleTypeId: string | { _id: string; name: string; code: string; icon: string };
   status: SlotStatus;
-  currentSessionId: string | null;
+  currentSessionId: string | ParkingSessionPopulated | null;
   maintenanceReason: string;
   isDeleted: boolean;
   createdAt: string;
@@ -42,6 +62,11 @@ export interface UpdateSlotStatusPayload {
   reason?: string;
 }
 
+export interface UpdateSlotPayload {
+  code?: string;
+  vehicleTypeId?: string;
+}
+
 export const slotService = {
   getByFloor: async (floorId: string): Promise<SlotListResponse> => {
     return apiClient.get(`/slots/floor/${floorId}`);
@@ -64,6 +89,13 @@ export const slotService = {
     payload: UpdateSlotStatusPayload,
   ): Promise<{ success: boolean; data: ParkingSlot }> => {
     return apiClient.patch(`/slots/${id}/status`, payload);
+  },
+
+  update: async (
+    id: string,
+    payload: UpdateSlotPayload,
+  ): Promise<{ success: boolean; data: ParkingSlot }> => {
+    return apiClient.patch(`/slots/${id}`, payload);
   },
 
   delete: async (id: string): Promise<{ success: boolean }> => {

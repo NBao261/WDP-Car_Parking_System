@@ -63,12 +63,14 @@ export function FacilityFloorsView({
             </p>
           </div>
         </div>
-        <button
-          onClick={() => { setEditingFloor(undefined); setIsFloorModalOpen(true); }}
-          className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
-        >
-          <Plus size={20} /> Thêm Tầng
-        </button>
+        {viewFacility.status !== 'inactive' && (
+          <button
+            onClick={() => { setEditingFloor(undefined); setIsFloorModalOpen(true); }}
+            className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
+          >
+            <Plus size={20} /> Thêm Tầng
+          </button>
+        )}
       </div>
 
       {/* Facility summary strip */}
@@ -112,6 +114,7 @@ export function FacilityFloorsView({
         onRemove={removeFloorLocal}
         onRefresh={fetchAll}
         onViewMap={handleViewMap}
+        isFacilityActive={viewFacility.status !== 'inactive'}
       />
 
       <FloorDetailModal

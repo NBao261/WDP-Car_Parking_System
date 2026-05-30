@@ -17,10 +17,11 @@ interface SlotMappingEditorViewProps {
   loading: boolean;
   onRefreshSlots: () => void;
   onClose?: () => void;
+  isFacilityActive?: boolean;
 }
 
 export function SlotMappingEditorView({
-  floor, slots, vtMap, vehicleTypes, loading, onRefreshSlots, onClose
+  floor, slots, vtMap, vehicleTypes, loading, onRefreshSlots, onClose, isFacilityActive = true
 }: SlotMappingEditorViewProps) {
   const [filterStatus, setFilterStatus] = useState<SlotStatus | 'all'>('all');
   const [statusSlot, setStatusSlot]     = useState<ParkingSlot | null>(null);
@@ -60,7 +61,7 @@ export function SlotMappingEditorView({
         <div className="flex items-start justify-between mb-5">
           <div>
             <h2 className="text-lg font-bold text-[#060606]">
-              Sơ đồ Slot — {floor.name}
+              Sơ đồ vị trí đỗ xe — Tầng {floor.name}
             </h2>
             <p className="text-sm text-gray-400 mt-0.5">Nhấp vào một slot để thay đổi trạng thái</p>
           </div>
@@ -101,7 +102,7 @@ export function SlotMappingEditorView({
             >
               <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             </button>
-            {floor.status === 'active' && (
+            {floor.status === 'active' && isFacilityActive && (
               <button
                 onClick={() => setBulkOpen(true)}
                 className="bg-[#d7ee46] text-[#060606] px-5 py-2 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm text-sm"
@@ -179,10 +180,10 @@ export function SlotMappingEditorView({
                       <div
                         key={slot._id}
                         onClick={() => {
-                          if (floor.status === 'active') setStatusSlot(slot);
-                          else toast.error('Không thể chỉnh sửa slot của tầng đang bị vô hiệu hóa.');
+                          if (floor.status === 'active' && isFacilityActive) setStatusSlot(slot);
+                          else toast.error(!isFacilityActive ? 'Không thể chỉnh sửa slot của tòa nhà đang bị vô hiệu hóa.' : 'Không thể chỉnh sửa slot của tầng đang bị vô hiệu hóa.');
                         }}
-                        className={`aspect-square rounded-lg flex items-center justify-center text-xs font-semibold ${floor.status === 'active' ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
+                        className={`aspect-square rounded-lg flex items-center justify-center text-xs font-semibold ${(floor.status === 'active' && isFacilityActive) ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
                         title={`${slot.code} – ${vtName} (${slot.status})`}
                       >
                         {slot.code}

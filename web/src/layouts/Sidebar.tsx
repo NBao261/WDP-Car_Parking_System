@@ -29,10 +29,9 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   // ── Admin ──
   { path: '/admin', label: 'Tổng Quan', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
-  { path: '/admin/facilities', label: 'Cơ Sở', icon: Map, roles: [UserRole.ADMIN] },
-  { path: '/admin/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.ADMIN] },
+  { path: '/admin/facilities', label: 'Tòa nhà & Bãi đỗ', icon: Map, roles: [UserRole.ADMIN] },
 
-  { path: '/admin/pricing', label: 'Bảng Giá & Doanh Thu', icon: Wallet, roles: [UserRole.ADMIN] },
+  { path: '/admin/pricing', label: 'Bảng Giá', icon: Wallet, roles: [UserRole.ADMIN] },
   { path: '/admin/users', label: 'Người Dùng', icon: Users, roles: [UserRole.ADMIN] },
   { path: '/admin/roles', label: 'Phân Quyền', icon: Shield, roles: [UserRole.ADMIN] },
   { path: '/admin/config', label: 'Cấu Hình Hệ Thống', icon: Settings, roles: [UserRole.ADMIN] },

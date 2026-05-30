@@ -54,8 +54,8 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, 
   const textColor = getBarTextColor(fillRate);
 
   const badgeStyle = isActive
-    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5', fontWeight: 600 }
-    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2', fontWeight: 600 };
+    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5', fontWeight: 'bold' }
+    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2', fontWeight: 'bold' };
 
   const handleConfirm = async () => {
     setLoading(true);
@@ -284,14 +284,14 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, 
           isOpen={confirmOpen}
           onClose={() => setConfirmOpen(false)}
           onConfirm={handleConfirm}
-          title={confirmAction === 'delete' ? 'Xóa cơ sở' : 'Vô hiệu hóa cơ sở'}
+          title={confirmAction === 'delete' ? 'Xóa tòa nhà / bãi đỗ' : 'Vô hiệu hóa tòa nhà / bãi đỗ'}
           message={
             confirmAction === 'delete'
-              ? `Bạn có chắc muốn xóa cơ sở "${facility.name}"? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn và không thể khôi phục.`
-              : `Bạn có chắc muốn vô hiệu hóa cơ sở "${facility.name}"? Các tầng sẽ được chuyển thành trạng thái vô hiệu hóa.`
+              ? `Bạn có chắc muốn xóa tòa nhà / bãi đỗ "${facility.name}"? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn và không thể khôi phục.`
+              : `Bạn có chắc muốn vô hiệu hóa tòa nhà / bãi đỗ "${facility.name}"? Các tầng sẽ được chuyển thành trạng thái vô hiệu hóa.`
           }
           confirmText={confirmAction === 'delete' ? 'Xóa vĩnh viễn' : 'Vô hiệu hóa'}
-          variant="danger"
+          variant={confirmAction === 'delete' ? 'danger' : 'warning'}
           isLoading={loading}
         />
       </div>
@@ -309,8 +309,8 @@ export function FacilityListItem({ facility, stats, onViewFloors, onViewDetail }
 
   const accentColor = isActive ? '#cce242' : '#e2e3e2';
   const badgeStyle = isActive
-    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5', fontWeight: 600 }
-    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2', fontWeight: 600 };
+    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5', fontWeight: 'bold' }
+    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2', fontWeight: 'bold' };
 
   return (
     <div className={`bg-white flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer ${!isActive ? 'opacity-70' : ''}`}

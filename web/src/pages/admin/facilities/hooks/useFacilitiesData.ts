@@ -147,6 +147,13 @@ export function useFacilitiesData() {
   const updateFacilityLocal = useCallback((updated: Facility) => {
     setFacilities((prev: Facility[]) => prev.map(f => f._id === updated._id ? updated : f));
     setViewFacility((prev: Facility | null) => prev && prev._id === updated._id ? updated : prev);
+    
+    // Đồng bộ trạng thái của các tầng thuộc cơ sở này
+    if (updated.status === 'inactive') {
+      setFloors((prev: Floor[]) => prev.map(f => f.facilityId === updated._id ? { ...f, status: 'inactive' } : f));
+    } else if (updated.status === 'active') {
+      setFloors((prev: Floor[]) => prev.map(f => f.facilityId === updated._id ? { ...f, status: 'active' } : f));
+    }
   }, []);
 
   const removeFacilityLocal = useCallback((id: string) => {

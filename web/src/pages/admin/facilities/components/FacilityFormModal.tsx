@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Building2, MapPin, Clock, Layers, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -90,7 +91,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
     e.preventDefault();
 
     const newErrors: Record<string, string> = {};
-    if (!form.name.trim()) newErrors.name = 'Vui lòng nhập tên cơ sở';
+    if (!form.name.trim()) newErrors.name = 'Vui lòng nhập tên tòa nhà / bãi đỗ';
     if (!form.address.trim()) newErrors.address = 'Vui lòng nhập địa chỉ';
     if (!form.totalFloors) newErrors.totalFloors = 'Vui lòng nhập tổng số tầng';
     if (!form.openTime) newErrors.openTime = 'Vui lòng chọn giờ mở cửa';
@@ -104,12 +105,29 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
 
     setIsSubmitting(true);
     try {
+      // Fetch all facilities to check for duplicates
+      const allRes = await facilityService.getAll({ limit: 1000 });
+      if (allRes.success) {
+        const existing = allRes.data.filter(f => !isEdit || f._id !== facility?._id);
+        const duplicateName = existing.find(f => f.name.toLowerCase() === form.name.trim().toLowerCase());
+        const duplicateAddress = existing.find(f => f.address.toLowerCase() === form.address.trim().toLowerCase());
+
+        if (duplicateName || duplicateAddress) {
+          const checkErrors: Record<string, string> = {};
+          if (duplicateName) checkErrors.name = 'Tên tòa nhà / bãi đỗ này đã tồn tại';
+          if (duplicateAddress) checkErrors.address = 'Địa chỉ này đã được sử dụng';
+          setErrors(checkErrors);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       if (isEdit && facility) {
         await facilityService.update(facility._id, form);
-        toast.success('Cập nhật cơ sở thành công');
+        toast.success('Cập nhật tòa nhà / bãi đỗ thành công');
       } else {
         await facilityService.create(form);
-        toast.success('Tạo cơ sở thành công');
+        toast.success('Tạo tòa nhà / bãi đỗ thành công');
       }
       onSuccess();
       onClose();
@@ -122,7 +140,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
         <motion.div
@@ -143,10 +161,10 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div>
               <h2 className="text-lg font-bold text-[#060606]">
-                {isEdit ? 'Sửa cơ sở' : 'Thêm cơ sở mới'}
+                {isEdit ? 'Sửa tòa nhà / bãi đỗ' : 'Thêm tòa nhà / bãi đỗ mới'}
               </h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                {isEdit ? 'Cập nhật thông tin cơ sở' : 'Tạo tòa nhà / bãi đỗ xe mới'}
+                {isEdit ? 'Cập nhật thông tin tòa nhà / bãi đỗ' : 'Tạo tòa nhà / bãi đỗ mới'}
               </p>
             </div>
             <button
@@ -160,7 +178,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
           {/* Form */}
           <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 space-y-4">
             {/* Facility Name */}
-            <FormField label="Tên cơ sở" required icon={Building2} error={errors.name}>
+            <FormField label="Tên tòa nhà / bãi đỗ" required icon={Building2} error={errors.name}>
               <input
                 type="text"
                 value={form.name}
@@ -253,7 +271,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all resize-none"
-                  placeholder="Mô tả ngắn gọn về cơ sở..."
+                  placeholder="Mô tả ngắn gọn về tòa nhà / bãi đỗ..."
                 />
               </div>
             </div>
@@ -280,6 +298,7 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
           </form>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
