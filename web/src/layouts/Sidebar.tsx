@@ -30,7 +30,6 @@ const NAV_ITEMS: NavItem[] = [
   // ── Admin ──
   { path: '/admin', label: 'Tổng Quan', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
   { path: '/admin/facilities', label: 'Tòa nhà & Bãi đỗ', icon: Map, roles: [UserRole.ADMIN] },
-  { path: '/admin/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.ADMIN] },
 
   { path: '/admin/pricing', label: 'Bảng Giá', icon: Wallet, roles: [UserRole.ADMIN] },
   { path: '/admin/users', label: 'Người Dùng', icon: Users, roles: [UserRole.ADMIN] },
