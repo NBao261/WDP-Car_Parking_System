@@ -9,7 +9,7 @@ import {
   pricingService, type PricingPlan, type CreatePricingPlanPayload, type UpdatePricingPlanPayload,
 } from '../../../../services/pricing.service';
 import { formSchema, type FormValues, FEE_TYPE_OPTIONS, mapToUiType, mapToBackendFeeConfig } from './constants';
-import { ICON_MAP } from '../../vehicles/components/constants';
+import { ICON_MAP } from '../../../shared/vehicles/components/constants';
 
 interface FormModalProps {
   plan?: PricingPlan;

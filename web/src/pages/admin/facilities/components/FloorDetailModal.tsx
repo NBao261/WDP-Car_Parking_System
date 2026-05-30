@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Layers, Calendar, Lock, Car } from 'lucide-react';
 import { Floor } from '../../../../services/floor.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { ICON_MAP } from '../../vehicles/components/constants';
+import { ICON_MAP } from '../../../shared/vehicles/components/constants';
 
 function getBarTextColor(pct: number) {
   if (pct > 85) return 'text-[#E24B4A]';

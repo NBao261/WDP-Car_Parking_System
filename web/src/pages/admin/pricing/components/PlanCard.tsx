@@ -6,7 +6,7 @@ import { pricingService, type PricingPlan } from '../../../../services/pricing.s
 import { type Facility } from '../../../../services/facility.service';
 import { type VehicleType } from '../../../../services/vehicleType.service';
 import { FEE_TYPE_LABELS, mapToUiType } from './constants';
-import { ICON_MAP } from '../../vehicles/components/constants';
+import { ICON_MAP } from '../../../shared/vehicles/components/constants';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
 
 interface PlanCardProps {
