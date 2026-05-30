@@ -7,7 +7,7 @@ import { ParkingSlot, SlotStatus } from '../../../../services/slot.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 import { SlotStatusModal } from './SlotStatusModal';
 import { SlotFormModal } from './SlotFormModal';
-import { ICON_MAP } from '../../vehicles/components/constants';
+import { ICON_MAP } from '../../../shared/vehicles/components/constants';
 
 interface SlotMappingEditorViewProps {
   floor: Floor | null;

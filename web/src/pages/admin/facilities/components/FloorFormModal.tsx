@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { X, Check, Loader2, Search, AlertTriangle, Car } from 'lucide-react';
 import { floorService, Floor } from '../../../../services/floor.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { ICON_MAP } from '../../vehicles/components/constants';
+import { ICON_MAP } from '../../../shared/vehicles/components/constants';
 
 interface FloorModalProps {
   isOpen: boolean;

@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { X, Building2, MapPin, Clock, Layers, FileText, Calendar, Lock, Car } from 'lucide-react';
 import { Facility } from '../../../../services/facility.service';
-import { ICON_MAP } from '../../vehicles/components/constants';
+import { ICON_MAP } from '../../../shared/vehicles/components/constants';
 
 function getBarTextColor(pct: number) {
   if (pct > 85) return 'text-[#E24B4A]';

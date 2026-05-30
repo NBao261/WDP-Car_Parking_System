@@ -13,7 +13,7 @@ import { userService } from '../../../../services/user.service';
 import { vehicleTypeService, type VehicleType } from '../../../../services/vehicleType.service';
 import { sessionService } from '../../../../services/session.service';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
-import { ICON_MAP } from '../../vehicles/components/constants';
+import { ICON_MAP } from '../../../shared/vehicles/components/constants';
 
 interface SlotStatusModalProps {
   slot: ParkingSlot | null;

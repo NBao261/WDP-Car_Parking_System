@@ -21,7 +21,7 @@ const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
 
 // ── Manager / Staff Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
-const VehiclesPage = lazy(() => import('../pages/manager/vehicles/VehiclesPage'));
+const VehiclesPage = lazy(() => import('../pages/shared/vehicles/VehiclesPage'));
 // Staff Pages ──
 const VehicleCheckPage = lazy(() => import('../pages/staff/vehicleCheck/VehicleCheckPage'));
 const ActiveSessionsPage = lazy(() => import('../pages/staff/activeSessions/ActiveSessionsPage'));
@@ -86,6 +86,7 @@ export const router = createBrowserRouter([
               { path: 'users/:id', element: <S><UserDetailPage /></S> },
               // FR-19: Role & Permission Management
               { path: 'roles', element: <S><RolesPage /></S> },
+              { path: 'vehicles', element: <S><VehiclesPage /></S> },
             ],
           },
 

@@ -32,10 +32,12 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/admin/facilities', label: 'Tòa nhà & Bãi đỗ', icon: Map, roles: [UserRole.ADMIN] },
 
   { path: '/admin/pricing', label: 'Bảng Giá', icon: Wallet, roles: [UserRole.ADMIN] },
+  { path: '/admin/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.ADMIN] },
   { path: '/admin/users', label: 'Người Dùng', icon: Users, roles: [UserRole.ADMIN] },
   { path: '/admin/roles', label: 'Phân Quyền', icon: Shield, roles: [UserRole.ADMIN] },
   { path: '/admin/config', label: 'Cấu Hình Hệ Thống', icon: Settings, roles: [UserRole.ADMIN] },
   { path: '/admin/logs', label: 'Lịch Sử Hoạt Động', icon: ScrollText, roles: [UserRole.ADMIN] },
+  { path: '/admin/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.ADMIN] },
 
   // ── Manager ──
   { path: '/manager', label: 'Tổng Quan', icon: LayoutDashboard, roles: [UserRole.MANAGER] },

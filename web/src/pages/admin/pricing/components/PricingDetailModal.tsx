@@ -4,7 +4,7 @@ import { X, DollarSign, Building2, MapPin, Clock, Calendar, Car, ShieldCheck, Mo
 import { PricingPlan } from '../../../../services/pricing.service';
 import { Facility } from '../../../../services/facility.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { ICON_MAP } from '../../vehicles/components/constants';
+import { ICON_MAP } from '../../../shared/vehicles/components/constants';
 import { FEE_TYPE_LABELS, mapToUiType } from './constants';
 
 interface PricingDetailModalProps {
