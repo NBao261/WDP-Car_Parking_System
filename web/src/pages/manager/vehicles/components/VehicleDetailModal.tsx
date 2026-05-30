@@ -80,7 +80,7 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
               <h2 className="text-lg font-bold text-[#060606]">Chi Tiết Loại Xe</h2>
               <p className="text-sm text-gray-500 mt-0.5">Thông tin chi tiết về loại phương tiện</p>
             </div>
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"><X size={20} /></button>
+            <button onClick={onClose} className="p-2 text-gray-400 hover:text-[#060606] hover:bg-[#d7ee46] rounded-xl transition-colors"><X size={20} /></button>
           </div>
 
           <div className="p-6 space-y-6 overflow-y-auto">
@@ -143,7 +143,7 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
           </div>
 
           <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end shrink-0">
-            <button onClick={onClose} className="px-5 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+            <button onClick={onClose} className="px-5 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-[#d7ee46] hover:text-[#060606] hover:border-[#c4dc32] transition-colors">
               Đóng
             </button>
           </div>
