@@ -127,6 +127,37 @@ export class ReportController {
   }
 
   /**
+   * GET /reports/occupancy/heatmap
+   * FR-6.3 mở rộng: Occupancy heatmap theo tầng + loại xe
+   *
+   * Trả về ma trận heatmap 2 chiều (tầng × loại xe) với chỉ số MFD:
+   * - occupancyRate, effectiveOccupancy, optimalOccupancy (O*)
+   * - operatingRegime: free-flow | capacity | congested
+   * - flowProxy: lượt checkout 24h gần nhất
+   * - gap: khoảng cách đến O* (dương = quá tải)
+   *
+   * Thuật toán: Macroscopic Fundamental Diagram (MFD) [P2]
+   *
+   * Query params:
+   * - facilityId: ID bãi xe (khuyến nghị, cần cho heatmap có ý nghĩa)
+   * - vehicleTypeId: ID loại phương tiện (tùy chọn, lọc 1 loại xe cụ thể)
+   */
+  static async getOccupancyHeatmap(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { facilityId, vehicleTypeId } = req.query;
+
+      const result = await ReportService.getOccupancyHeatmap({
+        facilityId: facilityId as string,
+        vehicleTypeId: vehicleTypeId as string,
+      });
+
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * GET /reports/export
    * FR-6 (Export): Xuất báo cáo ra Excel hoặc PDF
    *
