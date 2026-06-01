@@ -311,6 +311,159 @@ paths:
                 success: false
                 message: "Forbidden: Missing permission 'report:occupancy'"
 
+  /reports/occupancy/heatmap:
+    get:
+      summary: "[RQ1] Occupancy Heatmap theo tầng + loại xe (FR-6.3 mở rộng)"
+      description: |
+        Ma trận heatmap 2 chiều (tầng × loại xe) với chỉ số MFD (Macroscopic Fundamental Diagram) [P2].
+        
+        **Thuật toán MFD:**
+        - MFD mô tả quan hệ "chuông ngửa" giữa mật độ (occupancy) và lưu lượng (flow).
+        - **Optimal Occupancy (O*)** là điểm mà flow đạt cực đại trước khi rơi vào congestion.
+        - O* phụ thuộc kích thước xe: small=85%, medium=75%, large=70%.
+        
+        **Chỉ số MFD cho mỗi ô heatmap:**
+        - `occupancyRate`: tỷ lệ lấp đầy thực tế (%)
+        - `effectiveOccupancy`: (occupied + reserved) / total (%) — theo Reservation-Aware Capacity [P10]
+        - `optimalOccupancy`: O* theo MFD [P2] tùy kích thước xe
+        - `operatingRegime`: free-flow (< 0.85×O*) | capacity (0.85×O* → O*) | congested (> O*)
+        - `flowProxy`: lượt checkout 24h gần nhất — proxy cho MFD flow
+        - `gap`: effectiveOccupancy − O* (dương = quá tải, âm = còn dư)
+        
+        **Quyền truy cập (SRS 3.6):** Chỉ Admin và Manager được xem.
+      tags: [Reports]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: facilityId
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "683f1a2b3c4d5e6f7a8b9c0d"
+          description: MongoDB ObjectId của bãi xe (khuyến nghị để heatmap có ý nghĩa)
+        - name: vehicleTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "683f1a2b3c4d5e6f7a8b9c01"
+          description: MongoDB ObjectId của loại phương tiện (lọc 1 loại xe cụ thể)
+      responses:
+        '200':
+          description: Heatmap occupancy với chỉ số MFD thành công
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  algorithm: "MFD"
+                  description: "Occupancy heatmap theo tầng × loại xe với MFD-based Optimal Occupancy. O* (Optimal Occupancy) là điểm cực đại trên đường MFD — vượt O* sẽ gây ùn tắc."
+                  summary:
+                    totalSlots: 500
+                    totalOccupied: 320
+                    totalReserved: 25
+                    totalAvailable: 140
+                    overallOccupancyRate: 64
+                    overallEffectiveOccupancy: 69
+                    weightedOptimalOccupancy: 79.5
+                    overallOperatingRegime: "free-flow"
+                    totalFlowProxy24h: 185
+                    regimeCounts:
+                      free-flow: 3
+                      capacity: 2
+                      congested: 1
+                  axes:
+                    floors:
+                      - floorId: "683f1a2b3c4d5e6f7a8b9c02"
+                        floorName: "Tầng 1"
+                      - floorId: "683f1a2b3c4d5e6f7a8b9c03"
+                        floorName: "Tầng 2"
+                      - floorId: "683f1a2b3c4d5e6f7a8b9c04"
+                        floorName: "Tầng 3"
+                    vehicleTypes:
+                      - vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c01"
+                        vehicleTypeName: "Xe Máy"
+                        vehicleTypeCode: "MOTORBIKE"
+                      - vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c05"
+                        vehicleTypeName: "Ô Tô"
+                        vehicleTypeCode: "CAR"
+                  heatmapCells:
+                    - floorId: "683f1a2b3c4d5e6f7a8b9c02"
+                      floorName: "Tầng 1"
+                      vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c05"
+                      vehicleTypeName: "Ô Tô"
+                      vehicleTypeCode: "CAR"
+                      slotSize: "medium"
+                      facilityId: "683f1a2b3c4d5e6f7a8b9c0d"
+                      facilityName: "Central Hub Parking"
+                      total: 100
+                      occupied: 85
+                      reserved: 5
+                      available: 8
+                      maintenance: 2
+                      locked: 0
+                      occupancyRate: 85
+                      effectiveOccupancy: 90
+                      optimalOccupancy: 75
+                      operatingRegime: "congested"
+                      gap: 15
+                      flowProxy: 42
+                    - floorId: "683f1a2b3c4d5e6f7a8b9c03"
+                      floorName: "Tầng 2"
+                      vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c01"
+                      vehicleTypeName: "Xe Máy"
+                      vehicleTypeCode: "MOTORBIKE"
+                      slotSize: "small"
+                      facilityId: "683f1a2b3c4d5e6f7a8b9c0d"
+                      facilityName: "Central Hub Parking"
+                      total: 200
+                      occupied: 120
+                      reserved: 10
+                      available: 65
+                      maintenance: 5
+                      locked: 0
+                      occupancyRate: 60
+                      effectiveOccupancy: 65
+                      optimalOccupancy: 85
+                      operatingRegime: "free-flow"
+                      gap: -20
+                      flowProxy: 78
+                    - floorId: "683f1a2b3c4d5e6f7a8b9c04"
+                      floorName: "Tầng 3"
+                      vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c01"
+                      vehicleTypeName: "Xe Máy"
+                      vehicleTypeCode: "MOTORBIKE"
+                      slotSize: "small"
+                      facilityId: "683f1a2b3c4d5e6f7a8b9c0d"
+                      facilityName: "Central Hub Parking"
+                      total: 200
+                      occupied: 140
+                      reserved: 8
+                      available: 45
+                      maintenance: 7
+                      locked: 0
+                      occupancyRate: 70
+                      effectiveOccupancy: 74
+                      optimalOccupancy: 85
+                      operatingRegime: "capacity"
+                      gap: -11
+                      flowProxy: 65
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              example:
+                success: false
+                message: "No token provided or invalid format"
+        '403':
+          description: Không có quyền xem báo cáo
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Forbidden: Missing permission 'report:occupancy'"
+
   /reports/peak-hours:
     get:
       summary: Báo cáo khung giờ cao điểm (FR-6.4)

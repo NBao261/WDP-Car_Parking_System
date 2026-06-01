@@ -631,4 +631,311 @@ export class ReportService {
       hourlyDistribution: hourlyData, // Phân bố hoạt động theo 24 giờ
     };
   }
+
+  // ─────────────────────────────────────────────────────
+  // FR-6.3 MỞ RỘNG: Occupancy Heatmap theo tầng + loại xe
+  // Thuật toán: Macroscopic Fundamental Diagram (MFD) [P2]
+  // ─────────────────────────────────────────────────────
+
+  /**
+   * MFD Optimal Occupancy — ngưỡng lấp đầy tối ưu theo kích thước xe
+   *
+   * Dựa trên Macroscopic Fundamental Diagram (MFD) [P2]:
+   * - MFD mô tả quan hệ "chuông ngửa" giữa mật độ (occupancy) và lưu lượng (flow).
+   * - Optimal Occupancy O* là điểm mà flow đạt cực đại trước khi rơi vào congestion.
+   * - Xe lớn chiếm diện tích nhiều hơn → O* thấp hơn (dễ tắc hơn khi cùng occupancy %).
+   *
+   * Giá trị O* theo loại xe (đơn giản hóa từ MFD):
+   *   - small  (xe máy, xe đạp): O* = 85%  — slot nhỏ, mật độ cao vẫn lưu thông tốt
+   *   - medium (ô tô sedan):     O* = 75%  — cần lối đi quay đầu
+   *   - large  (SUV, xe tải):    O* = 70%  — bán kính quay lớn, dễ ùn ứ
+   */
+  private static MFD_OPTIMAL_OCCUPANCY: Record<string, number> = {
+    small: 85,
+    medium: 75,
+    large: 70,
+  };
+
+  /** Ngưỡng mặc định nếu không xác định được slotSize */
+  private static MFD_DEFAULT_OPTIMAL = 75;
+
+  /**
+   * Phân loại chế độ vận hành theo MFD dựa trên occupancy vs O*
+   *
+   * MFD chia thành 3 vùng:
+   * 1. Free-flow (tự do):     occupancy < 0.85 × O*  → còn nhiều chỗ, xe ra vào dễ
+   * 2. Capacity (tối ưu):     0.85×O* ≤ occupancy ≤ O* → gần tối ưu, flow cao nhất
+   * 3. Congested (quá tải):   occupancy > O*           → quá mật độ tối ưu, flow giảm
+   */
+  private static classifyMFDRegime(
+    effectiveOccupancyPct: number,
+    optimalOccupancyPct: number
+  ): 'free-flow' | 'capacity' | 'congested' {
+    if (effectiveOccupancyPct > optimalOccupancyPct) return 'congested';
+    if (effectiveOccupancyPct >= optimalOccupancyPct * 0.85) return 'capacity';
+    return 'free-flow';
+  }
+
+  /**
+   * FR-6.3 mở rộng: API Occupancy Heatmap theo tầng + loại xe
+   *
+   * Tạo ma trận heatmap 2 chiều (tầng × loại xe) với các chỉ số MFD:
+   * - occupancyRate: tỷ lệ lấp đầy thực tế (%)
+   * - effectiveOccupancy: (occupied + reserved) / total (%) [P10]
+   * - optimalOccupancy: O* theo MFD [P2] tùy kích thước xe
+   * - operatingRegime: free-flow | capacity | congested
+   * - flowProxy: ước tính flow từ turnover gần đây (lượt checkout 24h)
+   * - gap: effectiveOccupancy - optimalOccupancy (dương = quá tải)
+   *
+   * @param filters.facilityId - ID bãi xe (bắt buộc cho heatmap có ý nghĩa)
+   */
+  static async getOccupancyHeatmap(filters: OccupancyFilter) {
+    const { facilityId, vehicleTypeId } = filters;
+
+    // ── Bước 1: Aggregate slot theo (floorId, vehicleTypeId) ──
+    const slotMatch: any = { isDeleted: false };
+    if (facilityId) slotMatch.facilityId = new mongoose.Types.ObjectId(facilityId);
+    if (vehicleTypeId) slotMatch.vehicleTypeId = new mongoose.Types.ObjectId(vehicleTypeId);
+
+    const pipeline: any[] = [
+      { $match: slotMatch },
+      {
+        $group: {
+          _id: { floorId: '$floorId', vehicleTypeId: '$vehicleTypeId', facilityId: '$facilityId' },
+          total: { $sum: 1 },
+          occupied: {
+            $sum: { $cond: [{ $eq: ['$status', SlotStatus.OCCUPIED] }, 1, 0] },
+          },
+          reserved: {
+            $sum: { $cond: [{ $eq: ['$status', SlotStatus.RESERVED] }, 1, 0] },
+          },
+          available: {
+            $sum: { $cond: [{ $eq: ['$status', SlotStatus.AVAILABLE] }, 1, 0] },
+          },
+          maintenance: {
+            $sum: { $cond: [{ $eq: ['$status', SlotStatus.MAINTENANCE] }, 1, 0] },
+          },
+          locked: {
+            $sum: { $cond: [{ $eq: ['$status', SlotStatus.LOCKED] }, 1, 0] },
+          },
+        },
+      },
+      // Join Floor
+      {
+        $lookup: {
+          from: 'floors',
+          localField: '_id.floorId',
+          foreignField: '_id',
+          as: 'floor',
+        },
+      },
+      { $unwind: '$floor' },
+      // Join ParkingFacility
+      {
+        $lookup: {
+          from: 'parkingfacilities',
+          localField: '_id.facilityId',
+          foreignField: '_id',
+          as: 'facility',
+        },
+      },
+      { $unwind: '$facility' },
+      // Join VehicleType
+      {
+        $lookup: {
+          from: 'vehicletypes',
+          localField: '_id.vehicleTypeId',
+          foreignField: '_id',
+          as: 'vehicleType',
+        },
+      },
+      { $unwind: '$vehicleType' },
+      // Project
+      {
+        $project: {
+          _id: 0,
+          floorId: '$_id.floorId',
+          floorName: '$floor.name',
+          vehicleTypeId: '$_id.vehicleTypeId',
+          vehicleTypeName: '$vehicleType.name',
+          vehicleTypeCode: '$vehicleType.code',
+          slotSize: '$vehicleType.slotSize',
+          facilityId: '$_id.facilityId',
+          facilityName: '$facility.name',
+          total: 1,
+          occupied: 1,
+          reserved: 1,
+          available: 1,
+          maintenance: 1,
+          locked: 1,
+        },
+      },
+      { $sort: { floorName: 1, vehicleTypeName: 1 } },
+    ];
+
+    const rawCells = await ParkingSlot.aggregate(pipeline);
+
+    // ── Bước 2: Ước tính Flow Proxy từ turnover (24h gần nhất) ──
+    // Flow trong MFD = số xe hoàn thành hành trình (checkout) trong đơn vị thời gian.
+    // Ở đây ta dùng số lượt checkout 24h gần nhất làm proxy cho flow.
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const flowMatch: any = {
+      checkOutTime: { $gte: twentyFourHoursAgo },
+    };
+    if (facilityId) flowMatch.facilityId = new mongoose.Types.ObjectId(facilityId);
+    if (vehicleTypeId) flowMatch.vehicleTypeId = new mongoose.Types.ObjectId(vehicleTypeId);
+
+    const flowAgg = await ParkingSession.aggregate([
+      { $match: flowMatch },
+      {
+        $group: {
+          _id: { floorId: '$floorId', vehicleTypeId: '$vehicleTypeId' },
+          turnover: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Tạo map để tra cứu nhanh flow theo (floorId, vehicleTypeId)
+    const flowMap = new Map<string, number>();
+    for (const f of flowAgg) {
+      const key = `${f._id.floorId}_${f._id.vehicleTypeId}`;
+      flowMap.set(key, f.turnover);
+    }
+
+    // ── Bước 3: Tính MFD metrics cho mỗi ô heatmap ──
+    const heatmapCells = rawCells.map((cell: any) => {
+      const occupancyRate =
+        cell.total > 0 ? Math.round((cell.occupied / cell.total) * 10000) / 100 : 0;
+
+      const effectiveOccupancy =
+        cell.total > 0
+          ? Math.round(((cell.occupied + cell.reserved) / cell.total) * 10000) / 100
+          : 0;
+
+      // O* theo MFD [P2] — phụ thuộc kích thước xe
+      const optimalOccupancy =
+        ReportService.MFD_OPTIMAL_OCCUPANCY[cell.slotSize] ||
+        ReportService.MFD_DEFAULT_OPTIMAL;
+
+      // Phân loại chế độ vận hành MFD
+      const operatingRegime = ReportService.classifyMFDRegime(effectiveOccupancy, optimalOccupancy);
+
+      // Gap = khoảng cách đến O* (dương = quá tải, âm = còn dư)
+      const gap = Math.round((effectiveOccupancy - optimalOccupancy) * 100) / 100;
+
+      // Flow proxy (turnover 24h)
+      const flowKey = `${cell.floorId}_${cell.vehicleTypeId}`;
+      const flowProxy = flowMap.get(flowKey) || 0;
+
+      return {
+        floorId: cell.floorId,
+        floorName: cell.floorName,
+        vehicleTypeId: cell.vehicleTypeId,
+        vehicleTypeName: cell.vehicleTypeName,
+        vehicleTypeCode: cell.vehicleTypeCode,
+        slotSize: cell.slotSize,
+        facilityId: cell.facilityId,
+        facilityName: cell.facilityName,
+        // Slot counts
+        total: cell.total,
+        occupied: cell.occupied,
+        reserved: cell.reserved,
+        available: cell.available,
+        maintenance: cell.maintenance,
+        locked: cell.locked,
+        // MFD metrics
+        occupancyRate,           // Tỷ lệ lấp đầy thực tế (%)
+        effectiveOccupancy,      // (occupied + reserved) / total (%) [P10]
+        optimalOccupancy,        // O* theo MFD [P2] (%)
+        operatingRegime,         // free-flow | capacity | congested
+        gap,                     // effectiveOccupancy - O* (dương = quá tải)
+        flowProxy,               // Ước tính flow: lượt checkout 24h
+      };
+    });
+
+    // ── Bước 4: Xây dựng axes cho heatmap matrix ──
+    // Trục Y: danh sách tầng (duy nhất, giữ thứ tự)
+    const floorAxis: { floorId: string; floorName: string }[] = [];
+    const seenFloors = new Set<string>();
+    for (const cell of heatmapCells) {
+      const fid = cell.floorId.toString();
+      if (!seenFloors.has(fid)) {
+        seenFloors.add(fid);
+        floorAxis.push({ floorId: fid, floorName: cell.floorName });
+      }
+    }
+
+    // Trục X: danh sách loại xe (duy nhất, giữ thứ tự)
+    const vehicleTypeAxis: { vehicleTypeId: string; vehicleTypeName: string; vehicleTypeCode: string }[] = [];
+    const seenVehicleTypes = new Set<string>();
+    for (const cell of heatmapCells) {
+      const vid = cell.vehicleTypeId.toString();
+      if (!seenVehicleTypes.has(vid)) {
+        seenVehicleTypes.add(vid);
+        vehicleTypeAxis.push({
+          vehicleTypeId: vid,
+          vehicleTypeName: cell.vehicleTypeName,
+          vehicleTypeCode: cell.vehicleTypeCode,
+        });
+      }
+    }
+
+    // ── Bước 5: Tính tổng kết facility-level ──
+    const totalSlots = heatmapCells.reduce((s: number, c: any) => s + c.total, 0);
+    const totalOccupied = heatmapCells.reduce((s: number, c: any) => s + c.occupied, 0);
+    const totalReserved = heatmapCells.reduce((s: number, c: any) => s + c.reserved, 0);
+    const totalAvailable = heatmapCells.reduce((s: number, c: any) => s + c.available, 0);
+    const totalFlow = heatmapCells.reduce((s: number, c: any) => s + c.flowProxy, 0);
+
+    // Weighted average O* (trọng số theo số slot)
+    const weightedOptimal =
+      totalSlots > 0
+        ? Math.round(
+            heatmapCells.reduce(
+              (s: number, c: any) => s + c.optimalOccupancy * c.total,
+              0
+            ) / totalSlots * 100
+          ) / 100
+        : ReportService.MFD_DEFAULT_OPTIMAL;
+
+    const overallEffective =
+      totalSlots > 0
+        ? Math.round(((totalOccupied + totalReserved) / totalSlots) * 10000) / 100
+        : 0;
+
+    const overallRegime = ReportService.classifyMFDRegime(overallEffective, weightedOptimal);
+
+    // Đếm số ô theo regime
+    const regimeCounts = {
+      'free-flow': heatmapCells.filter((c: any) => c.operatingRegime === 'free-flow').length,
+      capacity: heatmapCells.filter((c: any) => c.operatingRegime === 'capacity').length,
+      congested: heatmapCells.filter((c: any) => c.operatingRegime === 'congested').length,
+    };
+
+    return {
+      algorithm: 'MFD', // Macroscopic Fundamental Diagram [P2]
+      description:
+        'Occupancy heatmap theo tầng × loại xe với MFD-based Optimal Occupancy. ' +
+        'O* (Optimal Occupancy) là điểm cực đại trên đường MFD — vượt O* sẽ gây ùn tắc.',
+      summary: {
+        totalSlots,
+        totalOccupied,
+        totalReserved,
+        totalAvailable,
+        overallOccupancyRate:
+          totalSlots > 0 ? Math.round((totalOccupied / totalSlots) * 10000) / 100 : 0,
+        overallEffectiveOccupancy: overallEffective,
+        weightedOptimalOccupancy: weightedOptimal,
+        overallOperatingRegime: overallRegime,
+        totalFlowProxy24h: totalFlow,
+        regimeCounts,
+      },
+      axes: {
+        floors: floorAxis,
+        vehicleTypes: vehicleTypeAxis,
+      },
+      heatmapCells,
+    };
+  }
 }

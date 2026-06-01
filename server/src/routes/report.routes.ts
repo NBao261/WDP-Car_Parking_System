@@ -27,6 +27,15 @@ router.get(
   ReportController.getRevenueReport
 );
 
+// GET /reports/occupancy/heatmap
+// FR-6.3 mở rộng: Occupancy heatmap theo tầng + loại xe (MFD [P2])
+// Quyền: report:occupancy (Admin + Manager — theo SRS 3.6)
+router.get(
+  '/occupancy/heatmap',
+  checkPermission(PERMISSIONS.REPORT_OCCUPANCY),
+  ReportController.getOccupancyHeatmap
+);
+
 // GET /reports/occupancy
 // FR-6.3: Báo cáo tỷ lệ lấp đầy
 // Quyền: report:occupancy (Admin + Manager — theo SRS 3.6)
