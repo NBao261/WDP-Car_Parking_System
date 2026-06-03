@@ -23,7 +23,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         handleCheckIn();
       }
     };
-    
+
     const onF10 = () => {
       handleReset();
     };
@@ -88,14 +88,19 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
           const floorName = res.data.floorId?.name || "Tầng Auto";
           const slotCode = res.data.slotId?.code || "Slot Auto";
 
+          const now = new Date();
+          const actualCheckInTime = res.data.checkInTime ? new Date(res.data.checkInTime) : now;
           onCheckIn({
             ticketCode: res.data.code,
             plate: res.data.licensePlate,
             vehicleType:
               vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name || "",
-            checkInTime: new Date(res.data.checkInTime).toLocaleTimeString("vi-VN", {
+            checkInTime: actualCheckInTime.toLocaleTimeString("vi-VN", {
               hour: "2-digit",
               minute: "2-digit",
+            }),
+            checkInDate: actualCheckInTime.toLocaleDateString("vi-VN", {
+              day: "2-digit", month: "2-digit", year: "numeric"
             }),
             gate: gateIn,
             zone: `${floorName} - Slot: ${slotCode}`,
@@ -155,7 +160,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCheckIn(); } }}
             disabled={step === "OPEN" || isSubmitting}
             className="flex-1 w-full text-[28px] font-mono px-4 border border-[#e8e9e8] rounded-[8px] uppercase font-bold text-[#060606] placeholder-gray-300 outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606] disabled:opacity-50"
-            placeholder="29A-123.45"
+            placeholder="XXX-XXX.XX"
           />
         </div>
 
@@ -166,9 +171,8 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
             Hủy
           </button>
           <button onClick={handleCheckIn} disabled={isSubmitting}
-            className={`flex-[4] font-bold rounded-[8px] transition-all text-[15px] shadow-sm disabled:opacity-70 ${
-              step === "OPEN" ? "bg-[#1d7a4a] text-white hover:bg-[#155d38]" : "bg-[#d7ee46] text-[#060606] hover:brightness-95"
-            }`}>
+            className={`flex-[4] font-bold rounded-[8px] transition-all text-[15px] shadow-sm disabled:opacity-70 ${step === "OPEN" ? "bg-[#1d7a4a] text-white hover:bg-[#155d38]" : "bg-[#d7ee46] text-[#060606] hover:brightness-95"
+              }`}>
             {isSubmitting ? "Đang xử lý..." : step === "OPEN" ? "Mở chắn" : "Xe vào"}
           </button>
         </div>
