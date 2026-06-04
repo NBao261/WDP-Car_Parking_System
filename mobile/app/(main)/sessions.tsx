@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from "expo-router";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius } from '../../src/constants/theme';
@@ -16,11 +17,11 @@ export default function SessionsScreen() {
   const fetchSessions = async () => {
     try {
       const status = activeTab === 'active' ? 'active' : 'completed';
-      const response = await sessionApi.getMySessions(status);
+      const response = (await sessionApi.getMySessions(status)) as any;
       
-      if (response.data.success) {
+      if (response.success) {
         // Map backend response to FE interface
-        const mappedSessions: ParkingSession[] = response.data.data.map((s: any) => ({
+        const mappedSessions: ParkingSession[] = response.data.map((s: any) => ({
           _id: s._id,
           code: s.code,
           licensePlate: s.licensePlate,
@@ -49,10 +50,12 @@ export default function SessionsScreen() {
     }
   };
 
-  useEffect(() => {
-    setLoading(true);
-    fetchSessions();
-  }, [activeTab]);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      fetchSessions();
+    }, [activeTab])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
