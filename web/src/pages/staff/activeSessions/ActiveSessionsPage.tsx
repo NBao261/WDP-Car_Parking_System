@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import CurrentOccupancy from './statisticCards/CurrentOccupancy';
 import TotalTraffic from './statisticCards/TotalTraffic';
 import TableSessionsPage from './tableSessions/TableSessionsPage';
 
 export default function ActiveSessionsPage() {
+  const [totalActiveSessions, setTotalActiveSessions] = useState(0);
+
   return (
     <div className="h-full flex flex-col gap-3 overflow-hidden">
       {/* Page Title — compact */}
@@ -14,7 +17,7 @@ export default function ActiveSessionsPage() {
       {/* Stats Row — 1 hàng ngang compact, ~60px */}
       <div className="grid grid-cols-3 gap-3 shrink-0 h-[60px]">
         <div className="col-span-1">
-          <CurrentOccupancy />
+          <CurrentOccupancy count={totalActiveSessions} />
         </div>
         <div className="col-span-2">
           <TotalTraffic />
@@ -23,7 +26,9 @@ export default function ActiveSessionsPage() {
 
       {/* Main Table — chiếm toàn bộ phần còn lại */}
       <div className="flex-1 min-h-0">
-        <TableSessionsPage />
+        <TableSessionsPage 
+          onTotalChange={setTotalActiveSessions}
+        />
       </div>
     </div>
   );

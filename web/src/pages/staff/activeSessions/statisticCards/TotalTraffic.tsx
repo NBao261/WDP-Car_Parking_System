@@ -1,6 +1,15 @@
 import { ArrowRightLeft } from "lucide-react";
 
-export default function TotalTraffic() {
+interface TotalTrafficProps {
+  trafficIn?: number;
+  trafficOut?: number;
+}
+
+export default function TotalTraffic({ 
+  trafficIn = 0, 
+  trafficOut = 0, 
+}: TotalTrafficProps) {
+  // Use mocked stats for now as requested
   const xeVao = 142;
   const xeRa = 98;
 
@@ -22,12 +31,6 @@ export default function TotalTraffic() {
         <div className="text-center">
           <div className="text-[10px] text-[#060606]/40 font-semibold uppercase tracking-wider mb-0.5">Xe ra</div>
           <div className="text-[22px] font-bold text-[#060606] leading-none">{xeRa}</div>
-        </div>
-        <div className="w-px h-8 bg-gray-200" />
-        <div className="flex gap-1.5">
-          <button className="px-3 py-1 rounded-md bg-[#060606] text-white text-[11px] font-semibold">Tất cả</button>
-          <button className="px-3 py-1 rounded-md bg-white border border-gray-200 text-[#060606] text-[11px] font-medium hover:bg-gray-50">Ô tô</button>
-          <button className="px-3 py-1 rounded-md bg-white border border-gray-200 text-[#060606] text-[11px] font-medium hover:bg-gray-50">Xe máy</button>
         </div>
       </div>
     </div>
