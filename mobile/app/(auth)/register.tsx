@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, TextInput } from '../../src/components';
 import { Colors, Typography, Spacing } from '../../src/constants/theme';
+import { useAuthStore } from '../../src/store/useAuthStore';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -14,21 +15,39 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const register = useAuthStore(state => state.register);
+
   const handleRegister = async () => {
+    if (!name || !email || !phone || !password) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
+      return;
+    }
     setLoading(true);
-    // TODO: Tuần 2 — gọi API register
-    setTimeout(() => {
+    try {
+      await register({ name, email, phone, password });
+      router.replace('/(main)/home');
+    } catch (error: any) {
+      const errMsg = error?.message || (typeof error === 'string' ? error : 'Có lỗi xảy ra');
+      Alert.alert('Đăng ký thất bại', errMsg);
+    } finally {
       setLoading(false);
-      console.log('Register attempt:', { name, email, phone, password });
-    }, 1000);
+    }
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        keyboardShouldPersistTaps="handled"
+        contentInsetAdjustmentBehavior="automatic"
+      >
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Tạo tài khoản</Text>
@@ -129,6 +148,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   form: {
+    gap: Spacing.base,
     marginBottom: Spacing.xl,
   },
   footer: {

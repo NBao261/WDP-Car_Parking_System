@@ -122,9 +122,9 @@
 
 #### FE3
 
-- [ ] Màn hình Login / Đăng ký Driver
-- [ ] Auth flow mobile (JWT + AsyncStorage)
-- [ ] Màn hình Home skeleton (tab bar: Trang chủ, Lượt gửi, Đặt chỗ, Tài khoản)
+- [x] Màn hình Login / Đăng ký Driver
+- [x] Auth flow mobile (JWT + AsyncStorage)
+- [x] Màn hình Home skeleton (tab bar: Trang chủ, Lượt gửi, Đặt chỗ, Tài khoản)
 
 ### Tuần 3
 
@@ -229,7 +229,7 @@
 
 #### FE1
 
-- [ ] Trang Quản lý Bảng giá: gán bảng giá cho tòa nhà (FR-5.2)
+- [x] Trang Quản lý Bảng giá: gán bảng giá cho tòa nhà (FR-5.2)
 - [ ] Trang Log hệ thống (FR-20.4): filter, phân trang
 - [ ] Nâng cao Dashboard: biểu đồ slot realtime
 
@@ -266,8 +266,8 @@
   - Chuyển reservation → session khi Driver đến (BR-6.6)
 - [x] API chính sách hủy (BR-6.5): tính phí hủy nếu < 2 giờ
 - [ ] 🔬 **[RQ3]** Implement Weighted Scoring Model cho API `suggest-floor` (FR-8.3):
-  - Thuật toán gốc: **TOPSIS + CRITIC** [P5] (Amari et al., *Sustainability* 2023), **COA** [P6] (Shirazi & Farzaneh, *JAIDM* 2025)
-  - Ràng buộc cứng (hard constraints) từ MARL framework [P7] (Zhang et al., *TRC* 2022): vehicleType match + slot.status == 'Available'
+  - Thuật toán gốc: **TOPSIS + CRITIC** [P5] (Amari et al., _Sustainability_ 2023), **COA** [P6] (Shirazi & Farzaneh, _JAIDM_ 2025)
+  - Ràng buộc cứng (hard constraints) từ MARL framework [P7] (Zhang et al., _TRC_ 2022): vehicleType match + slot.status == 'Available'
   - Phiên bản áp dụng: **WSM (Weighted Scoring Model)** — đơn giản hóa TOPSIS
   - `Score(slot) = W1×Distance + W2×FloorFillBalance + W3×DurationMatch + W4×FloorPreference`
   - Zone Filtering (từ Contract Net Protocol [P1] + Differentiated Parking [P2])
@@ -330,12 +330,12 @@
 - [ ] API Ngoại lệ nâng cao (FR-7): list exceptions for Manager, approve/reject
 - [ ] Optimize MongoDB queries: indexes cho licensePlate, sessionCode, slotCode
 - [ ] 🔬 **[RQ4]** Implement Load Balancing cho giờ cao điểm:
-  - Thuật toán gốc: **NSGA-II** (multi-objective demand allocation) [P8] (Zhang et al., *Systems* 2024), **DQN** [P9] (Chen et al., 2024)
+  - Thuật toán gốc: **NSGA-II** (multi-objective demand allocation) [P8] (Zhang et al., _Systems_ 2024), **DQN** [P9] (Chen et al., 2024)
   - Phiên bản áp dụng: **Threshold-based Load Balancing** — phát hiện tầng sắp đầy (occupancy ≥ 85%) → chuyển hướng xe đến tầng occupancy thấp nhất
-  - Tích hợp **Reservation-Aware Capacity** [P10] (Wang, Li & Xie, *TRC* 2022): `effective_occupancy = (occupied + reserved) / total`
+  - Tích hợp **Reservation-Aware Capacity** [P10] (Wang, Li & Xie, _TRC_ 2022): `effective_occupancy = (occupied + reserved) / total`
   - Conflict Resolution: khi 2 xe hướng cùng slot → ưu tiên xe gần hơn
 - [ ] 🔬 **[RQ4]** Peak Hour Detection: xác định giờ cao điểm tự động từ dữ liệu lịch sử
-  - Hướng nâng cấp tương lai: **MARL (Multi-Agent Deep RL)** [P7] (Zhang et al., *TRC* 2022) và **DRL (Deep Q-Network)** [P9]
+  - Hướng nâng cấp tương lai: **MARL (Multi-Agent Deep RL)** [P7] (Zhang et al., _TRC_ 2022) và **DRL (Deep Q-Network)** [P9]
   - **Service files tạo mới:**
     - `server/services/algorithms/loadBalancer.service.js` ← RQ4: Threshold LB [P8]
     - `server/services/algorithms/peakDetection.service.js` ← RQ4: Peak detection [P8]
@@ -362,8 +362,8 @@
   - **Service file:** `server/services/ai/durationPredictor.service.js`
   - **API:** `GET /api/ai/predict-duration`
 - [ ] 🤖 **[RQ5]** Implement AI Chatbot Query cho Manager/Admin (FR-6.5):
-  - Tham khảo: **NLI survey** [P11] (Quamar et al., *FnTDB* 2022), **Chatbot FM** [P12] (Chen & Tsai, *Sensors* 2021)
-  - Đánh giá acceptance: **TAM** [P13] (Alhammadi, *AJSTS* 2023), **SLR** [P14] (Delgado et al., *JISEM* 2025)
+  - Tham khảo: **NLI survey** [P11] (Quamar et al., _FnTDB_ 2022), **Chatbot FM** [P12] (Chen & Tsai, _Sensors_ 2021)
+  - Đánh giá acceptance: **TAM** [P13] (Alhammadi, _AJSTS_ 2023), **SLR** [P14] (Delgado et al., _JISEM_ 2025)
   - Phương pháp: **Intent-based NLQ** — keyword matching + entity extraction + template MongoDB query
   - Kiến trúc 4-module [P12]: Intent Analysis, Parking Dataset, Decision Mechanism, Response Generation
   - Intents hỗ trợ: revenue_report, traffic_report, occupancy_report, peak_hours, facility_info, exception_summary
@@ -377,8 +377,8 @@
   - **API:** `POST /api/ai/chat-query`, `GET /api/ai/chat-history`
   - **Nâng cấp tương lai:** LLM-based Text-to-SQL [P11], multi-turn conversation context [P11]
 - [ ] 🤖 **[RQ6]** Implement AI Pricing Suggestion cho Manager (FR-5.5):
-  - Tham khảo: **Prediction-based Pricing** [P15] (Hong et al., *CIKM* 2022), **DRL-DP** [P16] (Poh et al., *Algorithms* 2023)
-  - Framework: **ML Pricing 3 tầng** [P17] (Saharan et al., *FGCS* 2020), **Review** [P18] (Bayih & Tilahun, *ORD* 2024)
+  - Tham khảo: **Prediction-based Pricing** [P15] (Hong et al., _CIKM_ 2022), **DRL-DP** [P16] (Poh et al., _Algorithms_ 2023)
+  - Framework: **ML Pricing 3 tầng** [P17] (Saharan et al., _FGCS_ 2020), **Review** [P18] (Bayih & Tilahun, _ORD_ 2024)
   - Phương pháp: **Demand-based Pricing Suggestion** — phân tích tần suất gửi xe, occupancy rate, peak demand → gợi ý điều chỉnh giá
   - Pipeline: Data Collection → Demand Analysis → Price Suggestion Engine → Cross-Facility Comparison
   - Demand levels: high_demand (≥85%), normal_demand (50-85%), low_demand (<50%)
@@ -590,21 +590,21 @@ Tuần 9: Deploy ───────────────┘── Mileston
 
 ## 📊 BẢNG TỔNG HỢP MODULE ↔ NGƯỜI PHỤ TRÁCH
 
-| Module                   | Backend | Frontend Web | Mobile |
-| ------------------------ | :-----: | :----------: | :----: |
-| Auth & User Management   |   BE1   |     FE1      |  FE3   |
-| Tòa nhà / Tầng / Loại xe |   BE2   |     FE1      |   –    |
-| Slot đỗ xe               |   BE1   |   FE1+FE2    |   –    |
-| Bảng giá                 |   BE1   |   FE1+FE2    |  FE3   |
-| Parking Session (vào/ra) | BE1+BE2 |     FE2      |  FE3   |
-| Thanh toán               |   BE1   |     FE2      |  FE3   |
-| Ngoại lệ                 |   BE2   |   FE1+FE2    |   –    |
-| Đặt chỗ trước            |   BE1   |      –       |  FE3   |
-| Báo cáo & Thống kê       |   BE2   |     FE1      |   –    |
-| Phản hồi                 |   BE2   |     FE1      |  FE3   |
-| Quản trị hệ thống        |   BE2   |     FE1      |   –    |
-| Realtime (Socket.IO)     |   BE2   |   FE1+FE2    |  FE3   |
-| **Research Questions**   | **BE1+BE2** |    –     |   –    |
+| Module                   |   Backend   | Frontend Web | Mobile |
+| ------------------------ | :---------: | :----------: | :----: |
+| Auth & User Management   |     BE1     |     FE1      |  FE3   |
+| Tòa nhà / Tầng / Loại xe |     BE2     |     FE1      |   –    |
+| Slot đỗ xe               |     BE1     |   FE1+FE2    |   –    |
+| Bảng giá                 |     BE1     |   FE1+FE2    |  FE3   |
+| Parking Session (vào/ra) |   BE1+BE2   |     FE2      |  FE3   |
+| Thanh toán               |     BE1     |     FE2      |  FE3   |
+| Ngoại lệ                 |     BE2     |   FE1+FE2    |   –    |
+| Đặt chỗ trước            |     BE1     |      –       |  FE3   |
+| Báo cáo & Thống kê       |     BE2     |     FE1      |   –    |
+| Phản hồi                 |     BE2     |     FE1      |  FE3   |
+| Quản trị hệ thống        |     BE2     |     FE1      |   –    |
+| Realtime (Socket.IO)     |     BE2     |   FE1+FE2    |  FE3   |
+| **Research Questions**   | **BE1+BE2** |      –       |   –    |
 
 ---
 
@@ -655,62 +655,61 @@ Fallback: AI model chưa train → rule-based (rate > avg × 1.5) + AVG(duration
 
 ### Schema changes tổng hợp
 
-| Collection | Field | Type | Default | RQ |
-|-----------|-------|------|---------|-----|
-| Floor | distanceToGate | Number | 0 | RQ1, RQ3 |
-| ParkingSession | assignmentMode | String enum | 'auto' | RQ2 |
-| ParkingSession | suggestedSlotId | ObjectId | null | RQ2, RQ3 |
-| SystemConfig | algorithmWeights.W1_distance | Number | 0.25 | RQ3 |
-| SystemConfig | algorithmWeights.W2_floorBalance | Number | 0.30 | RQ3 |
-| SystemConfig | algorithmWeights.W3_durationMatch | Number | 0.25 | RQ3 |
-| SystemConfig | algorithmWeights.W4_floorPreference | Number | 0.20 | RQ3 |
-| SystemConfig | loadBalancingThreshold | Number | 0.85 | RQ4 |
-| SystemConfig | peakHourMultiplier | Number | 1.5 | RQ4 (fallback) |
-| SystemConfig | aiPredictionEnabled | Boolean | false | AI |
-| AIModelMeta | peakHourModel | Object | null | AI |
-| AIModelMeta | durationModel | Object | null | AI |
+| Collection     | Field                               | Type        | Default | RQ             |
+| -------------- | ----------------------------------- | ----------- | ------- | -------------- |
+| Floor          | distanceToGate                      | Number      | 0       | RQ1, RQ3       |
+| ParkingSession | assignmentMode                      | String enum | 'auto'  | RQ2            |
+| ParkingSession | suggestedSlotId                     | ObjectId    | null    | RQ2, RQ3       |
+| SystemConfig   | algorithmWeights.W1_distance        | Number      | 0.25    | RQ3            |
+| SystemConfig   | algorithmWeights.W2_floorBalance    | Number      | 0.30    | RQ3            |
+| SystemConfig   | algorithmWeights.W3_durationMatch   | Number      | 0.25    | RQ3            |
+| SystemConfig   | algorithmWeights.W4_floorPreference | Number      | 0.20    | RQ3            |
+| SystemConfig   | loadBalancingThreshold              | Number      | 0.85    | RQ4            |
+| SystemConfig   | peakHourMultiplier                  | Number      | 1.5     | RQ4 (fallback) |
+| SystemConfig   | aiPredictionEnabled                 | Boolean     | false   | AI             |
+| AIModelMeta    | peakHourModel                       | Object      | null    | AI             |
+| AIModelMeta    | durationModel                       | Object      | null    | AI             |
 
 ### API endpoints cho thuật toán
 
-| Method | Endpoint | Mô tả | RQ |
-|--------|----------|-------|----|
-| GET | `/api/parking/suggest-floor?mode=auto\|manual` | Gợi ý tầng/slot tối ưu | RQ2, RQ3 |
-| GET | `/api/reports/occupancy-heatmap` | Heatmap occupancy theo tầng | RQ1 |
-| GET | `/api/reports/peak-hours` | Phân tích giờ cao điểm | RQ4 |
-| GET | `/api/reports/load-imbalance` | Load Imbalance Index | RQ4 |
-| PUT | `/api/system-config/algorithm-weights` | Điều chỉnh W1–W4 | RQ3 |
-| POST | `/api/ai/train-models` | Trigger re-train AI models | AI |
-| GET | `/api/ai/model-status` | Trạng thái model: accuracy, lastTrained | AI |
-| GET | `/api/ai/predict-peak` | Dự đoán giờ cao điểm (test) | AI |
-| GET | `/api/ai/predict-duration` | Dự đoán thời gian gửi (test) | AI |
-| POST | `/api/ai/chat-query` | Chatbot truy vấn báo cáo bằng NL | RQ5 |
-| GET | `/api/ai/chat-history` | Lịch sử hội thoại chatbot | RQ5 |
-| GET | `/api/ai/pricing-suggestion/:facilityId` | Gợi ý điều chỉnh bảng giá | RQ6 |
-| GET | `/api/ai/pricing-suggestion/compare` | So sánh giá giữa các tòa nhà | RQ6 |
+| Method | Endpoint                                       | Mô tả                                   | RQ       |
+| ------ | ---------------------------------------------- | --------------------------------------- | -------- |
+| GET    | `/api/parking/suggest-floor?mode=auto\|manual` | Gợi ý tầng/slot tối ưu                  | RQ2, RQ3 |
+| GET    | `/api/reports/occupancy-heatmap`               | Heatmap occupancy theo tầng             | RQ1      |
+| GET    | `/api/reports/peak-hours`                      | Phân tích giờ cao điểm                  | RQ4      |
+| GET    | `/api/reports/load-imbalance`                  | Load Imbalance Index                    | RQ4      |
+| PUT    | `/api/system-config/algorithm-weights`         | Điều chỉnh W1–W4                        | RQ3      |
+| POST   | `/api/ai/train-models`                         | Trigger re-train AI models              | AI       |
+| GET    | `/api/ai/model-status`                         | Trạng thái model: accuracy, lastTrained | AI       |
+| GET    | `/api/ai/predict-peak`                         | Dự đoán giờ cao điểm (test)             | AI       |
+| GET    | `/api/ai/predict-duration`                     | Dự đoán thời gian gửi (test)            | AI       |
+| POST   | `/api/ai/chat-query`                           | Chatbot truy vấn báo cáo bằng NL        | RQ5      |
+| GET    | `/api/ai/chat-history`                         | Lịch sử hội thoại chatbot               | RQ5      |
+| GET    | `/api/ai/pricing-suggestion/:facilityId`       | Gợi ý điều chỉnh bảng giá               | RQ6      |
+| GET    | `/api/ai/pricing-suggestion/compare`           | So sánh giá giữa các tòa nhà            | RQ6      |
 
 ### Thuật toán đã chọn — tóm tắt
 
-| RQ | Paper chính | Ranking | Phiên bản áp dụng | Nâng cấp tương lai |
-|----|------------|---------|--------------------|-----------------|
-| RQ1 | [P2] Jakob & Menendez 2021 | Q2, IF=3.3 | Rule-based Zone Filtering | Adaptive ML Zoning |
-| RQ2 | [P3] arXiv 2025 + [P4] Wang 2021 | Preprint + Q1/IF=7.9 | Greedy Matching | Full Hungarian O(n³) |
-| RQ3 | [P5] Amari 2023 + [P7] Zhang 2022 | Q2 + Q1/IF=7.9 | WSM 4-criteria | Full TOPSIS + COA [P6] |
-| RQ4 | [P8] Zhang 2024 + [P10] Wang 2022 | Q1-JCR + Q1/IF=7.9 | Threshold Load Balancing | DQN [P9] / MARL [P7] |
-| RQ5 | [P12] Chen & Tsai 2021 + [P11] Quamar 2022 | Q1/IF=3.4 + Top-tier survey | Intent-based NLQ | LLM Text-to-SQL [P11] |
-| RQ6 | [P15] Hong 2022 + [P17] Saharan 2020 | CIKM-A + Q1/IF=7.5 | Demand-based Pricing Suggestion | Full DRL-DP agent [P16] |
+| RQ  | Paper chính                                | Ranking                     | Phiên bản áp dụng               | Nâng cấp tương lai      |
+| --- | ------------------------------------------ | --------------------------- | ------------------------------- | ----------------------- |
+| RQ1 | [P2] Jakob & Menendez 2021                 | Q2, IF=3.3                  | Rule-based Zone Filtering       | Adaptive ML Zoning      |
+| RQ2 | [P3] arXiv 2025 + [P4] Wang 2021           | Preprint + Q1/IF=7.9        | Greedy Matching                 | Full Hungarian O(n³)    |
+| RQ3 | [P5] Amari 2023 + [P7] Zhang 2022          | Q2 + Q1/IF=7.9              | WSM 4-criteria                  | Full TOPSIS + COA [P6]  |
+| RQ4 | [P8] Zhang 2024 + [P10] Wang 2022          | Q1-JCR + Q1/IF=7.9          | Threshold Load Balancing        | DQN [P9] / MARL [P7]    |
+| RQ5 | [P12] Chen & Tsai 2021 + [P11] Quamar 2022 | Q1/IF=3.4 + Top-tier survey | Intent-based NLQ                | LLM Text-to-SQL [P11]   |
+| RQ6 | [P15] Hong 2022 + [P17] Saharan 2020       | CIKM-A + Q1/IF=7.5          | Demand-based Pricing Suggestion | Full DRL-DP agent [P16] |
 
 ---
 
 ## ⚠️ QUY TẮC LÀM VIỆC
 
-| #   | Quy tắc                      | Chi tiết                                               |
-| --- | ---------------------------- | ------------------------------------------------------ |
-| 1   | Daily standup                | Mỗi ngày 15 phút báo cáo: đã làm, sẽ làm, blocker      |
-| 2   | Branch naming                | `feature/FR-xx-mô-tả`, `bugfix/issue-xx`, `hotfix/...` |
-| 3   | Pull Request                 | Mỗi PR cần ≥ 1 reviewer approve trước khi merge        |
-| 4   | API contract trước           | BE viết Swagger trước → FE mock data → Tích hợp sau    |
-| 5   | Sprint review cuối mỗi phase | Demo deliverable, retrospective                        |
-| 6   | Git commit convention        | `feat:`, `fix:`, `docs:`, `refactor:`, `test:`         |
-| 7   | Shared types                 | Tạo package `shared/types` dùng chung BE + FE + Mobile |
+| #   | Quy tắc                      | Chi tiết                                                           |
+| --- | ---------------------------- | ------------------------------------------------------------------ |
+| 1   | Daily standup                | Mỗi ngày 15 phút báo cáo: đã làm, sẽ làm, blocker                  |
+| 2   | Branch naming                | `feature/FR-xx-mô-tả`, `bugfix/issue-xx`, `hotfix/...`             |
+| 3   | Pull Request                 | Mỗi PR cần ≥ 1 reviewer approve trước khi merge                    |
+| 4   | API contract trước           | BE viết Swagger trước → FE mock data → Tích hợp sau                |
+| 5   | Sprint review cuối mỗi phase | Demo deliverable, retrospective                                    |
+| 6   | Git commit convention        | `feat:`, `fix:`, `docs:`, `refactor:`, `test:`                     |
+| 7   | Shared types                 | Tạo package `shared/types` dùng chung BE + FE + Mobile             |
 | 8   | Research tracking            | Mỗi session phải ghi nhận `assignmentMode` để phục vụ phân tích RQ |
-

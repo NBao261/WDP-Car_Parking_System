@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, TextInput } from '../../src/components';
 import { Colors, Typography, Spacing } from '../../src/constants/theme';
+import { useAuthStore } from '../../src/store/useAuthStore';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -12,21 +13,35 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const login = useAuthStore(state => state.login);
+
   const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ email và mật khẩu');
+      return;
+    }
     setLoading(true);
-    // TODO: Tuần 2 — gọi API login + lưu token vào SecureStore
-    setTimeout(() => {
+    try {
+      await login(email, password);
+      router.replace('/(main)/home');
+    } catch (error: any) {
+      const errMsg = error?.message || (typeof error === 'string' ? error : 'Có lỗi xảy ra');
+      Alert.alert('Đăng nhập thất bại', errMsg);
+    } finally {
       setLoading(false);
-      console.log('Login attempt:', { email, password });
-    }, 1000);
+    }
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        keyboardShouldPersistTaps="handled"
+        contentInsetAdjustmentBehavior="automatic"
+      >
         {/* Logo & Title */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
@@ -123,6 +138,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   form: {
+    gap: Spacing.base,
     marginBottom: Spacing.xl,
   },
   footer: {

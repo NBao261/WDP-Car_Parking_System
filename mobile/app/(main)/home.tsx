@@ -1,12 +1,31 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, Badge } from '../../src/components';
 import { Colors, Typography, Spacing, Shadows, BorderRadius } from '../../src/constants/theme';
+import { useAuthStore } from '../../src/store/useAuthStore';
 
 export default function HomeScreen() {
+  const { user } = useAuthStore();
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 2000);
+  }, []);
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.content}
+      contentInsetAdjustmentBehavior="automatic"
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
+      <View style={styles.greetingContainer}>
+        <Text style={styles.greetingText}>Xin chào, {user?.name || 'Driver'} 👋</Text>
+        <Text style={styles.subGreeting}>Chúc bạn một ngày tốt lành!</Text>
+      </View>
+
       {/* Quick Stats */}
       <View style={styles.statsRow}>
         <View style={[styles.statCard, { backgroundColor: Colors.primaryBg }]}>
@@ -61,6 +80,19 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.base,
   },
+  greetingContainer: {
+    marginBottom: Spacing.lg,
+  },
+  greetingText: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.textPrimary,
+  },
+  subGreeting: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
   statsRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
@@ -71,6 +103,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.md,
     borderRadius: BorderRadius.lg,
+    borderCurve: 'continuous',
   },
   statNumber: {
     fontSize: Typography.fontSize.xl,
