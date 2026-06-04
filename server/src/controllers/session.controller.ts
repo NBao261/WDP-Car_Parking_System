@@ -161,4 +161,18 @@ export class SessionController {
       next(error);
     }
   }
+
+  /**
+   * GET /sessions/my-sessions
+   * Lấy danh sách lượt gửi của Customer
+   */
+  static async getMySessions(req: Request, res: Response, next: NextFunction) {
+    try {
+      const driverId = req.user!.userId;
+      const result = await SessionService.getMySessions(driverId, req.query);
+      res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

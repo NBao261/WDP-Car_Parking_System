@@ -322,6 +322,7 @@ export class SessionService {
       staffInId: data.staffInId,
       cardCode,
       status: SessionStatus.ACTIVE,
+      driverId: matchedReservation ? matchedReservation.userId : null,
     });
 
     await session.save();
@@ -502,6 +503,32 @@ export class SessionService {
       page: Number(page),
       totalPages: Math.ceil(total / Number(limit))
     };
+  }
+
+  /**
+   * Lấy danh sách lượt gửi của tài khoản Customer (Driver)
+   */
+  static async getMySessions(driverId: string, query: any): Promise<{ data: IParkingSession[], total: number }> {
+    const filter: any = { driverId };
+
+    if (query.status) {
+      filter.status = query.status; // e.g., 'active' or 'completed'
+    }
+
+    const sort: any = { checkInTime: -1 }; // Mới nhất lên đầu
+
+    const [data, total] = await Promise.all([
+      ParkingSession.find(filter)
+        .sort(sort)
+        .populate('vehicleTypeId', 'name code icon')
+        .populate('facilityId', 'name address')
+        .populate('floorId', 'name')
+        .populate('slotId', 'code status')
+        .populate('pricingPlanId', 'name feeType rates'),
+      ParkingSession.countDocuments(filter)
+    ]);
+
+    return { data, total };
   }
 
   /**

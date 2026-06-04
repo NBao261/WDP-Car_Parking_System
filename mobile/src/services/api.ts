@@ -43,6 +43,11 @@ export const api = {
   },
 };
 
+export const sessionApi = {
+  getMySessions: (status?: string) => 
+    apiClient.get('/sessions/my-sessions', { params: { status } })
+};
+
 // ─── Request Interceptor: Attach token ────────────────
 apiClient.interceptors.request.use(
   async (config) => {

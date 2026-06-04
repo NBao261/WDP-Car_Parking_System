@@ -205,9 +205,9 @@
 
 #### FE3
 
-- [ ] Màn hình Lượt gửi hiện tại (FR-15.1): giờ vào, loại xe, khu vực, phí tạm tính
-- [ ] Màn hình Lịch sử gửi xe (FR-15.2): danh sách, chi tiết
-- [ ] Component: SessionDetailCard, FeeEstimate
+- [x] Màn hình Lượt gửi hiện tại (FR-15.1): giờ vào, loại xe, khu vực, phí tạm tính
+- [x] Màn hình Lịch sử gửi xe (FR-15.2): danh sách, chi tiết
+- [x] Component: SessionDetailCard, FeeEstimate
 
 ### Tuần 5
 
