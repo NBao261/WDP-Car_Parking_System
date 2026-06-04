@@ -44,8 +44,29 @@ export const api = {
 };
 
 export const sessionApi = {
-  getMySessions: (status?: string) => 
-    apiClient.get('/sessions/my-sessions', { params: { status } })
+  getMySessions: (status?: 'active' | 'completed') => {
+    return apiClient.get('/sessions/my-sessions', { params: { status } });
+  },
+};
+
+// Reservation API
+export const reservationApi = {
+  createReservation: (data: { facilityId: string; vehicleTypeId: string; licensePlate: string; startTime: string; endTime: string; }) => {
+    return apiClient.post('/reservations', data);
+  },
+  getReservations: (status?: 'pending' | 'confirmed' | 'used' | 'cancelled' | 'expired') => {
+    return apiClient.get('/reservations', { params: { status } });
+  },
+  cancelReservation: (id: string) => {
+    return apiClient.post(`/reservations/${id}/cancel`);
+  }
+};
+
+// Vehicle Type API
+export const vehicleTypeApi = {
+  getVehicleTypes: () => {
+    return apiClient.get('/vehicle-types');
+  }
 };
 
 // ─── Request Interceptor: Attach token ────────────────
