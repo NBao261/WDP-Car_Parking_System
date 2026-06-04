@@ -79,6 +79,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: BorderRadius.lg,
+    borderCurve: 'continuous',
   },
   fullWidth: {
     width: '100%',

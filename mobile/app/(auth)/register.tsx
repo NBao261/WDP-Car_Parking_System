@@ -43,7 +43,11 @@ export default function RegisterScreen() {
       style={styles.container}
       behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        keyboardShouldPersistTaps="handled"
+        contentInsetAdjustmentBehavior="automatic"
+      >
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Tạo tài khoản</Text>
@@ -144,6 +148,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   form: {
+    gap: Spacing.base,
     marginBottom: Spacing.xl,
   },
   footer: {

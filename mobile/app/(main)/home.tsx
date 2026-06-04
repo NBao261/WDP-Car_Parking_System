@@ -18,6 +18,7 @@ export default function HomeScreen() {
     <ScrollView 
       style={styles.container} 
       contentContainerStyle={styles.content}
+      contentInsetAdjustmentBehavior="automatic"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <View style={styles.greetingContainer}>
@@ -102,6 +103,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.md,
     borderRadius: BorderRadius.lg,
+    borderCurve: 'continuous',
   },
   statNumber: {
     fontSize: Typography.fontSize.xl,

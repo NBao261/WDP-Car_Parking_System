@@ -37,7 +37,11 @@ export default function AccountScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.content}
+      contentInsetAdjustmentBehavior="automatic"
+    >
       {/* Profile Card */}
       <Card variant="elevated">
         <View style={styles.profileRow}>
@@ -93,8 +97,9 @@ const styles = StyleSheet.create({
   },
   avatar: {
     width: 56,
-    height: 56,
-    borderRadius: 28,
+    height: 64,
+    borderRadius: 32,
+    borderCurve: 'continuous',
     backgroundColor: Colors.primaryBg,
     alignItems: 'center',
     justifyContent: 'center',

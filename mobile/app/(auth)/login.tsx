@@ -37,7 +37,11 @@ export default function LoginScreen() {
       style={styles.container}
       behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        keyboardShouldPersistTaps="handled"
+        contentInsetAdjustmentBehavior="automatic"
+      >
         {/* Logo & Title */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
@@ -134,6 +138,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   form: {
+    gap: Spacing.base,
     marginBottom: Spacing.xl,
   },
   footer: {

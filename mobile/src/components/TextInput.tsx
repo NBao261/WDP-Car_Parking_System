@@ -73,7 +73,6 @@ export const TextInput: React.FC<TextInputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: Spacing.base,
   },
   label: {
     fontSize: Typography.fontSize.sm,
@@ -86,6 +85,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1.5,
     borderRadius: BorderRadius.lg,
+    borderCurve: 'continuous',
     backgroundColor: Colors.white,
     paddingHorizontal: Spacing.md,
   },
