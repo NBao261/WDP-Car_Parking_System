@@ -8,9 +8,9 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { useLocalSearchParams, Stack } from "expo-router";
+import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Card, Badge } from "../../../src/components";
+import { Card, Badge, Button } from "../../../src/components";
 import {
   Colors,
   Typography,
@@ -26,6 +26,7 @@ import {
 
 export default function FacilityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const [facility, setFacility] = useState<Facility | null>(null);
   const [pricing, setPricing] = useState<PricingPlan[]>([]);
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
@@ -198,6 +199,15 @@ export default function FacilityDetailScreen() {
           ))
         )}
       </ScrollView>
+
+      <View style={styles.bottomBar}>
+        <Button 
+          title="Đặt chỗ ngay" 
+          onPress={() => router.push(`/(main)/facility/${id}/book`)}
+          fullWidth 
+          size="lg"
+        />
+      </View>
     </>
   );
 }
@@ -329,4 +339,11 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginBottom: Spacing.xs,
   },
+  bottomBar: {
+    padding: Spacing.base,
+    backgroundColor: Colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: Colors.divider,
+    paddingBottom: Spacing.xl, // add padding for safe area
+  }
 });
