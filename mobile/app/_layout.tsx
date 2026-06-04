@@ -1,7 +1,16 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as Notifications from 'expo-notifications';
 import { useAuthStore } from '../src/store/useAuthStore';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function RootLayout() {
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
@@ -10,7 +19,21 @@ export default function RootLayout() {
 
   useEffect(() => {
     checkAuth();
+    requestNotificationPermissions();
   }, [checkAuth]);
+
+  const requestNotificationPermissions = async () => {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') {
+      console.log('Failed to get push token for push notification!');
+      return;
+    }
+  };
 
   useEffect(() => {
     if (isLoading) return;

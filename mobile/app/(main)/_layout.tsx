@@ -50,10 +50,10 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="reserve"
+        name="reservations"
         options={{
           title: 'Đặt chỗ',
-          headerTitle: 'Đặt chỗ đỗ xe',
+          headerTitle: 'Quản lý Đặt chỗ',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" size={size} color={color} />
           ),
@@ -67,6 +67,29 @@ export default function MainLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" size={size} color={color} />
           ),
+        }}
+      />
+      
+      {/* Ẩn các màn hình con khỏi Bottom Tabs */}
+      <Tabs.Screen
+        name="facility/[id]"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="facility/[id]/book"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="reserve"
+        options={{
+          href: null,
+          headerShown: false,
         }}
       />
     </Tabs>
