@@ -6,3 +6,4 @@ export { Badge } from './Badge';
 export { Loading } from './Loading';
 export { SessionDetailCard } from './SessionDetailCard';
 export { FeeEstimate } from './FeeEstimate';
+export { default as ReservationCard } from './ReservationCard';
