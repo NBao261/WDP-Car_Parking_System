@@ -2,6 +2,7 @@ import { ParkingFacility } from '../models/parkingFacility.model';
 import { PricingPlan } from '../models/pricingPlan.model';
 import { ParkingSlot } from '../models/parkingSlot.model';
 import { AppError } from '../middlewares/error.middleware';
+import mongoose from 'mongoose';
 
 export class PublicService {
   static async getPublicFacilities(filters: any = {}, skip = 0, limit = 10) {
@@ -12,17 +13,17 @@ export class PublicService {
   }
 
   static async getPublicPricing(facilityId: string) {
-    const pricingPlans = await PricingPlan.find({ facilityId, status: 'active' }).populate('vehicleType', 'name code slotSize icon');
+    const pricingPlans = await PricingPlan.find({ facilityId, status: 'active' }).populate('vehicleTypeId', 'name code slotSize icon');
     return pricingPlans;
   }
 
   static async getAvailableSlots(facilityId: string) {
     // Aggregation to count available slots by vehicle type
     const availableSlots = await ParkingSlot.aggregate([
-      { $match: { facilityId: facilityId, status: 'available' } },
+      { $match: { facilityId: new mongoose.Types.ObjectId(facilityId), status: 'available' } },
       {
         $group: {
-          _id: '$vehicleType',
+          _id: '$vehicleTypeId',
           count: { $sum: 1 },
         },
       },
