@@ -157,10 +157,10 @@
 
 #### FE3
 
-- [ ] Màn hình Xem thông tin bãi xe (FR-12.1): tên, địa chỉ, giờ hoạt động
-- [ ] Màn hình Xem bảng giá (FR-12.2): hiển thị theo loại xe
-- [ ] Màn hình Xem slot trống (FR-12.3): số lượng theo loại xe
-- [ ] Pull-to-refresh, loading states
+- [x] Màn hình Xem thông tin bãi xe (FR-12.1): tên, địa chỉ, giờ hoạt động
+- [x] Màn hình Xem bảng giá (FR-12.2): hiển thị theo loại xe
+- [x] Màn hình Xem slot trống (FR-12.3): số lượng theo loại xe
+- [x] Pull-to-refresh, loading states
 
 **✅ Deliverable tuần 2–3:** Auth hoạt động, CRUD quản lý hoàn chỉnh, Admin Panel + Staff Portal cơ bản, Mobile xem được thông tin bãi xe.
 

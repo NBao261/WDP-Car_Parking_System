@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import { Facility, PricingPlan, AvailableSlot } from '../types/facility.types';
 
 // ─── API Configuration ───────────────────────────────
 // Ưu tiên EXPO_PUBLIC_API_URL từ .env
@@ -25,6 +26,22 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+export const api = {
+  // Public Routes
+  getPublicFacilities: async (page = 1, limit = 10) => {
+    const response = await apiClient.get<any, { success: boolean, data: Facility[], pagination: any }>(`/public/facilities?page=${page}&limit=${limit}`);
+    return response.data;
+  },
+  getPublicPricing: async (facilityId: string) => {
+    const response = await apiClient.get<any, { success: boolean, data: PricingPlan[] }>(`/public/facilities/${facilityId}/pricing`);
+    return response.data;
+  },
+  getAvailableSlots: async (facilityId: string) => {
+    const response = await apiClient.get<any, { success: boolean, data: AvailableSlot[] }>(`/public/facilities/${facilityId}/available-slots`);
+    return response.data;
+  },
+};
 
 // ─── Request Interceptor: Attach token ────────────────
 apiClient.interceptors.request.use(

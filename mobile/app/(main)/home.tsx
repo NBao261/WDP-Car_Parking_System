@@ -1,17 +1,37 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Card, Badge } from '../../src/components';
-import { Colors, Typography, Spacing, Shadows, BorderRadius } from '../../src/constants/theme';
+import { Colors, Typography, Spacing, BorderRadius } from '../../src/constants/theme';
 import { useAuthStore } from '../../src/store/useAuthStore';
+import { api } from '../../src/services/api';
+import { Facility } from '../../src/types/facility.types';
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
-  const [refreshing, setRefreshing] = React.useState(false);
+  const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
+  const [facilities, setFacilities] = useState<Facility[]>([]);
 
-  const onRefresh = React.useCallback(() => {
+  const fetchFacilities = async () => {
+    try {
+      const data = await api.getPublicFacilities(1, 10);
+      setFacilities(data);
+    } catch (error: any) {
+      console.log('Failed to fetch facilities', error);
+      Alert.alert('Lỗi', 'Không thể tải danh sách bãi xe');
+    }
+  };
+
+  useEffect(() => {
+    fetchFacilities();
+  }, []);
+
+  const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 2000);
+    await fetchFacilities();
+    setRefreshing(false);
   }, []);
 
   return (
@@ -55,19 +75,33 @@ export default function HomeScreen() {
 
       {/* Nearby Facilities */}
       <Text style={styles.sectionTitle}>Bãi xe gần đây</Text>
-      <Card
-        title="Central Hub Parking"
-        subtitle="123 Main Street, District 1, HCMC"
-        variant="elevated"
-      >
-        <View style={styles.facilityInfo}>
-          <View style={styles.facilityDetail}>
-            <Ionicons name="time-outline" size={16} color={Colors.textSecondary} />
-            <Text style={styles.facilityDetailText}>00:00 - 23:59</Text>
-          </View>
-          <Badge label="Mở cửa" variant="success" size="sm" />
-        </View>
-      </Card>
+      {facilities.length === 0 ? (
+        <Text style={styles.emptyText}>Chưa có bãi xe nào.</Text>
+      ) : (
+        facilities.map((facility) => (
+          <Card
+            key={facility._id}
+            title={facility.name}
+            subtitle={facility.address}
+            variant="elevated"
+            onPress={() => router.push(`/facility/${facility._id}`)}
+          >
+            <View style={styles.facilityInfo}>
+              <View style={styles.facilityDetail}>
+                <Ionicons name="time-outline" size={16} color={Colors.textSecondary} />
+                <Text style={styles.facilityDetailText}>
+                  {facility.operationHours?.open || '00:00'} - {facility.operationHours?.close || '23:59'}
+                </Text>
+              </View>
+              <Badge 
+                label={facility.status === 'active' ? 'Mở cửa' : 'Đóng cửa'} 
+                variant={facility.status === 'active' ? 'success' : 'danger'} 
+                size="sm" 
+              />
+            </View>
+          </Card>
+        ))
+      )}
     </ScrollView>
   );
 }
