@@ -1,12 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Card } from '../../src/components';
 import { Colors, Typography, Spacing, BorderRadius } from '../../src/constants/theme';
+import { useAuthStore } from '../../src/store/useAuthStore';
 
 export default function AccountScreen() {
   const router = useRouter();
+  const { user, logout } = useAuthStore();
 
   const menuItems = [
     { icon: 'person-outline' as const, label: 'Thông tin cá nhân', onPress: () => {} },
@@ -15,6 +17,24 @@ export default function AccountScreen() {
     { icon: 'notifications-outline' as const, label: 'Thông báo', onPress: () => {} },
     { icon: 'help-circle-outline' as const, label: 'Trợ giúp', onPress: () => {} },
   ];
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Đăng xuất',
+      'Bạn có chắc chắn muốn đăng xuất?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Đăng xuất', 
+          style: 'destructive', 
+          onPress: async () => {
+            await logout();
+            router.replace('/');
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -25,8 +45,8 @@ export default function AccountScreen() {
             <Ionicons name="person" size={32} color={Colors.primary} />
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>Driver User</Text>
-            <Text style={styles.profileEmail}>driver@smartparking.com</Text>
+            <Text style={styles.profileName}>{user?.name || 'Driver'}</Text>
+            <Text style={styles.profileEmail}>{user?.email || 'driver@smartparking.com'}</Text>
           </View>
         </View>
       </Card>
@@ -52,7 +72,7 @@ export default function AccountScreen() {
         title="Đăng xuất"
         variant="outline"
         fullWidth
-        onPress={() => router.replace('/')}
+        onPress={handleLogout}
         icon={<Ionicons name="log-out-outline" size={20} color={Colors.primary} />}
       />
     </ScrollView>

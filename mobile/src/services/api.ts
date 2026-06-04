@@ -10,7 +10,10 @@ const DEFAULT_API_URL =
     ? 'http://10.0.2.2:5000/api/v1'
     : 'http://localhost:5000/api/v1';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
+let API_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
+if (Platform.OS === 'android' && API_URL.includes('localhost')) {
+  API_URL = API_URL.replace('localhost', '10.0.2.2');
+}
 
 export const TOKEN_KEY = 'sp_access_token';
 export const REFRESH_TOKEN_KEY = 'sp_refresh_token';
