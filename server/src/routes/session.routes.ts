@@ -17,6 +17,12 @@ const router = Router();
 
 router.use(verifyToken);
 
+// Customer Route: Xem danh sách lượt gửi của chính mình
+router.get(
+  '/my-sessions',
+  SessionController.getMySessions
+);
+
 // FR-8.1: Kiểm tra điều kiện xe vào bãi (Staff tạo session)
 router.post(
   '/check-conditions',
