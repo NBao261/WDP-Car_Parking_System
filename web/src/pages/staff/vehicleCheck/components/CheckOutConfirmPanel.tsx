@@ -27,6 +27,9 @@ export default function CheckOutConfirmPanel({ data }: CheckOutConfirmPanelProps
     plateOut = "—",
     checkInTime = "—",
     checkOutTime = "—",
+    checkInDate = "—",
+    checkOutDate = "—",
+    gateIn = "—",
     gateOut = "—",
     fee = 0,
     feeDetails,
@@ -43,8 +46,9 @@ export default function CheckOutConfirmPanel({ data }: CheckOutConfirmPanelProps
 
       {/* Layout ngang: 2 phần — Info bên trái, Tiền bên phải */}
       <div className="bg-[#f9faf9] rounded-[8px] border border-[#e8e9e8] px-4 py-3 flex-1 min-h-0 overflow-hidden flex gap-6">
-        {/* Cột trái: 6 trường thông tin dạng 3 cột */}
+        {/* Cột trái: 9 trường thông tin dạng 3 cột */}
         <div className="flex-1 grid grid-cols-3 gap-x-4 gap-y-2 text-[12px] content-center">
+          {/* Row 1 */}
           <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Mã vé:</span>
             <span className="font-semibold text-[#060606] truncate">{ticketCode}</span>
@@ -57,13 +61,29 @@ export default function CheckOutConfirmPanel({ data }: CheckOutConfirmPanelProps
             <span className="text-[#6b6b6b] mb-0.5">Biển số (Ra):</span>
             <span className="font-bold text-[#060606] font-mono text-[13px] uppercase">{plateOut}</span>
           </div>
+          
+          {/* Row 2 */}
           <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Giờ vào:</span>
             <span className="font-semibold text-[#6b6b6b]">{checkInTime}</span>
           </div>
           <div className="flex flex-col">
+            <span className="text-[#6b6b6b] mb-0.5">Ngày vào:</span>
+            <span className="font-semibold text-[#6b6b6b]">{checkInDate}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[#6b6b6b] mb-0.5">Cổng vào:</span>
+            <span className="font-semibold text-[#6b6b6b] truncate">{gateIn}</span>
+          </div>
+
+          {/* Row 3 */}
+          <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Giờ ra:</span>
             <span className="font-semibold text-[#060606]">{checkOutTime}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[#6b6b6b] mb-0.5">Ngày ra:</span>
+            <span className="font-semibold text-[#060606]">{checkOutDate}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Cổng ra:</span>

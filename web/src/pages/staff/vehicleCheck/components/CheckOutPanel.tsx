@@ -106,9 +106,13 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
           const fee = feeRes.data.totalFee;
           setFeeData({ totalFee: fee, details: feeRes.data.details });
           const checkOutTimeStr = new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+          const checkOutDateStr = new Date().toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
           onCheckOut({
-            ticketCode: searchInput, plateIn, plateOut: plate,
+            ticketCode: currentSession.code || "—", plateIn, plateOut: plate,
             checkInTime: checkInTimeDisplay, checkOutTime: checkOutTimeStr,
+            checkInDate: new Date(currentSession.checkInTime).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }), 
+            checkOutDate: checkOutDateStr,
+            gateIn: currentSession.gateIn || "—",
             gateOut: gateOut.trim(), fee, feeDetails: feeRes.data.details,
             paymentStatus: "Chưa thanh toán",
           });
@@ -128,8 +132,11 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
           const actualCheckOutTime = checkOutRes.data.checkOutTime
             ? new Date(checkOutRes.data.checkOutTime).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
             : new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+          const actualCheckOutDate = checkOutRes.data.checkOutTime
+            ? new Date(checkOutRes.data.checkOutTime).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
+            : new Date().toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
           toast.success("Đã xác nhận thanh toán & mở barie xe ra thành công!");
-          onCheckOut((prev: any) => ({ ...prev, checkOutTime: actualCheckOutTime, paymentStatus: "Đã thanh toán" }));
+          onCheckOut((prev: any) => ({ ...prev, checkOutTime: actualCheckOutTime, checkOutDate: actualCheckOutDate, paymentStatus: "Đã thanh toán" }));
           setSearchInput(""); setPlateIn(""); onChangePlate("");
           setVehicleTypeName("Không có dữ liệu"); setCheckInTimeDisplay("Không có dữ liệu");
           setCurrentSession(null); setFeeData(null); setStep("SEARCH");

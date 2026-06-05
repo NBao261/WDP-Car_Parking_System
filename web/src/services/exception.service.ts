@@ -2,36 +2,36 @@ import { apiClient } from './api';
 
 // ─── Enums (mirror backend exception.model.ts) ───────────────────────────────
 export enum ExceptionType {
-  LOST_CARD  = 'lost_card',
+  LOST_CARD = 'lost_card',
   WRONG_PLATE = 'wrong_plate',
-  OVERTIME   = 'overtime',
+  OVERTIME = 'overtime',
   WRONG_ZONE = 'wrong_zone',
-  UNPAID     = 'unpaid',
-  OTHER      = 'other',
+  UNPAID = 'unpaid',
+  OTHER = 'other',
 }
 
 export enum ExceptionStatus {
-  NEW        = 'new',
+  NEW = 'new',
   PROCESSING = 'processing',
-  RESOLVED   = 'resolved',
-  REJECTED   = 'rejected',
+  RESOLVED = 'resolved',
+  REJECTED = 'rejected',
 }
 
 // ─── Label map: hiển thị tiếng Việt → enum value gửi lên BE ─────────────────
 export const EXCEPTION_TYPE_LABELS: Record<ExceptionType, string> = {
-  [ExceptionType.LOST_CARD]:   'Mất vé / Mất thẻ (Lost Card)',
-  [ExceptionType.WRONG_PLATE]: 'Sai biển số (Wrong Plate)',
-  [ExceptionType.OVERTIME]:    'Xe quá giờ (Overtime)',
-  [ExceptionType.WRONG_ZONE]:  'Sai khu vực đỗ (Wrong Zone)',
-  [ExceptionType.UNPAID]:      'Chưa thanh toán (Unpaid)',
-  [ExceptionType.OTHER]:       'Lỗi khác (Other)',
+  [ExceptionType.LOST_CARD]: 'Mất vé / Mất thẻ',
+  [ExceptionType.WRONG_PLATE]: 'Sai biển số',
+  [ExceptionType.OVERTIME]: 'Xe quá giờ',
+  [ExceptionType.WRONG_ZONE]: 'Sai khu vực đỗ',
+  [ExceptionType.UNPAID]: 'Chưa thanh toán',
+  [ExceptionType.OTHER]: 'Lỗi khác',
 };
 
 export const EXCEPTION_STATUS_LABELS: Record<ExceptionStatus, string> = {
-  [ExceptionStatus.NEW]:        'Mới',
+  [ExceptionStatus.NEW]: 'Mới',
   [ExceptionStatus.PROCESSING]: 'Đang xử lý',
-  [ExceptionStatus.RESOLVED]:   'Đã giải quyết',
-  [ExceptionStatus.REJECTED]:   'Từ chối',
+  [ExceptionStatus.RESOLVED]: 'Đã giải quyết',
+  [ExceptionStatus.REJECTED]: 'Từ chối',
 };
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -112,5 +112,16 @@ export const exceptionService = {
     sessionId: string
   ): Promise<{ success: boolean; data: ExceptionsResponse; message?: string }> => {
     return apiClient.get('/exceptions', { params: { sessionId } });
+  },
+
+  /**
+   * Staff: Xử lý ngoại lệ
+   * PATCH /api/v1/exceptions/:id/resolve
+   */
+  resolveException: async (
+    exceptionId: string,
+    payload: { staffNote: string; newLicensePlate?: string; newSlotId?: string }
+  ): Promise<{ success: boolean; data: IException; message?: string }> => {
+    return apiClient.patch(`/exceptions/${exceptionId}/resolve`, payload);
   },
 };
