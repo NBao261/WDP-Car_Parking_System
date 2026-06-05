@@ -6,6 +6,7 @@ interface CheckInConfirmPanelProps {
     plate?: string;
     vehicleType?: string;
     checkInTime?: string;
+    checkInDate?: string;
     gate?: string;
     zone?: string;
   };
@@ -17,6 +18,7 @@ export default function CheckInConfirmPanel({ data }: CheckInConfirmPanelProps) 
     plate = "—",
     vehicleType = "—",
     checkInTime = "—",
+    checkInDate = "—",
     gate = "—",
     zone = "—"
   } = data || {};
@@ -32,6 +34,7 @@ export default function CheckInConfirmPanel({ data }: CheckInConfirmPanelProps) 
       {/* 6 trường dữ liệu — layout 3 cột ngang để tiết kiệm chiều cao */}
       <div className="bg-[#f9faf9] rounded-[8px] border border-[#e8e9e8] px-4 py-3 flex-1 min-h-0 overflow-hidden">
         <div className="grid grid-cols-3 gap-x-6 gap-y-2 text-[12px] h-full content-center">
+          {/* Row 1 */}
           <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Mã vé:</span>
             <span className="font-semibold text-[#060606] truncate">{ticketCode}</span>
@@ -44,15 +47,23 @@ export default function CheckInConfirmPanel({ data }: CheckInConfirmPanelProps) 
             <span className="text-[#6b6b6b] mb-0.5">Loại xe:</span>
             <span className="font-semibold text-[#060606] truncate">{vehicleType}</span>
           </div>
+
+          {/* Row 2 */}
           <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Giờ vào:</span>
             <span className="font-semibold text-[#060606]">{checkInTime}</span>
           </div>
           <div className="flex flex-col">
+            <span className="text-[#6b6b6b] mb-0.5">Ngày vào:</span>
+            <span className="font-semibold text-[#060606]">{checkInDate}</span>
+          </div>
+          <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Cổng vào:</span>
             <span className="font-semibold text-[#060606] truncate">{gate}</span>
           </div>
-          <div className="flex flex-col">
+
+          {/* Row 3 */}
+          <div className="flex flex-col col-span-3 pt-1 border-t border-[#e8e9e8]">
             <span className="text-[#6b6b6b] mb-0.5">Khu vực / Tầng:</span>
             <span className="font-semibold text-[#060606] truncate">{zone}</span>
           </div>
