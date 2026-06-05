@@ -462,12 +462,12 @@ export class SessionService {
    * FR-9.2: Xem danh sách lượt gửi đang hoạt động
    */
   static async getActiveSessions(query: any): Promise<{ data: IParkingSession[], total: number, page: number, totalPages: number }> {
-    const { 
-      page = 1, 
-      limit = 10, 
-      facilityId, 
-      vehicleTypeId, 
-      floorId, 
+    const {
+      page = 1,
+      limit = 10,
+      facilityId,
+      vehicleTypeId,
+      floorId,
       licensePlate,
       sortBy = 'checkInTime',
       sortOrder = 'desc'
@@ -497,8 +497,8 @@ export class SessionService {
       ParkingSession.countDocuments(filter)
     ]);
 
-    return { 
-      data, 
+    return {
+      data,
       total,
       page: Number(page),
       totalPages: Math.ceil(total / Number(limit))
@@ -538,7 +538,7 @@ export class SessionService {
   static async calculateFee(sessionId: string, checkOutTime: Date = new Date()): Promise<{ totalFee: number, details: any }> {
     const session = await ParkingSession.findById(sessionId).populate('pricingPlanId');
     if (!session) throw new AppError('Session không tồn tại', 404);
-    
+
     const pricingPlan: any = session.pricingPlanId;
     if (!pricingPlan) throw new AppError('Không tìm thấy bảng giá cho session này', 400);
 
@@ -583,7 +583,7 @@ export class SessionService {
     const daysDiff = Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24));
 
     // Xác định feeMethod (backward compat: nếu chưa có feeMethod thì suy từ feeType)
-    const feeMethod = pricingPlan.feeMethod || 
+    const feeMethod = pricingPlan.feeMethod ||
       (pricingPlan.feeType === 'per_turn' ? 'flat_rate' : 'duration_based');
 
     // ═══════════════════════════════════════════════════
@@ -662,9 +662,6 @@ export class SessionService {
 
     for (const exc of resolvedExceptions) {
       exceptionSurcharge += exc.surcharge || 0;
-      if (exc.type === ExceptionType.LOST_CARD) {
-        lostCardFeeTotal += pricingPlan.lostCardFee || 0;
-      }
     }
 
     const totalFee = baseFee + overnightFee + overtimeFee + exceptionSurcharge + lostCardFeeTotal;
@@ -850,7 +847,7 @@ export class SessionService {
     session.staffOutId = new mongoose.Types.ObjectId(data.staffOutId);
     session.totalFee = feeResult.totalFee;
     session.status = SessionStatus.COMPLETED;
-    
+
     await session.save();
 
     // Update slot -> Available
