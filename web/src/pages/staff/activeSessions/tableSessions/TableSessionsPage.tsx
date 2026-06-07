@@ -139,7 +139,7 @@ export default function TableSessionsPage({
               <th className="px-4 py-2.5 font-semibold w-[120px]">Mã vé</th>
               <th className="px-4 py-2.5 font-semibold w-[150px]">Biển số</th>
               <th className="px-4 py-2.5 font-semibold w-[120px]">Loại xe</th>
-              <th className="px-4 py-2.5 font-semibold w-[200px]">Cổng vào</th>
+              <th className="px-4 py-2.5 font-semibold w-[120px]">Cổng vào</th>
               <th className="px-4 py-2.5 font-semibold w-[180px]">Giờ vào</th>
               <th className="px-4 py-2.5 font-semibold w-[120px]">Trạng thái</th>
               <th className="px-4 py-2.5 font-semibold w-[100px] text-right">Thao tác</th>
