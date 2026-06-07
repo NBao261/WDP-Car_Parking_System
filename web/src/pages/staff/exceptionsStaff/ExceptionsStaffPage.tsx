@@ -47,12 +47,12 @@ function mapApiException(exc: any, pricingMap?: Map<string, number>): ExceptionD
     vehicleType: (session?.vehicleTypeId as any)?.name || "—",
     checkInTime: session?.checkInTime
       ? new Date(session.checkInTime).toLocaleString("vi-VN", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
       : "—",
     slotCode: (session?.slotId as any)?.code || "—",
     floorName: (session?.floorId as any)?.name || "—",
@@ -87,7 +87,7 @@ export default function ExceptionsStaffPage() {
         exceptionService.getExceptions(params),
         pricingService.getAll({ limit: 100 })
       ]);
-      
+
       const pricingMap = new Map<string, number>();
       if (pricingRes.success && pricingRes.data) {
         // Backend pagination data might be in res.data or res.data.data
@@ -104,7 +104,7 @@ export default function ExceptionsStaffPage() {
       // Backend returns { success: true, data: [...], pagination: {...} }
       // The array is in res.data directly, not res.data.data
       const listData = Array.isArray(res.data) ? res.data : res.data?.data;
-      
+
       if (res.success && listData) {
         setExceptionsList(listData.map((exc: any) => mapApiException(exc, pricingMap)));
       }
@@ -137,7 +137,7 @@ export default function ExceptionsStaffPage() {
   };
 
   return (
-    <div className="h-full max-w-6xl mx-auto pb-10 p-6">
+    <div className="h-full max-w-[1400px] mx-auto pb-10 p-6">
       <div className="flex justify-between items-start mb-6">
         <div>
           <h2 className="text-[22px] font-bold text-[#060606]">Ngoại lệ của tôi</h2>
@@ -180,7 +180,7 @@ export default function ExceptionsStaffPage() {
         onResolved={fetchExceptions}
       />
 
-      <CreateExceptionModal 
+      <CreateExceptionModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={fetchExceptions}
