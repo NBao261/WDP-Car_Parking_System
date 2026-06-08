@@ -1,5 +1,6 @@
 import { Search, ArrowRightCircle, Loader2, ShieldAlert } from "lucide-react";
 import { ExceptionStatus } from "../../../../services/exception.service";
+import { useState, useEffect } from "react";
 
 export interface ExceptionData {
   id: string;
@@ -44,8 +45,6 @@ interface ExceptionsListProps {
 const STATUS_BADGE: Record<string, { bg: string; text: string; label: string }> = {
   RESOLVED: { bg: "bg-[#e8f7f0]", text: "text-[#1d7a4a]", label: "Đã xử lý" },
   NEW: { bg: "bg-[#fff3e0]", text: "text-[#c77700]", label: "Chờ xử lý" },
-  PROCESSING: { bg: "bg-[#e3ecf8]", text: "text-[#1a5fa8]", label: "Đang xử lý" },
-  REJECTED: { bg: "bg-[#fde8e8]", text: "text-[#b03030]", label: "Từ chối" },
 };
 
 const TYPE_BADGE: Record<string, { bg: string; text: string }> = {
@@ -64,6 +63,16 @@ export default function ExceptionsList({
   onSelectException,
   onContinueCheckout,
 }: ExceptionsListProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterStatus]);
+
+  const totalPages = Math.ceil(exceptionsList.length / itemsPerPage) || 1;
+  const currentData = exceptionsList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <>
       {/* Toolbar */}
@@ -97,20 +106,21 @@ export default function ExceptionsList({
         <table className="w-full text-sm text-left table-fixed">
           <thead className="bg-[#f5f5f5] text-[#6b6b6b] text-[11px] uppercase font-semibold border-b border-[#e8e9e8]">
             <tr>
-              <th className="px-4 py-3 w-[15%]">Mã Lượt Gửi / Thẻ</th>
+              <th className="px-4 py-3 w-[5%] text-center">STT</th>
+              <th className="px-4 py-3 w-[13%]">Mã Lượt Gửi / Thẻ</th>
               <th className="px-4 py-3 w-[12%]">Biển Số</th>
               <th className="px-4 py-3 w-[12%]">Loại</th>
-              <th className="px-4 py-3 w-[18%]">Mô Tả</th>
-              <th className="px-4 py-3 w-[15%]">Ghi Nhận Lúc</th>
-              <th className="px-4 py-3 w-[10%]">Phụ Phí</th>
-              <th className="px-4 py-3 w-[10%]">Trạng Thái</th>
-              <th className="px-4 py-3 w-[8%]">Thao Tác</th>
+              <th className="px-4 py-3 w-[10%]">Mô Tả</th>
+              <th className="px-4 py-3 w-[14%]">Ghi Nhận Lúc</th>
+              <th className="px-4 py-3 w-[8%]">Phụ Phí</th>
+              <th className="px-4 py-3 w-[8%]">Trạng Thái</th>
+              <th className="px-4 py-3 w-[12%] text-center">Thao Tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e8e9e8]">
             {isLoading ? (
               <tr>
-                <td colSpan={8} className="px-6 py-12 text-center">
+                <td colSpan={9} className="px-6 py-12 text-center">
                   <div className="flex items-center justify-center gap-2 text-[#6b6b6b]">
                     <Loader2 className="w-5 h-5 animate-spin" />
                     <span>Đang tải dữ liệu...</span>
@@ -119,7 +129,7 @@ export default function ExceptionsList({
               </tr>
             ) : exceptionsList.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-6 py-16 text-center">
+                <td colSpan={9} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center justify-center text-[#6b6b6b]">
                     <ShieldAlert className="w-12 h-12 text-gray-300 mb-3" strokeWidth={1.5} />
                     <span className="text-sm font-medium">Danh sách báo cáo ngoại lệ đang trống.</span>
@@ -127,12 +137,14 @@ export default function ExceptionsList({
                 </td>
               </tr>
             ) : (
-              exceptionsList.map((exc) => {
+              currentData.map((exc, index) => {
                 const statusBadge = STATUS_BADGE[exc.status] || STATUS_BADGE.NEW;
                 const typeBadge = TYPE_BADGE[exc.typeEnum] || TYPE_BADGE.default;
+                const stt = (currentPage - 1) * itemsPerPage + index + 1;
 
                 return (
-                  <tr key={exc.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => onSelectException(exc)}>
+                  <tr key={exc.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 text-[13px] text-[#6b6b6b] text-center font-medium">{stt}</td>
                     <td className="px-4 py-4">
                       <div className="font-mono text-[#060606] text-[12px] truncate">{exc.code}</div>
                       <div className="text-[11px] text-[#6b6b6b] truncate mt-0.5">{exc.cardCode}</div>
@@ -174,6 +186,42 @@ export default function ExceptionsList({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {exceptionsList.length > 0 && (
+        <div className="p-4 flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Hiển thị {(currentPage - 1) * itemsPerPage + 1} đến {Math.min(currentPage * itemsPerPage, exceptionsList.length)} trên tổng số {exceptionsList.length} mục
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              className="px-3 py-1.5 border border-gray-200 rounded-md text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+            >
+              Trước
+            </button>
+            <div className="flex gap-1 px-2">
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium ${currentPage === i + 1 ? 'bg-[#d7ee46] text-[#060606]' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              className="px-3 py-1.5 border border-gray-200 rounded-md text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+            >
+              Sau
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
