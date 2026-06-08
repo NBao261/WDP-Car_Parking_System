@@ -13,6 +13,7 @@ import {
   ClipboardList,
   ScanLine,
   Shield,
+  CalendarDays,
   type LucideIcon,
   AlertTriangle,
 } from 'lucide-react';
@@ -37,13 +38,14 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/admin/roles', label: 'Phân Quyền', icon: Shield, roles: [UserRole.ADMIN] },
   { path: '/admin/config', label: 'Cấu Hình Hệ Thống', icon: Settings, roles: [UserRole.ADMIN] },
   { path: '/admin/logs', label: 'Lịch Sử Hoạt Động', icon: ScrollText, roles: [UserRole.ADMIN] },
-  { path: '/admin/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.ADMIN] },
+  { path: '/admin/reservations', label: 'Đặt Chỗ', icon: CalendarDays, roles: [UserRole.ADMIN] },
 
   // ── Manager ──
   { path: '/manager', label: 'Tổng Quan', icon: LayoutDashboard, roles: [UserRole.MANAGER] },
   { path: '/manager/zones', label: 'Khu Vực', icon: Map, roles: [UserRole.MANAGER] },
   { path: '/manager/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.MANAGER] },
   { path: '/manager/reports', label: 'Báo Cáo', icon: ClipboardList, roles: [UserRole.MANAGER] },
+  { path: '/manager/reservations', label: 'Đặt Chỗ', icon: CalendarDays, roles: [UserRole.MANAGER] },
 
   // ── Staff ──
   { path: '/staff', label: 'Xe Ra Vào', icon: ScanLine, roles: [UserRole.STAFF] },

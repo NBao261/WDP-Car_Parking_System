@@ -22,6 +22,7 @@ const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
 // ── Manager / Staff Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
 const VehiclesPage = lazy(() => import('../pages/shared/vehicles/VehiclesPage'));
+const ReservationsPage = lazy(() => import('../pages/manager/reservations/ReservationsPage'));
 // Staff Pages ──
 const VehicleCheckPage = lazy(() => import('../pages/staff/vehicleCheck/VehicleCheckPage'));
 const ActiveSessionsPage = lazy(() => import('../pages/staff/activeSessions/ActiveSessionsPage'));
@@ -87,6 +88,7 @@ export const router = createBrowserRouter([
               // FR-19: Role & Permission Management
               { path: 'roles', element: <S><RolesPage /></S> },
               { path: 'vehicles', element: <S><VehiclesPage /></S> },
+              { path: 'reservations', element: <S><ReservationsPage /></S> },
             ],
           },
 
@@ -97,6 +99,7 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <ManagerDashboard /> },
               { path: 'vehicles', element: <S><VehiclesPage /></S> },
+              { path: 'reservations', element: <S><ReservationsPage /></S> },
             ],
           },
 
