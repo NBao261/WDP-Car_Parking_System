@@ -79,7 +79,7 @@ export default function GlobalExceptionPanel({
         toast.error("Không tìm thấy phiên xe đang hoạt động!");
       }
     } catch (error: any) {
-      toast.error(error.message || "Không tìm thấy phiên gửi xe!");
+      toast.error(error.message || "❌ Tìm kiếm thất bại: Không thể lấy thông tin phiên đỗ xe từ hệ thống.");
     } finally {
       setIsSearching(false);
     }
@@ -119,7 +119,7 @@ export default function GlobalExceptionPanel({
       toast.success("Đã gửi ngoại lệ thành công! Đang chờ Quản lý duyệt.");
       onClose();
     } catch (error: any) {
-      toast.error(error.message || "Lỗi khi gửi ngoại lệ, thử lại sau!");
+      toast.error(error.message || "❌ Gửi báo cáo thất bại: Không thể ghi nhận ngoại lệ vào hệ thống.");
     } finally {
       setIsSubmitting(false);
     }

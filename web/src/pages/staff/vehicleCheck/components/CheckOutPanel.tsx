@@ -100,7 +100,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
         onChangePlate(session.licensePlate);
       }
     } catch (error: any) {
-      toast.error(error.message || "Không tìm thấy trong hệ thống!");
+      toast.error(error.message || "❌ Tìm kiếm thất bại: Không thể lấy thông tin phiên đỗ xe.");
       setPlateIn("");
       setVehicleTypeName("Không có dữ liệu");
       setCurrentSession(null);
@@ -135,7 +135,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
           setTimeout(() => { onCheckOut(null); }, 2000);
         }
       } catch (error: any) {
-        toast.error(error.message || "Lỗi khi check-out!");
+        toast.error(error.message || "❌ Giao dịch thất bại: Lỗi hệ thống khi check-out xe.");
       } finally {
         setIsSubmitting(false);
       }
