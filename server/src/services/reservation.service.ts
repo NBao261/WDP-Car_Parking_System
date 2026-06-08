@@ -34,7 +34,7 @@ export class ReservationService {
     // Validate facility operating hours
     const startStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
     const endStr = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
-    
+
     if (facility.openTime !== facility.closeTime) {
       if (facility.openTime < facility.closeTime) {
         if (startStr < facility.openTime || startStr >= facility.closeTime || endStr < facility.openTime || endStr > facility.closeTime) {
@@ -192,6 +192,7 @@ export class ReservationService {
 
     if (query?.status) filter.status = query.status;
     if (query?.facilityId) filter.facilityId = query.facilityId;
+    if (query?.licensePlate) filter.licensePlate = query.licensePlate.toUpperCase();
 
     const sortBy = query?.sortBy || 'createdAt';
     const sortOrder = query?.sortOrder === 'asc' ? 1 : -1;

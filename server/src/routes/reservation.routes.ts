@@ -32,10 +32,10 @@ router.post(
   ReservationController.createReservation
 );
 
-// FR-14.2: Xem danh sách đặt chỗ — Driver xem của mình, Manager/Admin xem tất cả
+// FR-14.2: Xem danh sách đặt chỗ — Driver xem của mình, Manager/Admin/Staff xem tất cả
 router.get(
   '/',
-  checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.DRIVER]),
+  checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF, UserRole.DRIVER]),
   validate(getReservationsSchema),
   checkPermission(PERMISSIONS.SLOT_READ),
   ReservationController.getReservations
