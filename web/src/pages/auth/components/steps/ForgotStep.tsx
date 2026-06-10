@@ -16,7 +16,7 @@ export function ForgotStep({ changeView, email, setEmail }: ForgotStepProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return setStatus("error");
-    
+
     setStatus("loading");
     setTimeout(() => {
       setStatus("success");
@@ -27,9 +27,9 @@ export function ForgotStep({ changeView, email, setEmail }: ForgotStepProps) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col">
       <AuthInput
-        label="Email Address"
+        label="Địa chỉ Email"
         type="email"
-        placeholder="Enter your email"
+        placeholder="Nhập email"
         icon={<Mail size={16} />}
         value={email}
         onChange={(e) => {
@@ -40,14 +40,14 @@ export function ForgotStep({ changeView, email, setEmail }: ForgotStepProps) {
         className="mb-[24px]"
       />
 
-      <SubmitButton status={status} text="Send Code" />
+      <SubmitButton status={status} text="Gửi mã" />
 
       <button
         type="button"
         onClick={() => changeView("login")}
         className="mt-[24px] text-[#7B7B7B] text-[12px] font-medium hover:text-[#062F28] hover:underline transition-colors text-center"
       >
-        Back to Sign In
+        Quay lại đăng nhập
       </button>
     </form>
   );

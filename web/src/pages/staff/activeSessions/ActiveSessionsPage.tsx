@@ -10,8 +10,8 @@ export default function ActiveSessionsPage() {
     <div className="h-full flex flex-col gap-3 overflow-hidden">
       {/* Page Title — compact */}
       <div className="shrink-0 px-1 pt-1">
-        <h1 className="text-xl font-bold text-[#060606]">Active Sessions</h1>
-        <p className="text-[12px] text-gray-400 mt-0.5">Theo dõi danh sách xe đang trong bãi và hỗ trợ tìm kiếm, thanh toán nhanh.</p>
+        <h1 className="text-xl font-bold text-[#060606]">Danh Sách Xe Trong Bãi</h1>
+        <p className="text-[12px] text-gray-400 mt-0.5">Theo dõi danh sách xe đang trong bãi và hỗ trợ tìm kiếm.</p>
       </div>
 
       {/* Stats Row — 1 hàng ngang compact, ~60px */}
@@ -26,7 +26,7 @@ export default function ActiveSessionsPage() {
 
       {/* Main Table — chiếm toàn bộ phần còn lại */}
       <div className="flex-1 min-h-0">
-        <TableSessionsPage 
+        <TableSessionsPage
           onTotalChange={setTotalActiveSessions}
         />
       </div>
