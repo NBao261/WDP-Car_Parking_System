@@ -229,7 +229,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
               )}
             </button>
           ) : (
-          <div className="relative rounded-[10px] overflow-hidden border-2 border-[#d7ee46] bg-[#060606]" style={{height: '160px'}}>
+          <div className="relative mx-auto rounded-[10px] overflow-hidden border-2 border-[#d7ee46] bg-[#f5f5f4]" style={{height: '160px', width: '160px'}}>
               <img src={previewUrl} alt="preview" className="w-full h-full object-contain" />
               {isUploading && (
                 <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
