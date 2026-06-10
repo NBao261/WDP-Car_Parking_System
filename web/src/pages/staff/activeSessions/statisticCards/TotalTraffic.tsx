@@ -6,8 +6,8 @@ interface TotalTrafficProps {
 }
 
 export default function TotalTraffic({ 
-  trafficIn = 0, 
-  trafficOut = 0, 
+  trafficIn: _trafficIn = 0, 
+  trafficOut: _trafficOut = 0, 
 }: TotalTrafficProps) {
   // Use mocked stats for now as requested
   const xeVao = 142;
