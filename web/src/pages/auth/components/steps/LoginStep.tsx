@@ -16,8 +16,8 @@ interface LoginStepProps {
 }
 
 const loginSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required").min(6, "Password must be at least 6 characters"),
+  email: z.string().min(1, "Email không được để trống").email("Vui lòng nhập email hợp lệ"),
+  password: z.string().min(1, "Mật khẩu không được để trống").min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
 });
 
 export function LoginStep({ changeView }: LoginStepProps) {
@@ -32,7 +32,7 @@ export function LoginStep({ changeView }: LoginStepProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const validationResult = loginSchema.safeParse({ email, password });
     if (!validationResult.success) {
       const errors = validationResult.error.flatten().fieldErrors;
@@ -47,7 +47,7 @@ export function LoginStep({ changeView }: LoginStepProps) {
     setFieldErrors({});
     setStatus("loading");
     setErrorMessage("");
-    
+
     try {
       const response = await authService.login(email, password);
       const { user, tokens } = response.data;
@@ -85,7 +85,7 @@ export function LoginStep({ changeView }: LoginStepProps) {
       }, 800);
     } catch (error: any) {
       setStatus("error");
-      setErrorMessage(error.message || "Invalid email or password.");
+      setErrorMessage(error.message || "Email hoặc mật khẩu không đúng.");
     }
   };
 
@@ -95,7 +95,7 @@ export function LoginStep({ changeView }: LoginStepProps) {
       <AuthInput
         label="Email"
         type="email"
-        placeholder="Enter your email"
+        placeholder="Nhập email"
         icon={<Mail size={16} />}
         value={email}
         onChange={(e) => {
@@ -109,9 +109,9 @@ export function LoginStep({ changeView }: LoginStepProps) {
       />
 
       <AuthInput
-        label="Password"
+        label="Mật khẩu"
         type="password"
-        placeholder="Enter your password"
+        placeholder="Nhập mật khẩu"
         icon={<Lock size={16} />}
         value={password}
         onChange={(e) => {
@@ -136,11 +136,11 @@ export function LoginStep({ changeView }: LoginStepProps) {
           onClick={() => changeView("forgot")}
           className="text-[#9FE870] hover:text-[#062F28] text-[12px] font-medium hover:underline transition-colors"
         >
-          Forgot password?
+          Quên mật khẩu
         </button>
       </div>
 
-      <SubmitButton status={status} text="Sign In" />
+      <SubmitButton status={status} text="Đăng nhập" />
 
       <div className="relative flex items-center my-[20px]">
         <div className="flex-grow border-t border-[#E7E7F1]"></div>
@@ -150,10 +150,10 @@ export function LoginStep({ changeView }: LoginStepProps) {
 
       <div className="mt-2 text-center flex flex-col gap-1">
         <p className="text-[#7B7B7B] text-[11px]">
-          Having trouble log in? <a href="#" onClick={(e) => e.preventDefault()} className="underline hover:text-[#062F28]">Contact your administrator.</a>
+          Gặp sự cố khi đăng nhập? <a href="#" onClick={(e) => e.preventDefault()} className="underline hover:text-[#062F28]">Liên hệ quản trị viên.</a>
         </p>
         <p className="text-[#7B7B7B] text-[10px] opacity-60">
-          © 2026 LYNC Park. All rights reserved.
+          © 2026 LYNC Park.  Bảo lưu mọi quyền.
         </p>
       </div>
     </form>
