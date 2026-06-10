@@ -2,8 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, Loader2, MoreVertical,
-  PowerOff, CheckCircle, Trash2, Pencil, Map, Plus, Layers, Eye
+  Loader2, MoreVertical,
+  PowerOff, CheckCircle, Trash2, Pencil, Map, Plus, Layers
 } from 'lucide-react';
 import { floorService, Floor } from '../../../../services/floor.service';
 import { VehicleType } from '../../../../services/vehicleType.service';

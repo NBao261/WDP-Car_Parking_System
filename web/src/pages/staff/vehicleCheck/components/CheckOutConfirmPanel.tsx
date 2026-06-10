@@ -7,6 +7,9 @@ interface CheckOutConfirmPanelProps {
     plateOut?: string;
     checkInTime?: string;
     checkOutTime?: string;
+    checkInDate?: string;
+    checkOutDate?: string;
+    gateIn?: string;
     gateOut?: string;
     fee?: number;
     feeDetails?: {

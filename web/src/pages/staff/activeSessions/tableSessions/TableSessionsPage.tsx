@@ -58,7 +58,7 @@ export default function TableSessionsPage({
       const res = await sessionService.getActiveSessions({ limit: 100, facilityId, vehicleTypeId });
       if (res.success && res.data) {
         setSessions(res.data as any);
-        onTotalChange?.(res.total || res.data.length);
+        onTotalChange?.((res as any).total ?? res.data.length);
       } else {
         setSessions([]);
         onTotalChange?.(0);

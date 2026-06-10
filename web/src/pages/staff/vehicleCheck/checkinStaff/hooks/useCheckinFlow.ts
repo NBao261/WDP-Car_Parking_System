@@ -12,6 +12,7 @@ export function useCheckinFlow() {
   const [gate, setGate] = useState("GATE-A");
   const [vehicleTypeId, setVehicleTypeId] = useState("");
   const [plate, setPlate] = useState("");
+  const [checkInImage, setCheckInImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // ── Catalog data ───────────────────────────────────────────────
@@ -142,6 +143,7 @@ export function useCheckinFlow() {
         licensePlate: plate,
         gateIn: gate,
         floorId,
+        checkInImage,
       });
 
       setResult(checkinRes.data);
@@ -156,6 +158,7 @@ export function useCheckinFlow() {
   // ── Reset về trạng thái ban đầu ───────────────────────────────
   const resetFlow = () => {
     setPlate("");
+    setCheckInImage(null);
     setResult(null);
     setSuggestedFloors([]);
     setError("");
@@ -170,6 +173,7 @@ export function useCheckinFlow() {
       setSelectedFacility(null);
       setStep("facility");
       setPlate("");
+      setCheckInImage(null);
       setError("");
       setSuggestedFloors([]);
       setResult(null);
@@ -181,6 +185,7 @@ export function useCheckinFlow() {
     gate, setGate,
     vehicleTypeId, setVehicleTypeId,
     plate, setPlate,
+    checkInImage, setCheckInImage,
     loading,
     // Facility data
     assignedFacilities,
