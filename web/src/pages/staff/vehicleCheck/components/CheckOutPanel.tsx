@@ -59,8 +59,8 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
       } else {
         toast.warning(response.data.message || "Không nhận dạng được. Nhập tay.");
       }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi xử lý ảnh.");
+    } catch (error: any) {
+      toast.error(error.message || "Lỗi xử lý ảnh.");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -228,16 +228,16 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
 
           {/* OCR Upload Zone — chỉ hiển thị ở bước SEARCH */}
           {step === "SEARCH" && (
-            <div className="">
+            <div className="flex-1 flex flex-col min-h-0 justify-center">
               {!ocrPreviewUrl ? (
                 <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isUploading}
-                  className="w-full border-2 border-dashed border-[#e8e9e8] rounded-[10px] py-5 flex flex-col items-center justify-center gap-2 text-[#6b6b6b] hover:border-[#d7ee46] hover:bg-[#f9ffe0] hover:text-[#060606] transition-all">
+                  className="w-full flex-1 min-h-[80px] border-2 border-dashed border-[#e8e9e8] rounded-[10px] py-2 flex flex-col items-center justify-center gap-2 text-[#6b6b6b] hover:border-[#d7ee46] hover:bg-[#f9ffe0] hover:text-[#060606] transition-all">
                   {isUploading
                     ? <><RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" /><span className="text-[13px] font-semibold text-[#8bc34a]">Đang nhận dạng biển số...</span></>
                     : <><ScanLine className="w-7 h-7 text-[#aaa]" /><span className="text-[13px] font-semibold">Scan ảnh biển số (OCR)</span><span className="text-[11px] text-[#aaa]">Chụp thẳng góc, đủ sáng — tự điền biển số</span></>}
                 </button>
               ) : (
-                <div className="relative rounded-[10px] overflow-hidden border-2 border-[#d7ee46] bg-[#060606]" style={{height: '140px'}}>
+                <div className="relative mx-auto rounded-[10px] overflow-hidden border-2 border-[#d7ee46] bg-[#f5f5f4] flex-1 min-h-0" style={{aspectRatio: '1/1', maxHeight: '140px'}}>
                   <img src={ocrPreviewUrl} alt="ocr" className="w-full h-full object-contain" />
                   {isUploading && (
                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
@@ -286,6 +286,16 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
                 className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none" />
             </div>
           </div>
+
+          {/* Hình ảnh lúc vào (để so sánh) */}
+          {step === "CONFIRM" && currentSession?.checkInImage && (
+            <div className="flex flex-col mb-1">
+              <label className="text-[11px] font-semibold text-[#6b6b6b] mb-1">Hình ảnh biển số lúc vào</label>
+              <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex justify-center items-center" style={{ height: '110px' }}>
+                <img src={currentSession.checkInImage} alt="check-in" className="max-w-full max-h-full object-contain" />
+              </div>
+            </div>
+          )}
 
           {/* Biển số xe ra */}
           <div className="flex-1 flex flex-col">
