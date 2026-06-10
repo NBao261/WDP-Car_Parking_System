@@ -122,6 +122,10 @@ paths:
                   type: string
                   description: (Optional) Chọn slot cụ thể, bỏ qua để auto-assign
                   example: "683f1a2b3c4d5e6f7a8b9c03"
+                checkInImage:
+                  type: string
+                  description: "URL hoặc path của ảnh check-in"
+                  example: "http://res.cloudinary.com/demo/image/upload/sample.jpg"
             examples:
               reservation_checkin:
                 summary: "✅ Check-in bằng mã đặt chỗ (chỉ cần 2 trường)"
@@ -135,6 +139,7 @@ paths:
                   vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c01"
                   licensePlate: "59A-12345"
                   gateIn: "GATE-A"
+                  checkInImage: "http://res.cloudinary.com/demo/image/upload/sample.jpg"
       responses:
         '201':
           description: Lượt gửi xe tạo thành công
@@ -168,6 +173,7 @@ paths:
                     _id: "683f1a2b3c4d5e6f7a8b9c99"
                     name: "Staff Nguyen"
                     email: "staff@smartparking.com"
+                  checkInImage: "http://res.cloudinary.com/demo/image/upload/sample.jpg"
                   status: "active"
                   totalFee: 0
         '400':
@@ -334,6 +340,7 @@ paths:
                     licensePlate: "59A-12345"
                     status: "active"
                     checkInTime: "2026-05-14T06:30:00.000Z"
+                    checkInImage: "http://res.cloudinary.com/demo/image/upload/sample.jpg"
                     totalFee: 0
                 total: 1
                 page: 1
@@ -415,6 +422,7 @@ paths:
                   staffInId:
                     _id: "683f1a2b3c4d5e6f7a8b9c99"
                     name: "Staff Nguyen"
+                  checkInImage: "http://res.cloudinary.com/demo/image/upload/sample.jpg"
                   status: "active"
                   totalFee: 0
         '404':
