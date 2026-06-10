@@ -22,38 +22,49 @@ export const Card: React.FC<CardProps> = ({
   const Wrapper = onPress ? TouchableOpacity : View;
 
   return (
-    <Wrapper
-      style={[styles.base, variantStyles[variant], style]}
-      {...(onPress ? { onPress, activeOpacity: 0.7 } : {})}
-    >
-      {(title || subtitle) && (
-        <View style={styles.header}>
-          {title && <Text style={styles.title}>{title}</Text>}
-          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-        </View>
-      )}
-      {children}
-    </Wrapper>
+    <View style={[styles.outerBezel, variantStyles[variant], style]}>
+      <Wrapper
+        style={[styles.innerBezel]}
+        {...(onPress ? { onPress, activeOpacity: 0.7 } : {})}
+      >
+        {(title || subtitle) && (
+          <View style={styles.header}>
+            {title && <Text style={styles.title}>{title}</Text>}
+            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+          </View>
+        )}
+        {children}
+      </Wrapper>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  base: {
-    borderRadius: BorderRadius.xl,
-    borderCurve: 'continuous',
+  outerBezel: {
+    borderRadius: BorderRadius['2xl'],
+    padding: 1, // Creates the outer border effect
+    backgroundColor: Colors.borderLight, // The outer hairline
+    marginBottom: Spacing.base,
+    ...Shadows.lg, // High-end diffused shadow
+  },
+  innerBezel: {
+    backgroundColor: Colors.surface, // Vantablack/deep card background
+    borderRadius: BorderRadius['2xl'] - 1, // Matches outer curve
     padding: Spacing.base,
-    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderLight, // Inner highlight / border
   },
   header: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.base,
   },
   title: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semiBold,
+    fontSize: Typography.fontSize.lg,
+    fontFamily: Typography.fontFamily.semiBold,
     color: Colors.textPrimary,
   },
   subtitle: {
     fontSize: Typography.fontSize.sm,
+    fontFamily: Typography.fontFamily.regular,
     color: Colors.textSecondary,
     marginTop: Spacing.xs,
   },
@@ -61,16 +72,16 @@ const styles = StyleSheet.create({
 
 const variantStyles: Record<string, ViewStyle> = {
   elevated: {
-    backgroundColor: Colors.surface,
-    ...Shadows.md,
+    backgroundColor: Colors.borderLight,
   },
   outlined: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: Colors.border,
+    ...Shadows.sm,
   },
   filled: {
-    backgroundColor: Colors.primaryBg,
+    backgroundColor: 'transparent',
+    elevation: 0,
+    shadowOpacity: 0,
   },
 };
 
