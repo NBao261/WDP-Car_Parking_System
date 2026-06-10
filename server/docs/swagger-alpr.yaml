@@ -1,0 +1,84 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - ALPR
+  version: 1.0.0
+paths:
+  /alpr/scan:
+    post:
+      summary: Nhận diện biển số xe từ hình ảnh (FR-7.1)
+      description: |
+        Tải lên hình ảnh xe/biển số xe để nhận diện biển số sử dụng dịch vụ ALPR.
+        Hệ thống sẽ lưu ảnh (vào Cloudinary hoặc ổ đĩa cục bộ) và trả về biển số xe cùng với link ảnh.
+      tags: [ALPR]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: File hình ảnh cần nhận diện (jpg, png, v.v.)
+      responses:
+        '200':
+          description: Nhận diện thành công và tìm thấy reservation tương ứng
+          content:
+            application/json:
+              examples:
+                exact_match:
+                  summary: Khớp hoàn toàn với một mã đặt chỗ
+                  value:
+                    success: true
+                    data:
+                      licensePlate: "59A-12345"
+                      normalizedPlate: "59A12345"
+                      confidence: 0.98
+                      imageUrl: "http://res.cloudinary.com/demo/image/upload/sample.jpg"
+                      reservation: 
+                        _id: "683f1a2b3c4d5e6f7a8b9c0d"
+                        licensePlate: "59A-12345"
+                        status: "confirmed"
+                possible_match:
+                  summary: Nhận diện thành công nhưng chỉ có kết quả gần giống
+                  value:
+                    success: true
+                    message: "No exact reservation match, but found potential matches."
+                    data:
+                      licensePlate: "59A-123.45"
+                      normalizedPlate: "59A12345"
+                      confidence: 0.95
+                      imageUrl: "http://res.cloudinary.com/demo/image/upload/sample.jpg"
+                      possibleReservations: 
+                        - _id: "683f1a2b3c4d5e6f7a8b9c0e"
+                          licensePlate: "59A-12345"
+                          status: "confirmed"
+        '404':
+          description: Không tìm thấy biển số xe trong ảnh hoặc không có lượt đặt trước nào
+          content:
+            application/json:
+              example:
+                success: false
+                message: "License plate recognized but no active reservation found."
+                data:
+                  licensePlate: "59A-99999"
+                  normalizedPlate: "59A99999"
+                  confidence: 0.99
+                  imageUrl: "http://res.cloudinary.com/demo/image/upload/sample2.jpg"
+        '400':
+          description: Lỗi không cung cấp file hình ảnh
+          content:
+            application/json:
+              example:
+                success: false
+                message: "No image file provided"
+        '500':
+          description: Lỗi hệ thống hoặc lỗi từ dịch vụ ALPR
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Failed to process image with ALPR service"

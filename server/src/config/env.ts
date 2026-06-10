@@ -17,6 +17,11 @@ export const env = {
   // CORS
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
 
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+
   // Logging
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
 } as const;

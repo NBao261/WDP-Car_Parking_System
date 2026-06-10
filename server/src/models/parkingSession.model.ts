@@ -27,6 +27,7 @@ export interface IParkingSession extends Document {
   assignmentMode: 'auto' | 'manual'; // RQ-ready: ghi nhận cách phân bổ slot
   status: SessionStatus;
   cardCode: string;
+  checkInImage?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +53,7 @@ const parkingSessionSchema = new Schema<IParkingSession>(
     assignmentMode: { type: String, enum: ['auto', 'manual'], default: 'manual' }, // RQ-ready
     status: { type: String, enum: Object.values(SessionStatus), default: SessionStatus.ACTIVE },
     cardCode: { type: String, required: true, unique: true },
+    checkInImage: { type: String, default: null },
   },
   { timestamps: true }
 );
