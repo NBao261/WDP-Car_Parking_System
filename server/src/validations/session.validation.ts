@@ -50,6 +50,7 @@ export const checkInSchema = z.object({
       .string()
       .min(1, 'Reservation code is required')
       .optional(),
+    checkInImage: z.string().optional(),
   }).refine(
     (data) => data.reservationCode || (data.facilityId && data.vehicleTypeId && data.licensePlate),
     {
