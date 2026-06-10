@@ -165,7 +165,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
           setStep("OPEN");
         }
       } catch (error: any) {
-        toast.error(error.response?.data?.message || "Lỗi khi tạo phiên đỗ xe!");
+        toast.error(error.message || "Lỗi khi tạo phiên đỗ xe!");
       } finally {
         setIsSubmitting(false);
       }

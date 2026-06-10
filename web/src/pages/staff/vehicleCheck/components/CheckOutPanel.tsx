@@ -59,8 +59,8 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
       } else {
         toast.warning(response.data.message || "Không nhận dạng được. Nhập tay.");
       }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi xử lý ảnh.");
+    } catch (error: any) {
+      toast.error(error.message || "Lỗi xử lý ảnh.");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
