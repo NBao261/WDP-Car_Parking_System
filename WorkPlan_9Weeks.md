@@ -316,10 +316,10 @@
 
 #### FE3
 
-- [ ] **Màn hình Đặt chỗ trước** (FR-14.1):
+- [x] **Màn hình Đặt chỗ trước** (FR-14.1):
   - Chọn loại xe → Chọn thời gian → Xem khu vực trống → Xác nhận
-- [ ] Màn hình Quản lý đặt chỗ (FR-14.2): xem, hủy reservation
-- [ ] Push notification setup (Expo Notifications / Firebase FCM)
+- [x] Màn hình Quản lý đặt chỗ (FR-14.2): xem, hủy reservation
+- [x] Push notification setup (Expo Notifications / Firebase FCM)
 
 ### Tuần 7
 
