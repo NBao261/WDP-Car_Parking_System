@@ -23,7 +23,7 @@ const STATUS_BADGE: Record<string, { bg: string; text: string; border: string; l
 export default function ExceptionDetailDrawer({
   selectedException,
   onClose,
-  onContinueCheckout,
+  onContinueCheckout: _onContinueCheckout,
   onResolved,
 }: ExceptionDetailDrawerProps) {
   const [staffNote, setStaffNote] = useState("");
