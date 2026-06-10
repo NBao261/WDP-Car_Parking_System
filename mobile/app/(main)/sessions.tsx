@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useFocusEffect } from "expo-router";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { Colors, Typography, Spacing, BorderRadius } from '../../src/constants/theme';
 import { SessionDetailCard, FeeEstimate } from '../../src/components';
 import { ParkingSession } from '../../src/types/session.types';
@@ -64,7 +65,7 @@ export default function SessionsScreen() {
 
   const renderEmptyState = (title: string, subtitle: string) => (
     <View style={styles.emptyState}>
-      <Ionicons name="receipt-outline" size={64} color={Colors.disabled} />
+      <Ionicons name="receipt-outline" size={64} color={Colors.disabled} style={{ marginBottom: Spacing.md }} />
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptySubtitle}>{subtitle}</Text>
     </View>
@@ -126,9 +127,10 @@ export default function SessionsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Segmented Control */}
-      <View style={styles.segmentContainer}>
-        <View style={styles.segmentControl}>
+      {/* Segmented Control & Scan Action */}
+      <View style={styles.headerControls}>
+        <View style={styles.segmentContainer}>
+          <View style={styles.segmentControl}>
           <TouchableOpacity
             style={[styles.segmentButton, activeTab === 'active' && styles.segmentButtonActive]}
             onPress={() => setActiveTab('active')}
@@ -147,6 +149,15 @@ export default function SessionsScreen() {
           </TouchableOpacity>
         </View>
       </View>
+      
+      <TouchableOpacity 
+          style={styles.scanButton} 
+          onPress={() => router.push('/scan-plate')}
+        >
+          <Ionicons name="scan" size={20} color={Colors.white} />
+          <Text style={styles.scanButtonText}>Scan Plate</Text>
+      </TouchableOpacity>
+      </View>
 
       {/* Content */}
       <View style={styles.content}>
@@ -161,18 +172,38 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  segmentContainer: {
+  headerControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.sm,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.divider,
   },
+  segmentContainer: {
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
   segmentControl: {
     flexDirection: 'row',
     backgroundColor: Colors.divider,
     borderRadius: BorderRadius.md,
     padding: 2,
+  },
+  scanButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+  },
+  scanButtonText: {
+    color: Colors.white,
+    fontWeight: Typography.fontWeight.semiBold,
+    marginLeft: Spacing.xs,
   },
   segmentButton: {
     flex: 1,
