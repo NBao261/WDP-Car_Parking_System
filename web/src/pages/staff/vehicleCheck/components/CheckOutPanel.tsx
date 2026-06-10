@@ -287,6 +287,16 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
             </div>
           </div>
 
+          {/* Hình ảnh lúc vào (để so sánh) */}
+          {step === "CONFIRM" && currentSession?.checkInImage && (
+            <div className="flex flex-col mb-1">
+              <label className="text-[11px] font-semibold text-[#6b6b6b] mb-1">Hình ảnh biển số lúc vào</label>
+              <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex justify-center items-center" style={{ height: '110px' }}>
+                <img src={currentSession.checkInImage} alt="check-in" className="max-w-full max-h-full object-contain" />
+              </div>
+            </div>
+          )}
+
           {/* Biển số xe ra */}
           <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-1">
