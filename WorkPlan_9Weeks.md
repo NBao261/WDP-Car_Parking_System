@@ -246,9 +246,9 @@
 
 #### FE3
 
-- [ ] Màn hình Thanh toán tại bãi (FR-13.2): xem phí, QR thanh toán
+- [x] Màn hình Thanh toán tại bãi (FR-13.2): xem phí, QR thanh toán
 - [ ] Màn hình Thanh toán online (FR-16.2): chọn phương thức, xác nhận
-- [ ] Tích hợp hiển thị phí tạm tính realtime
+- [x] Tích hợp hiển thị phí tạm tính realtime
 
 **✅ Deliverable tuần 4–5:** Flow xe vào/ra hoạt động E2E, tính phí tự động, thu phí, xử lý ngoại lệ cơ bản, Mobile xem/theo dõi lượt gửi.
 
@@ -310,8 +310,8 @@
 
 #### FE2
 
-- [ ] Danh sách session nâng cao: filter, search, pagination
-- [ ] Phím tắt cho Staff: F1 = Xe vào, F2 = Xe ra, F3 = Tìm session
+- [x] Danh sách session nâng cao: filter, search, pagination
+- [x] Phím tắt cho Staff: F1 = Xe vào, F2 = Xe ra, F3 = Tìm session
 - [ ] Cải thiện UX: auto-focus, tab navigation
 
 #### FE3
@@ -404,7 +404,7 @@
 
 #### FE1
 
-- [ ] Trang Quản lý Ngoại lệ (FR-7): danh sách, filter, duyệt/từ chối
+- [x] Trang Quản lý Ngoại lệ (FR-7): danh sách, filter, duyệt/từ chối
 - [ ] Trang Xem phản hồi: danh sách feedback, trạng thái, trả lời
 - [ ] Hoàn thiện Dashboard: widget ngoại lệ, feedback mới
 
@@ -417,7 +417,7 @@
 #### FE3
 
 - [ ] Màn hình Gửi phản hồi (FR-17.1): chọn loại, mô tả, đính kèm ảnh
-- [ ] Màn hình Theo dõi phản hồi (FR-17.2): trạng thái xử lý
+- [x] Màn hình Theo dõi phản hồi (FR-17.2): trạng thái xử lý
 - [ ] Màn hình Tài khoản: thông tin cá nhân, đổi mật khẩu, lịch sử
 - [ ] Nhận push notification
 

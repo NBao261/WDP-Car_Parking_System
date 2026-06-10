@@ -21,7 +21,7 @@ export function ResetStep({ changeView }: ResetStepProps) {
     setStatus("loading");
     setTimeout(() => {
       setStatus("success");
-      toast.success("Password changed successfully", {
+      toast.success("Đặt lại mật khẩu thành công", {
         style: {
           background: "#062F28",
           color: "#9FE870",
@@ -37,9 +37,9 @@ export function ResetStep({ changeView }: ResetStepProps) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col">
       <AuthInput
-        label="New Password"
+        label="Mật khẩu mới"
         type="password"
-        placeholder="Enter new password"
+        placeholder="Nhập mật khẩu mới"
         icon={<Lock size={16} />}
         value={newPassword}
         onChange={(e) => {
@@ -51,9 +51,9 @@ export function ResetStep({ changeView }: ResetStepProps) {
       />
 
       <AuthInput
-        label="Confirm Password"
+        label="Xác nhận mật khẩu"
         type="password"
-        placeholder="Re-enter new password"
+        placeholder="Xác nhận mật khẩu"
         icon={<Lock size={16} />}
         value={confirmPassword}
         onChange={(e) => {
@@ -66,12 +66,12 @@ export function ResetStep({ changeView }: ResetStepProps) {
 
       {status === "error" && (
         <p className="text-red-500 text-[11px] mb-[10px] text-center">
-          Passwords do not match or are empty.
+          Mật khẩu không khớp hoặc để trống.
         </p>
       )}
 
       <div className="mt-[14px]">
-        <SubmitButton status={status} text="Reset Password" />
+        <SubmitButton status={status} text="Đặt lại mật khẩu" />
       </div>
     </form>
   );

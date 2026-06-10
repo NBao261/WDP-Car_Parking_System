@@ -5,9 +5,9 @@ interface TotalTrafficProps {
   trafficOut?: number;
 }
 
-export default function TotalTraffic({ 
-  trafficIn: _trafficIn = 0, 
-  trafficOut: _trafficOut = 0, 
+export default function TotalTraffic({
+  trafficIn = 0,
+  trafficOut = 0,
 }: TotalTrafficProps) {
   // Use mocked stats for now as requested
   const xeVao = 142;
@@ -19,7 +19,7 @@ export default function TotalTraffic({
         <div className="p-2 rounded-lg bg-[#060606]/5 text-[#060606]">
           <ArrowRightLeft className="w-4 h-4" />
         </div>
-        <span className="text-[13px] text-[#060606]/60 font-semibold">Lưu lượng hôm nay</span>
+        <span className="text-[13px] text-[#060606]/60 font-semibold">Lưu lượng hôm nay "CHƯA LÀM"</span>
       </div>
 
       <div className="flex items-center gap-6">
