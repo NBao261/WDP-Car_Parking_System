@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { FeeType } from '../../../../services/pricing.service';
+import type { FeeType as _FeeType } from '../../../../services/pricing.service';
 
 export const FEE_TYPE_LABELS: Record<string, string> = {
   per_turn: 'Theo lượt',
