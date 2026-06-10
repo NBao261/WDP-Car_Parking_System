@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { Search, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { Search, ScanLine, ImagePlus, RefreshCw, CheckCircle, X } from "lucide-react";
+import axios from "axios";
 import { sessionService, ParkingSession } from "../../../../services/session.service";
 
 interface CheckOutPanelProps {
@@ -11,17 +12,62 @@ interface CheckOutPanelProps {
   onFlagException?: () => void;
 }
 
-export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSearch, onFlagException }: CheckOutPanelProps) {
+/** Client-side cleanup cho biển số xe sau khi OCR */
+function formatPlate(raw: string): string {
+  let s = raw.trim().toUpperCase();
+  s = s.replace(/[^A-Z0-9\s.\-]/g, '');
+  s = s.replace(/\s+/g, ' ').trim();
+  s = s.replace(/^(\d{2})([A-Z])/, '$1-$2');
+  return s;
+}
+
+export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSearch }: CheckOutPanelProps) {
   const [searchInput, setSearchInput] = useState("");
   const [searchMode, setSearchMode] = useState<"code" | "plate">("code");
   const [plateIn, setPlateIn] = useState("");
   const [vehicleTypeName, setVehicleTypeName] = useState("Không có dữ liệu");
-  const [checkInTimeDisplay, setCheckInTimeDisplay] = useState("Không có dữ liệu");
+  const [_checkInTimeDisplay, setCheckInTimeDisplay] = useState("Không có dữ liệu");
   const [step, setStep] = useState<"SEARCH" | "CONFIRM" | "OPEN" | "MISMATCH">("SEARCH");
   const [currentSession, setCurrentSession] = useState<ParkingSession | null>(null);
   const [feeData, setFeeData] = useState<{ totalFee: number; details: any } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [ocrPreviewUrl, setOcrPreviewUrl] = useState<string | null>(null);
+  const [ocrSuccess, setOcrSuccess] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setOcrPreviewUrl(URL.createObjectURL(file));
+    setOcrSuccess(false);
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+      const response = await axios.post(`${API_BASE_URL}/alpr/scan`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      if (response.data.success && response.data.data.normalizedPlate) {
+        const fp = formatPlate(response.data.data.normalizedPlate);
+        setSearchInput(fp);
+        setSearchMode("plate");
+        setOcrSuccess(true);
+        toast.success(`Đã nhận dạng: ${fp} — kiểm tra lại trước khi tìm`);
+      } else {
+        toast.warning(response.data.message || "Không nhận dạng được. Nhập tay.");
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Lỗi xử lý ảnh.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const clearOcrPreview = () => { setOcrPreviewUrl(null); setOcrSuccess(false); };
 
   // ─── Hotkeys ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -76,7 +122,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
         let feeDetails = null;
         if (feeRes.success) {
           fee = feeRes.data.totalFee;
-          feeDetails = feeRes.data.details;
+          feeDetails = (feeRes.data as any).details ?? null;
           setFeeData({ totalFee: fee, details: feeDetails });
         }
 
@@ -154,6 +200,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
     setStep("SEARCH"); setSearchInput(""); setPlateIn(""); onChangePlate("");
     setCurrentSession(null); setFeeData(null);
     setVehicleTypeName("Không có dữ liệu"); setCheckInTimeDisplay("Không có dữ liệu");
+    setOcrPreviewUrl(null); setOcrSuccess(false);
   };
 
   // ─── Render ─────────────────────────────────────────────────────────────────
@@ -178,6 +225,33 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
                 className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none" />
             </div>
           </div>
+
+          {/* OCR Upload Zone — chỉ hiển thị ở bước SEARCH */}
+          {step === "SEARCH" && (
+            <div className="">
+              {!ocrPreviewUrl ? (
+                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isUploading}
+                  className="w-full border-2 border-dashed border-[#e8e9e8] rounded-[10px] py-5 flex flex-col items-center justify-center gap-2 text-[#6b6b6b] hover:border-[#d7ee46] hover:bg-[#f9ffe0] hover:text-[#060606] transition-all">
+                  {isUploading
+                    ? <><RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" /><span className="text-[13px] font-semibold text-[#8bc34a]">Đang nhận dạng biển số...</span></>
+                    : <><ScanLine className="w-7 h-7 text-[#aaa]" /><span className="text-[13px] font-semibold">Scan ảnh biển số (OCR)</span><span className="text-[11px] text-[#aaa]">Chụp thẳng góc, đủ sáng — tự điền biển số</span></>}
+                </button>
+              ) : (
+                <div className="relative rounded-[10px] overflow-hidden border-2 border-[#d7ee46] bg-[#060606]" style={{height: '140px'}}>
+                  <img src={ocrPreviewUrl} alt="ocr" className="w-full h-full object-contain" />
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
+                      <RefreshCw className="w-5 h-5 animate-spin text-[#d7ee46]" />
+                      <span className="text-white text-[11px] font-semibold">Đang nhận dạng...</span>
+                    </div>
+                  )}
+                  {ocrSuccess && <div className="absolute bottom-2 left-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle className="w-3 h-3" /> OCR OK</div>}
+                  <button type="button" onClick={clearOcrPreview} className="absolute top-2 right-2 w-5 h-5 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center shadow-md"><X className="w-3 h-3" /></button>
+                </div>
+              )}
+              <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
+            </div>
+          )}
 
           {/* Tìm kiếm & Loại xe */}
           <div className="flex gap-3">
