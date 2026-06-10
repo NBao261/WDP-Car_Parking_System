@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Map, Car, Wallet, Settings, ScrollText, ArrowRight } from 'lucide-react';
+import { LayoutDashboard, Users, Map, Wallet, Settings, ScrollText, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../../store';
 
