@@ -34,6 +34,7 @@ interface CheckInData {
   floorId?: string;
   slotId?: string;
   reservationCode?: string;
+  checkInImage?: string;
 }
 
 export class SessionService {
@@ -323,6 +324,7 @@ export class SessionService {
       cardCode,
       status: SessionStatus.ACTIVE,
       driverId: matchedReservation ? matchedReservation.userId : null,
+      checkInImage: data.checkInImage || null,
     });
 
     await session.save();

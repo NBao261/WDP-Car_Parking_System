@@ -4,10 +4,24 @@ import { PublicService } from '../services/public.service';
 export class PublicController {
   static async getPublicFacilities(req: Request, res: Response, next: NextFunction) {
     try {
-      const { page = 1, limit = 10 } = req.query;
+      const { page = 1, limit = 10, search, status, vehicleTypeId } = req.query;
       const skip = (Number(page) - 1) * Number(limit);
 
-      const { facilities, total } = await PublicService.getPublicFacilities({}, skip, Number(limit));
+      const filters: any = {};
+      if (search) {
+        filters.$or = [
+          { name: { $regex: search, $options: 'i' } },
+          { address: { $regex: search, $options: 'i' } }
+        ];
+      }
+      if (status) {
+        filters.status = status;
+      }
+      if (vehicleTypeId) {
+        filters.vehicleTypeId = vehicleTypeId;
+      }
+
+      const { facilities, total } = await PublicService.getPublicFacilities(filters, skip, Number(limit));
       res.status(200).json({
         success: true,
         data: facilities,

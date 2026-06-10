@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { ScanLine, ImagePlus, RefreshCw, CheckCircle, X } from "lucide-react";
+import axios from "axios";
 import { VehicleType } from "../../../../services/vehicleType.service";
 import { facilityService } from "../../../../services/facility.service";
 import { sessionService } from "../../../../services/session.service";
@@ -8,12 +10,62 @@ interface CheckInPanelProps {
   onCheckIn: (data: any) => void;
 }
 
+/** Client-side cleanup cho biển số xe sau khi OCR */
+function formatPlate(raw: string): string {
+  let s = raw.trim().toUpperCase();
+  // Xoá ký tự lạ
+  s = s.replace(/[^A-Z0-9\s.\-]/g, '');
+  // Chuẩn khoảng trắng
+  s = s.replace(/\s+/g, ' ').trim();
+  // Chèn dấu - nếu thiếu: 63B9... → 63-B9
+  s = s.replace(/^(\d{2})([A-Z])/, '$1-$2');
+  return s;
+}
+
 export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   const [plate, setPlate] = useState("");
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
   const [selectedVehicleTypeId, setSelectedVehicleTypeId] = useState("");
   const [step, setStep] = useState<"INPUT" | "OPEN">("INPUT");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkInImage, setCheckInImage] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [ocrSuccess, setOcrSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const localUrl = URL.createObjectURL(file);
+    setPreviewUrl(localUrl);
+    setOcrSuccess(false);
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+      const response = await axios.post(`${API_BASE_URL}/alpr/scan`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      if (response.data.success && response.data.data.normalizedPlate) {
+        const plate = formatPlate(response.data.data.normalizedPlate);
+        setPlate(plate);
+        if (response.data.data.imageUrl) setCheckInImage(response.data.data.imageUrl);
+        setOcrSuccess(true);
+        toast.success(`Đã nhận dạng: ${plate} — kiểm tra lại trước khi xác nhận`);
+      } else {
+        toast.warning(response.data.message || "Không nhận dạng được biển số. Vui lòng nhập tay.");
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Lỗi xử lý ảnh.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const clearPreview = () => { setPreviewUrl(null); setOcrSuccess(false); setCheckInImage(null); };
 
   // Lắng nghe Hotkeys
   useEffect(() => {
@@ -25,7 +77,11 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     };
 
     const onF10 = () => {
-      handleReset();
+      setStep("INPUT");
+      setPlate("");
+      setCheckInImage(null);
+      setPreviewUrl(null);
+      setOcrSuccess(false);
     };
 
     window.addEventListener("HOTKEY_F2", onF2);
@@ -80,13 +136,13 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
           facilityId,
           vehicleTypeId: selectedVehicleTypeId,
           licensePlate: plate,
-          gateIn, // auto-generated, không cần staff nhập
-          // floorId không truyền → Backend auto-assign slot tối ưu
+          gateIn,
+          ...(checkInImage ? { checkInImage } : {}),
         });
 
         if (res.success) {
-          const floorName = res.data.floorId?.name || "Tầng Auto";
-          const slotCode = res.data.slotId?.code || "Slot Auto";
+          const floorName = (res.data.floorId as any)?.name || "Tầng Auto";
+          const slotCode = (res.data.slotId as any)?.code || "Slot Auto";
 
           const now = new Date();
           const actualCheckInTime = res.data.checkInTime ? new Date(res.data.checkInTime) : now;
@@ -117,6 +173,9 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
       toast.success("Đã mở chắn thành công!");
       setStep("INPUT");
       setPlate("");
+      setCheckInImage(null);
+      setPreviewUrl(null);
+      setOcrSuccess(false);
       onCheckIn(null);
     }
   };
@@ -152,16 +211,55 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         </div>
 
         {/* Biển số xe — ô nhập lớn làm điểm nhấn */}
-        <div className="flex-1 flex flex-col">
-          <label className="block text-[12px] font-semibold text-[#060606] mb-1">Biển số xe</label>
+        <div className="flex-1 flex flex-col gap-2">
+          <label className="block text-[12px] font-semibold text-[#060606]">Biển số xe</label>
+
+          {/* OCR Upload Zone */}
+          {!previewUrl ? (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={step === "OPEN" || isUploading}
+              className="w-full border-2 border-dashed border-[#e8e9e8] rounded-[10px] py-5 flex flex-col items-center justify-center gap-2 text-[#6b6b6b] hover:border-[#d7ee46] hover:bg-[#f9ffe0] hover:text-[#060606] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isUploading ? (
+                <><RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" /><span className="text-[13px] font-semibold text-[#8bc34a]">Đang nhận dạng biển số...</span></>
+              ) : (
+                <><ImagePlus className="w-7 h-7 text-[#aaa]" /><span className="text-[13px] font-semibold">Chụp / Upload ảnh biển số (OCR)</span><span className="text-[11px] text-[#aaa]">Hỗ trợ JPG, PNG — chụp thẳng góc, đủ sáng</span></>
+              )}
+            </button>
+          ) : (
+          <div className="relative rounded-[10px] overflow-hidden border-2 border-[#d7ee46] bg-[#060606]" style={{height: '160px'}}>
+              <img src={previewUrl} alt="preview" className="w-full h-full object-contain" />
+              {isUploading && (
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
+                  <RefreshCw className="w-6 h-6 animate-spin text-[#d7ee46]" />
+                  <span className="text-white text-[12px] font-semibold">Đang nhận dạng biển số...</span>
+                </div>
+              )}
+              {ocrSuccess && (
+                <div className="absolute bottom-2 left-2 bg-green-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
+                  <CheckCircle className="w-3.5 h-3.5" /> OCR OK
+                </div>
+              )}
+              <button type="button" onClick={clearPreview} disabled={step === "OPEN"}
+                className="absolute top-2 right-2 w-6 h-6 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition shadow-md">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
+
           <input
             type="text" value={plate}
             onChange={(e) => setPlate(e.target.value.toUpperCase())}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCheckIn(); } }}
             disabled={step === "OPEN" || isSubmitting}
-            className="flex-1 w-full text-[28px] font-mono px-4 border border-[#e8e9e8] rounded-[8px] uppercase font-bold text-[#060606] placeholder-gray-300 outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606] disabled:opacity-50"
+            className="w-full text-[18px] font-mono px-3 py-2 border border-[#e8e9e8] rounded-[8px] uppercase font-bold text-[#060606] placeholder-gray-300 outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606] disabled:opacity-50"
             placeholder="XXX-XXX.XX"
           />
+          {ocrSuccess && <p className="text-[10px] text-green-600 font-semibold text-center -mt-1">✓ Biển số tự động — kiểm tra lại trước khi xác nhận</p>}
         </div>
 
         {/* Action buttons */}

@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+paddlepaddle-gpu
+paddleocr
+opencv-contrib-python
+numpy

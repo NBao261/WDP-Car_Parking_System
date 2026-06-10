@@ -30,7 +30,7 @@ function mapApiException(exc: any, pricingMap?: Map<string, number>): ExceptionD
     code: session?.code || exc._id,
     cardCode: session?.cardCode || "—",
     plate: session?.licensePlate || "—",
-    type: EXCEPTION_TYPE_LABELS[exc.type] || exc.type,
+    type: EXCEPTION_TYPE_LABELS[exc.type as ExceptionType] || exc.type,
     typeEnum: exc.type,
     time: new Date(exc.createdAt).toLocaleString("vi-VN", {
       day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"

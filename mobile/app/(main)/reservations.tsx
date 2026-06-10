@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useFocusEffect } from "expo-router";
+import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -78,6 +79,7 @@ export default function ReservationsScreen() {
 
   const renderEmptyState = (title: string, subtitle: string) => (
     <View style={styles.emptyState}>
+      <Ionicons name="calendar-outline" size={64} color={Colors.disabled} style={{ marginBottom: Spacing.md }} />
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptySubtitle}>{subtitle}</Text>
     </View>
@@ -131,10 +133,6 @@ export default function ReservationsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Quản lý Đặt chỗ</Text>
-      </View>
-
       <View style={styles.segmentContainer}>
         <View style={styles.segmentControl}>
           <TouchableOpacity
@@ -181,18 +179,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  header: {
-    padding: Spacing.xl,
-    paddingBottom: Spacing.md,
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  title: {
-    fontSize: Typography.fontSize["2xl"],
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.textPrimary,
   },
   segmentContainer: {
     paddingHorizontal: Spacing.base,

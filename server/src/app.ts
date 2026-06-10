@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
 import { env } from './config/env';
 import { errorHandler } from './middlewares/error.middleware';
 import { notFoundHandler } from './middlewares/notFound.middleware';
@@ -26,6 +27,7 @@ import reportRoutes from './routes/report.routes';
 import configRoutes from './routes/config.routes';
 import publicRoutes from './routes/public.routes';
 import roleRoutes from './routes/role.routes';
+import alprRoutes from './routes/alpr.routes';
 
 
 const app = express();
@@ -58,6 +60,9 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ─── Static Files ─────────────────────────────────────
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+
 // ─── API Routes ───────────────────────────────────────
 const API_PREFIX = '/api/v1';
 
@@ -77,6 +82,7 @@ app.use(`${API_PREFIX}/feedbacks`, feedbackRoutes);
 app.use(`${API_PREFIX}/reports`, reportRoutes);
 app.use(`${API_PREFIX}/config`, configRoutes);
 app.use(`${API_PREFIX}/roles`, roleRoutes);
+app.use(`${API_PREFIX}/alpr`, alprRoutes);
 
 
 // ─── Error Handling ───────────────────────────────────

@@ -20,11 +20,15 @@ export default function MainLayout() {
           paddingTop: 4,
         },
         headerStyle: {
-          backgroundColor: Colors.primary,
+          backgroundColor: Colors.white,
+          elevation: 0, // Remove shadow on Android
+          shadowOpacity: 0, // Remove shadow on iOS
+          borderBottomWidth: 1,
+          borderBottomColor: Colors.borderLight,
         },
-        headerTintColor: Colors.white,
+        headerTintColor: Colors.textPrimary,
         headerTitleStyle: {
-          fontWeight: Typography.fontWeight.semiBold,
+          fontFamily: Typography.fontFamily.bold,
           fontSize: Typography.fontSize.md,
         },
       }}
@@ -34,8 +38,19 @@ export default function MainLayout() {
         options={{
           title: 'Trang chủ',
           headerTitle: 'Smart Parking',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="facilities"
+        options={{
+          title: 'Bãi xe',
+          headerTitle: 'Danh sách Bãi xe',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="map-outline" size={size} color={color} />
           ),
         }}
       />
@@ -69,29 +84,13 @@ export default function MainLayout() {
           ),
         }}
       />
-      
-      {/* Ẩn các màn hình con khỏi Bottom Tabs */}
       <Tabs.Screen
         name="facility/[id]"
         options={{
           href: null,
-          headerShown: false,
-        }}
-      />
-      <Tabs.Screen
-        name="facility/[id]/book"
-        options={{
-          href: null,
-          headerShown: false,
-        }}
-      />
-      <Tabs.Screen
-        name="reserve"
-        options={{
-          href: null,
-          headerShown: false,
         }}
       />
     </Tabs>
   );
 }
+
