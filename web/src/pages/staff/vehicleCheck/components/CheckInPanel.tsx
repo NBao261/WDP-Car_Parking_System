@@ -211,8 +211,8 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         </div>
 
         {/* Biển số xe — ô nhập lớn làm điểm nhấn */}
-        <div className="flex-1 flex flex-col gap-2">
-          <label className="block text-[12px] font-semibold text-[#060606]">Biển số xe</label>
+        <div className="flex-1 flex flex-col gap-2 min-h-0">
+          <label className="block text-[12px] font-semibold text-[#060606] shrink-0">Biển số xe</label>
 
           {/* OCR Upload Zone */}
           {!previewUrl ? (
@@ -220,7 +220,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={step === "OPEN" || isUploading}
-              className="w-full border-2 border-dashed border-[#e8e9e8] rounded-[10px] py-5 flex flex-col items-center justify-center gap-2 text-[#6b6b6b] hover:border-[#d7ee46] hover:bg-[#f9ffe0] hover:text-[#060606] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex-1 min-h-[80px] border-2 border-dashed border-[#e8e9e8] rounded-[10px] py-2 flex flex-col items-center justify-center gap-2 text-[#6b6b6b] hover:border-[#d7ee46] hover:bg-[#f9ffe0] hover:text-[#060606] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isUploading ? (
                 <><RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" /><span className="text-[13px] font-semibold text-[#8bc34a]">Đang nhận dạng biển số...</span></>
@@ -229,7 +229,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
               )}
             </button>
           ) : (
-          <div className="relative mx-auto rounded-[10px] overflow-hidden border-2 border-[#d7ee46] bg-[#f5f5f4]" style={{height: '160px', width: '160px'}}>
+          <div className="relative mx-auto rounded-[10px] overflow-hidden border-2 border-[#d7ee46] bg-[#f5f5f4] flex-1 min-h-0" style={{aspectRatio: '1/1', maxHeight: '160px'}}>
               <img src={previewUrl} alt="preview" className="w-full h-full object-contain" />
               {isUploading && (
                 <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
@@ -256,7 +256,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
             onChange={(e) => setPlate(e.target.value.toUpperCase())}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCheckIn(); } }}
             disabled={step === "OPEN" || isSubmitting}
-            className="w-full text-[18px] font-mono px-3 py-2 border border-[#e8e9e8] rounded-[8px] uppercase font-bold text-[#060606] placeholder-gray-300 outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606] disabled:opacity-50"
+            className="w-full shrink-0 text-[18px] font-mono px-3 py-2 border border-[#e8e9e8] rounded-[8px] uppercase font-bold text-[#060606] placeholder-gray-300 outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606] disabled:opacity-50"
             placeholder="XXX-XXX.XX"
           />
           {ocrSuccess && <p className="text-[10px] text-green-600 font-semibold text-center -mt-1">✓ Biển số tự động — kiểm tra lại trước khi xác nhận</p>}
