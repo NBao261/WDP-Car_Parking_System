@@ -1,4 +1,4 @@
-import { Search, ArrowRightCircle, Loader2, ShieldAlert } from "lucide-react";
+import { Search, Loader2, ShieldAlert } from "lucide-react";
 import { ExceptionStatus } from "../../../../services/exception.service";
 import { useState, useEffect } from "react";
 
@@ -61,7 +61,7 @@ export default function ExceptionsList({
   onSearchChange,
   onFilterChange,
   onSelectException,
-  onContinueCheckout,
+  onContinueCheckout: _onContinueCheckout,
 }: ExceptionsListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
