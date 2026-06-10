@@ -7,24 +7,25 @@ import {
   Alert,
   TouchableOpacity,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
   Colors,
   Typography,
   Spacing,
   BorderRadius,
-} from "../../../../src/constants/theme";
-import { Button, TextInput, Loading, Card } from "../../../../src/components";
+} from "../../../src/constants/theme";
+import { Button, TextInput, Loading, Card } from "../../../src/components";
 import {
   reservationApi,
   vehicleTypeApi,
   api,
-} from "../../../../src/services/api";
-import { AvailableSlot } from "../../../../src/types/facility.types";
+} from "../../../src/services/api";
+import { AvailableSlot } from "../../../src/types/facility.types";
 
 export default function BookingScreen() {
   const router = useRouter();
@@ -149,7 +150,16 @@ export default function BookingScreen() {
   if (loading) return <Loading />;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.customHeader}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content}>
       <Text style={styles.title}>Tạo Đặt chỗ trước</Text>
       <Text style={styles.subtitle}>
         Điền thông tin xe và thời gian gửi để giữ chỗ.
@@ -158,7 +168,12 @@ export default function BookingScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>1. Phương tiện</Text>
         <Text style={styles.label}>Loại xe</Text>
-        <View style={styles.vehicleTypeContainer}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={styles.vehicleTypeContainer}
+          style={{ marginBottom: Spacing.lg, marginHorizontal: -Spacing.lg, paddingHorizontal: Spacing.lg }}
+        >
           {vehicleTypes.map((vt) => (
             <TouchableOpacity
               key={vt._id}
@@ -180,7 +195,7 @@ export default function BookingScreen() {
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
 
         <TextInput
           label="Biển số xe"
@@ -351,7 +366,9 @@ export default function BookingScreen() {
         fullWidth
         style={styles.bookBtn}
       />
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
+    </>
   );
 }
 
@@ -359,6 +376,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  customHeader: {
+    paddingHorizontal: Spacing.base,
+    paddingTop: Spacing.sm,
+    backgroundColor: Colors.background,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   content: {
     padding: Spacing.lg,
@@ -398,10 +426,9 @@ const styles = StyleSheet.create({
   vehicleTypeContainer: {
     flexDirection: "row",
     gap: Spacing.sm,
-    marginBottom: Spacing.lg,
   },
   vehicleTypeItem: {
-    flex: 1,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     alignItems: "center",
     borderWidth: 1,

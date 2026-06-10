@@ -7,22 +7,34 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
+  TouchableOpacity,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Card, Badge, Button } from "../../../src/components";
+import { Card, Badge, Button } from "../../src/components";
 import {
   Colors,
   Typography,
   Spacing,
   BorderRadius,
-} from "../../../src/constants/theme";
-import { api } from "../../../src/services/api";
+} from "../../src/constants/theme";
+import { api } from "../../src/services/api";
 import {
   Facility,
   PricingPlan,
   AvailableSlot,
-} from "../../../src/types/facility.types";
+} from "../../src/types/facility.types";
+
+const getVehicleIcon = (code?: string): keyof typeof Ionicons.glyphMap => {
+  if (!code) return "bicycle";
+  const upper = code.toUpperCase();
+  if (upper.includes("CAR")) return "car-sport";
+  if (upper.includes("BUS")) return "bus";
+  if (upper.includes("TRUCK")) return "car"; 
+  if (upper.includes("MOTO")) return "bicycle";
+  return "bicycle";
+};
 
 export default function FacilityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -91,9 +103,18 @@ export default function FacilityDetailScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: facility.name || "Chi tiết bãi xe" }} />
+      <Stack.Screen options={{ headerShown: false }} />
+      <SafeAreaView style={styles.container}>
+        {/* Custom Header */}
+        <View style={styles.customHeader}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle} numberOfLines={1}>Chi tiết bãi xe</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView
-        style={styles.container}
         contentContainerStyle={styles.content}
         contentInsetAdjustmentBehavior="automatic"
         refreshControl={
@@ -142,9 +163,7 @@ export default function FacilityDetailScreen() {
             slots.map((slot) => (
               <View key={slot.vehicleTypeId} style={styles.slotCard}>
                 <Ionicons
-                  name={
-                    slot.vehicleTypeCode === "CAR" ? "car-sport" : "bicycle"
-                  }
+                  name={getVehicleIcon(slot.vehicleTypeCode)}
                   size={32}
                   color={Colors.primary}
                 />
@@ -164,14 +183,12 @@ export default function FacilityDetailScreen() {
             <Card key={plan._id} variant="outlined" style={styles.pricingCard}>
               <View style={styles.pricingHeader}>
                 <Ionicons
-                  name={
-                    plan.vehicleTypeId?.code === "CAR" ? "car-sport" : "bicycle"
-                  }
+                  name={getVehicleIcon(plan.vehicleTypeId?.code)}
                   size={20}
                   color={Colors.textPrimary}
                 />
                 <Text style={styles.pricingTitle}>
-                  {plan.name} ({plan.vehicleTypeId?.name})
+                  {plan.name} {plan.vehicleTypeId?.name ? `(${plan.vehicleTypeId.name})` : ''}
                 </Text>
               </View>
 
@@ -203,11 +220,12 @@ export default function FacilityDetailScreen() {
       <View style={styles.bottomBar}>
         <Button 
           title="Đặt chỗ ngay" 
-          onPress={() => router.push(`/(main)/facility/${id}/book`)}
+          onPress={() => router.push(`/facility/${id}/book`)}
           fullWidth 
           size="lg"
         />
       </View>
+    </SafeAreaView>
     </>
   );
 }
@@ -216,6 +234,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  customHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.background,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  headerTitle: {
+    fontSize: Typography.fontSize.md,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.textPrimary,
+    flex: 1,
+    textAlign: 'center',
   },
   content: {
     padding: Spacing.base,
@@ -341,9 +380,9 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     padding: Spacing.base,
+    paddingTop: Spacing.md,
     backgroundColor: Colors.surface,
     borderTopWidth: 1,
-    borderTopColor: Colors.divider,
-    paddingBottom: Spacing.xl, // add padding for safe area
+    borderTopColor: Colors.borderLight,
   }
 });
