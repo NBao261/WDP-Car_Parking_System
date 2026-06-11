@@ -211,7 +211,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
       <h2 className="text-[17px] font-bold text-[#060606] mb-3 shrink-0">Đăng Ký Xe Ra</h2>
 
       {/* ── STATE: SEARCH / CONFIRM — FORM CHÍNH ── */}
-      <div className="flex flex-col gap-2.5 flex-1 min-h-0">
+      <div className="flex flex-col gap-2.5 flex-1 min-h-0 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
           {/* Toà nhà + Cổng trực */}
           <div className="flex gap-3">
             <div className="flex-1">
@@ -289,7 +289,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
 
           {/* Hình ảnh lúc vào và ra (để so sánh) */}
           {step === "CONFIRM" && (
-            <div className="flex gap-2 mb-1">
+            <div className="flex gap-2 mb-1 shrink-0">
               <div className="flex-1 flex flex-col">
                 <label className="text-[11px] font-semibold text-[#6b6b6b] mb-1 text-center">Ảnh lúc ra (hiện tại)</label>
                 <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex justify-center items-center" style={{ height: '110px' }}>
@@ -319,7 +319,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
           )}
 
           {/* Biển số xe ra */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex flex-col shrink-0">
             <div className="flex items-center justify-between mb-1">
               <label className="text-[12px] font-semibold text-[#060606]">Biển số xe ra</label>
               {step === "CONFIRM" && <span className="text-[10px] text-[#1d7a4a] font-medium">✓ Tự động điền từ hệ thống</span>}
@@ -334,7 +334,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
           </div>
           {/* Hiển thị Phí ngay trên Form để Staff thấy và thu tiền (chỉ khi đúng biển số) */}
           {step === "CONFIRM" && feeData && !isMismatch && (
-            <div className="mt-2 bg-[#e8f7f0] border border-[#1d7a4a] rounded-[8px] p-3 flex flex-col items-center justify-center">
+            <div className="mt-2 bg-[#e8f7f0] border border-[#1d7a4a] rounded-[8px] p-3 flex flex-col items-center justify-center shrink-0">
                <div className="text-[13px] font-bold text-[#1d7a4a] mb-1">SỐ TIỀN CẦN THU</div>
                <div className="text-[32px] font-bold text-[#060606]">
                  {feeData.totalFee.toLocaleString("vi-VN")} ₫
