@@ -54,9 +54,12 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
         const fp = formatPlate(response.data.data.normalizedPlate);
         
         if (step === "SEARCH") {
-          setSearchInput(fp);
-          setSearchMode("plate");
-          toast.success(`Đã nhận dạng: ${fp} — kiểm tra lại trước khi tìm`);
+          if (searchMode === "plate") {
+            setSearchInput(fp);
+          }
+          // Luôn lưu plate từ OCR vào state plate của form (chờ đối chiếu)
+          onChangePlate(fp);
+          toast.success(`Đã nhận dạng ảnh xe ra: ${fp}`);
         } else if (step === "CONFIRM") {
           onChangePlate(fp);
           if (fp.toUpperCase() !== plateIn.toUpperCase()) {
@@ -154,10 +157,12 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
 
         setStep("CONFIRM");
         if (onSearch) onSearch(session);
-        if (searchMode === "plate") {
-          onChangePlate(session.licensePlate);
+        
+        // So sánh trực tiếp plate (vừa được OCR trước khi bấm Tìm Xe) với plateIn của session
+        if (plate.toUpperCase() !== session.licensePlate.toUpperCase()) {
+          toast.error(`CẢNH BÁO: Biển số xe ra (${plate || "Trống"}) KHÔNG KHỚP với lúc vào (${session.licensePlate})!`, { autoClose: 5000 });
         } else {
-          onChangePlate(""); // Bắt buộc nhân viên phải tự nhập hoặc quét biển số lúc ra!
+          toast.success(`Hợp lệ: Biển số xe ra khớp với lúc vào (${plate})`);
         }
       }
     } catch (error: any) {
@@ -371,7 +376,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
           Hủy
         </button>
         <button onClick={step === "SEARCH" ? handleSearch : handleCheckOut}
-          disabled={(step === "SEARCH" && !searchInput) || isSubmitting || isMismatch}
+          disabled={step === "SEARCH" ? (isSubmitting || !searchInput || !ocrPreviewUrl) : (isSubmitting || isMismatch)}
           className={`flex-[4] font-bold rounded-[8px] transition-all text-[15px] shadow-sm 
             ${isMismatch ? "bg-[#DF0101] text-white disabled:opacity-100 cursor-not-allowed" 
             : step === "CONFIRM" ? "bg-[#1d7a4a] text-white hover:bg-[#155d38] disabled:opacity-50"
@@ -379,6 +384,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
           {isSubmitting ? "Đang xử lý..."
             : isMismatch ? "Không khớp biển số lúc vào"
             : step === "CONFIRM" ? "Mở chắn"
+                  : (!searchInput || !ocrPreviewUrl) ? "Cần Đủ Thông Tin & Ảnh Chụp"
                   : "Tìm xe"}
         </button>
       </div>
