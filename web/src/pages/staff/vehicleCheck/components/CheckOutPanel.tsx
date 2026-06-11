@@ -52,10 +52,17 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
       });
       if (response.data.success && response.data.data.normalizedPlate) {
         const fp = formatPlate(response.data.data.normalizedPlate);
-        setSearchInput(fp);
-        setSearchMode("plate");
+        
+        if (step === "SEARCH") {
+          setSearchInput(fp);
+          setSearchMode("plate");
+          toast.success(`Đã nhận dạng: ${fp} — kiểm tra lại trước khi tìm`);
+        } else if (step === "CONFIRM") {
+          onChangePlate(fp);
+          toast.success(`Đã nhận dạng biển số xe ra: ${fp}`);
+        }
+        
         setOcrSuccess(true);
-        toast.success(`Đã nhận dạng: ${fp} — kiểm tra lại trước khi tìm`);
       } else {
         toast.warning(response.data.message || "Không nhận dạng được. Nhập tay.");
       }
@@ -249,9 +256,10 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
                   <button type="button" onClick={clearOcrPreview} className="absolute top-2 right-2 w-5 h-5 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center shadow-md"><X className="w-3 h-3" /></button>
                 </div>
               )}
-              <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
             </div>
           )}
+          {/* File input (dùng chung cho cả SEARCH và CONFIRM) */}
+          <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
 
           {/* Tìm kiếm & Loại xe */}
           <div className="flex gap-3">
@@ -292,11 +300,24 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
             <div className="flex gap-2 mb-1 flex-1 min-h-[110px]">
               <div className="flex-1 flex flex-col">
                 <label className="text-[11px] font-semibold text-[#6b6b6b] mb-1 text-center">Ảnh lúc ra (hiện tại)</label>
-                <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex flex-1 justify-center items-center">
+                <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex flex-1 justify-center items-center group">
                   {ocrPreviewUrl ? (
-                    <img src={ocrPreviewUrl} alt="check-out" className="max-w-full max-h-full object-contain" />
+                    <>
+                      <img src={ocrPreviewUrl} alt="check-out" className="max-w-full max-h-full object-contain" />
+                      <button type="button" onClick={() => fileInputRef.current?.click()} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[11px] font-semibold gap-1">
+                        <ImagePlus className="w-5 h-5" />
+                        <span>Chụp lại</span>
+                      </button>
+                    </>
                   ) : (
-                    <span className="text-[10px] text-[#aaa]">Không có ảnh</span>
+                    <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isUploading}
+                      className="w-full h-full flex flex-col items-center justify-center gap-1 text-[#6b6b6b] hover:text-[#060606] hover:bg-[#f9ffe0] transition-colors">
+                      {isUploading ? (
+                        <><RefreshCw className="w-5 h-5 animate-spin text-[#8bc34a]" /><span className="text-[10px]">Đang quét...</span></>
+                      ) : (
+                        <><ImagePlus className="w-6 h-6 text-[#aaa] group-hover:text-[#d7ee46]" /><span className="text-[10px] font-semibold">Chụp ảnh xe ra</span></>
+                      )}
+                    </button>
                   )}
                 </div>
               </div>
