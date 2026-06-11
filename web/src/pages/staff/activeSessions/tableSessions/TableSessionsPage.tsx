@@ -20,10 +20,17 @@ interface Session {
 const calculateDuration = (checkInTime: string) => {
   const diff = Date.now() - new Date(checkInTime).getTime();
   if (diff < 0) return '0p';
-  const hours = Math.floor(diff / (1000 * 60 * 60));
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  if (hours > 0) return `${hours}h ${minutes}p`;
-  return `${minutes}p`;
+  
+  const parts = [];
+  if (days > 0) parts.push(`${days} ngày`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0 || parts.length === 0) parts.push(`${minutes}p`);
+  
+  return parts.join(' ');
 };
 
 export default function TableSessionsPage({ 
