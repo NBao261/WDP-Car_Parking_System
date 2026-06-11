@@ -63,7 +63,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
         } else if (step === "CONFIRM") {
           onChangePlate(fp);
           if (fp.toUpperCase() !== plateIn.toUpperCase()) {
-            toast.error(`CẢNH BÁO: Biển số xe ra (${fp}) KHÔNG KHỚP với lúc vào (${plateIn})!`, { autoClose: 5000 });
+            toast.error(`CẢNH BÁO: Biển số xe ra (${fp}) KHÔNG KHỚP với lúc vào (${plateIn})!`, { duration: 5000 });
           } else {
             toast.success(`Hợp lệ: Biển số xe ra khớp với lúc vào (${fp})`);
           }
@@ -160,7 +160,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
         
         // So sánh trực tiếp plate (vừa được OCR trước khi bấm Tìm Xe) với plateIn của session
         if (plate.toUpperCase() !== session.licensePlate.toUpperCase()) {
-          toast.error(`CẢNH BÁO: Biển số xe ra (${plate || "Trống"}) KHÔNG KHỚP với lúc vào (${session.licensePlate})!`, { autoClose: 5000 });
+          toast.error(`CẢNH BÁO: Biển số xe ra (${plate || "Trống"}) KHÔNG KHỚP với lúc vào (${session.licensePlate})!`, { duration: 5000 });
         } else {
           // toast.success(`Hợp lệ: Biển số xe ra khớp với lúc vào (${plate})`);
         }
