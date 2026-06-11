@@ -122,31 +122,53 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   useEffect(() => {
     if (!plate || vehicleTypes.length === 0) return;
     
-    const isCarPlate = (plateStr: string) => {
+    const guessVehicleCategory = (plateStr: string) => {
       const cleanPlate = plateStr.replace(/[-.\s]/g, '').toUpperCase();
       // Regex cho biển số thông thường: 2 số tỉnh + 1/2 ký tự sê-ri + 4/5 số
       const match = cleanPlate.match(/^(\d{2})([A-Z0-9]{1,2})(\d{4,5})$/);
-      if (!match) return false;
+      if (!match) return 'Motorbike'; // Default fallback
       
       const series = match[2];
-      // Có số trong sê-ri (VD: K1, B9) -> chắc chắn xe máy
-      if (/\d/.test(series)) return false; 
-      // Chỉ có 1 chữ cái (VD: A, F, H) -> chắc chắn ô tô
-      if (series.length === 1) return true; 
-      // 2 chữ cái đặc biệt của ô tô
-      const carSpecialSeries = ['LD', 'KT', 'NN', 'NG', 'CV', 'DA', 'HC', 'MK', 'MĐ', 'TĐ'];
-      if (carSpecialSeries.includes(series)) return true;
       
-      // Còn lại (VD: AA, AB của xe máy điện/<50cc) -> xe máy
-      return false; 
+      // -- Phân tích Nhóm Ô tô --
+      // Xe tải / Bán tải thường dùng chữ C, H, D
+      if (series === 'C' || series === 'H' || series === 'D') return 'Truck';
+      
+      // Các chữ cái đơn còn lại (A, B, E, F, G, K, L...) là ô tô
+      if (series.length === 1) return 'Car';
+      
+      // Các sê-ri 2 chữ cái đặc biệt của ô tô
+      const carSpecialSeries = ['LD', 'KT', 'NN', 'NG', 'CV', 'DA', 'HC', 'MK', 'TĐ'];
+      if (carSpecialSeries.includes(series)) return 'Car';
+      
+      // -- Phân tích Nhóm Xe máy --
+      // Xe máy điện
+      if (series === 'MĐ') return 'ElectricMotorbike';
+      
+      // Mặc định còn lại là xe máy (K1, B9, AA, AB, v.v.)
+      return 'Motorbike';
     };
 
-    const isCar = isCarPlate(plate);
-    const targetType = vehicleTypes.find(v => {
+    const category = guessVehicleCategory(plate);
+    
+    // Tìm loại xe phù hợp nhất trong danh sách (dựa vào từ khoá tên)
+    let targetType = vehicleTypes.find(v => {
       const lowerName = v.name.toLowerCase();
-      if (isCar) return lowerName.includes('ô tô') || lowerName.includes('car');
-      return lowerName.includes('máy') || lowerName.includes('motor') || lowerName.includes('bike');
+      if (category === 'Truck') return lowerName.includes('tải') || lowerName.includes('truck');
+      if (category === 'ElectricMotorbike') return lowerName.includes('máy điện') || lowerName.includes('xe điện');
+      if (category === 'Car') return lowerName === 'ô tô' || lowerName === 'car' || (lowerName.includes('ô tô') && !lowerName.includes('điện'));
+      if (category === 'Motorbike') return lowerName === 'xe máy' || lowerName === 'motorbike' || (lowerName.includes('máy') && !lowerName.includes('điện'));
+      return false;
     });
+
+    // Fallback nếu không tìm thấy loại chính xác
+    if (!targetType) {
+      if (category === 'Truck' || category === 'Car') {
+        targetType = vehicleTypes.find(v => v.name.toLowerCase().includes('ô tô'));
+      } else {
+        targetType = vehicleTypes.find(v => v.name.toLowerCase().includes('máy'));
+      }
+    }
     
     if (targetType && targetType._id !== selectedVehicleTypeId) {
       setSelectedVehicleTypeId(targetType._id);
