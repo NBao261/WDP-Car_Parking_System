@@ -211,8 +211,15 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      if (step === "SEARCH") handleSearch();
-      else handleCheckOut();
+      if (step === "SEARCH") {
+        if (!searchInput || !ocrPreviewUrl) {
+          toast.warning("Vui lòng chụp ảnh xe ra trước khi tìm kiếm!");
+          return;
+        }
+        handleSearch();
+      } else {
+        handleCheckOut();
+      }
     }
   };
 
@@ -294,10 +301,6 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
                   placeholder={searchMode === "code" ? "VD: TKT-12345" : "VD: 29A-12345"}
                   disabled={isSubmitting || step !== "SEARCH"}
                   className="flex-1 w-full min-w-0 h-8 px-3 border border-[#e8e9e8] rounded-[6px] text-[12px] font-medium outline-none focus:border-[#060606] disabled:opacity-50" />
-                <button onClick={handleSearch} disabled={isSubmitting || step !== "SEARCH"}
-                  className="px-3 bg-gray-100 hover:bg-gray-200 border border-[#e8e9e8] rounded-[6px] text-[#060606] transition-colors disabled:opacity-50 shrink-0">
-                  <Search className="w-4 h-4" />
-                </button>
               </div>
             </div>
 
