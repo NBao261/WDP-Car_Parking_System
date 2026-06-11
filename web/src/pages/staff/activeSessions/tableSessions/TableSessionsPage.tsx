@@ -157,7 +157,11 @@ export default function TableSessionsPage({
                   <td className="px-4 py-2.5 text-[#060606] text-sm truncate">{session.gateIn || 'N/A'}</td>
                   <td className="px-4 py-2.5 text-[#060606]/70 text-sm tabular-nums truncate">{new Date(session.checkInTime).toLocaleString('vi-VN')}</td>
                   <td className="px-4 py-2.5 truncate">
-                    <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-semibold bg-green-50 text-green-700 border border-green-100">
+                    <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
+                      session.status === 'exception' 
+                        ? 'bg-orange-50 text-orange-700 border-orange-100' 
+                        : 'bg-green-50 text-green-700 border-green-100'
+                    }`}>
                       {session.status}
                     </span>
                   </td>
@@ -253,7 +257,11 @@ export default function TableSessionsPage({
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                   <p className="text-gray-400 text-xs mb-1">Trạng thái</p>
-                  <span className="inline-flex px-2.5 py-1 rounded-md text-xs font-semibold bg-green-50 text-green-700">{selectedSession.status}</span>
+                  <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold ${
+                    selectedSession.status === 'exception'
+                      ? 'bg-orange-50 text-orange-700 border border-orange-100'
+                      : 'bg-green-50 text-green-700'
+                  }`}>{selectedSession.status}</span>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                   <p className="text-gray-400 text-xs mb-1">Giờ vào</p>
