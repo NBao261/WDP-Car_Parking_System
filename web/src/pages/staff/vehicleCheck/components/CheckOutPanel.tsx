@@ -240,6 +240,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   const isMismatch = step === "CONFIRM" && plate.toUpperCase() !== plateIn.toUpperCase();
+  const isException = currentSession?.status === "exception";
 
   return (
     <div className="flex flex-col bg-white rounded-[16px] border border-[#e8e9e8] shadow-lg shadow-blue-500/20 px-5 pt-4 pb-4 h-full min-h-0 overflow-hidden">
@@ -367,7 +368,8 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
           <div className="flex flex-col shrink-0">
             <div className="flex items-center justify-between mb-1">
               <label className="text-[12px] font-semibold text-[#060606]">Biển số xe ra</label>
-              {step === "CONFIRM" && <span className="text-[10px] text-[#1d7a4a] font-medium">✓ Tự động điền từ hệ thống</span>}
+              {step === "CONFIRM" && !isException && <span className="text-[10px] text-[#1d7a4a] font-medium">✓ Tự động điền từ hệ thống</span>}
+              {isException && <span className="text-[10px] text-[#ea580c] font-bold uppercase animate-pulse">! Đang Ngoại Lệ</span>}
             </div>
             <input type="text" value={plate}
               onChange={(e) => onChangePlate(e.target.value.toUpperCase())}
@@ -387,12 +389,14 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
           Hủy
         </button>
         <button onClick={step === "SEARCH" ? handleSearch : handleCheckOut}
-          disabled={step === "SEARCH" ? (isSubmitting || !searchInput || !ocrPreviewUrl) : (isSubmitting || isMismatch)}
+          disabled={step === "SEARCH" ? (isSubmitting || !searchInput || !ocrPreviewUrl) : (isSubmitting || isMismatch || isException)}
           className={`flex-[4] font-bold rounded-[8px] transition-all text-[15px] shadow-sm 
-            ${isMismatch ? "bg-[#DF0101] text-white disabled:opacity-100 cursor-not-allowed" 
+            ${isException ? "bg-[#ea580c] text-white disabled:opacity-100 cursor-not-allowed"
+            : isMismatch ? "bg-[#DF0101] text-white disabled:opacity-100 cursor-not-allowed" 
             : step === "CONFIRM" ? "bg-[#1d7a4a] text-white hover:bg-[#155d38] disabled:opacity-50"
                 : "bg-[#d7ee46] text-[#060606] hover:brightness-95 disabled:opacity-50"}`}>
           {isSubmitting ? "Đang xử lý..."
+            : isException ? "Đang Xử Lý Ngoại Lệ"
             : isMismatch ? "Không khớp biển số lúc vào"
             : step === "CONFIRM" ? "Mở chắn"
                   : (!searchInput || !ocrPreviewUrl) ? "Cần Đủ Thông Tin & Ảnh Chụp"
