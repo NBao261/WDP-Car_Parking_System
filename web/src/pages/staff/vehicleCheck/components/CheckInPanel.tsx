@@ -26,7 +26,6 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   const [plate, setPlate] = useState("");
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
   const [selectedVehicleTypeId, setSelectedVehicleTypeId] = useState("");
-  const [step, setStep] = useState<"INPUT" | "OPEN">("INPUT");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkInImage, setCheckInImage] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -71,14 +70,13 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   // Lắng nghe Hotkeys
   useEffect(() => {
     const onF2 = () => {
-      // Chỉ check-in khi đã nhập đủ biển số và đang ở bước 1
-      if (step === "INPUT" && plate.trim().length > 0 && !isSubmitting) {
+      // Chỉ check-in khi đã nhập đủ biển số
+      if (plate.trim().length > 0 && !isSubmitting) {
         handleCheckIn();
       }
     };
 
     const onF10 = () => {
-      setStep("INPUT");
       setPlate("");
       setCheckInImage(null);
       setPreviewUrl(null);
@@ -91,7 +89,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
       window.removeEventListener("HOTKEY_F2", onF2);
       window.removeEventListener("HOTKEY_F10", onF10);
     };
-  }, [step, plate, isSubmitting]);
+  }, [plate, isSubmitting]);
 
   // ─── Terminal Session (từ sessionStorage, set lúc chọn ca) ────────────────
   const facilityId = sessionStorage.getItem("staff_facility_id") || "";
@@ -121,17 +119,16 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   }, [facilityId]);
 
   const handleCheckIn = async () => {
-    if (step === "INPUT") {
-      if (!plate) {
-        toast.error("Vui lòng nhập biển số xe!");
-        return;
-      }
-      if (!facilityId || !selectedVehicleTypeId) {
-        toast.error("Thiếu thông tin vị trí trực hoặc loại xe. Vui lòng đăng nhập lại!");
-        return;
-      }
+    if (!plate) {
+      toast.error("Vui lòng nhập biển số xe!");
+      return;
+    }
+    if (!facilityId || !selectedVehicleTypeId) {
+      toast.error("Thiếu thông tin vị trí trực hoặc loại xe. Vui lòng đăng nhập lại!");
+      return;
+    }
 
-      setIsSubmitting(true);
+    setIsSubmitting(true);
       try {
         const res = await sessionService.checkIn({
           facilityId,
@@ -162,23 +159,19 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
             gate: gateIn,
             zone: `${floorName} - Slot: ${slotCode}`,
           });
-          toast.success(`Đã cấp phát: ${floorName} - Slot: ${slotCode}. Vui lòng mở chắn.`);
-          setStep("OPEN");
+          toast.success(`Đã cấp phát: ${floorName} - Slot: ${slotCode}. Đã tự động mở chắn!`);
+          
+          // Tự động xoá form để sẵn sàng đón xe tiếp theo (thông tin xác nhận vẫn giữ lại)
+          setPlate("");
+          setCheckInImage(null);
+          setPreviewUrl(null);
+          setOcrSuccess(false);
         }
       } catch (error: any) {
         toast.error(error.message || "Lỗi khi tạo phiên đỗ xe!");
       } finally {
         setIsSubmitting(false);
       }
-    } else if (step === "OPEN") {
-      toast.success("Đã mở chắn thành công!");
-      setStep("INPUT");
-      setPlate("");
-      setCheckInImage(null);
-      setPreviewUrl(null);
-      setOcrSuccess(false);
-      onCheckIn(null);
-    }
   };
 
   return (
@@ -220,7 +213,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={step === "OPEN" || isUploading}
+              disabled={isUploading}
               className="w-full flex-1 min-h-[80px] border-2 border-dashed border-[#e8e9e8] rounded-[10px] py-2 flex flex-col items-center justify-center gap-2 text-[#6b6b6b] hover:border-[#d7ee46] hover:bg-[#f9ffe0] hover:text-[#060606] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isUploading ? (
@@ -243,7 +236,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
                   <CheckCircle className="w-3.5 h-3.5" /> OCR OK
                 </div>
               )}
-              <button type="button" onClick={clearPreview} disabled={step === "OPEN"}
+              <button type="button" onClick={clearPreview}
                 className="absolute top-2 right-2 w-6 h-6 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition shadow-md">
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -256,23 +249,25 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
             type="text" value={plate}
             onChange={(e) => setPlate(e.target.value.toUpperCase())}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCheckIn(); } }}
-            disabled={step === "OPEN" || isSubmitting}
+            disabled={isSubmitting}
             className="w-full shrink-0 text-[18px] font-mono px-3 py-2 border border-[#e8e9e8] rounded-[8px] uppercase font-bold text-[#060606] placeholder-gray-300 outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606] disabled:opacity-50"
             placeholder="XXX-XXX.XX"
           />
           {ocrSuccess && <p className="text-[10px] text-green-600 font-semibold text-center -mt-1">✓ Biển số tự động — kiểm tra lại trước khi xác nhận</p>}
         </div>
 
-        {/* Action buttons */}
-        <div className="flex gap-3 h-[42px] shrink-0">
-          <button onClick={() => { setStep("INPUT"); setPlate(""); }} disabled={isSubmitting}
-            className="flex-[1] bg-white border border-[#e8e9e8] rounded-[8px] font-medium text-[#6b6b6b] hover:bg-gray-50 transition-colors disabled:opacity-50">
-            Hủy
-          </button>
-          <button onClick={handleCheckIn} disabled={isSubmitting}
-            className={`flex-[4] font-bold rounded-[8px] transition-all text-[15px] shadow-sm disabled:opacity-70 ${step === "OPEN" ? "bg-[#1d7a4a] text-white hover:bg-[#155d38]" : "bg-[#d7ee46] text-[#060606] hover:brightness-95"
-              }`}>
-            {isSubmitting ? "Đang xử lý..." : step === "OPEN" ? "Mở chắn" : "Xe vào"}
+        {/* Action Buttons */}
+        <div className="flex gap-2 mt-auto shrink-0">
+          <button
+            onClick={handleCheckIn}
+            disabled={isSubmitting || !plate}
+            className="flex-1 h-10 bg-[#060606] text-[#d7ee46] rounded-[8px] font-bold text-[13px] hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              <><RefreshCw className="w-4 h-4 animate-spin" /> Đang xử lý...</>
+            ) : (
+              "Ghi nhận xe vào (F2)"
+            )}
           </button>
         </div>
       </div>
