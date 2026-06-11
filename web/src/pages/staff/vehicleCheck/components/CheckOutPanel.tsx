@@ -332,21 +332,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
               className={`flex-1 w-full text-[24px] font-mono px-4 border rounded-[8px] uppercase font-bold outline-none transition-colors 
                 ${step === "CONFIRM" ? (isMismatch ? "bg-[#fef2f2] border-[#DF0101] text-[#DF0101] focus:border-[#DF0101]" : "bg-[#f0fdf4] border-[#1d7a4a] text-[#1d7a4a] focus:border-[#155d38]") : "bg-[#f5f5f4] border-[#e8e9e8] text-[#9b9b9b]"}`} />
           </div>
-          {/* Hiển thị Phí ngay trên Form để Staff thấy và thu tiền (chỉ khi đúng biển số) */}
-          {step === "CONFIRM" && feeData && !isMismatch && (
-            <div className="mt-2 bg-[#e8f7f0] border border-[#1d7a4a] rounded-[8px] p-3 flex flex-col items-center justify-center shrink-0">
-               <div className="text-[13px] font-bold text-[#1d7a4a] mb-1">SỐ TIỀN CẦN THU</div>
-               <div className="text-[32px] font-bold text-[#060606]">
-                 {feeData.totalFee.toLocaleString("vi-VN")} ₫
-               </div>
-               {feeData.details && (
-                 <div className="mt-1 text-[11px] text-[#6b6b6b] flex gap-3 text-center">
-                   <span>Thời gian đỗ: {feeData.details.durationHours} giờ</span>
-                   {feeData.details.overnightFee > 0 && <span>Qua đêm: {feeData.details.overnightFee?.toLocaleString("vi-VN")} ₫</span>}
-                 </div>
-               )}
-            </div>
-          )}
+          {/* Đã bỏ phần hiển thị phí ở đây vì panel bên dưới (Xác Nhận Xe Ra) đã hiển thị */}
         </div>
 
       {/* Nút hành động */}
