@@ -59,7 +59,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
           }
           // Luôn lưu plate từ OCR vào state plate của form (chờ đối chiếu)
           onChangePlate(fp);
-          toast.success(`Đã nhận dạng ảnh xe ra: ${fp}`);
+          // toast.success(`Đã nhận dạng ảnh xe ra: ${fp}`);
         } else if (step === "CONFIRM") {
           onChangePlate(fp);
           if (fp.toUpperCase() !== plateIn.toUpperCase()) {
@@ -128,7 +128,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
         setVehicleTypeName(vehicleTypeObj?.name || "Không xác định");
         const checkInTimeStr = new Date(session.checkInTime).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
         setCheckInTimeDisplay(checkInTimeStr);
-        toast.success(searchMode === "plate" ? "Đã tìm thấy thông tin đỗ xe qua Biển số!" : "Đã tìm thấy thông tin vé!");
+        // toast.success(searchMode === "plate" ? "Đã tìm thấy thông tin đỗ xe qua Biển số!" : "Đã tìm thấy thông tin vé!");
 
         // Fetch fee immediately
         const feeRes = await sessionService.calculateFee(session._id);
@@ -162,7 +162,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
         if (plate.toUpperCase() !== session.licensePlate.toUpperCase()) {
           toast.error(`CẢNH BÁO: Biển số xe ra (${plate || "Trống"}) KHÔNG KHỚP với lúc vào (${session.licensePlate})!`, { autoClose: 5000 });
         } else {
-          toast.success(`Hợp lệ: Biển số xe ra khớp với lúc vào (${plate})`);
+          // toast.success(`Hợp lệ: Biển số xe ra khớp với lúc vào (${plate})`);
         }
       }
     } catch (error: any) {
@@ -192,7 +192,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
             ? new Date(checkOutRes.data.checkOutTime).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
             : new Date().toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
           
-          toast.success("Đã xác nhận thanh toán & mở barie xe ra thành công!");
+          // toast.success("Đã xác nhận thanh toán & mở barie xe ra thành công!");
           onCheckOut((prev: any) => ({ ...prev, checkOutTime: actualCheckOutTime, checkOutDate: actualCheckOutDate, paymentStatus: "Đã thanh toán" }));
           
           setSearchInput(""); setPlateIn(""); onChangePlate("");
