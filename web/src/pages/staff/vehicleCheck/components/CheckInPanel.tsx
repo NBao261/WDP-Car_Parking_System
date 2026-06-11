@@ -118,6 +118,41 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
       .catch(() => toast.error("Không thể tải cấu hình loại xe"));
   }, [facilityId]);
 
+  // ─── TỰ ĐỘNG ĐOÁN LOẠI XE DỰA VÀO BIỂN SỐ ────────────────────────────
+  useEffect(() => {
+    if (!plate || vehicleTypes.length === 0) return;
+    
+    const isCarPlate = (plateStr: string) => {
+      const cleanPlate = plateStr.replace(/[-.\s]/g, '').toUpperCase();
+      // Regex cho biển số thông thường: 2 số tỉnh + 1/2 ký tự sê-ri + 4/5 số
+      const match = cleanPlate.match(/^(\d{2})([A-Z0-9]{1,2})(\d{4,5})$/);
+      if (!match) return false;
+      
+      const series = match[2];
+      // Có số trong sê-ri (VD: K1, B9) -> chắc chắn xe máy
+      if (/\d/.test(series)) return false; 
+      // Chỉ có 1 chữ cái (VD: A, F, H) -> chắc chắn ô tô
+      if (series.length === 1) return true; 
+      // 2 chữ cái đặc biệt của ô tô
+      const carSpecialSeries = ['LD', 'KT', 'NN', 'NG', 'CV', 'DA', 'HC', 'MK', 'MĐ', 'TĐ'];
+      if (carSpecialSeries.includes(series)) return true;
+      
+      // Còn lại (VD: AA, AB của xe máy điện/<50cc) -> xe máy
+      return false; 
+    };
+
+    const isCar = isCarPlate(plate);
+    const targetType = vehicleTypes.find(v => {
+      const lowerName = v.name.toLowerCase();
+      if (isCar) return lowerName.includes('ô tô') || lowerName.includes('car');
+      return lowerName.includes('máy') || lowerName.includes('motor') || lowerName.includes('bike');
+    });
+    
+    if (targetType && targetType._id !== selectedVehicleTypeId) {
+      setSelectedVehicleTypeId(targetType._id);
+    }
+  }, [plate, vehicleTypes]);
+
   const handleCheckIn = async () => {
     if (!plate) {
       toast.error("Vui lòng nhập biển số xe!");
