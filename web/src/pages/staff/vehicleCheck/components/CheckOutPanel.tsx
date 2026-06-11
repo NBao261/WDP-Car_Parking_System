@@ -377,7 +377,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
               disabled={step === "SEARCH" || isSubmitting}
               placeholder="(đã tự động điền)"
               className={`flex-1 w-full text-[24px] font-mono px-4 border rounded-[8px] uppercase font-bold outline-none transition-colors 
-                ${step === "CONFIRM" ? (isMismatch ? "bg-[#fef2f2] border-[#DF0101] text-[#DF0101] focus:border-[#DF0101]" : "bg-[#f0fdf4] border-[#1d7a4a] text-[#1d7a4a] focus:border-[#155d38]") : "bg-[#f5f5f4] border-[#e8e9e8] text-[#9b9b9b]"}`} />
+                ${step === "CONFIRM" ? (isException ? "bg-[#fff7ed] border-[#ea580c] text-[#ea580c] focus:border-[#c2410c]" : isMismatch ? "bg-[#fef2f2] border-[#DF0101] text-[#DF0101] focus:border-[#DF0101]" : "bg-[#f0fdf4] border-[#1d7a4a] text-[#1d7a4a] focus:border-[#155d38]") : "bg-[#f5f5f4] border-[#e8e9e8] text-[#9b9b9b]"}`} />
           </div>
           {/* Đã bỏ phần hiển thị phí ở đây vì panel bên dưới (Xác Nhận Xe Ra) đã hiển thị */}
         </div>
