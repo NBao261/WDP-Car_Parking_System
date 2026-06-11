@@ -287,12 +287,33 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
             </div>
           </div>
 
-          {/* Hình ảnh lúc vào (để so sánh) */}
-          {step === "CONFIRM" && currentSession?.checkInImage && (
-            <div className="flex flex-col mb-1">
-              <label className="text-[11px] font-semibold text-[#6b6b6b] mb-1">Hình ảnh biển số lúc vào</label>
-              <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex justify-center items-center" style={{ height: '110px' }}>
-                <img src={currentSession.checkInImage} alt="check-in" className="max-w-full max-h-full object-contain" />
+          {/* Hình ảnh lúc vào và ra (để so sánh) */}
+          {step === "CONFIRM" && (
+            <div className="flex gap-2 mb-1">
+              <div className="flex-1 flex flex-col">
+                <label className="text-[11px] font-semibold text-[#6b6b6b] mb-1 text-center">Ảnh lúc ra (hiện tại)</label>
+                <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex justify-center items-center" style={{ height: '110px' }}>
+                  {ocrPreviewUrl ? (
+                    <img src={ocrPreviewUrl} alt="check-out" className="max-w-full max-h-full object-contain" />
+                  ) : (
+                    <span className="text-[10px] text-[#aaa]">Không có ảnh</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col">
+                <label className="text-[11px] font-semibold text-[#6b6b6b] mb-1 text-center">Ảnh lúc vào (so sánh)</label>
+                <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex justify-center items-center" style={{ height: '110px' }}>
+                  {currentSession?.checkInImage ? (() => {
+                    const SERVER_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace(/\/api\/v1\/?$/, '');
+                    const imgSrc = currentSession.checkInImage.startsWith('http') 
+                      ? currentSession.checkInImage 
+                      : `${SERVER_URL}${currentSession.checkInImage}`;
+                    return <img src={imgSrc} alt="check-in" className="max-w-full max-h-full object-contain" />;
+                  })() : (
+                    <span className="text-[10px] text-[#aaa]">Không có ảnh</span>
+                  )}
+                </div>
               </div>
             </div>
           )}
