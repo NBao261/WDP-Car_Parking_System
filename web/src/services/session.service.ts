@@ -42,6 +42,15 @@ export const sessionService = {
   searchSession: async (params: { cardCode?: string; licensePlate?: string; code?: string }): Promise<{ success: boolean; data: ParkingSession }> => {
     return apiClient.get('/sessions/search', { params });
   },
+  getTodayTraffic: async (facilityId?: string) => {
+    try {
+      const params = facilityId ? `?facilityId=${facilityId}` : '';
+      const response = await apiClient.get(`/sessions/today-traffic${params}`);
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || 'Lỗi server' };
+    }
+  },
   calculateFee: async (id: string): Promise<{ success: boolean; data: { totalFee: number; discount: number; finalFee: number; pricingPlan: any } }> => {
     return apiClient.get(`/sessions/${id}/fee`);
   },

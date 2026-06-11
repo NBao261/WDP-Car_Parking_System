@@ -129,15 +129,6 @@ export const scanLicensePlate = async (req: Request, res: Response): Promise<voi
       },
     });
 
-    // ── 6. Nếu Cloudinary chưa xong, vẫn tiếp tục nền (để log/DB update) ──
-    if (!imageUrl) {
-      bgUpload
-        .then((url) => {
-          if (url) console.log(`[ALPR] Cloudinary delayed upload done: ${url} (plate: ${normalizedPlate})`);
-        })
-        .catch(console.error);
-    }
-
   } catch (error) {
     console.error('[ALPR] Controller error:', error);
     res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ.' });

@@ -511,6 +511,32 @@ export class SessionService {
   }
 
   /**
+   * Lấy lưu lượng xe ra vào trong ngày hôm nay
+   */
+  static async getTodayTraffic(facilityId?: string): Promise<{ trafficIn: number; trafficOut: number }> {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const filterIn: any = { checkInTime: { $gte: startOfDay, $lte: endOfDay } };
+    const filterOut: any = { checkOutTime: { $gte: startOfDay, $lte: endOfDay } };
+
+    if (facilityId) {
+      filterIn.facilityId = facilityId;
+      filterOut.facilityId = facilityId;
+    }
+
+    const [trafficIn, trafficOut] = await Promise.all([
+      ParkingSession.countDocuments(filterIn),
+      ParkingSession.countDocuments(filterOut)
+    ]);
+
+    return { trafficIn, trafficOut };
+  }
+
+  /**
    * Lấy danh sách lượt gửi của tài khoản Customer (Driver)
    */
   static async getMySessions(driverId: string, query: any): Promise<{ data: IParkingSession[], total: number }> {

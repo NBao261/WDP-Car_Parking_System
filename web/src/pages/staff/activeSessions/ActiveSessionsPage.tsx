@@ -1,10 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { sessionService } from '../../../services/session.service';
 import CurrentOccupancy from './statisticCards/CurrentOccupancy';
 import TotalTraffic from './statisticCards/TotalTraffic';
 import TableSessionsPage from './tableSessions/TableSessionsPage';
 
 export default function ActiveSessionsPage() {
   const [totalActiveSessions, setTotalActiveSessions] = useState(0);
+  const [trafficIn, setTrafficIn] = useState(0);
+  const [trafficOut, setTrafficOut] = useState(0);
+
+  useEffect(() => {
+    const facilityId = sessionStorage.getItem("staff_facility_id") || undefined;
+    sessionService.getTodayTraffic(facilityId).then((res: any) => {
+      if (res.success && res.data) {
+        setTrafficIn(res.data.trafficIn);
+        setTrafficOut(res.data.trafficOut);
+      }
+    }).catch(console.error);
+  }, []);
 
   return (
     <div className="h-full flex flex-col gap-3 overflow-hidden">
@@ -20,7 +33,7 @@ export default function ActiveSessionsPage() {
           <CurrentOccupancy count={totalActiveSessions} />
         </div>
         <div className="col-span-2">
-          <TotalTraffic />
+          <TotalTraffic trafficIn={trafficIn} trafficOut={trafficOut} />
         </div>
       </div>
 
