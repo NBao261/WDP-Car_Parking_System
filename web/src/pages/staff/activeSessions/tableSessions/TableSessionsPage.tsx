@@ -13,7 +13,18 @@ interface Session {
   totalFee: number;
   vehicleTypeId: { _id: string, name: string, code: string, icon?: string };
   gateIn: string;
+  floorId?: { name: string };
+  slotId?: { code: string };
 }
+
+const calculateDuration = (checkInTime: string) => {
+  const diff = Date.now() - new Date(checkInTime).getTime();
+  if (diff < 0) return '0p';
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  if (hours > 0) return `${hours}h ${minutes}p`;
+  return `${minutes}p`;
+};
 
 export default function TableSessionsPage({ 
   onTotalChange 
@@ -139,8 +150,10 @@ export default function TableSessionsPage({
               <th className="px-4 py-2.5 font-semibold w-[120px]">Mã vé</th>
               <th className="px-4 py-2.5 font-semibold w-[150px]">Biển số</th>
               <th className="px-4 py-2.5 font-semibold w-[120px]">Loại xe</th>
+              <th className="px-4 py-2.5 font-semibold w-[150px]">Vị trí</th>
               <th className="px-4 py-2.5 font-semibold w-[120px]">Cổng vào</th>
               <th className="px-4 py-2.5 font-semibold w-[180px]">Giờ vào</th>
+              <th className="px-4 py-2.5 font-semibold w-[120px]">Thời gian đỗ</th>
               <th className="px-4 py-2.5 font-semibold w-[120px]">Trạng thái</th>
               <th className="px-4 py-2.5 font-semibold w-[100px] text-right">Thao tác</th>
             </tr>
@@ -154,8 +167,12 @@ export default function TableSessionsPage({
                   <td className="px-4 py-2.5 text-[#060606] font-medium text-sm truncate">{session.code}</td>
                   <td className="px-4 py-2.5 font-mono text-[15px] text-[#060606] font-bold truncate">{session.licensePlate}</td>
                   <td className="px-4 py-2.5 text-[#060606] text-sm truncate">{session.vehicleTypeId?.name || 'N/A'}</td>
+                  <td className="px-4 py-2.5 text-[#060606] text-sm truncate">
+                    {session.floorId && session.slotId ? `${session.floorId.name} - ${session.slotId.code}` : '—'}
+                  </td>
                   <td className="px-4 py-2.5 text-[#060606] text-sm truncate">{session.gateIn || 'N/A'}</td>
                   <td className="px-4 py-2.5 text-[#060606]/70 text-sm tabular-nums truncate">{new Date(session.checkInTime).toLocaleString('vi-VN')}</td>
+                  <td className="px-4 py-2.5 text-[#060606] text-sm font-medium tabular-nums truncate">{calculateDuration(session.checkInTime)}</td>
                   <td className="px-4 py-2.5 truncate">
                     <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
                       session.status === 'exception' 
@@ -177,7 +194,7 @@ export default function TableSessionsPage({
               );
             })}
             {currentData.length === 0 && !loading && (
-              <tr><td colSpan={8} className="px-5 py-12 text-center text-gray-400 text-sm">Không có phiên đỗ xe nào đang hoạt động</td></tr>
+              <tr><td colSpan={10} className="px-5 py-12 text-center text-gray-400 text-sm">Không có phiên đỗ xe nào đang hoạt động</td></tr>
             )}
           </tbody>
         </table>
@@ -256,6 +273,12 @@ export default function TableSessionsPage({
                   <p className="font-semibold text-[#060606]">{selectedSession.gateIn || '—'}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <p className="text-gray-400 text-xs mb-1">Vị trí đỗ</p>
+                  <p className="font-semibold text-[#060606]">
+                    {selectedSession.floorId && selectedSession.slotId ? `${selectedSession.floorId.name} - ${selectedSession.slotId.code}` : '—'}
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                   <p className="text-gray-400 text-xs mb-1">Trạng thái</p>
                   <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold ${
                     selectedSession.status === 'exception'
@@ -270,6 +293,10 @@ export default function TableSessionsPage({
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                   <p className="text-gray-400 text-xs mb-1">Giờ ra</p>
                   <p className="font-semibold text-[#060606]/40">Chưa ra</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <p className="text-gray-400 text-xs mb-1">Thời gian đỗ</p>
+                  <p className="font-semibold text-[#060606]">{calculateDuration(selectedSession.checkInTime)}</p>
                 </div>
               </div>
             </div>
