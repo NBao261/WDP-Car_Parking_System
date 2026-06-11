@@ -20,7 +20,7 @@ export default function ActiveSessionsPage() {
   }, []);
 
   return (
-    <div className="h-full flex flex-col gap-3 overflow-hidden">
+    <div className="h-full flex flex-col gap-3 overflow-hidden p-4 lg:p-6">
       {/* Page Title — compact */}
       <div className="shrink-0 px-1 pt-1">
         <h1 className="text-xl font-bold text-[#060606]">Danh Sách Xe Trong Bãi</h1>
