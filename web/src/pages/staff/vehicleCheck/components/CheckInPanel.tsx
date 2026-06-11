@@ -145,7 +145,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
           const now = new Date();
           const actualCheckInTime = res.data.checkInTime ? new Date(res.data.checkInTime) : now;
           onCheckIn({
-            ticketCode: res.data.code,
+            cardCode: res.data.cardCode,
             plate: res.data.licensePlate,
             vehicleType:
               vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name || "",

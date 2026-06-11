@@ -7,6 +7,7 @@ import { VehicleType } from '../../../../services/vehicleType.service';
 interface Session {
   _id: string;
   code: string;
+  cardCode?: string;
   licensePlate: string;
   status: string;
   checkInTime: string;
@@ -121,7 +122,7 @@ export default function TableSessionsPage({
         <div className="relative max-w-sm w-full">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
-            type="text" placeholder="Tìm kiếm biển số hoặc mã vé..." value={search} onChange={handleSearchChange}
+            type="text" placeholder="Tìm kiếm biển số hoặc mã thẻ..." value={search} onChange={handleSearchChange}
             maxLength={12}
             className="w-full pl-9 pr-4 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606]"
           />
@@ -154,7 +155,7 @@ export default function TableSessionsPage({
           <thead className="sticky top-0 bg-white z-10">
             <tr className="text-[11px] text-[#060606]/50 border-b border-gray-100 font-semibold uppercase tracking-wider">
               <th className="px-4 py-2.5 font-semibold w-[50px]">#</th>
-              <th className="px-4 py-2.5 font-semibold w-[120px]">Mã vé</th>
+              <th className="px-4 py-2.5 font-semibold w-[120px]">Mã thẻ</th>
               <th className="px-4 py-2.5 font-semibold w-[150px]">Biển số</th>
               <th className="px-4 py-2.5 font-semibold w-[120px]">Loại xe</th>
               <th className="px-4 py-2.5 font-semibold w-[150px]">Vị trí</th>
@@ -171,7 +172,7 @@ export default function TableSessionsPage({
               return (
                 <tr key={session._id} className="hover:bg-[#f9fafb] transition-colors border-b border-gray-50 last:border-0">
                   <td className="px-4 py-2.5 text-[#060606]/50 text-sm truncate">{globalIndex}</td>
-                  <td className="px-4 py-2.5 text-[#060606] font-medium text-sm truncate">{session.code}</td>
+                  <td className="px-4 py-2.5 text-[#060606] font-medium text-sm truncate">{session.cardCode || session.code}</td>
                   <td className="px-4 py-2.5 font-mono text-[15px] text-[#060606] font-bold truncate">{session.licensePlate}</td>
                   <td className="px-4 py-2.5 text-[#060606] text-sm truncate">{session.vehicleTypeId?.name || 'N/A'}</td>
                   <td className="px-4 py-2.5 text-[#060606] text-sm truncate">
@@ -268,8 +269,8 @@ export default function TableSessionsPage({
               {/* Detail Fields */}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  <p className="text-gray-400 text-xs mb-1">Mã vé</p>
-                  <p className="font-semibold text-[#060606]">{selectedSession.code}</p>
+                  <p className="text-gray-400 text-xs mb-1">Mã thẻ</p>
+                  <p className="font-semibold text-[#060606]">{selectedSession.cardCode || selectedSession.code}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                   <p className="text-gray-400 text-xs mb-1">Loại xe</p>
