@@ -59,7 +59,11 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
           toast.success(`Đã nhận dạng: ${fp} — kiểm tra lại trước khi tìm`);
         } else if (step === "CONFIRM") {
           onChangePlate(fp);
-          toast.success(`Đã nhận dạng biển số xe ra: ${fp}`);
+          if (fp.toUpperCase() !== plateIn.toUpperCase()) {
+            toast.error(`CẢNH BÁO: Biển số xe ra (${fp}) KHÔNG KHỚP với lúc vào (${plateIn})!`, { autoClose: 5000 });
+          } else {
+            toast.success(`Hợp lệ: Biển số xe ra khớp với lúc vào (${fp})`);
+          }
         }
         
         setOcrSuccess(true);
@@ -150,7 +154,11 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
 
         setStep("CONFIRM");
         if (onSearch) onSearch(session);
-        onChangePlate(session.licensePlate);
+        if (searchMode === "plate") {
+          onChangePlate(session.licensePlate);
+        } else {
+          onChangePlate(""); // Bắt buộc nhân viên phải tự nhập hoặc quét biển số lúc ra!
+        }
       }
     } catch (error: any) {
       toast.error(error.message || "Không tìm thấy trong hệ thống!");
