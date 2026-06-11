@@ -54,7 +54,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         setPlate(recognized);
         if (response.data.imageUrl) setCheckInImage(response.data.imageUrl);
         setOcrSuccess(true);
-        // toast.success(`Đã nhận dạng: ${recognized} — kiểm tra lại trước khi xác nhận`);
+        toast.success(`Đã nhận dạng: ${recognized} — kiểm tra lại trước khi xác nhận`);
       } else {
         toast.warning(response.message || "Không nhận dạng được biển số. Vui lòng nhập tay.");
       }
@@ -162,7 +162,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
             gate: gateIn,
             zone: `${floorName} - Slot: ${slotCode}`,
           });
-          // toast.success(`Đã cấp phát: ${floorName} - Slot: ${slotCode}. Vui lòng mở chắn.`);
+          toast.success(`Đã cấp phát: ${floorName} - Slot: ${slotCode}. Vui lòng mở chắn.`);
           setStep("OPEN");
         }
       } catch (error: any) {
@@ -171,7 +171,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         setIsSubmitting(false);
       }
     } else if (step === "OPEN") {
-      // toast.success("Đã mở chắn thành công!");
+      toast.success("Đã mở chắn thành công!");
       setStep("INPUT");
       setPlate("");
       setCheckInImage(null);
