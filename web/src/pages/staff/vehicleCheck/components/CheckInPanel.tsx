@@ -70,8 +70,11 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   // Lắng nghe Hotkeys
   useEffect(() => {
     const onF2 = () => {
-      // Chỉ check-in khi đã nhập đủ biển số
-      if (plate.trim().length > 0 && !isSubmitting) {
+      const selectedType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
+      const isBike = selectedType?.name.toLowerCase().includes("xe đạp") || false;
+      
+      // Chỉ check-in khi đã nhập đủ biển số (hoặc là xe đạp)
+      if ((isBike || plate.trim().length > 0) && !isSubmitting) {
         handleCheckIn();
       }
     };
@@ -176,7 +179,10 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   }, [plate, vehicleTypes]);
 
   const handleCheckIn = async () => {
-    if (!plate) {
+    const selectedVehicleType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
+    const isBicycle = selectedVehicleType?.name.toLowerCase().includes("xe đạp") || false;
+
+    if (!isBicycle && !plate) {
       toast.error("Vui lòng nhập biển số xe!");
       return;
     }
@@ -187,12 +193,14 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
 
     setIsSubmitting(true);
       try {
+        const actualPlate = isBicycle ? `XD-${Math.floor(100000 + Math.random() * 900000)}` : plate;
+        
         const res = await sessionService.checkIn({
           facilityId,
           vehicleTypeId: selectedVehicleTypeId,
-          licensePlate: plate,
+          licensePlate: actualPlate,
           gateIn,
-          ...(checkInImage ? { checkInImage } : {}),
+          ...(checkInImage && !isBicycle ? { checkInImage } : {}),
         });
 
         if (res.success) {
@@ -262,8 +270,22 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         </div>
 
         {/* Biển số xe — ô nhập lớn làm điểm nhấn */}
-        <div className="flex-1 flex flex-col gap-2 min-h-0">
-          <label className="block text-[12px] font-semibold text-[#060606] shrink-0">Biển số xe</label>
+        <div className="flex-1 flex flex-col gap-2 min-h-0 relative">
+          <label className="block text-[12px] font-semibold text-[#060606] shrink-0">
+            Biển số xe 
+            {vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name.toLowerCase().includes("xe đạp") && 
+              <span className="text-[#8bc34a] ml-2 font-normal">(Bỏ qua với Xe đạp)</span>
+            }
+          </label>
+
+          {/* Nếu là xe đạp -> Tạo lớp phủ bóng mờ disabled */}
+          {vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name.toLowerCase().includes("xe đạp") && (
+            <div className="absolute inset-0 top-6 z-10 bg-white/40 backdrop-blur-[1px] flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[#e8e9e8]">
+              <span className="bg-black/70 text-white text-[12px] px-3 py-1.5 rounded-[6px] font-medium shadow-md">
+                Xe đạp không cần chụp và nhập biển
+              </span>
+            </div>
+          )}
 
           {/* OCR Upload Zone */}
           {!previewUrl ? (
@@ -303,7 +325,8 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
           <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
 
           <input
-            type="text" value={plate}
+            type="text" 
+            value={vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name.toLowerCase().includes("xe đạp") ? "XD-AUTO" : plate}
             onChange={(e) => setPlate(e.target.value.toUpperCase())}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCheckIn(); } }}
             disabled={isSubmitting}
@@ -314,10 +337,10 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 mt-auto shrink-0">
+        <div className="flex gap-2 mt-auto shrink-0 z-20">
           <button
             onClick={handleCheckIn}
-            disabled={isSubmitting || !plate}
+            disabled={isSubmitting || (!vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name.toLowerCase().includes("xe đạp") && !plate)}
             className="flex-1 h-10 bg-[#060606] text-[#d7ee46] rounded-[8px] font-bold text-[13px] hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
