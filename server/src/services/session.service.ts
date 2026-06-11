@@ -174,13 +174,16 @@ export class SessionService {
       throw new AppError('Bạn không được phân công tại bãi xe này', 403);
     }
 
-    // 3. Kiểm tra xe đang có session active (biển số trùng)
+    // 3. Kiểm tra xe đang có session active hoặc exception (biển số trùng)
     const existingSession = await ParkingSession.findOne({
       licensePlate: data.licensePlate.toUpperCase(),
-      status: SessionStatus.ACTIVE,
+      status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] },
     });
 
     if (existingSession) {
+      if (existingSession.status === SessionStatus.EXCEPTION) {
+        throw new AppError(`Xe biển số "${data.licensePlate}" đang có sự cố ngoại lệ cần xử lý (${existingSession.code}), không được phép vào gửi.`, 400);
+      }
       throw new AppError(`Xe biển số "${data.licensePlate}" đang có lượt gửi chưa kết thúc (${existingSession.code})`, 400);
     }
 
@@ -433,7 +436,7 @@ export class SessionService {
    * Tìm theo: cardCode, licensePlate, hoặc session code
    */
   static async searchSession(query: { cardCode?: string; licensePlate?: string; code?: string }): Promise<IParkingSession> {
-    const searchConditions: any = { status: SessionStatus.ACTIVE };
+    const searchConditions: any = { status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } };
 
     if (query.cardCode) {
       searchConditions.cardCode = query.cardCode;
@@ -475,7 +478,7 @@ export class SessionService {
       sortOrder = 'desc'
     } = query;
 
-    const filter: any = { status: SessionStatus.ACTIVE };
+    const filter: any = { status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } };
 
     if (facilityId) filter.facilityId = facilityId;
     if (vehicleTypeId) filter.vehicleTypeId = vehicleTypeId;
@@ -505,6 +508,32 @@ export class SessionService {
       page: Number(page),
       totalPages: Math.ceil(total / Number(limit))
     };
+  }
+
+  /**
+   * Lấy lưu lượng xe ra vào trong ngày hôm nay
+   */
+  static async getTodayTraffic(facilityId?: string): Promise<{ trafficIn: number; trafficOut: number }> {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const filterIn: any = { checkInTime: { $gte: startOfDay, $lte: endOfDay } };
+    const filterOut: any = { checkOutTime: { $gte: startOfDay, $lte: endOfDay } };
+
+    if (facilityId) {
+      filterIn.facilityId = facilityId;
+      filterOut.facilityId = facilityId;
+    }
+
+    const [trafficIn, trafficOut] = await Promise.all([
+      ParkingSession.countDocuments(filterIn),
+      ParkingSession.countDocuments(filterOut)
+    ]);
+
+    return { trafficIn, trafficOut };
   }
 
   /**

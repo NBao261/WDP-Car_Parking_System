@@ -42,6 +42,10 @@ export const sessionService = {
   searchSession: async (params: { cardCode?: string; licensePlate?: string; code?: string }): Promise<{ success: boolean; data: ParkingSession }> => {
     return apiClient.get('/sessions/search', { params });
   },
+  getTodayTraffic: async (facilityId?: string) => {
+    const params = facilityId ? `?facilityId=${facilityId}` : '';
+    return apiClient.get(`/sessions/today-traffic${params}`);
+  },
   calculateFee: async (id: string): Promise<{ success: boolean; data: { totalFee: number; discount: number; finalFee: number; pricingPlan: any } }> => {
     return apiClient.get(`/sessions/${id}/fee`);
   },

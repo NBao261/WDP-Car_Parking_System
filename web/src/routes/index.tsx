@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 import { UserRole } from '../../../shared/types';
 import { ProtectedRoute, AuthRedirect } from '../components/ProtectedRoute';
 import MainLayout from '../layouts/MainLayout';
+import StaffLayout from '../layouts/StaffLayout';
 
 // ── Auth Pages ──
 import LoginPage from '../pages/auth/LoginPage';
@@ -99,13 +100,16 @@ export const router = createBrowserRouter([
               { path: 'vehicles', element: <S><VehiclesPage /></S> },
             ],
           },
-
-          // ── Staff Routes ──────────────────────────────────
+        ],
+      },
+      {
+        path: 'staff',
+        element: (
+          <ProtectedRoute allowedRoles={[UserRole.STAFF, UserRole.MANAGER, UserRole.ADMIN]} />
+        ),
+        children: [
           {
-            path: 'staff',
-            element: (
-              <ProtectedRoute allowedRoles={[UserRole.STAFF, UserRole.MANAGER, UserRole.ADMIN]} />
-            ),
+            element: <StaffLayout />,
             children: [
               { index: true, element: <S><VehicleCheckPage /></S> },
               { path: 'active-sessions', element: <S><ActiveSessionsPage /></S> },

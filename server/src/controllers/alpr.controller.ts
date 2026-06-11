@@ -63,24 +63,6 @@ const uploadImage = (file: Express.Multer.File): Promise<string | null> => {
   });
 };
 
-/**
- * Race: upload Cloudinary vs timeout.
- * - Nếu Cloudinary xong trong CLOUDINARY_FAST_TIMEOUT_MS → trả URL thật.
- * - Nếu chậm hơn → trả null (upload vẫn tiếp tục nền, không block response).
- */
-const uploadWithTimeout = (
-  file: Express.Multer.File
-): { fast: Promise<string | null>; background: Promise<string | null> } => {
-  const uploadPromise = uploadImage(file);
-
-  const fastRace = Promise.race([
-    uploadPromise,
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), CLOUDINARY_FAST_TIMEOUT_MS)),
-  ]);
-
-  return { fast: fastRace, background: uploadPromise };
-};
-
 export const scanLicensePlate = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.file) {
@@ -88,11 +70,11 @@ export const scanLicensePlate = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    // ── 1. Bắt đầu upload ảnh SONG SONG với gửi sang ALPR ─────────────────
-    //    (Cloudinary upload bắt đầu ngay từ đây, không đợi OCR xong)
-    const { fast: fastUpload, background: bgUpload } = uploadWithTimeout(req.file);
+    // ── 1. Upload ảnh lên Cloudinary (đợi hoàn tất để lấy URL thật) ───────
+    // Dù OCR rất nhanh (200ms), ta vẫn cần URL để lưu vào ParkingSession.
+    const uploadPromise = uploadImage(req.file);
 
-    // ── 2. Gửi ảnh sang Python ALPR service ────────────────────────────────
+    // ── 2. Gửi ảnh sang Python ALPR service (song song với upload) ────────
     const formData = new FormData();
     formData.append('file', req.file.buffer, {
       filename: req.file.originalname,
@@ -111,14 +93,13 @@ export const scanLicensePlate = async (req: Request, res: Response): Promise<voi
         success: false,
         message: 'Dịch vụ nhận dạng không phản hồi. Vui lòng nhập biển số thủ công.',
       });
-      bgUpload.catch(console.error); // không bỏ upload
+      // Vẫn đợi upload xong nhưng không lưu
+      await uploadPromise.catch(console.error);
       return;
     }
 
-    // ── 3. Đợi Cloudinary (nếu xong trước timeout) ─────────────────────────
-    //    OCR thường mất 3-5s, Cloudinary mất 1-2s → thường xong cùng lúc.
-    //    Race timeout 3s đảm bảo không bị block thêm quá lâu.
-    const imageUrl = await fastUpload;
+    // ── 3. Đợi Cloudinary lấy URL (thường mất 1-2s) ──────────────────────
+    const imageUrl = await uploadPromise;
 
     // ── 4. Xử lý kết quả OCR ──────────────────────────────────────────────
     const results: any[] = alprResponse.data.results ?? [];
@@ -129,14 +110,13 @@ export const scanLicensePlate = async (req: Request, res: Response): Promise<voi
         message: 'Không phát hiện biển số trong ảnh.',
         data: { imageUrl },
       });
-      bgUpload.catch(console.error);
       return;
     }
 
     const best = results.sort((a, b) => b.confidence - a.confidence)[0];
     const normalizedPlate = normalizeLicensePlate(best.text);
 
-    // ── 5. Trả về biển số + imageUrl (Cloudinary URL hoặc null nếu chậm) ───
+    // ── 5. Trả về biển số + imageUrl ──────────────────────────────────────
     res.status(200).json({
       success: true,
       message: `Nhận dạng biển số: ${normalizedPlate}`,
@@ -148,15 +128,6 @@ export const scanLicensePlate = async (req: Request, res: Response): Promise<voi
         allResults: results,
       },
     });
-
-    // ── 6. Nếu Cloudinary chưa xong, vẫn tiếp tục nền (để log/DB update) ──
-    if (!imageUrl) {
-      bgUpload
-        .then((url) => {
-          if (url) console.log(`[ALPR] Cloudinary delayed upload done: ${url} (plate: ${normalizedPlate})`);
-        })
-        .catch(console.error);
-    }
 
   } catch (error) {
     console.error('[ALPR] Controller error:', error);

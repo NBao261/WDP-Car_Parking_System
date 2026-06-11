@@ -91,6 +91,20 @@ export class SessionController {
   }
 
   /**
+   * GET /sessions/today-traffic
+   * Lấy lưu lượng xe ra vào trong ngày
+   */
+  static async getTodayTraffic(req: Request, res: Response, next: NextFunction) {
+    try {
+      const facilityId = req.query.facilityId as string;
+      const result = await SessionService.getTodayTraffic(facilityId);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * GET /sessions/search
    * FR-10.1: Tìm lượt gửi xe
    */

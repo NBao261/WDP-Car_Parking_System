@@ -68,6 +68,14 @@ router.get(
   SessionController.searchSession
 );
 
+// Lấy lưu lượng xe ra vào trong ngày
+router.get(
+  '/today-traffic',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
+  checkPermission(PERMISSIONS.SESSION_READ),
+  SessionController.getTodayTraffic
+);
+
 // FR-10.2: Tính phí tự động
 router.get(
   '/:id/fee',
