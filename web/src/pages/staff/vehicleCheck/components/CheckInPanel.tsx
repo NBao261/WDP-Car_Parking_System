@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { ScanLine, ImagePlus, RefreshCw, CheckCircle, X } from "lucide-react";
-import axios from "axios";
+import { apiClient } from "../../../../services/api";
 import { VehicleType } from "../../../../services/vehicleType.service";
 import { facilityService } from "../../../../services/facility.service";
 import { sessionService } from "../../../../services/session.service";
@@ -44,21 +44,22 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     const formData = new FormData();
     formData.append("image", file);
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
-      const response = await axios.post(`${API_BASE_URL}/alpr/scan`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
-      if (response.data.success && response.data.data.normalizedPlate) {
-        const plate = formatPlate(response.data.data.normalizedPlate);
-        setPlate(plate);
-        if (response.data.data.imageUrl) setCheckInImage(response.data.data.imageUrl);
+      // Dùng apiClient (có auth + timeout 35s cho ALPR)
+      const response: any = await apiClient.post('/alpr/scan', formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 35000,
+      } as any);
+      if (response.success && response.data?.normalizedPlate) {
+        const recognized = formatPlate(response.data.normalizedPlate);
+        setPlate(recognized);
+        if (response.data.imageUrl) setCheckInImage(response.data.imageUrl);
         setOcrSuccess(true);
-        toast.success(`Đã nhận dạng: ${plate} — kiểm tra lại trước khi xác nhận`);
+        toast.success(`Đã nhận dạng: ${recognized} — kiểm tra lại trước khi xác nhận`);
       } else {
-        toast.warning(response.data.message || "Không nhận dạng được biển số. Vui lòng nhập tay.");
+        toast.warning(response.message || "Không nhận dạng được biển số. Vui lòng nhập tay.");
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi xử lý ảnh.");
+      toast.error(err.message || "Lỗi xử lý ảnh.");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
