@@ -289,10 +289,10 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
 
           {/* Hình ảnh lúc vào và ra (để so sánh) */}
           {step === "CONFIRM" && (
-            <div className="flex gap-2 mb-1 shrink-0">
+            <div className="flex gap-2 mb-1 flex-1 min-h-[110px]">
               <div className="flex-1 flex flex-col">
                 <label className="text-[11px] font-semibold text-[#6b6b6b] mb-1 text-center">Ảnh lúc ra (hiện tại)</label>
-                <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex justify-center items-center" style={{ height: '110px' }}>
+                <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex flex-1 justify-center items-center">
                   {ocrPreviewUrl ? (
                     <img src={ocrPreviewUrl} alt="check-out" className="max-w-full max-h-full object-contain" />
                   ) : (
@@ -303,7 +303,7 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
 
               <div className="flex-1 flex flex-col">
                 <label className="text-[11px] font-semibold text-[#6b6b6b] mb-1 text-center">Ảnh lúc vào (so sánh)</label>
-                <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex justify-center items-center" style={{ height: '110px' }}>
+                <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex flex-1 justify-center items-center">
                   {currentSession?.checkInImage ? (() => {
                     const SERVER_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace(/\/api\/v1\/?$/, '');
                     const imgSrc = currentSession.checkInImage.startsWith('http') 
