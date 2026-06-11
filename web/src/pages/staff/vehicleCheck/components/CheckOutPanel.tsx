@@ -228,7 +228,15 @@ export default function CheckOutPanel({ plate, onChangePlate, onCheckOut, onSear
     setCurrentSession(null); setFeeData(null);
     setVehicleTypeName("Không có dữ liệu"); setCheckInTimeDisplay("Không có dữ liệu");
     setOcrPreviewUrl(null); setOcrSuccess(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (onSearch) onSearch(null);
+    if (onCheckOut) onCheckOut(null);
   };
+
+  useEffect(() => {
+    window.addEventListener("RESET_CHECKOUT", handleReset);
+    return () => window.removeEventListener("RESET_CHECKOUT", handleReset);
+  }, []);
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   const isMismatch = step === "CONFIRM" && plate.toUpperCase() !== plateIn.toUpperCase();

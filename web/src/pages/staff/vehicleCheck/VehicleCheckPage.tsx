@@ -107,9 +107,12 @@ export default function VehicleCheckPage() {
       {/* GLOBAL EXCEPTION SLIDE-OVER PANEL */}
       {showExceptionPanel && (
         <GlobalExceptionPanel 
-          coPlateCam={coPlateCam} 
+          coPlateCam={coPlateCam}
           currentSession={currentCheckOutSession}
-          onClose={() => setShowExceptionPanel(false)} 
+          onClose={() => setShowExceptionPanel(false)}
+          onExceptionCreated={() => {
+            window.dispatchEvent(new CustomEvent("RESET_CHECKOUT"));
+          }}
         />
       )}
     </div>
