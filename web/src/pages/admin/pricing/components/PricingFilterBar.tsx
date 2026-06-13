@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, X, LayoutGrid, List } from 'lucide-react';
 import { Facility } from '../../../../services/facility.service';
 
 const inputBase: React.CSSProperties = {
@@ -131,14 +131,15 @@ interface PricingFilterBarProps {
   filterFacility: string;
   setFilterFacility: (v: string) => void;
   facilities: Facility[];
+  hideFacilityFilter?: boolean;
 }
 
 export function PricingFilterBar({
   filterStatus, setFilterStatus,
   filterFacility, setFilterFacility,
-  facilities
+  facilities, hideFacilityFilter
 }: PricingFilterBarProps) {
-  const hasActiveFilters = filterStatus !== 'all' || filterFacility !== 'all';
+  const hasActiveFilters = filterStatus !== 'all' || (!hideFacilityFilter && filterFacility !== 'all');
 
   const clearFilters = () => {
     setFilterStatus('all');
@@ -157,15 +158,17 @@ export function PricingFilterBar({
         ]}
       />
 
-      <DropFilter
-        width={220}
-        value={filterFacility}
-        onChange={setFilterFacility}
-        options={[
-          { value: 'all', label: 'Tất cả cơ sở' },
-          ...facilities.map(f => ({ value: f._id, label: f.name }))
-        ]}
-      />
+      {!hideFacilityFilter && (
+        <DropFilter
+          width={220}
+          value={filterFacility}
+          onChange={setFilterFacility}
+          options={[
+            { value: 'all', label: 'Tất cả cơ sở' },
+            ...facilities.map(f => ({ value: f._id, label: f.name }))
+          ]}
+        />
+      )}
 
       {hasActiveFilters && (
         <button
@@ -192,6 +195,7 @@ export function PricingFilterBar({
           Bỏ lọc
         </button>
       )}
+
     </div>
   );
 }

@@ -78,8 +78,8 @@ export function FacilityFloorsView({
         <div className="flex items-center gap-1.5 text-[14px] font-medium text-gray-500">
           <Clock size={16} /> {viewFacility.openTime} – {viewFacility.closeTime}
         </div>
-        <div className="flex items-center gap-1.5 text-[14px] font-medium text-gray-500">
-          <Layers size={16} /> {filteredFloors.length} tầng
+        <div className="flex items-center gap-1.5 text-[14px] font-medium text-gray-500" title={`Cơ sở này giới hạn tối đa ${viewFacility.totalFloors} tầng`}>
+          <Layers size={16} /> {filteredFloors.length}/{viewFacility.totalFloors} tầng
         </div>
         <div className="flex items-center gap-3 ml-auto">
           <span className="text-[14px] font-medium tabular-nums text-gray-500">

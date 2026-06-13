@@ -7,11 +7,9 @@ interface FacilityFilterBarProps {
   setSearch: (val: string) => void;
   statusFilter: string;
   setStatusFilter: (val: string) => void;
-  vehicleFilter: string;
-  setVehicleFilter: (val: string) => void;
-  vehicleTypes: VehicleType[];
   viewMode: 'grid' | 'list';
   setViewMode: (val: 'grid' | 'list') => void;
+  hideViewMode?: boolean;
 }
 
 const inputBase: React.CSSProperties = {
@@ -153,16 +151,14 @@ function DropFilter({ value, onChange, options }: {
 export function FacilityFilterBar({
   search, setSearch,
   statusFilter, setStatusFilter,
-  vehicleFilter, setVehicleFilter,
-  vehicleTypes,
-  viewMode, setViewMode
+  viewMode, setViewMode,
+  hideViewMode = false
 }: FacilityFilterBarProps) {
-  const hasActiveFilters = search !== '' || statusFilter !== 'all' || vehicleFilter !== 'all';
+  const hasActiveFilters = search !== '' || statusFilter !== 'all';
 
   const clearFilters = () => {
     setSearch('');
     setStatusFilter('all');
-    setVehicleFilter('all');
   };
 
   return (
@@ -188,13 +184,6 @@ export function FacilityFilterBar({
             { value: 'all', label: 'Tất cả trạng thái' },
             { value: 'active', label: 'Hoạt động' },
             { value: 'inactive', label: 'Đã tắt' },
-          ]}
-        />
-        <DropFilter
-          label="Loại xe" value={vehicleFilter} onChange={setVehicleFilter}
-          options={[
-            { value: 'all', label: 'Tất cả loại xe' },
-            ...vehicleTypes.map(v => ({ value: v._id, label: v.name }))
           ]}
         />
 
@@ -225,24 +214,26 @@ export function FacilityFilterBar({
         )}
 
         {/* View toggle */}
-        <div className="flex gap-1 shrink-0 ml-auto">
-          {(['grid', 'list'] as const).map(mode => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              style={{
-                width: 40, height: 40, borderRadius: 10, border: 'none', cursor: 'pointer',
-                background: viewMode === mode ? '#d7ee46' : '#f0f1f0',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'background 0.15s',
-              }}
-            >
-              {mode === 'grid'
-                ? <LayoutGrid size={16} style={{ color: viewMode === 'grid' ? '#060606' : '#6b6e6b' }} />
-                : <List size={16} style={{ color: viewMode === 'list' ? '#060606' : '#6b6e6b' }} />}
-            </button>
-          ))}
-        </div>
+        {!hideViewMode && (
+          <div className="flex gap-1 shrink-0 ml-auto">
+            {(['grid', 'list'] as const).map(mode => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                style={{
+                  width: 40, height: 40, borderRadius: 10, border: 'none', cursor: 'pointer',
+                  background: viewMode === mode ? '#d7ee46' : '#f0f1f0',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'background 0.15s',
+                }}
+              >
+                {mode === 'grid'
+                  ? <LayoutGrid size={16} style={{ color: viewMode === 'grid' ? '#060606' : '#6b6e6b' }} />
+                  : <List size={16} style={{ color: viewMode === 'list' ? '#060606' : '#6b6e6b' }} />}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

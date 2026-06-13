@@ -111,32 +111,33 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onViewDetail,
       }}
     >
       {/* Row 1: icon + name + menu */}
-      <div className="flex items-start gap-3">
-        <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(204,226,66,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <VtIcon size={22} style={{ color: '#4a7c20' }} strokeWidth={1.5} />
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex gap-3 items-center min-w-0 flex-1">
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(204,226,66,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <VtIcon size={22} style={{ color: '#4a7c20' }} strokeWidth={1.5} />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-[#060606] text-[17px] leading-snug truncate" title={plan.name}>{plan.name}</h3>
+          </div>
         </div>
 
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-800 text-sm leading-snug truncate">{plan.name}</p>
-          <p className="text-xs text-gray-400 mt-0.5 truncate">{facName}</p>
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 5, ...badgeStyle }}>
+        <div className="flex items-center gap-2 shrink-0">
+          <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 5, ...badgeStyle }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
             {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
           </span>
 
-          {loading ? <Loader2 size={14} className="animate-spin text-gray-400" /> : (
-            <div className="relative" onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => setMenuOpen(v => !v)} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                <MoreVertical size={15} />
+          {loading ? <Loader2 size={16} className="animate-spin text-gray-400 ml-1" /> : (
+            <div className="relative ml-1" onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => setMenuOpen(v => !v)} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <MoreVertical size={16} />
               </button>
               <AnimatePresence>
                 {menuOpen && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.1 }}
-                    className="absolute right-0 top-7 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-30"
+                    className="absolute right-0 top-8 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-30"
                   >
                     <div className="fixed inset-0 z-[-1]" onClick={() => setMenuOpen(false)} />
                     <button onClick={() => { onViewDetail(plan); setMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
@@ -169,22 +170,22 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onViewDetail,
       <div className="h-px bg-gray-50" />
 
       {/* Row 2: vehicle type + fee type + method */}
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="px-2.5 py-1.5 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[11px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm">
-          <VtIcon size={13} className="text-[#4a7c20]" strokeWidth={2} /> {vtName}
+      <div className="flex flex-wrap items-center gap-2 text-xs pt-1">
+        <span className="px-2.5 py-1 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm">
+          <VtIcon size={14} className="text-[#4a7c20]" strokeWidth={2} /> {vtName}
         </span>
-        <span className={`font-semibold px-2.5 py-0.5 rounded-full text-[11px] ${FEE_TYPE_BADGE[uiFeeType] ?? 'bg-gray-100 text-gray-600'}`}>
+        <span className={`font-semibold px-2.5 py-1 border rounded-lg text-[12px] ${FEE_TYPE_BADGE[uiFeeType]?.replace('bg-', 'bg-opacity-50 bg-').replace('text-', 'border-opacity-30 border-').replace('text-', 'text-') ?? 'bg-gray-50 text-gray-600 border-gray-200'}`}>
           {FEE_TYPE_LABELS[uiFeeType] ?? plan.feeType}
         </span>
       </div>
 
       {/* Row 3: Rates display */}
-      <div className="bg-gray-50/50 rounded-xl p-3 border border-gray-100 mt-1 space-y-2">
+      <div className="mt-2 space-y-2">
         {plan.rates.map((rate, idx) => (
-          <div key={idx} className="flex justify-between items-center text-sm">
-            <span className="text-gray-500 font-medium">
+          <div key={idx} className="flex justify-between items-center text-[15px] border-b border-gray-50 pb-2 last:border-0 last:pb-0">
+            <span className="text-gray-600 font-medium">
               {rate.startTime && rate.endTime ? (
-                <span className="text-[#060606] bg-white border border-gray-200 px-1.5 py-0.5 rounded text-[11px] mr-2 tracking-wide shadow-sm">
+                <span className="text-[#060606] bg-gray-50 border border-gray-200 px-1.5 py-0.5 rounded text-[12px] mr-2 tracking-wide font-semibold">
                   {rate.startTime} - {rate.endTime}
                 </span>
               ) : null}
@@ -192,7 +193,7 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onViewDetail,
               {(idx === 0 && plan.feeMethod === 'duration_based' && plan.firstBlockHours && plan.firstBlockHours > 1) && ` (${plan.firstBlockHours}h)`}
             </span>
             <span className="font-bold text-[#4a7c20]">
-              {fmt(rate.amount)}<span className="text-xs font-normal text-gray-400 ml-1">/{translateUnit(rate.unit)}</span>
+              {fmt(rate.amount)}<span className="text-[13px] font-normal text-gray-500 ml-1">/{translateUnit(rate.unit)}</span>
             </span>
           </div>
         ))}
@@ -200,30 +201,30 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onViewDetail,
 
       {/* Row 4: Surcharges (only if any) */}
       {(plan.overnightFee > 0 || plan.overtimeFeePerHour > 0 || plan.lostCardFee > 0 || (plan.gracePeriodMinutes && plan.gracePeriodMinutes > 0) || (plan.maxDailyFee && plan.maxDailyFee > 0)) && (
-        <div className="flex flex-wrap gap-1.5 pt-1">
+        <div className="flex flex-wrap gap-2 pt-3 mt-1 border-t border-gray-50">
           {plan.gracePeriodMinutes ? (
-            <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-lg">
-              <ShieldCheck size={10} /> Miễn {plan.gracePeriodMinutes}p đầu
+            <span className="inline-flex items-center gap-1.5 text-[12px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2.5 py-1 rounded-lg">
+              <ShieldCheck size={12} /> Miễn {plan.gracePeriodMinutes}p đầu
             </span>
           ) : null}
           {plan.maxDailyFee ? (
-            <span className="inline-flex items-center gap-1 text-[11px] bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 rounded-lg">
-              <TrendingUp size={10} /> Trần {fmt(plan.maxDailyFee)}/ngày
+            <span className="inline-flex items-center gap-1.5 text-[12px] bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1 rounded-lg">
+              <TrendingUp size={12} /> Trần {fmt(plan.maxDailyFee)}/ngày
             </span>
           ) : null}
           {plan.overnightFee > 0 && (
-            <span className="inline-flex items-center gap-1 text-[11px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-2 py-0.5 rounded-lg">
-              <Moon size={10} /> Qua đêm {fmt(plan.overnightFee)}
+            <span className="inline-flex items-center gap-1.5 text-[12px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-2.5 py-1 rounded-lg">
+              <Moon size={12} /> Qua đêm {fmt(plan.overnightFee)}
             </span>
           )}
           {plan.overtimeFeePerHour > 0 && (
-            <span className="inline-flex items-center gap-1 text-[11px] bg-orange-50 text-orange-500 border border-orange-100 px-2 py-0.5 rounded-lg">
-              <Clock size={10} /> Quá giờ {fmt(plan.overtimeFeePerHour)}/h
+            <span className="inline-flex items-center gap-1.5 text-[12px] bg-orange-50 text-orange-600 border border-orange-100 px-2.5 py-1 rounded-lg">
+              <Clock size={12} /> Quá giờ {fmt(plan.overtimeFeePerHour)}/h
             </span>
           )}
           {plan.lostCardFee > 0 && (
-            <span className="inline-flex items-center gap-1 text-[11px] bg-red-50 text-red-500 border border-red-100 px-2 py-0.5 rounded-lg">
-              <CreditCard size={10} /> Mất thẻ {fmt(plan.lostCardFee)}
+            <span className="inline-flex items-center gap-1.5 text-[12px] bg-red-50 text-red-500 border border-red-100 px-2.5 py-1 rounded-lg">
+              <CreditCard size={12} /> Mất thẻ {fmt(plan.lostCardFee)}
             </span>
           )}
         </div>

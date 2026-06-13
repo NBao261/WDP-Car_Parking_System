@@ -17,9 +17,11 @@ interface FormModalProps {
   vehicleTypes: any[];
   onClose: () => void;
   onSuccess: () => void;
+  selectedFacilityId?: string;
+  selectedVehicleTypeId?: string;
 }
 
-export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSuccess }: FormModalProps) {
+export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSuccess, selectedFacilityId, selectedVehicleTypeId }: FormModalProps) {
   const isEdit = !!plan;
   const [isFacOpen, setIsFacOpen] = useState(false);
   const [isVtOpen, setIsVtOpen] = useState(false);
@@ -55,7 +57,9 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
         maxDailyFee: plan.maxDailyFee ?? 0,
         firstBlockHours: plan.firstBlockHours ?? 1,
       }
-      : { 
+      : {
+        facilityId: selectedFacilityId || ('' as any),
+        vehicleTypeId: selectedVehicleTypeId || ('' as any),
         uiFeeType: undefined as any, 
         rates: [], 
         overnightFee: '' as any, overtimeFeePerHour: '' as any, lostCardFee: '' as any,
@@ -165,12 +169,13 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
                   render={({ field }) => {
                     const selected = facilities.find(f => f._id === field.value);
                     const hasErr = !!errors.facilityId;
+                    const isLocked = isEdit || !!selectedFacilityId;
                     const borderClass = isFacOpen ? (hasErr ? 'ring-2 ring-red-200 border-red-500' : 'ring-2 ring-[#d7ee46] border-[#d7ee46]') : (hasErr ? '' : 'hover:border-[#d7ee46]');
                     return (
                       <div className="relative">
-                        <div onClick={() => !isEdit && setIsFacOpen(!isFacOpen)} className={`${getInputCls(hasErr)} flex items-center justify-between cursor-pointer transition-colors ${isEdit ? 'bg-gray-100 opacity-70 pointer-events-none' : ''} ${borderClass}`}>
+                        <div onClick={() => !isLocked && setIsFacOpen(!isFacOpen)} className={`${getInputCls(hasErr)} flex items-center justify-between transition-colors ${isLocked ? 'bg-gray-100 opacity-70 cursor-not-allowed' : 'cursor-pointer'} ${borderClass}`}>
                           <span className={selected ? 'text-[#060606]' : 'text-gray-400'}>{selected ? selected.name : '-- Chọn cơ sở --'}</span>
-                          <ChevronDown size={16} className={`text-gray-400 transition-transform ${isFacOpen ? 'rotate-180' : ''}`} />
+                          {!isLocked && <ChevronDown size={16} className={`text-gray-400 transition-transform ${isFacOpen ? 'rotate-180' : ''}`} />}
                         </div>
                         <AnimatePresence>
                           {isFacOpen && (

@@ -28,8 +28,8 @@ export function useFacilitiesData() {
   const [mapLoading, setMapLoading] = useState(false);
 
   // ── Fetching Data ───────────────────────────────────────────────────────────
-  const fetchAll = useCallback(async () => {
-    setIsLoading(true);
+  const fetchAll = useCallback(async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const [fRes, flRes, vtRes] = await Promise.all([
         facilityService.getAll({ limit: 100 }),
@@ -41,7 +41,7 @@ export function useFacilitiesData() {
       setFloors(fetchedFloors);
       setVehicleTypes(vtRes.data);
 
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
 
       if (fetchedFloors.length > 0) {
         try {
@@ -52,8 +52,13 @@ export function useFacilitiesData() {
           setAllSlots(slots);
           
           // Keep mapFloor and mapSlots in sync if currently viewing map
-          setMapFloor(prev => prev ? fetchedFloors.find((f: Floor) => f._id === prev._id) || prev : null);
-          setMapSlots(prev => prev.length > 0 ? slots.filter(s => s.floorId === prev[0].floorId).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })) : []);
+          setMapFloor(prevFloor => {
+            if (prevFloor) {
+              setMapSlots(slots.filter(s => s.floorId === prevFloor._id).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })));
+              return fetchedFloors.find((f: Floor) => f._id === prevFloor._id) || prevFloor;
+            }
+            return null;
+          });
         } catch {
           setAllSlots([]);
         }
@@ -62,11 +67,46 @@ export function useFacilitiesData() {
       }
     } catch (err: any) {
       toast.error(err.message || 'Lỗi tải dữ liệu');
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => { 
+    fetchAll();
+    const interval = setInterval(() => fetchAll(true), 30000); // 30s global polling
+    return () => clearInterval(interval);
+  }, [fetchAll]);
+
+  // Fast polling only for the currently viewed mapFloor
+  useEffect(() => {
+    if (!mapFloor) return;
+    const interval = setInterval(() => {
+      slotService.getByFloor(mapFloor._id).then(res => {
+        const sorted = res.data.sort((a: ParkingSlot, b: ParkingSlot) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }));
+        setMapSlots(sorted);
+        setAllSlots(prev => {
+          const others = prev.filter(s => s.floorId !== mapFloor._id);
+          return [...others, ...sorted];
+        });
+      }).catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [mapFloor]);
+
+  const refreshFloors = useCallback(async () => {
+    try {
+      const flRes = await floorService.getAll({ limit: 100 });
+      setFloors(flRes.data);
+      setMapFloor(prevFloor => {
+        if (prevFloor) {
+          return flRes.data.find((f: Floor) => f._id === prevFloor._id) || prevFloor;
+        }
+        return null;
+      });
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // ── Derived Stats ───────────────────────────────────────────────────────────
   const slotStatsByFloor = useMemo<Record<string, FloorSlotStats>>(() => {
@@ -222,6 +262,7 @@ export function useFacilitiesData() {
 
     // Handlers
     fetchAll,
+    refreshFloors,
     updateFacilityLocal,
     removeFacilityLocal,
     updateFloorLocal,
