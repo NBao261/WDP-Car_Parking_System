@@ -92,10 +92,6 @@ export function PlanCard({
     typeof plan.vehicleTypeId === 'object'
       ? plan.vehicleTypeId?.icon
       : (vehicleTypes.find((v) => v._id === vtId)?.icon ?? '');
-  const facName =
-    typeof plan.facilityId === 'object'
-      ? plan.facilityId?.name
-      : (facilities.find((f) => f._id === facId)?.name ?? '');
   const facility = facilities.find((f) => f._id === facId);
 
   const uiFeeType = mapToUiType(plan.feeType, plan.feeMethod || '');

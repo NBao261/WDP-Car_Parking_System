@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, ChevronDown, LayoutGrid, List, X } from 'lucide-react';
-import { VehicleType } from '../../../../services/vehicleType.service';
 
 interface FacilityFilterBarProps {
   search: string;

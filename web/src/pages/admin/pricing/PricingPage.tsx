@@ -7,7 +7,6 @@ import {
   Building2,
   MapPin,
   ArrowLeft,
-  MoreHorizontal,
   FileText,
   Clock,
 } from 'lucide-react';

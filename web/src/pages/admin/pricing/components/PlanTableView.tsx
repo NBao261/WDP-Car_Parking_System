@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Edit, PowerOff, CheckCircle2, Trash2, Car, MoreVertical } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { pricingService, type PricingPlan } from '../../../../services/pricing.service';
 import { type Facility } from '../../../../services/facility.service';
@@ -21,7 +21,6 @@ interface PlanTableProps {
 
 export function PlanTableView({
   plans,
-  facilities,
   vehicleTypes,
   onEdit,
   onViewDetail,

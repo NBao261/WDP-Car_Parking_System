@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, X, LayoutGrid, List, Search, ArrowUpDown } from 'lucide-react';
+import { ChevronDown, X, Search, ArrowUpDown } from 'lucide-react';
 import { Facility } from '../../../../services/facility.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 
