@@ -337,7 +337,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
   
   let nexts: SlotStatus[] = [];
   if (displaySlot.status === 'available') {
-    nexts = ['maintenance', 'locked'];
+    nexts = ['maintenance'];
   } else if (displaySlot.status === 'maintenance' || displaySlot.status === 'locked') {
     nexts = ['available'];
   }
