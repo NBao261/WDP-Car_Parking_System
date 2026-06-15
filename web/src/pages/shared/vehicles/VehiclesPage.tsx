@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, Search, RefreshCw, Package, ChevronLeft, ChevronRight, ChevronDown, Filter, Loader2, X, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Plus, Search, Package, ChevronLeft, ChevronRight, ChevronDown, Filter, Loader2, X, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { vehicleTypeService, VehicleType, SlotSize } from '../../../services/vehicleType.service';
 import { floorService, Floor } from '../../../services/floor.service';
 import { facilityService, Facility } from '../../../services/facility.service';
@@ -293,19 +293,18 @@ export default function VehiclesPage() {
         {/* Search input */}
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Tìm kiếm theo tên hoặc mã..." value={search}
+          <input type="text" placeholder="Tìm kiếm theo tên hoặc mã xe..." value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:border-transparent transition-all"
           />
         </div>
         
         {/* Slot Size Filter */}
-        <div className="relative w-auto sm:w-44 shrink-0">
+        <div className="relative w-auto sm:w-48 shrink-0">
           <DropFilter
             width="100%"
             value={filterSize}
             onChange={(v) => setFilterSize(v as any)}
-            icon={Filter}
             options={[
               { value: 'all', label: 'Tất Cả Kích Thước' },
               { value: 'small', label: 'Nhỏ' },
