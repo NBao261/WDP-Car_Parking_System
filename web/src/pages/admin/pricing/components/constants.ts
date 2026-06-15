@@ -38,12 +38,12 @@ export const formSchema = z.object({
     errorMap: () => ({ message: 'Vui lòng chọn loại hình thu phí' })
   }),
   rates: z.array(rateSchema).min(1, 'Cần ít nhất 1 mức giá'),
-  overnightFee: z.preprocess((val) => (val === '' || val === null || val === undefined) ? undefined : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
-  overtimeFeePerHour: z.preprocess((val) => (val === '' || val === null || val === undefined) ? undefined : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
-  lostCardFee: z.preprocess((val) => (val === '' || val === null || val === undefined) ? undefined : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
-  gracePeriodMinutes: z.preprocess((val) => (val === '' || val === null || val === undefined) ? undefined : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm').max(60, 'Tối đa 60 phút')),
-  maxDailyFee: z.preprocess((val) => (val === '' || val === null || val === undefined) ? undefined : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
-  firstBlockHours: z.preprocess((val) => (val === '' || val === null || val === undefined) ? undefined : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(1, 'Tối thiểu 1 giờ')),
+  overnightFee: z.preprocess((val) => (val === '' || val === null || val === undefined) ? 0 : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
+  overtimeFeePerHour: z.preprocess((val) => (val === '' || val === null || val === undefined) ? 0 : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
+  lostCardFee: z.preprocess((val) => (val === '' || val === null || val === undefined) ? 50000 : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
+  gracePeriodMinutes: z.preprocess((val) => (val === '' || val === null || val === undefined) ? 0 : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm').max(60, 'Tối đa 60 phút')),
+  maxDailyFee: z.preprocess((val) => (val === '' || val === null || val === undefined) ? 0 : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
+  firstBlockHours: z.preprocess((val) => (val === '' || val === null || val === undefined) ? 1 : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(1, 'Tối thiểu 1 giờ')),
 }).superRefine((data, ctx) => {
   if (data.uiFeeType === 'time_window') {
     data.rates.forEach((rate, index) => {

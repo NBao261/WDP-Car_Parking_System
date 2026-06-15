@@ -684,23 +684,25 @@ export function PricingFormModal({
                   )}
 
                   {/* Overnight fee: Per turn or Hourly */}
-                  <div>
-                    <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1 flex items-center gap-1">
-                      <Moon size={11} />
-                      Phí Qua Đêm (VNĐ) <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      {...register('overnightFee')}
-                      type="number"
-                      min="0"
-                      className={getInputCls(!!errors.overnightFee)}
-                      placeholder="0"
-                    />
-                    {errors.overnightFee && <p className={errCls}>{errors.overnightFee.message}</p>}
-                  </div>
+                  {(currentUiFeeType === 'per_turn' || currentUiFeeType === 'hourly') && (
+                    <div>
+                      <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1 flex items-center gap-1">
+                        <Moon size={11} />
+                        Phí Qua Đêm (VNĐ) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        {...register('overnightFee')}
+                        type="number"
+                        min="0"
+                        className={getInputCls(!!errors.overnightFee)}
+                        placeholder="0"
+                      />
+                      {errors.overnightFee && <p className={errCls}>{errors.overnightFee.message}</p>}
+                    </div>
+                  )}
 
-                  {/* Overtime fee: Time window */}
-                  {currentUiFeeType === 'time_window' && (
+                  {/* Overtime fee: Time window & Hourly */}
+                  {(currentUiFeeType === 'time_window' || currentUiFeeType === 'hourly') && (
                     <div>
                       <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1 flex items-center gap-1">
                         <Clock size={11} />
@@ -713,6 +715,9 @@ export function PricingFormModal({
                         className={getInputCls(!!errors.overtimeFeePerHour)}
                         placeholder="0"
                       />
+                      <p className="text-[10px] text-gray-400 mt-1">
+                        {currentUiFeeType === 'hourly' ? 'Tính thêm khi đỗ quá 24h' : 'Ngoài khung giờ hoạt động'}
+                      </p>
                       {errors.overtimeFeePerHour && (
                         <p className={errCls}>{errors.overtimeFeePerHour.message}</p>
                       )}
