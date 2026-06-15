@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, DollarSign, Building2, MapPin, ArrowLeft, MoreHorizontal, FileText } from 'lucide-react';
+import { Plus, DollarSign, Building2, MapPin, ArrowLeft, MoreHorizontal, FileText, Clock } from 'lucide-react';
 
 import { facilityService, type Facility } from '../../../services/facility.service';
 import { floorService, type Floor } from '../../../services/floor.service';
@@ -13,7 +13,8 @@ import { PricingFormModal } from './components/PricingFormModal';
 import { PricingDetailModal } from './components/PricingDetailModal';
 import { PricingFilterBar } from './components/PricingFilterBar';
 import { PricingPagination } from './components/PricingPagination';
-import { FacilityFilterBar } from '../facilities/components/FacilityFilterBar';
+import { PricingFacilityFilterBar } from './components/PricingFacilityFilterBar';
+import { mapToUiType } from './components/constants';
 
 export default function PricingPage() {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
@@ -30,17 +31,25 @@ export default function PricingPage() {
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   
+  // Plans list filters
+  const [planSearch, setPlanSearch] = useState('');
+  const [planFilterVehicleType, setPlanFilterVehicleType] = useState('all');
+  const [planFilterFeeType, setPlanFilterFeeType] = useState('all');
+  const [planSortPrice, setPlanSortPrice] = useState('default');
+  const [planSortDate, setPlanSortDate] = useState('default');
+  
   // Facilities list filters
   const [facilitySearch, setFacilitySearch] = useState('');
   const [facilityStatusFilter, setFacilityStatusFilter] = useState('all');
   const [facilityViewMode, setFacilityViewMode] = useState<'grid' | 'list'>('grid');
+  const [facilitySort, setFacilitySort] = useState('default');
 
   const pageLimit = 9;
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterStatus, filterFacility, facilitySearch, facilityStatusFilter]);
+  }, [filterStatus, filterFacility, planSearch, planFilterVehicleType, planFilterFeeType, planSortPrice, planSortDate, facilitySearch, facilityStatusFilter, facilitySort]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -64,9 +73,38 @@ export default function PricingPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const displayed = plans.filter((p) => {
-    const facId = typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
+  const availableVehicleTypes = useMemo(() => {
+    if (!selectedFacility) return vehicleTypes;
+    const facPlanVtIds = new Set<string>();
+    plans.forEach(p => {
+      const pFacId = typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
+      if (pFacId === selectedFacility._id) {
+        const vtId = typeof p.vehicleTypeId === 'object' ? p.vehicleTypeId._id : p.vehicleTypeId;
+        if (vtId) facPlanVtIds.add(vtId);
+      }
+    });
+    return vehicleTypes.filter(vt => facPlanVtIds.has(vt._id));
+  }, [selectedFacility, plans, vehicleTypes]);
+
+  const displayed = plans.filter(p => {
     if (filterStatus !== 'all' && p.status !== filterStatus) return false;
+    
+    if (planSearch.trim()) {
+      const q = planSearch.toLowerCase();
+      if (!p.name.toLowerCase().includes(q)) return false;
+    }
+
+    if (planFilterVehicleType !== 'all') {
+      const vtId = typeof p.vehicleTypeId === 'object' && p.vehicleTypeId ? p.vehicleTypeId._id : p.vehicleTypeId;
+      if (vtId !== planFilterVehicleType) return false;
+    }
+
+    if (planFilterFeeType !== 'all') {
+      const uiType = mapToUiType(p.feeType, p.feeMethod || '');
+      if (uiType !== planFilterFeeType) return false;
+    }
+
+    const facId = typeof p.facilityId === 'object' && p.facilityId ? p.facilityId._id : p.facilityId;
     
     // If a facility is selected, only show its plans
     if (selectedFacility) {
@@ -78,8 +116,26 @@ export default function PricingPage() {
     return true;
   });
 
-  const totalPages = Math.ceil(displayed.length / pageLimit);
-  const paginatedPlans = displayed.slice((currentPage - 1) * pageLimit, currentPage * pageLimit);
+  const sortedPlans = [...displayed].sort((a, b) => {
+    if (planSortPrice !== 'default') {
+      const priceA = a.rates && a.rates.length > 0 ? a.rates[0].amount : 0;
+      const priceB = b.rates && b.rates.length > 0 ? b.rates[0].amount : 0;
+      if (planSortPrice === 'price_desc') return priceB - priceA;
+      if (planSortPrice === 'price_asc') return priceA - priceB;
+    }
+    if (planSortDate === 'created_desc') return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    if (planSortDate === 'created_asc') return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+  });
+
+  const totalPages = Math.ceil(sortedPlans.length / pageLimit);
+  const paginatedPlans = sortedPlans.slice((currentPage - 1) * pageLimit, currentPage * pageLimit);
+
+  // Stats for facilities list
+  const getFacilityPlanCount = useCallback((facId: string) => plans.filter(p => {
+    const pFacId = typeof p.facilityId === 'object' && p.facilityId ? p.facilityId._id : p.facilityId;
+    return pFacId === facId;
+  }).length, [plans]);
 
   // Filter facilities
   const filteredFacilities = facilities.filter(fac => {
@@ -89,17 +145,19 @@ export default function PricingPage() {
       if (!fac.name.toLowerCase().includes(q) && !fac.address.toLowerCase().includes(q)) return false;
     }
     return true;
+  }).sort((a, b) => {
+    if (facilitySort === 'planCount_desc') {
+      return getFacilityPlanCount(b._id) - getFacilityPlanCount(a._id);
+    }
+    if (facilitySort === 'planCount_asc') {
+      return getFacilityPlanCount(a._id) - getFacilityPlanCount(b._id);
+    }
+    return 0; // default order
   });
 
   // Pagination for facilities
   const totalFacilitiesPages = Math.ceil(filteredFacilities.length / pageLimit);
   const paginatedFacilities = filteredFacilities.slice((currentPage - 1) * pageLimit, currentPage * pageLimit);
-
-  // Stats for facilities list
-  const getFacilityPlanCount = (facId: string) => plans.filter(p => {
-    const pFacId = typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
-    return pFacId === facId;
-  }).length;
 
   return (
     <div className="space-y-6 pb-12">
@@ -119,9 +177,25 @@ export default function PricingPage() {
             <h1 className="text-2xl font-bold text-[#060606]">
               {selectedFacility ? `Bảng Giá: ${selectedFacility.name}` : 'Bảng Giá'}
             </h1>
-            <p className="text-gray-500 text-sm mt-1">
-              {selectedFacility ? 'Quản lý các bảng giá của tòa nhà này' : 'Chọn một tòa nhà để xem bảng giá'}
-            </p>
+            <div className="flex flex-col mt-1">
+              {!selectedFacility && (
+                <p className="text-gray-500 text-sm">
+                  Chọn một tòa nhà để xem bảng giá
+                </p>
+              )}
+              {selectedFacility?.address && (
+                <div className="flex items-center gap-4 mt-1.5">
+                  <div className="flex items-center gap-1.5 text-gray-500 text-sm">
+                    <MapPin size={14} />
+                    <span>{selectedFacility.address}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-500 text-sm">
+                    <Clock size={14} />
+                    <span>{selectedFacility.openTime} - {selectedFacility.closeTime}</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         
@@ -136,14 +210,25 @@ export default function PricingPage() {
       </div>
 
       {selectedFacility && (
-        <PricingFilterBar
-          filterStatus={filterStatus}
-          setFilterStatus={setFilterStatus}
-          filterFacility={filterFacility}
-          setFilterFacility={setFilterFacility}
-          facilities={facilities}
-          hideFacilityFilter={true}
-        />
+            <PricingFilterBar
+              filterStatus={filterStatus as any}
+              setFilterStatus={setFilterStatus as any}
+              filterFacility={filterFacility}
+              setFilterFacility={setFilterFacility}
+              facilities={facilities}
+              hideFacilityFilter={!!selectedFacility}
+              search={planSearch}
+              setSearch={setPlanSearch}
+              filterVehicleType={planFilterVehicleType}
+              setFilterVehicleType={setPlanFilterVehicleType}
+              vehicleTypes={availableVehicleTypes}
+              filterFeeType={planFilterFeeType}
+              setFilterFeeType={setPlanFilterFeeType}
+              sortPrice={planSortPrice}
+              setSortPrice={setPlanSortPrice}
+              sortDate={planSortDate}
+              setSortDate={setPlanSortDate}
+            />
       )}
 
       {/* Content */}
@@ -158,7 +243,7 @@ export default function PricingPage() {
         </div>
       ) : !selectedFacility ? (
         <div className="space-y-6">
-          <FacilityFilterBar
+          <PricingFacilityFilterBar
             search={facilitySearch}
             setSearch={setFacilitySearch}
             statusFilter={facilityStatusFilter}
@@ -166,6 +251,13 @@ export default function PricingPage() {
             viewMode={facilityViewMode}
             setViewMode={setFacilityViewMode}
             hideViewMode={true}
+            sortValue={facilitySort}
+            onSortChange={setFacilitySort}
+            sortOptions={[
+              { value: 'default', label: 'Số Bảng giá' },
+              { value: 'planCount_desc', label: 'Nhiều bảng giá nhất' },
+              { value: 'planCount_asc', label: 'Ít bảng giá nhất' }
+            ]}
           />
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -178,7 +270,6 @@ export default function PricingPage() {
               return (
                 <motion.div
                   key={fac._id}
-                  layout
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={`group bg-white rounded-[16px] flex flex-col justify-between overflow-hidden ${!isActive ? 'opacity-70' : ''}`}
@@ -194,7 +285,7 @@ export default function PricingPage() {
                   <div className="px-5 pt-4 pb-3">
                     <div className="flex gap-3 mb-4">
                       {/* Icon */}
-                      <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(204,226,66,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <div className="self-center" style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(204,226,66,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <Building2 size={24} style={{ color: '#4a7c20' }} strokeWidth={1.5} />
                       </div>
                       {/* Text */}
@@ -202,16 +293,22 @@ export default function PricingPage() {
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <h3 className="text-[15px] font-semibold text-[#060606] truncate" title={fac.name}>{fac.name}</h3>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-1 text-[13px]" style={{ color: '#6b6e6b' }}>
-                          <MapPin size={12} className="shrink-0" />
-                          <span className="truncate uppercase tracking-wide" title={fac.address}>{fac.address}</span>
+                        <div className="flex flex-col gap-1 mt-1.5 min-w-0" style={{ color: '#6b6e6b' }}>
+                          <div className="flex items-center gap-1.5 text-[13px]">
+                            <MapPin size={12} className="shrink-0" />
+                            <span className="truncate uppercase tracking-wide" title={fac.address}>{fac.address}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[13px]">
+                            <Clock size={12} className="shrink-0" />
+                            <span className="truncate tracking-wide">{fac.openTime} - {fac.closeTime}</span>
+                          </div>
                         </div>
                       </div>
                       {/* Badge */}
                       <div className="flex-shrink-0">
                         <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 5, ...badgeStyle }}>
                           <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
-                          {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
+                          {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
                         </span>
                       </div>
                     </div>

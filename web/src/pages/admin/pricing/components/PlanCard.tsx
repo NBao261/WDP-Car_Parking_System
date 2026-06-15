@@ -60,6 +60,7 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onViewDetail,
   const vtName = typeof plan.vehicleTypeId === 'object' ? plan.vehicleTypeId?.name : vehicleTypes.find(v => v._id === vtId)?.name ?? '';
   const vtIconKey = typeof plan.vehicleTypeId === 'object' ? plan.vehicleTypeId?.icon : vehicleTypes.find(v => v._id === vtId)?.icon ?? '';
   const facName = typeof plan.facilityId === 'object' ? plan.facilityId?.name : facilities.find(f => f._id === facId)?.name ?? '';
+  const facility = facilities.find(f => f._id === facId);
 
   const uiFeeType = mapToUiType(plan.feeType, plan.feeMethod || '');
 
@@ -125,7 +126,7 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onViewDetail,
         <div className="flex items-center gap-2 shrink-0">
           <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 5, ...badgeStyle }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
-            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
+            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
           </span>
 
           {loading ? <Loader2 size={16} className="animate-spin text-gray-400 ml-1" /> : (
@@ -174,9 +175,15 @@ export function PlanCard({ plan, facilities, vehicleTypes, onEdit, onViewDetail,
         <span className="px-2.5 py-1 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm">
           <VtIcon size={14} className="text-[#4a7c20]" strokeWidth={2} /> {vtName}
         </span>
-        <span className={`font-semibold px-2.5 py-1 border rounded-lg text-[12px] ${FEE_TYPE_BADGE[uiFeeType]?.replace('bg-', 'bg-opacity-50 bg-').replace('text-', 'border-opacity-30 border-').replace('text-', 'text-') ?? 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+        <span className={`font-semibold px-2.5 py-1 border rounded-lg text-[12px] shadow-sm ${FEE_TYPE_BADGE[uiFeeType]?.replace('bg-', 'bg-opacity-50 bg-').replace('text-', 'border-opacity-30 border-').replace('text-', 'text-') ?? 'bg-gray-50 text-gray-600 border-gray-200'}`}>
           {FEE_TYPE_LABELS[uiFeeType] ?? plan.feeType}
         </span>
+        {facility && facility.openTime && facility.closeTime && (
+          <span className="font-semibold px-2.5 py-1 border border-gray-200 bg-gray-50 text-gray-600 rounded-lg text-[12px] flex items-center gap-1.5 shadow-sm">
+            <Clock size={12} className="text-gray-500" />
+            {facility.openTime} - {facility.closeTime}
+          </span>
+        )}
       </div>
 
       {/* Row 3: Rates display */}

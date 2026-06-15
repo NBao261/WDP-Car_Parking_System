@@ -87,21 +87,21 @@ export function PlanTableView({ plans, facilities, vehicleTypes, onEdit, onViewD
   const activeMenuPlan = plans.find(p => p._id === menuState?.id);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm relative">
-      <div className="overflow-x-auto min-h-[160px]">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-bold">
-              <th className="p-4 py-3">Tên bảng giá</th>
-              <th className="p-4 py-3">Loại xe</th>
-              <th className="p-4 py-3">Loại giá</th>
-              <th className="p-4 py-3">Đơn giá cơ bản</th>
-              <th className="p-4 py-3">Phụ phí</th>
-              <th className="p-4 py-3 text-center">Trạng thái</th>
-              <th className="p-4 py-3 text-right">Thao tác</th>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col relative">
+      <div className="w-full overflow-x-auto min-h-[160px]">
+        <table className="w-full text-left text-sm whitespace-nowrap">
+          <thead className="bg-lime-50/50 text-lime-700 font-semibold border-b border-lime-100/50">
+            <tr>
+              <th className="px-6 py-4 rounded-tl-2xl">Tên bảng giá</th>
+              <th className="px-6 py-4">Loại xe</th>
+              <th className="px-6 py-4">Loại giá</th>
+              <th className="px-6 py-4">Đơn giá cơ bản</th>
+              <th className="px-6 py-4">Phụ phí</th>
+              <th className="px-6 py-4 text-center">Trạng thái</th>
+              <th className="px-6 py-4 text-right rounded-tr-2xl">Thao tác</th>
             </tr>
           </thead>
-          <tbody className="text-[13px]">
+          <tbody className="divide-y divide-gray-50">
             {plans.map((plan) => {
               const vtId = typeof plan.vehicleTypeId === 'object' ? plan.vehicleTypeId?._id : plan.vehicleTypeId;
               const vtName = typeof plan.vehicleTypeId === 'object' ? plan.vehicleTypeId?.name : vehicleTypes.find(v => v._id === vtId)?.name ?? '';
@@ -116,22 +116,22 @@ export function PlanTableView({ plans, facilities, vehicleTypes, onEdit, onViewD
                 <tr 
                   key={plan._id} 
                   onClick={() => onViewDetail(plan)}
-                  className={`border-b border-gray-100 hover:bg-gray-100 transition-colors cursor-pointer ${!isActive ? 'opacity-75 bg-gray-50/50' : ''}`}
+                  className={`hover:bg-gray-50 transition-colors cursor-pointer ${!isActive ? 'opacity-75 bg-gray-50/50' : ''}`}
                 >
-                  <td className="p-4 font-bold text-[14px] text-[#060606] max-w-[200px] truncate" title={plan.name}>
+                  <td className="px-6 py-4 font-bold text-[14px] text-[#060606] max-w-[200px] truncate" title={plan.name}>
                     {plan.name}
                   </td>
-                  <td className="p-4">
+                  <td className="px-6 py-4">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[12px] font-semibold rounded-lg">
                       <VtIcon size={14} className="text-[#4a7c20]" strokeWidth={2} /> {vtName}
                     </span>
                   </td>
-                  <td className="p-4">
+                  <td className="px-6 py-4">
                     <span className="text-gray-600 font-medium">
                       {FEE_TYPE_LABELS[uiFeeType] ?? plan.feeType}
                     </span>
                   </td>
-                  <td className="p-4">
+                  <td className="px-6 py-4">
                     {baseRate ? (
                       <div className="whitespace-nowrap">
                         <span className="font-bold text-[#4a7c20] text-[14px]">{fmt(baseRate.amount)}</span>
@@ -139,7 +139,7 @@ export function PlanTableView({ plans, facilities, vehicleTypes, onEdit, onViewD
                       </div>
                     ) : <span className="text-gray-400">-</span>}
                   </td>
-                  <td className="p-4 text-xs text-gray-500">
+                  <td className="px-6 py-4 text-xs text-gray-500">
                     <div className="flex flex-col gap-0.5 whitespace-nowrap">
                       {plan.overnightFee > 0 && <span>Qua đêm: <span className="font-medium text-gray-700">{fmt(plan.overnightFee)}</span></span>}
                       {plan.overtimeFeePerHour > 0 && <span>Quá giờ: <span className="font-medium text-gray-700">{fmt(plan.overtimeFeePerHour)}/h</span></span>}
@@ -147,16 +147,16 @@ export function PlanTableView({ plans, facilities, vehicleTypes, onEdit, onViewD
                       {!plan.overnightFee && !plan.overtimeFeePerHour && !plan.lostCardFee && <span className="text-gray-400">-</span>}
                     </div>
                   </td>
-                  <td className="p-4 text-center">
+                  <td className="px-6 py-4 text-center">
                     <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
-                      {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
+                      {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
                     </span>
                   </td>
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end" onClick={e => e.stopPropagation()}>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end relative" onClick={e => e.stopPropagation()}>
                       <button 
                         onClick={(e) => handleMenuClick(e, plan._id)} 
-                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                       >
                         <MoreVertical size={16} />
                       </button>
