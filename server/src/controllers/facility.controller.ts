@@ -55,7 +55,7 @@ export class FacilityController {
     try {
       const { status, page = 1, limit = 10 } = req.query;
       const skip = (Number(page) - 1) * Number(limit);
-      const filters: any = {};
+      const filters: any = { isDeleted: false };
       if (status) filters.status = status;
 
       const { facilities, total } = await FacilityService.getAllFacilities(filters, skip, Number(limit));
