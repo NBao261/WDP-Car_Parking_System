@@ -23,7 +23,6 @@ export default function ShiftSelectionPage() {
 
     sessionStorage.setItem("staff_facility_id", selectedFacilityId);
     sessionStorage.setItem("staff_facility_name", facilityName);
-    // Tự động sinh gate name dựa trên tên toà nhà — nhất quán, không cần staff nhập tay
     sessionStorage.setItem("staff_gate_name", `Cổng - ${facilityName}`);
 
     navigate("/staff");
@@ -41,7 +40,8 @@ export default function ShiftSelectionPage() {
           </div>
           <h1 className="text-[20px] font-bold">Xác Nhận Vị Trí Làm Việc</h1>
           <p className="text-[13px] text-[#6b6b6b] mt-1 text-center">
-            Chọn toà nhà bạn sẽ trực trong ca này rồi bấm Bắt đầu ca.
+            Chọn toà nhà bạn sẽ trực trong ca này <br />
+            rồi bấm Bắt đầu ca.
           </p>
         </div>
 

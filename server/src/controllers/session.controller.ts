@@ -39,7 +39,7 @@ export class SessionController {
    */
   static async checkIn(req: Request, res: Response, next: NextFunction) {
     try {
-      const { facilityId, vehicleTypeId, licensePlate, gateIn, floorId, slotId, reservationCode } = req.body;
+      const { facilityId, vehicleTypeId, licensePlate, gateIn, floorId, slotId, reservationCode, checkInImage } = req.body;
       const staffInId = req.user!.userId;
 
       const session = await SessionService.checkIn({
@@ -51,6 +51,7 @@ export class SessionController {
         floorId,
         slotId,
         reservationCode,
+        checkInImage,
       });
 
       res.status(201).json({ success: true, data: session });
@@ -84,6 +85,20 @@ export class SessionController {
     try {
       const result = await SessionService.getActiveSessions(req.query);
       res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /sessions/today-traffic
+   * Lấy lưu lượng xe ra vào trong ngày
+   */
+  static async getTodayTraffic(req: Request, res: Response, next: NextFunction) {
+    try {
+      const facilityId = req.query.facilityId as string;
+      const result = await SessionService.getTodayTraffic(facilityId);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { X, Loader2, Plus, Copy, Check, Car, Search } from 'lucide-react';
+import { X, Loader2, Check, Car, Search } from 'lucide-react';
 import { ICON_MAP } from '../../../shared/vehicles/components/constants';
 import { slotService } from '../../../../services/slot.service';
 import { VehicleType } from '../../../../services/vehicleType.service';

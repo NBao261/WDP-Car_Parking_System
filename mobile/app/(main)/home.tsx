@@ -5,180 +5,182 @@ import { useRouter } from 'expo-router';
 import { Card, Badge } from '../../src/components';
 import { Colors, Typography, Spacing, BorderRadius } from '../../src/constants/theme';
 import { useAuthStore } from '../../src/store/useAuthStore';
-import { api } from '../../src/services/api';
-import { Facility } from '../../src/types/facility.types';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
-  const [facilities, setFacilities] = useState<Facility[]>([]);
-
-  const fetchFacilities = async () => {
-    try {
-      const data = await api.getPublicFacilities(1, 10);
-      setFacilities(data);
-    } catch (error: any) {
-      console.log('Failed to fetch facilities', error);
-      Alert.alert('Lỗi', 'Không thể tải danh sách bãi xe');
-    }
-  };
-
-  useEffect(() => {
-    fetchFacilities();
-  }, []);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    await fetchFacilities();
+    // Simulate refresh for now since stats are mocked
+    await new Promise(resolve => setTimeout(resolve, 1000));
     setRefreshing(false);
   }, []);
 
   return (
-    <ScrollView 
-      style={styles.container} 
-      contentContainerStyle={styles.content}
-      contentInsetAdjustmentBehavior="automatic"
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <View style={styles.greetingContainer}>
-        <Text style={styles.greetingText}>Xin chào, {user?.name || 'Driver'} 👋</Text>
-        <Text style={styles.subGreeting}>Chúc bạn một ngày tốt lành!</Text>
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+      >
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greetingText}>Chào mừng trở lại,</Text>
+            <Text style={styles.userName}>{user?.name || 'Tài xế'}</Text>
+          </View>
+          <View style={styles.avatar}>
+            <Ionicons name="person" size={20} color={Colors.primary} />
+          </View>
+        </View>
 
-      {/* Quick Stats */}
-      <View style={styles.statsRow}>
-        <View style={[styles.statCard, { backgroundColor: Colors.primaryBg }]}>
-          <Ionicons name="car-sport" size={28} color={Colors.primary} />
-          <Text style={styles.statNumber}>0</Text>
-          <Text style={styles.statLabel}>Đang gửi</Text>
-        </View>
-        <View style={[styles.statCard, { backgroundColor: Colors.successLight }]}>
-          <Ionicons name="checkmark-circle" size={28} color={Colors.success} />
-          <Text style={styles.statNumber}>0</Text>
-          <Text style={styles.statLabel}>Hoàn thành</Text>
-        </View>
-        <View style={[styles.statCard, { backgroundColor: Colors.warningLight }]}>
-          <Ionicons name="calendar" size={28} color={Colors.warning} />
-          <Text style={styles.statNumber}>0</Text>
-          <Text style={styles.statLabel}>Đặt chỗ</Text>
-        </View>
-      </View>
-
-      {/* Current Session */}
-      <Card title="Lượt gửi hiện tại" variant="outlined">
-        <View style={styles.emptyState}>
-          <Ionicons name="car-outline" size={48} color={Colors.disabled} />
-          <Text style={styles.emptyText}>Không có xe đang gửi</Text>
-        </View>
-      </Card>
-
-      {/* Nearby Facilities */}
-      <Text style={styles.sectionTitle}>Bãi xe gần đây</Text>
-      {facilities.length === 0 ? (
-        <Text style={styles.emptyText}>Chưa có bãi xe nào.</Text>
-      ) : (
-        facilities.map((facility) => (
-          <Card
-            key={facility._id}
-            title={facility.name}
-            subtitle={facility.address}
-            variant="elevated"
-            onPress={() => router.push(`/facility/${facility._id}`)}
-          >
-            <View style={styles.facilityInfo}>
-              <View style={styles.facilityDetail}>
-                <Ionicons name="time-outline" size={16} color={Colors.textSecondary} />
-                <Text style={styles.facilityDetailText}>
-                  {facility.operationHours?.open || '00:00'} - {facility.operationHours?.close || '23:59'}
-                </Text>
-              </View>
-              <Badge 
-                label={facility.status === 'active' ? 'Mở cửa' : 'Đóng cửa'} 
-                variant={facility.status === 'active' ? 'success' : 'danger'} 
-                size="sm" 
-              />
+        {/* Quick Stats - Bento Row */}
+        <View style={styles.statsRow}>
+          <View style={[styles.statCard, { backgroundColor: Colors.surfaceElevated }]}>
+            <View style={styles.statIconWrapper}>
+              <Ionicons name="car-sport" size={20} color={Colors.primary} />
             </View>
-          </Card>
-        ))
-      )}
-    </ScrollView>
+            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statLabel}>Đang đỗ</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: Colors.surfaceElevated }]}>
+            <View style={styles.statIconWrapper}>
+              <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+            </View>
+            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statLabel}>Hoàn thành</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: Colors.surfaceElevated }]}>
+            <View style={styles.statIconWrapper}>
+              <Ionicons name="calendar" size={20} color={Colors.warning} />
+            </View>
+            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statLabel}>Đã đặt</Text>
+          </View>
+        </View>
+
+        {/* Current Session */}
+        <Text style={styles.sectionTitle}>Lượt gửi hiện tại</Text>
+        <Card variant="outlined" style={styles.sessionCard}>
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIconCircle}>
+              <Ionicons name="car-outline" size={32} color={Colors.textTertiary} />
+            </View>
+            <Text style={styles.emptyText}>Không có lượt gửi xe nào đang hoạt động</Text>
+          </View>
+        </Card>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: Colors.background,
   },
+  container: {
+    flex: 1,
+  },
   content: {
     padding: Spacing.base,
+    paddingBottom: Spacing['3xl'],
   },
-  greetingContainer: {
-    marginBottom: Spacing.lg,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+    marginTop: Spacing.sm,
   },
   greetingText: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.textPrimary,
-  },
-  subGreeting: {
     fontSize: Typography.fontSize.sm,
+    fontFamily: Typography.fontFamily.medium,
     color: Colors.textSecondary,
+    letterSpacing: 0.5,
+  },
+  userName: {
+    fontSize: Typography.fontSize.xl,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textPrimary,
     marginTop: 2,
+    letterSpacing: -0.5,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statsRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
   },
   statCard: {
     flex: 1,
-    alignItems: 'center',
     padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    borderCurve: 'continuous',
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  statIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.full,
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
   },
   statNumber: {
     fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.bold,
+    fontFamily: Typography.fontFamily.bold,
     color: Colors.textPrimary,
-    marginTop: Spacing.xs,
   },
   statLabel: {
     fontSize: Typography.fontSize.xs,
+    fontFamily: Typography.fontFamily.medium,
     color: Colors.textSecondary,
     marginTop: 2,
   },
   sectionTitle: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semiBold,
+    fontSize: Typography.fontSize.lg,
+    fontFamily: Typography.fontFamily.semiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
-    marginTop: Spacing.sm,
+    letterSpacing: -0.5,
+  },
+  sessionCard: {
+    marginBottom: Spacing.xl,
   },
   emptyState: {
     alignItems: 'center',
     paddingVertical: Spacing.xl,
   },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
   emptyText: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.textTertiary,
-    marginTop: Spacing.sm,
-  },
-  facilityInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: Spacing.sm,
-  },
-  facilityDetail: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  facilityDetailText: {
-    fontSize: Typography.fontSize.sm,
+    fontFamily: Typography.fontFamily.medium,
     color: Colors.textSecondary,
   },
 });
+
+// Force Metro bundler refresh

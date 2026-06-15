@@ -1,6 +1,6 @@
 import {
-  Car, Bike, Truck, Bus, Tractor, Ambulance,
-  Caravan, CarTaxiFront, BusFront, Zap,
+  Car, Bike, Truck, Bus,
+  CarTaxiFront, BusFront,
   type LucideIcon,
 } from 'lucide-react';
 import { SlotSize } from '../../../../services/vehicleType.service';

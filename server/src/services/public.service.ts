@@ -6,7 +6,20 @@ import mongoose from 'mongoose';
 
 export class PublicService {
   static async getPublicFacilities(filters: any = {}, skip = 0, limit = 10) {
-    const query = { status: 'active', ...filters };
+    const query: any = { ...filters };
+    if (!query.status && query.status !== 'all') {
+      query.status = 'active';
+    } else if (query.status === 'all') {
+      delete query.status;
+    }
+    
+    if (query.vehicleTypeId) {
+      const plans = await PricingPlan.find({ vehicleTypeId: query.vehicleTypeId, status: 'active' }).select('facilityId');
+      const facilityIds = plans.map(p => p.facilityId);
+      query._id = { $in: facilityIds };
+      delete query.vehicleTypeId;
+    }
+    
     const facilities = await ParkingFacility.find(query).skip(skip).limit(limit).select('-createdAt -updatedAt');
     const total = await ParkingFacility.countDocuments(query);
     return { facilities, total };

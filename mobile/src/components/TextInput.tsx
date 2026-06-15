@@ -34,7 +34,7 @@ export const TextInput: React.FC<TextInputProps> = ({
     ? Colors.danger
     : isFocused
       ? Colors.primary
-      : Colors.border;
+      : Colors.borderLight;
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -73,25 +73,28 @@ export const TextInput: React.FC<TextInputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    marginBottom: Spacing.md,
   },
   label: {
     fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
-    color: Colors.textPrimary,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.textSecondary,
     marginBottom: Spacing.xs,
+    letterSpacing: 0.5,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderRadius: BorderRadius.xl,
     borderCurve: 'continuous',
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.surfaceElevated,
     paddingHorizontal: Spacing.md,
   },
   input: {
     flex: 1,
     fontSize: Typography.fontSize.base,
+    fontFamily: Typography.fontFamily.regular,
     color: Colors.textPrimary,
     paddingVertical: Spacing.md,
   },
@@ -103,11 +106,13 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: Typography.fontSize.xs,
+    fontFamily: Typography.fontFamily.regular,
     color: Colors.danger,
     marginTop: Spacing.xs,
   },
   hint: {
     fontSize: Typography.fontSize.xs,
+    fontFamily: Typography.fontFamily.regular,
     color: Colors.textTertiary,
     marginTop: Spacing.xs,
   },

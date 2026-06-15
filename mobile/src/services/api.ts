@@ -29,8 +29,12 @@ export const apiClient = axios.create({
 
 export const api = {
   // Public Routes
-  getPublicFacilities: async (page = 1, limit = 10) => {
-    const response = await apiClient.get<any, { success: boolean, data: Facility[], pagination: any }>(`/public/facilities?page=${page}&limit=${limit}`);
+  getPublicFacilities: async (page = 1, limit = 10, search?: string, status?: string, vehicleTypeId?: string) => {
+    let url = `/public/facilities?page=${page}&limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (status && status !== 'all') url += `&status=${status}`;
+    if (vehicleTypeId && vehicleTypeId !== 'all') url += `&vehicleTypeId=${vehicleTypeId}`;
+    const response = await apiClient.get<any, { success: boolean, data: Facility[], pagination: any }>(url);
     return response.data;
   },
   getPublicPricing: async (facilityId: string) => {
@@ -64,7 +68,7 @@ export const reservationApi = {
 
 // Vehicle Type API
 export const vehicleTypeApi = {
-  getVehicleTypes: () => {
+  getVehicleTypes: async (): Promise<any> => {
     return apiClient.get('/vehicle-types');
   }
 };

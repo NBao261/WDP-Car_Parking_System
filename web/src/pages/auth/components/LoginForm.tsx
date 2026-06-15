@@ -13,20 +13,20 @@ export function LoginForm() {
 
   const viewMeta = {
     login: {
-      title: "Welcome back",
-      subtitle: "Sign in to your account"
+      title: "Đăng Nhập",
+      subtitle: "Chào mừng quay trở lại LYNC Park"
     },
     forgot: {
-      title: "Forgot Password",
-      subtitle: "Enter your email to receive a 6-digit verification code."
+      title: "Quên mật khẩu",
+      subtitle: "Nhập email của bạn để nhận mã OTP."
     },
     otp: {
-      title: "Check Your Email",
-      subtitle: "We sent a verification code to your email. Please enter it below."
+      title: "Xác nhận mã OTP",
+      subtitle: "Nhập mã OTP đã được gửi đến email của bạn."
     },
     reset: {
-      title: "Create New Password",
-      subtitle: "Your new password must be different from previously used passwords."
+      title: "Tạo mật khẩu mới",
+      subtitle: "Mật khẩu mới của bạn phải khác với mật khẩu đã sử dụng."
     }
   };
 

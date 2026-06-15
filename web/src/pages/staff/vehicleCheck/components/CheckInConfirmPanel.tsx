@@ -2,7 +2,7 @@ import { CheckCircle2 } from "lucide-react";
 
 interface CheckInConfirmPanelProps {
   data?: {
-    ticketCode?: string;
+    cardCode?: string;
     plate?: string;
     vehicleType?: string;
     checkInTime?: string;
@@ -14,7 +14,7 @@ interface CheckInConfirmPanelProps {
 
 export default function CheckInConfirmPanel({ data }: CheckInConfirmPanelProps) {
   const {
-    ticketCode = "—",
+    cardCode = "—",
     plate = "—",
     vehicleType = "—",
     checkInTime = "—",
@@ -36,8 +36,8 @@ export default function CheckInConfirmPanel({ data }: CheckInConfirmPanelProps) 
         <div className="grid grid-cols-3 gap-x-6 gap-y-2 text-[12px] h-full content-center">
           {/* Row 1 */}
           <div className="flex flex-col">
-            <span className="text-[#6b6b6b] mb-0.5">Mã vé:</span>
-            <span className="font-semibold text-[#060606] truncate">{ticketCode}</span>
+            <span className="text-[#6b6b6b] mb-0.5">Mã thẻ:</span>
+            <span className="font-semibold text-[#060606] truncate">{cardCode}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Biển số xe:</span>

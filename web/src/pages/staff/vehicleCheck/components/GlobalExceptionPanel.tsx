@@ -14,12 +14,14 @@ interface GlobalExceptionPanelProps {
   coPlateCam: string;
   currentSession?: any;  // ParkingSession object từ sessionService.searchSession()
   onClose: () => void;
+  onExceptionCreated?: () => void;
 }
 
 export default function GlobalExceptionPanel({
   coPlateCam,
   currentSession,
   onClose,
+  onExceptionCreated,
 }: GlobalExceptionPanelProps) {
   const [exceptionType, setExceptionType] = useState<ExceptionType>(
     ExceptionType.WRONG_PLATE
@@ -117,6 +119,9 @@ export default function GlobalExceptionPanel({
       await exceptionService.createException(payload);
 
       toast.success("Đã gửi ngoại lệ thành công! Đang chờ Quản lý duyệt.");
+      if (onExceptionCreated) {
+        onExceptionCreated();
+      }
       onClose();
     } catch (error: any) {
       toast.error(error.message || "Lỗi khi gửi ngoại lệ, thử lại sau!");
