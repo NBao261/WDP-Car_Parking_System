@@ -4,13 +4,24 @@ import { Facility } from '../../../../services/facility.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 
 const inputBase: React.CSSProperties = {
-  height: 40, background: '#ffffff',
-  border: '1.5px solid #e2e3e2', borderRadius: 10,
-  fontSize: 14, outline: 'none', cursor: 'pointer',
+  height: 40,
+  background: '#ffffff',
+  border: '1.5px solid #e2e3e2',
+  borderRadius: 10,
+  fontSize: 14,
+  outline: 'none',
+  cursor: 'pointer',
 };
 
-function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
-  value: string; onChange: (v: string) => void;
+function DropFilter({
+  value,
+  onChange,
+  options,
+  width = 180,
+  icon: Icon,
+}: {
+  value: string;
+  onChange: (v: string) => void;
   options: { value: string; label: string }[];
   width?: number;
   icon?: React.ElementType;
@@ -29,7 +40,7 @@ function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const selectedOption = options.find(o => o.value === value) || options[0];
+  const selectedOption = options.find((o) => o.value === value) || options[0];
 
   return (
     <div className="relative" style={{ width, flexShrink: 0 }} ref={dropdownRef}>
@@ -57,9 +68,13 @@ function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
       <ChevronDown
         size={15}
         style={{
-          position: 'absolute', right: 10, top: '50%', transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`,
-          color: '#6b6e6b', pointerEvents: 'none',
-          transition: 'transform 0.2s ease'
+          position: 'absolute',
+          right: 10,
+          top: '50%',
+          transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`,
+          color: '#6b6e6b',
+          pointerEvents: 'none',
+          transition: 'transform 0.2s ease',
         }}
       />
 
@@ -79,7 +94,7 @@ function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
             overflowY: 'auto',
             overflowX: 'hidden',
             maxHeight: 280,
-            animation: 'fadeIn 0.15s ease-out'
+            animation: 'fadeIn 0.15s ease-out',
           }}
         >
           <style>
@@ -106,7 +121,7 @@ function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
                 fontWeight: value === o.value ? 500 : 400,
                 display: 'flex',
                 alignItems: 'center',
-                transition: 'background 0.15s ease, color 0.15s ease'
+                transition: 'background 0.15s ease, color 0.15s ease',
               }}
               onMouseEnter={(e) => {
                 if (value !== o.value) {
@@ -149,17 +164,32 @@ interface PricingFilterBarProps {
 }
 
 export function PricingFilterBar({
-  filterStatus, setFilterStatus,
-  filterFacility, setFilterFacility,
-  facilities, hideFacilityFilter,
-  search, setSearch,
-  filterVehicleType, setFilterVehicleType,
+  filterStatus,
+  setFilterStatus,
+  filterFacility,
+  setFilterFacility,
+  facilities,
+  hideFacilityFilter,
+  search,
+  setSearch,
+  filterVehicleType,
+  setFilterVehicleType,
   vehicleTypes,
-  filterFeeType, setFilterFeeType,
-  sortPrice, setSortPrice,
-  sortDate, setSortDate
+  filterFeeType,
+  setFilterFeeType,
+  sortPrice,
+  setSortPrice,
+  sortDate,
+  setSortDate,
 }: PricingFilterBarProps) {
-  const hasActiveFilters = filterStatus !== 'all' || (!hideFacilityFilter && filterFacility !== 'all') || search !== '' || filterVehicleType !== 'all' || filterFeeType !== 'all' || sortPrice !== 'default' || sortDate !== 'default';
+  const hasActiveFilters =
+    filterStatus !== 'all' ||
+    (!hideFacilityFilter && filterFacility !== 'all') ||
+    search !== '' ||
+    filterVehicleType !== 'all' ||
+    filterFeeType !== 'all' ||
+    sortPrice !== 'default' ||
+    sortDate !== 'default';
 
   const clearFilters = () => {
     setFilterStatus('all');
@@ -173,18 +203,41 @@ export function PricingFilterBar({
 
   return (
     <div className="mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap items-center gap-x-2.5 gap-y-4">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[160px]">
-          <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#6b6e6b' }} />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Tìm tên bảng giá..."
-            style={{ ...inputBase, width: '100%', boxSizing: 'border-box', paddingLeft: 40, paddingRight: 16, cursor: 'text', transition: 'all 0.2s ease' }}
-            onFocus={e => { e.target.style.border = '1.5px solid #cce242'; e.target.style.boxShadow = '0 0 0 3px rgba(204,226,66,0.2)'; }}
-            onBlur={e => { e.target.style.border = '1.5px solid #e2e3e2'; e.target.style.boxShadow = 'none'; }}
-          />
-        </div>
+      {/* Search */}
+      <div className="relative flex-1 min-w-[160px]">
+        <Search
+          size={15}
+          style={{
+            position: 'absolute',
+            left: 14,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#6b6e6b',
+          }}
+        />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Tìm tên bảng giá..."
+          style={{
+            ...inputBase,
+            width: '100%',
+            boxSizing: 'border-box',
+            paddingLeft: 40,
+            paddingRight: 16,
+            cursor: 'text',
+            transition: 'all 0.2s ease',
+          }}
+          onFocus={(e) => {
+            e.target.style.border = '1.5px solid #cce242';
+            e.target.style.boxShadow = '0 0 0 3px rgba(204,226,66,0.2)';
+          }}
+          onBlur={(e) => {
+            e.target.style.border = '1.5px solid #e2e3e2';
+            e.target.style.boxShadow = 'none';
+          }}
+        />
+      </div>
 
       <DropFilter
         width={150}
@@ -203,7 +256,7 @@ export function PricingFilterBar({
         onChange={setFilterVehicleType}
         options={[
           { value: 'all', label: 'Tất cả loại xe' },
-          ...vehicleTypes.map(v => ({ value: v._id, label: v.name }))
+          ...vehicleTypes.map((v) => ({ value: v._id, label: v.name })),
         ]}
       />
 
@@ -226,7 +279,7 @@ export function PricingFilterBar({
           onChange={setFilterFacility}
           options={[
             { value: 'all', label: 'Tất cả cơ sở' },
-            ...facilities.map(f => ({ value: f._id, label: f.name }))
+            ...facilities.map((f) => ({ value: f._id, label: f.name })),
           ]}
         />
       )}
@@ -276,14 +329,13 @@ export function PricingFilterBar({
             gap: 6,
             transition: 'background 0.2s',
           }}
-          onMouseEnter={e => e.currentTarget.style.background = '#fce4e4'}
-          onMouseLeave={e => e.currentTarget.style.background = '#fff1f1'}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#fce4e4')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = '#fff1f1')}
         >
           <X size={15} />
           Bỏ lọc
         </button>
       )}
-
     </div>
   );
 }
