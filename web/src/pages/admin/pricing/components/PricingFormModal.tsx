@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, X, Loader2, Moon, Clock, CreditCard, ChevronDown, Car, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { Plus, X, Loader2, Moon, Clock, CreditCard, ChevronDown, Car, AlertTriangle, ShieldAlert, MapPin, Building2 } from 'lucide-react';
 import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -70,16 +70,18 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
   const { fields, append, remove } = useFieldArray({ control, name: 'rates' });
 
   const currentUiFeeType = useWatch({ control, name: 'uiFeeType' });
+  const currentFacilityId = useWatch({ control, name: 'facilityId' });
+  const currentFacility = facilities.find(f => f._id === currentFacilityId);
 
   // Tự động điều chỉnh rates khi thay đổi loại hình thu phí
   useEffect(() => {
     if (isEdit) return; // Không can thiệp nếu đang edit
     if (currentUiFeeType === 'per_turn') {
-      setValue('rates', [{ label: '', amount: '' as any, unit: '' }]);
+      setValue('rates', [{ label: '', amount: '' as any, unit: 'lượt' }]);
     } else if (currentUiFeeType === 'hourly') {
-      setValue('rates', [{ label: '', amount: '' as any, unit: '' }, { label: '', amount: '' as any, unit: '' }]);
+      setValue('rates', [{ label: '', amount: '' as any, unit: 'giờ' }, { label: '', amount: '' as any, unit: 'giờ' }]);
     } else if (currentUiFeeType === 'time_window') {
-      setValue('rates', [{ label: '', amount: '' as any, unit: '', startTime: '', endTime: '' }]);
+      setValue('rates', [{ label: '', amount: '' as any, unit: 'giờ', startTime: '', endTime: '' }]);
     }
   }, [currentUiFeeType, isEdit, setValue]);
 
@@ -153,91 +155,121 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
           {/* SECTION 1: THÔNG TIN CHUNG */}
           <div className="space-y-4">
             <h3 className="font-semibold text-[#060606] border-b pb-2">1. Thông tin chung</h3>
+            
+            {/* Facility */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Vị trí tòa nhà / bãi đỗ</label>
+              <Controller
+                control={control}
+                name="facilityId"
+                render={({ field }) => {
+                  const selected = facilities.find(f => f._id === field.value);
+                  const hasErr = !!errors.facilityId;
+                  const isLocked = isEdit || !!selectedFacilityId;
+                  const borderClass = isFacOpen ? (hasErr ? 'ring-2 ring-red-200 border-red-500' : 'ring-2 ring-[#d7ee46] border-[#d7ee46]') : (hasErr ? '' : 'hover:border-[#d7ee46]');
+                  return (
+                    <div className="relative">
+                      <div onClick={() => !isLocked && setIsFacOpen(!isFacOpen)} className={`${getInputCls(hasErr, '!bg-transparent !border-transparent !shadow-none !px-0')} flex items-center justify-between transition-colors ${isLocked ? 'bg-gray-100 opacity-70 cursor-not-allowed' : 'cursor-pointer'} !py-2`}>
+                        <div className={selected ? 'text-[#060606]' : 'text-gray-400'}>
+                          {selected ? (
+                            <div className="flex items-center gap-3 py-1">
+                              <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(204,226,66,0.15)', border: '1px solid rgba(204,226,66,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <Building2 size={24} style={{ color: '#4a7c20' }} strokeWidth={1.5} />
+                              </div>
+                              <div className="flex flex-col gap-1 min-w-0">
+                                <span className="font-bold text-[16px] text-[#060606] truncate">{selected.name}</span>
+                                <span className="flex items-center gap-2 text-[14px] text-gray-500 font-normal">
+                                  <MapPin size={15} className="shrink-0" /> <span className="truncate">{selected.address}</span>
+                                </span>
+                                <span className="flex items-center gap-2 text-[14px] text-gray-500 font-normal">
+                                  <Clock size={15} className="shrink-0" /> {selected.openTime} - {selected.closeTime}
+                                </span>
+                              </div>
+                            </div>
+                          ) : <span className="text-sm py-1 block">-- Chọn cơ sở --</span>}
+                        </div>
+                        {!isLocked && <ChevronDown size={16} className={`text-gray-400 transition-transform ${isFacOpen ? 'rotate-180' : ''}`} />}
+                      </div>
+                      <AnimatePresence>
+                        {isFacOpen && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setIsFacOpen(false)} />
+                            <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-50 max-h-40 overflow-y-auto">
+                              {facilities.map((f) => (
+                                <div key={f._id} onClick={() => { field.onChange(f._id); setIsFacOpen(false); }} className={`px-4 py-3 cursor-pointer border-b border-gray-50 last:border-0 ${field.value === f._id ? 'bg-[#d7ee46]/20' : 'hover:bg-gray-50'}`}>
+                                  <div className="flex items-center gap-3">
+                                    <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(204,226,66,0.15)', border: '1px solid rgba(204,226,66,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                      <Building2 size={22} style={{ color: '#4a7c20' }} strokeWidth={1.5} />
+                                    </div>
+                                    <div className="flex flex-col gap-1 min-w-0">
+                                      <span className={`text-[15px] ${field.value === f._id ? 'text-[#060606] font-bold' : 'text-gray-700 font-semibold'}`}>{f.name}</span>
+                                      <div className="flex items-center gap-3 text-[13px] text-gray-500 font-normal">
+                                        <span className="flex items-center gap-1.5 truncate max-w-[250px]"><MapPin size={14} className="shrink-0" /> {f.address}</span>
+                                        <span className="flex items-center gap-1.5 shrink-0"><Clock size={14} /> {f.openTime} - {f.closeTime}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                }}
+              />
+              {errors.facilityId && <p className={errCls}>{errors.facilityId.message}</p>}
+            </div>
+
+            {/* Tên Bảng Giá */}
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-1.5">Tên Bảng Giá <span className="text-red-500">*</span></label>
               <input {...register('name')} className={getInputCls(!!errors.name)} placeholder="Xe máy - Theo giờ" />
               {errors.name && <p className={errCls}>{errors.name.message}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              {/* Facility */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Cơ Sở <span className="text-red-500">*</span></label>
-                <Controller
-                  control={control}
-                  name="facilityId"
-                  render={({ field }) => {
-                    const selected = facilities.find(f => f._id === field.value);
-                    const hasErr = !!errors.facilityId;
-                    const isLocked = isEdit || !!selectedFacilityId;
-                    const borderClass = isFacOpen ? (hasErr ? 'ring-2 ring-red-200 border-red-500' : 'ring-2 ring-[#d7ee46] border-[#d7ee46]') : (hasErr ? '' : 'hover:border-[#d7ee46]');
-                    return (
-                      <div className="relative">
-                        <div onClick={() => !isLocked && setIsFacOpen(!isFacOpen)} className={`${getInputCls(hasErr)} flex items-center justify-between transition-colors ${isLocked ? 'bg-gray-100 opacity-70 cursor-not-allowed' : 'cursor-pointer'} ${borderClass}`}>
-                          <span className={selected ? 'text-[#060606]' : 'text-gray-400'}>{selected ? selected.name : '-- Chọn cơ sở --'}</span>
-                          {!isLocked && <ChevronDown size={16} className={`text-gray-400 transition-transform ${isFacOpen ? 'rotate-180' : ''}`} />}
-                        </div>
-                        <AnimatePresence>
-                          {isFacOpen && (
-                            <>
-                              <div className="fixed inset-0 z-40" onClick={() => setIsFacOpen(false)} />
-                              <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-50 max-h-40 overflow-y-auto">
-                                {facilities.map((f) => (
-                                  <div key={f._id} onClick={() => { field.onChange(f._id); setIsFacOpen(false); }} className={`px-3 py-2.5 text-sm cursor-pointer whitespace-normal break-words ${field.value === f._id ? 'bg-[#d7ee46]/20 text-[#060606] font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}>{f.name}</div>
-                                ))}
-                              </motion.div>
-                            </>
-                          )}
-                        </AnimatePresence>
+            {/* Vehicle type */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Loại Xe <span className="text-red-500">*</span></label>
+              <Controller
+                control={control}
+                name="vehicleTypeId"
+                render={({ field }) => {
+                  const selected = vehicleTypes.find(v => v._id === field.value);
+                  const SelectedIcon = (selected?.icon && ICON_MAP[selected.icon]) ? ICON_MAP[selected.icon] : Car;
+                  const hasErr = !!errors.vehicleTypeId;
+                  const borderClass = isVtOpen ? (hasErr ? 'ring-2 ring-red-200 border-red-500' : 'ring-2 ring-[#d7ee46] border-[#d7ee46]') : (hasErr ? '' : 'hover:border-[#d7ee46]');
+                  return (
+                    <div className="relative">
+                      <div onClick={() => !isEdit && setIsVtOpen(!isVtOpen)} className={`${getInputCls(hasErr)} flex items-center justify-between cursor-pointer transition-colors ${isEdit ? 'bg-gray-100 opacity-70 pointer-events-none' : ''} ${borderClass}`}>
+                        <span className={selected ? 'text-[#060606]' : 'text-gray-400'}>
+                          {selected ? (<span className="flex items-center gap-2"><SelectedIcon size={16} className="text-[#4a7c20]" />{selected.name}</span>) : '-- Chọn loại xe --'}
+                        </span>
+                        <ChevronDown size={16} className={`text-gray-400 transition-transform ${isVtOpen ? 'rotate-180' : ''}`} />
                       </div>
-                    );
-                  }}
-                />
-                {errors.facilityId && <p className={errCls}>{errors.facilityId.message}</p>}
-              </div>
-
-              {/* Vehicle type */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Loại Xe <span className="text-red-500">*</span></label>
-                <Controller
-                  control={control}
-                  name="vehicleTypeId"
-                  render={({ field }) => {
-                    const selected = vehicleTypes.find(v => v._id === field.value);
-                    const SelectedIcon = (selected?.icon && ICON_MAP[selected.icon]) ? ICON_MAP[selected.icon] : Car;
-                    const hasErr = !!errors.vehicleTypeId;
-                    const borderClass = isVtOpen ? (hasErr ? 'ring-2 ring-red-200 border-red-500' : 'ring-2 ring-[#d7ee46] border-[#d7ee46]') : (hasErr ? '' : 'hover:border-[#d7ee46]');
-                    return (
-                      <div className="relative">
-                        <div onClick={() => !isEdit && setIsVtOpen(!isVtOpen)} className={`${getInputCls(hasErr)} flex items-center justify-between cursor-pointer transition-colors ${isEdit ? 'bg-gray-100 opacity-70 pointer-events-none' : ''} ${borderClass}`}>
-                          <span className={selected ? 'text-[#060606]' : 'text-gray-400'}>
-                            {selected ? (<span className="flex items-center gap-2"><SelectedIcon size={16} className="text-[#4a7c20]" />{selected.name}</span>) : '-- Chọn loại xe --'}
-                          </span>
-                          <ChevronDown size={16} className={`text-gray-400 transition-transform ${isVtOpen ? 'rotate-180' : ''}`} />
-                        </div>
-                        <AnimatePresence>
-                          {isVtOpen && (
-                            <>
-                              <div className="fixed inset-0 z-40" onClick={() => setIsVtOpen(false)} />
-                              <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-50 max-h-40 overflow-y-auto">
-                                {vehicleTypes.map((v) => {
-                                  const IconComp = (v.icon && ICON_MAP[v.icon]) ? ICON_MAP[v.icon] : Car;
-                                  return (
-                                    <div key={v._id} onClick={() => { field.onChange(v._id); setIsVtOpen(false); }} className={`px-3 py-2.5 text-sm cursor-pointer flex items-center gap-2 whitespace-normal break-words ${field.value === v._id ? 'bg-[#d7ee46]/20 text-[#060606] font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}>
-                                      <IconComp size={16} className={`flex-shrink-0 ${field.value === v._id ? 'text-[#060606]' : 'text-gray-400'}`} />{v.name}
-                                    </div>
-                                  );
-                                })}
-                              </motion.div>
-                            </>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    );
-                  }}
-                />
-                {errors.vehicleTypeId && <p className={errCls}>{errors.vehicleTypeId.message}</p>}
-              </div>
+                      <AnimatePresence>
+                        {isVtOpen && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setIsVtOpen(false)} />
+                            <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-50 max-h-40 overflow-y-auto">
+                              {vehicleTypes.map((v) => {
+                                const IconComp = (v.icon && ICON_MAP[v.icon]) ? ICON_MAP[v.icon] : Car;
+                                return (
+                                  <div key={v._id} onClick={() => { field.onChange(v._id); setIsVtOpen(false); }} className={`px-3 py-2.5 text-sm cursor-pointer flex items-center gap-2 whitespace-normal break-words ${field.value === v._id ? 'bg-[#d7ee46]/20 text-[#060606] font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}>
+                                    <IconComp size={16} className={`flex-shrink-0 ${field.value === v._id ? 'text-[#060606]' : 'text-gray-400'}`} />{v.name}
+                                  </div>
+                                );
+                              })}
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                }}
+              />
+              {errors.vehicleTypeId && <p className={errCls}>{errors.vehicleTypeId.message}</p>}
             </div>
           </div>
 
@@ -279,7 +311,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
               {currentUiFeeType === 'time_window' && (
                 <div className="text-xs text-blue-600 bg-blue-50 p-2.5 rounded-lg border border-blue-100 mb-3 flex items-start gap-2">
                   <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-                  <span>Các khung giờ bạn thêm vào <b>bắt buộc phải nối tiếp nhau và phủ kín toàn bộ thời gian hoạt động</b> của Tòa nhà này. Vượt ngoài các khung giờ sẽ tính theo Phí quá giờ.</span>
+                  <span>Các khung giờ bạn thêm vào <b>bắt buộc phải nối tiếp nhau và phủ kín toàn bộ thời gian hoạt động</b> của Tòa nhà này{currentFacility ? ` (${currentFacility.openTime} - ${currentFacility.closeTime})` : ''}. Vượt ngoài các khung giờ sẽ tính theo Phí quá giờ.</span>
                 </div>
               )}
 
@@ -288,19 +320,21 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
                   {currentUiFeeType === 'time_window' && (
                     <div className="w-full flex items-center gap-2 mb-1">
                       <div className="flex-1">
-                        <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Từ giờ (HH:mm)</label>
+                        <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Từ giờ (HH:mm) <span className="text-red-500">*</span></label>
                         <input type="time" {...register(`rates.${idx}.startTime`)} className={getInputCls(!!errors.rates?.[idx]?.startTime, 'py-1.5')} />
+                        {errors.rates?.[idx]?.startTime && <p className={errCls}>{errors.rates[idx]!.startTime!.message}</p>}
                       </div>
                       <div className="text-gray-300 mt-5">-</div>
                       <div className="flex-1">
-                        <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Đến giờ (HH:mm)</label>
+                        <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Đến giờ (HH:mm) <span className="text-red-500">*</span></label>
                         <input type="time" {...register(`rates.${idx}.endTime`)} className={getInputCls(!!errors.rates?.[idx]?.endTime, 'py-1.5')} />
+                        {errors.rates?.[idx]?.endTime && <p className={errCls}>{errors.rates[idx]!.endTime!.message}</p>}
                       </div>
                     </div>
                   )}
 
                   <div className="flex-1 min-w-[120px]">
-                    <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Tên hiển thị</label>
+                    <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Tên khung giờ<span className="text-red-500">*</span></label>
                     <input {...register(`rates.${idx}.label`)} 
                       placeholder={currentUiFeeType === 'hourly' ? (idx === 0 ? 'Giờ đầu' : 'Giờ tiếp theo') : (currentUiFeeType === 'per_turn' ? 'Mỗi lượt' : 'Khung ngày')} 
                       className={getInputCls(!!errors.rates?.[idx]?.label, 'py-1.5 font-medium')}
@@ -309,13 +343,13 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
                   </div>
                   
                   <div className="w-32">
-                    <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Đơn giá (VNĐ)</label>
+                    <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Đơn giá (VNĐ) <span className="text-red-500">*</span></label>
                     <input {...register(`rates.${idx}.amount`)} type="number" min="0" placeholder="0" className={getInputCls(!!errors.rates?.[idx]?.amount, 'py-1.5 font-bold text-lg text-[#4a7c20]')} />
                   </div>
 
                   <div className="w-20">
                     <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Đơn vị</label>
-                    <input {...register(`rates.${idx}.unit`)} placeholder={currentUiFeeType === 'per_turn' ? 'lượt' : 'giờ'} className={getInputCls(!!errors.rates?.[idx]?.unit, 'py-1.5')} />
+                    <input {...register(`rates.${idx}.unit`)} readOnly className={`${getInputCls(false, 'py-1.5')} bg-gray-100 text-gray-500 cursor-not-allowed`} />
                   </div>
 
                   {(fields.length > 1 && currentUiFeeType === 'time_window') && (
@@ -336,7 +370,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {/* Grace period: always visible */}
               <div>
-                <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Thời gian ân hạn (Phút)</label>
+                <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Thời gian miễn phí (Phút) <span className="text-red-500">*</span></label>
                 <input {...register('gracePeriodMinutes')} type="number" min="0" max="60" className={getInputCls(!!errors.gracePeriodMinutes)} placeholder="0" />
                 <p className="text-[10px] text-gray-400 mt-1">Miễn phí X phút đầu</p>
                 {errors.gracePeriodMinutes && <p className={errCls}>{errors.gracePeriodMinutes.message}</p>}
@@ -345,7 +379,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
               {/* First block hours: Hourly & duration */}
               {currentUiFeeType === 'hourly' && (
                 <div>
-                  <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Block giờ đầu (Giờ)</label>
+                  <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Số giờ tính phí đầu (Giờ)<span className="text-red-500">*</span></label>
                   <input {...register('firstBlockHours')} type="number" min="1" className={getInputCls(!!errors.firstBlockHours)} placeholder="1" />
                   <p className="text-[10px] text-gray-400 mt-1">Số giờ của mức giá đầu tiên</p>
                   {errors.firstBlockHours && <p className={errCls}>{errors.firstBlockHours.message}</p>}
@@ -355,7 +389,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
               {/* Max daily fee: Hourly */}
               {(currentUiFeeType === 'hourly' || currentUiFeeType === 'time_window') && (
                 <div>
-                  <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Phí trần / Ngày (VNĐ)</label>
+                  <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1">Mức phí tối đa / Ngày (VNĐ)<span className="text-red-500">*</span></label>
                   <input {...register('maxDailyFee')} type="number" min="0" className={getInputCls(!!errors.maxDailyFee)} placeholder="0" />
                   <p className="text-[10px] text-gray-400 mt-1">0 = Không giới hạn</p>
                   {errors.maxDailyFee && <p className={errCls}>{errors.maxDailyFee.message}</p>}
@@ -364,7 +398,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
 
               {/* Overnight fee: Per turn or Hourly */}
               <div>
-                <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1 flex items-center gap-1"><Moon size={11} />Phí Qua Đêm (VNĐ)</label>
+                <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1 flex items-center gap-1"><Moon size={11} />Phí Qua Đêm (VNĐ) <span className="text-red-500">*</span></label>
                 <input {...register('overnightFee')} type="number" min="0" className={getInputCls(!!errors.overnightFee)} placeholder="0" />
                 {errors.overnightFee && <p className={errCls}>{errors.overnightFee.message}</p>}
               </div>
@@ -372,7 +406,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
               {/* Overtime fee: Time window */}
               {currentUiFeeType === 'time_window' && (
                 <div>
-                  <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1 flex items-center gap-1"><Clock size={11} />Phí Quá Giờ (VNĐ/h)</label>
+                  <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1 flex items-center gap-1"><Clock size={11} />Phí Quá Giờ (VNĐ/h) <span className="text-red-500">*</span></label>
                   <input {...register('overtimeFeePerHour')} type="number" min="0" className={getInputCls(!!errors.overtimeFeePerHour)} placeholder="0" />
                   {errors.overtimeFeePerHour && <p className={errCls}>{errors.overtimeFeePerHour.message}</p>}
                 </div>
@@ -380,7 +414,7 @@ export function PricingFormModal({ plan, facilities, vehicleTypes, onClose, onSu
 
               {/* Lost card fee: always visible */}
               <div>
-                <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1 flex items-center gap-1"><CreditCard size={11} />Phí Mất Thẻ (VNĐ)</label>
+                <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1 flex items-center gap-1"><CreditCard size={11} />Phí Mất Thẻ (VNĐ) <span className="text-red-500">*</span></label>
                 <input {...register('lostCardFee')} type="number" min="0" className={getInputCls(!!errors.lostCardFee)} placeholder="50000" />
                 {errors.lostCardFee && <p className={errCls}>{errors.lostCardFee.message}</p>}
               </div>
