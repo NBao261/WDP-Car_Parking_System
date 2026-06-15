@@ -162,8 +162,7 @@ export function FacilityFilterBar({
   };
 
   return (
-    <div className="mb-5">
-      <div className="flex flex-wrap items-center gap-3" style={{ minHeight: 48 }}>
+    <div className="mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap items-center gap-3" style={{ minHeight: 48 }}>
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
           <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#6b6e6b' }} />
@@ -183,7 +182,7 @@ export function FacilityFilterBar({
           options={[
             { value: 'all', label: 'Tất cả trạng thái' },
             { value: 'active', label: 'Hoạt động' },
-            { value: 'inactive', label: 'Đã tắt' },
+            { value: 'inactive', label: 'Đã vô hiệu hóa' },
           ]}
         />
 
@@ -234,7 +233,6 @@ export function FacilityFilterBar({
             ))}
           </div>
         )}
-      </div>
     </div>
   );
 }
