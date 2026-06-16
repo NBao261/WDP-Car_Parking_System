@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Search, ScanLine, ImagePlus, RefreshCw, CheckCircle, X } from 'lucide-react';
+import { ScanLine, ImagePlus, RefreshCw, CheckCircle, X } from 'lucide-react';
 import axios from 'axios';
 import { sessionService, ParkingSession } from '../../../../services/session.service';
 
@@ -34,11 +34,11 @@ export default function CheckOutPanel({
   const [_checkInTimeDisplay, setCheckInTimeDisplay] = useState('Không có dữ liệu');
   const [step, setStep] = useState<'SEARCH' | 'CONFIRM' | 'OPEN' | 'MISMATCH'>('SEARCH');
   const [currentSession, setCurrentSession] = useState<ParkingSession | null>(null);
-  const [feeData, setFeeData] = useState<{ totalFee: number; details: any } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [ocrPreviewUrl, setOcrPreviewUrl] = useState<string | null>(null);
   const [ocrSuccess, setOcrSuccess] = useState(false);
+  const [checkoutImageUrl, setCheckoutImageUrl] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -77,6 +77,9 @@ export default function CheckOutPanel({
         }
 
         setOcrSuccess(true);
+        if (response.data.data.imageUrl) {
+          setCheckoutImageUrl(response.data.data.imageUrl);
+        }
       } else {
         toast.warning(response.data.message || 'Không nhận dạng được. Nhập tay.');
       }
@@ -90,6 +93,7 @@ export default function CheckOutPanel({
 
   const clearOcrPreview = () => {
     setOcrPreviewUrl(null);
+    setCheckoutImageUrl(null);
     setOcrSuccess(false);
   };
 
@@ -150,7 +154,6 @@ export default function CheckOutPanel({
         if (feeRes.success) {
           fee = feeRes.data.totalFee;
           feeDetails = (feeRes.data as any).details ?? null;
-          setFeeData({ totalFee: fee, details: feeDetails });
         }
 
         const checkOutTimeStr = new Date().toLocaleTimeString('vi-VN', {
@@ -217,6 +220,7 @@ export default function CheckOutPanel({
       try {
         const checkOutRes = await sessionService.checkOut(currentSession._id, {
           gateOut: gateOut.trim(),
+          checkOutImage: checkoutImageUrl || undefined,
         });
         if (checkOutRes.success) {
           const actualCheckOutTime = checkOutRes.data.checkOutTime
@@ -251,7 +255,6 @@ export default function CheckOutPanel({
           setVehicleTypeName('Không có dữ liệu');
           setCheckInTimeDisplay('Không có dữ liệu');
           setCurrentSession(null);
-          setFeeData(null);
           setStep('SEARCH');
           setTimeout(() => {
             onCheckOut(null);
@@ -503,14 +506,21 @@ export default function CheckOutPanel({
                     const SERVER_URL = (
                       import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'
                     ).replace(/\/api\/v1\/?$/, '');
-                    const imgSrc = currentSession.checkInImage.startsWith('http')
-                      ? currentSession.checkInImage
-                      : `${SERVER_URL}${currentSession.checkInImage}`;
+                    
+                    let imgSrc = currentSession.checkInImage;
+                    if (!imgSrc.startsWith('http')) {
+                       const cleanPath = imgSrc.startsWith('/') ? imgSrc : `/${imgSrc}`;
+                       imgSrc = `${SERVER_URL}${cleanPath}`;
+                    }
+                    
                     return (
                       <img
                         src={imgSrc}
                         alt="check-in"
                         className="max-w-full max-h-full object-contain"
+                        onError={(e) => {
+                          console.error("Image failed to load:", imgSrc);
+                        }}
                       />
                     );
                   })()

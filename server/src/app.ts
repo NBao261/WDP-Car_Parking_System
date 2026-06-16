@@ -33,7 +33,9 @@ import alprRoutes from './routes/alpr.routes';
 const app = express();
 
 // ─── Security ─────────────────────────────────────────
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(
   rateLimit({
