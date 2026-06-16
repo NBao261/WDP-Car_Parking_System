@@ -108,5 +108,6 @@ export const checkOutSchema = z.object({
     gateOut: z
       .string({ required_error: 'Gate out is required' })
       .min(1, 'Gate out is required'),
+    checkOutImage: z.string().optional(),
   }),
 });

@@ -363,11 +363,8 @@ export class SessionService {
       // Ignore if socket is not initialized
     }
 
-    // 9. Kích hoạt Background Upload nếu có ảnh local
-    if (session.checkInImage && session.checkInImage.startsWith('/uploads/alpr/')) {
-      // Fire and forget (không await)
-      UploadService.uploadLocalImageToCloudinary(session._id.toString(), session.checkInImage).catch(console.error);
-    }
+    // 9. Defer Background Upload: Ảnh local được giữ lại, sẽ đẩy lên Cloudinary cùng ảnh checkOut (trọn gói khi xe ra khỏi bãi)
+    // UploadService.uploadLocalImageToCloudinary(session._id.toString(), session.checkInImage).catch(console.error);
 
     return populatedSession!;
   }
@@ -857,7 +854,7 @@ export class SessionService {
   /**
    * FR-10.3: Thu phí gửi xe và check-out
    */
-  static async checkOut(data: { sessionId: string, gateOut: string, staffOutId: string }): Promise<IParkingSession> {
+  static async checkOut(data: { sessionId: string, gateOut: string, staffOutId: string, checkOutImage?: string }): Promise<IParkingSession> {
     const session = await ParkingSession.findById(data.sessionId);
     if (!session) throw new AppError('Session không tồn tại', 404);
     if (session.status === SessionStatus.COMPLETED) {
@@ -885,6 +882,9 @@ export class SessionService {
     session.staffOutId = new mongoose.Types.ObjectId(data.staffOutId);
     session.totalFee = feeResult.totalFee;
     session.status = SessionStatus.COMPLETED;
+    if (data.checkOutImage) {
+      session.checkOutImage = data.checkOutImage;
+    }
 
     await session.save();
 
@@ -916,6 +916,9 @@ export class SessionService {
     } catch (err) {
       // Ignore if socket is not initialized
     }
+
+    // 🔥 Background Upload: Đẩy cả ảnh checkIn và checkOut lên Cloudinary
+    UploadService.processCompletedSessionImages(session._id.toString()).catch(console.error);
 
     return populatedSession!;
   }

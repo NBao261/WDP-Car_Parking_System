@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { ScanLine, ImagePlus, RefreshCw, CheckCircle, X } from "lucide-react";
+import { ImagePlus, RefreshCw, CheckCircle, X } from "lucide-react";
 import { apiClient } from "../../../../services/api";
 import { VehicleType } from "../../../../services/vehicleType.service";
 import { facilityService } from "../../../../services/facility.service";

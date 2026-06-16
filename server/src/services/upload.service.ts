@@ -5,56 +5,60 @@ import { ParkingSession } from '../models/parkingSession.model';
 
 export class UploadService {
   /**
-   * Background task: Tải ảnh từ local lên Cloudinary,
-   * cập nhật lại vào DB, và xoá file local.
+   * Background task: Xử lý gộp cả ảnh checkIn và checkOut
+   * khi xe ra khỏi bãi (COMPLETED session).
    */
-  static async uploadLocalImageToCloudinary(sessionId: string, localUrl: string): Promise<void> {
+  static async processCompletedSessionImages(sessionId: string): Promise<void> {
     try {
-      if (!process.env.CLOUDINARY_CLOUD_NAME) {
-        // Nếu không có cấu hình Cloudinary, giữ nguyên URL local
-        return;
+      if (!process.env.CLOUDINARY_CLOUD_NAME) return;
+
+      const session = await ParkingSession.findById(sessionId);
+      if (!session) return;
+
+      let updatedFields: any = {};
+
+      if (session.checkInImage && session.checkInImage.startsWith('/uploads/alpr/')) {
+        const cloudUrl = await this._uploadAndDeleteLocal(session.checkInImage);
+        if (cloudUrl) updatedFields.checkInImage = cloudUrl;
       }
 
-      // Trích xuất tên file từ localUrl (VD: "/uploads/alpr/alpr_12345.jpg")
-      const filename = path.basename(localUrl);
-      const localFilePath = path.join(__dirname, '../../public/uploads/alpr', filename);
-
-      if (!fs.existsSync(localFilePath)) {
-        console.error(`[UploadService] Không tìm thấy file local: ${localFilePath}`);
-        return;
+      if (session.checkOutImage && session.checkOutImage.startsWith('/uploads/alpr/')) {
+        const cloudUrl = await this._uploadAndDeleteLocal(session.checkOutImage);
+        if (cloudUrl) updatedFields.checkOutImage = cloudUrl;
       }
 
-      console.log(`[UploadService] Bắt đầu đẩy ảnh ngầm lên Cloudinary cho session ${sessionId}...`);
+      if (Object.keys(updatedFields).length > 0) {
+        await ParkingSession.findByIdAndUpdate(sessionId, updatedFields);
+        console.log(`[UploadService] [OK] Đã sync Cloudinary thành công cho session ${sessionId}`);
+      }
+    } catch (error) {
+      console.error(`[UploadService] [FAIL] Sync background thất bại cho session ${sessionId}:`, error);
+    }
+  }
 
-      // Upload lên Cloudinary
+  private static async _uploadAndDeleteLocal(localUrl: string): Promise<string | null> {
+    const filename = path.basename(localUrl);
+    const localFilePath = path.join(__dirname, '../../public/uploads/alpr', filename);
+
+    if (!fs.existsSync(localFilePath)) return null;
+
+    try {
       const cloudinaryUrl = await new Promise<string>((resolve, reject) => {
         cloudinary.uploader.upload(
           localFilePath,
           { folder: 'smart_parking/alpr' },
           (error, result) => {
-            if (error || !result) {
-              reject(error || new Error('Lỗi upload Cloudinary không xác định'));
-            } else {
-              resolve(result.secure_url);
-            }
+            if (error || !result) reject(error);
+            else resolve(result.secure_url);
           }
         );
       });
 
-      // Cập nhật Database
-      await ParkingSession.findByIdAndUpdate(sessionId, { checkInImage: cloudinaryUrl });
-      console.log(`[UploadService] [OK] Đã cập nhật ảnh Cloudinary cho session ${sessionId}`);
-
-      // Xoá file local để dọn dẹp dung lượng
-      try {
-        fs.unlinkSync(localFilePath);
-        console.log(`[UploadService] [OK] Đã xoá file tạm: ${localFilePath}`);
-      } catch (delError) {
-        console.error(`[UploadService] Lỗi khi xoá file tạm:`, delError);
-      }
-    } catch (error) {
-      console.error(`[UploadService] [FAIL] Upload background thất bại cho session ${sessionId}:`, error);
-      // Ảnh local vẫn còn trong ổ cứng, UI vẫn hiển thị được qua local URL.
+      fs.unlinkSync(localFilePath);
+      return cloudinaryUrl;
+    } catch (err) {
+      console.error(`[UploadService] Lỗi xử lý file ${filename}:`, err);
+      return null;
     }
   }
 }

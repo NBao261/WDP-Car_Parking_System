@@ -28,6 +28,7 @@ export interface IParkingSession extends Document {
   status: SessionStatus;
   cardCode: string;
   checkInImage?: string;
+  checkOutImage?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +55,7 @@ const parkingSessionSchema = new Schema<IParkingSession>(
     status: { type: String, enum: Object.values(SessionStatus), default: SessionStatus.ACTIVE },
     cardCode: { type: String, required: true, unique: true },
     checkInImage: { type: String, default: null },
+    checkOutImage: { type: String, default: null },
   },
   { timestamps: true }
 );

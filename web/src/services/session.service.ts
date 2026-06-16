@@ -49,7 +49,7 @@ export const sessionService = {
   calculateFee: async (id: string): Promise<{ success: boolean; data: { totalFee: number; discount: number; finalFee: number; pricingPlan: any } }> => {
     return apiClient.get(`/sessions/${id}/fee`);
   },
-  checkOut: async (id: string, payload: { gateOut: string }): Promise<{ success: boolean; data: ParkingSession; message?: string }> => {
+  checkOut: async (id: string, payload: { gateOut: string, checkOutImage?: string }): Promise<{ success: boolean; data: ParkingSession; message?: string }> => {
     return apiClient.post(`/sessions/${id}/check-out`, payload);
   },
   getActiveSessions: async (params: any): Promise<{ success: boolean; data: ParkingSession[]; pagination?: any }> => {
