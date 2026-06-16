@@ -11,6 +11,7 @@ import { Exception, ExceptionStatus, ExceptionType } from '../models/exception.m
 import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { generateSessionCode, generateCardCode } from '../utils/codeGenerator';
 import { getIO } from '../config/socket';
+import { UploadService } from './upload.service';
 
 interface CheckConditionsResult {
   eligible: boolean;
@@ -360,6 +361,12 @@ export class SessionService {
       });
     } catch (err) {
       // Ignore if socket is not initialized
+    }
+
+    // 9. Kích hoạt Background Upload nếu có ảnh local
+    if (session.checkInImage && session.checkInImage.startsWith('/uploads/alpr/')) {
+      // Fire and forget (không await)
+      UploadService.uploadLocalImageToCloudinary(session._id.toString(), session.checkInImage).catch(console.error);
     }
 
     return populatedSession!;

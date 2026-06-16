@@ -3,15 +3,8 @@ import axios from 'axios';
 import FormData from 'form-data';
 import fs from 'fs';
 import path from 'path';
-import streamifier from 'streamifier';
-import cloudinary from '../config/cloudinary';
 
 const ALPR_SERVICE_URL = process.env.ALPR_SERVICE_URL || 'http://localhost:8000/predict';
-const IS_PRODUCTION = process.env.NODE_ENV === 'production';
-
-// Thời gian tối đa chờ Cloudinary trước khi trả response (ms).
-// Nếu upload chậm hơn mốc này → vẫn trả biển số, imageUrl = null (upload vẫn tiếp tục nền).
-const CLOUDINARY_FAST_TIMEOUT_MS = 3000;
 
 /**
  * Chuẩn hóa biển số xe Việt Nam từ kết quả OCR.
@@ -27,41 +20,16 @@ const normalizeLicensePlate = (raw: string): string => {
 };
 
 /**
- * Upload ảnh lên Cloudinary.
- * 
- * Production: chỉ Cloudinary.
- * Development (không có Cloudinary config): lưu local làm fallback.
+ * Lưu ảnh local cực nhanh (< 5ms) để trả về ngay cho giao diện.
  */
-const uploadImage = (file: Express.Multer.File): Promise<string | null> => {
-  if (!process.env.CLOUDINARY_CLOUD_NAME) {
-    if (!IS_PRODUCTION) {
-      // Dev fallback: lưu local
-      try { return Promise.resolve(saveLocally(file)); }
-      catch { return Promise.resolve(null); }
-    }
-    console.warn('[ALPR] CLOUDINARY_CLOUD_NAME not set — images will not be stored.');
-    return Promise.resolve(null);
-  }
-
-  return new Promise((resolve) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder: 'smart_parking/alpr' },
-      (error, result) => {
-        if (error || !result) {
-          console.error('[ALPR] Cloudinary upload failed:', error?.message);
-          // Production: không fallback local, trả null
-          const fallback = IS_PRODUCTION ? null : (() => {
-            try { return saveLocally(file); } catch { return null; }
-          })();
-          resolve(fallback);
-        } else {
-          resolve(result.secure_url);
-        }
-      }
-    );
-    streamifier.createReadStream(file.buffer).pipe(stream);
-  });
-};
+function saveLocally(file: Express.Multer.File): string {
+  const dir = path.join(__dirname, '../../public/uploads/alpr');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const ext = path.extname(file.originalname) || '.jpg';
+  const filename = `alpr_${Date.now()}${ext}`;
+  fs.writeFileSync(path.join(dir, filename), file.buffer);
+  return `/uploads/alpr/${filename}`;
+}
 
 export const scanLicensePlate = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -70,11 +38,15 @@ export const scanLicensePlate = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    // ── 1. Upload ảnh lên Cloudinary (đợi hoàn tất để lấy URL thật) ───────
-    // Dù OCR rất nhanh (200ms), ta vẫn cần URL để lưu vào ParkingSession.
-    const uploadPromise = uploadImage(req.file);
+    // ── 1. Lưu file xuống ổ cứng local tức thì ─────────────────────────────
+    let localImageUrl: string | null = null;
+    try {
+      localImageUrl = saveLocally(req.file);
+    } catch (err) {
+      console.error('[ALPR] Error saving local image:', err);
+    }
 
-    // ── 2. Gửi ảnh sang Python ALPR service (song song với upload) ────────
+    // ── 2. Gửi ảnh sang Python ALPR service ───────────────────────────────
     const formData = new FormData();
     formData.append('file', req.file.buffer, {
       filename: req.file.originalname,
@@ -93,22 +65,17 @@ export const scanLicensePlate = async (req: Request, res: Response): Promise<voi
         success: false,
         message: 'Dịch vụ nhận dạng không phản hồi. Vui lòng nhập biển số thủ công.',
       });
-      // Vẫn đợi upload xong nhưng không lưu
-      await uploadPromise.catch(console.error);
       return;
     }
 
-    // ── 3. Đợi Cloudinary lấy URL (thường mất 1-2s) ──────────────────────
-    const imageUrl = await uploadPromise;
-
-    // ── 4. Xử lý kết quả OCR ──────────────────────────────────────────────
+    // ── 3. Xử lý kết quả OCR ──────────────────────────────────────────────
     const results: any[] = alprResponse.data.results ?? [];
 
     if (results.length === 0) {
       res.status(200).json({
         success: false,
         message: 'Không phát hiện biển số trong ảnh.',
-        data: { imageUrl },
+        data: { imageUrl: localImageUrl },
       });
       return;
     }
@@ -116,7 +83,7 @@ export const scanLicensePlate = async (req: Request, res: Response): Promise<voi
     const best = results.sort((a, b) => b.confidence - a.confidence)[0];
     const normalizedPlate = normalizeLicensePlate(best.text);
 
-    // ── 5. Trả về biển số + imageUrl ──────────────────────────────────────
+    // ── 4. Trả về biển số + imageUrl (local) ngay lập tức ─────────────────
     res.status(200).json({
       success: true,
       message: `Nhận dạng biển số: ${normalizedPlate}`,
@@ -124,7 +91,7 @@ export const scanLicensePlate = async (req: Request, res: Response): Promise<voi
         licensePlate: best.text,
         normalizedPlate,
         confidence: best.confidence,
-        imageUrl,         // Cloudinary URL nếu upload kịp, null nếu chậm
+        imageUrl: localImageUrl, // Đường dẫn local, hiển thị ngay lập tức
         allResults: results,
       },
     });
@@ -135,12 +102,3 @@ export const scanLicensePlate = async (req: Request, res: Response): Promise<voi
   }
 };
 
-// ── Helper lưu file local (CHỈ dùng ở development) ─────────────────────────
-function saveLocally(file: Express.Multer.File): string {
-  const dir = path.join(__dirname, '../../public/uploads/alpr');
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  const ext = path.extname(file.originalname) || '.jpg';
-  const filename = `alpr_${Date.now()}${ext}`;
-  fs.writeFileSync(path.join(dir, filename), file.buffer);
-  return `/uploads/alpr/${filename}`;
-}
