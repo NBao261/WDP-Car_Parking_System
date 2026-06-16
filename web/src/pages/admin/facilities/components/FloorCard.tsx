@@ -228,7 +228,7 @@ export const FloorCard = React.memo(function FloorCard({
         <div className="flex items-center gap-2 flex-shrink-0">
           <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 5, ...badgeStyle }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
-            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
+            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
           </span>
 
           {/* Menu dropdown */}
@@ -370,7 +370,7 @@ export const FloorCard = React.memo(function FloorCard({
               : `Bạn có chắc muốn vô hiệu hóa tầng "${floor.name}"? Các slot trong tầng sẽ không khả dụng.`
           }
           confirmText={confirmAction === 'delete' ? 'Xóa' : 'Vô hiệu hóa'}
-          variant="danger"
+          variant={confirmAction === 'delete' ? 'danger' : 'warning'}
           isLoading={loading}
         />
       </div>

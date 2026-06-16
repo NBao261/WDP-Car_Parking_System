@@ -15,7 +15,7 @@ interface SlotMappingEditorViewProps {
   vtMap: Record<string, string>;
   vehicleTypes: VehicleType[];
   loading: boolean;
-  onRefreshSlots: () => void;
+  onRefreshSlots: (silent?: boolean) => void;
   onClose?: () => void;
   isFacilityActive?: boolean;
 }
@@ -96,7 +96,7 @@ export function SlotMappingEditorView({
           
           <div className="flex items-center gap-2">
             <button
-              onClick={onRefreshSlots}
+              onClick={() => onRefreshSlots()}
               title="Làm mới"
               className="px-3 py-2 border border-gray-200 text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors flex items-center justify-center shrink-0"
             >
@@ -156,7 +156,7 @@ export function SlotMappingEditorView({
             ) : filteredSlots.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 text-gray-400 text-sm gap-2">
                 <Map size={28} className="opacity-30" />
-                {slots.length === 0 ? 'Tầng này chưa có slot nào.' : 'Không có slot phù hợp bộ lọc.'}
+                {slots.length === 0 ? `Tầng này chưa có slot nào (0/${floor.totalSlots}).` : 'Không có slot phù hợp bộ lọc.'}
               </div>
             ) : (
               <div className="min-w-[500px]">
@@ -203,7 +203,7 @@ export function SlotMappingEditorView({
           <SlotStatusModal
             slot={statusSlot}
             onClose={() => setStatusSlot(null)}
-            onSuccess={() => { setStatusSlot(null); onRefreshSlots(); }}
+            onSuccess={() => { setStatusSlot(null); onRefreshSlots(true); }}
           />
         )}
         {bulkOpen && floor && (
@@ -214,7 +214,7 @@ export function SlotMappingEditorView({
             totalSlots={floor.totalSlots}
             currentSlotCount={slots.length}
             onClose={() => setBulkOpen(false)}
-            onSuccess={() => { setBulkOpen(false); onRefreshSlots(); }}
+            onSuccess={() => { setBulkOpen(false); onRefreshSlots(true); }}
           />
         )}
       </AnimatePresence>

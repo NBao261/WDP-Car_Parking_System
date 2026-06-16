@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 
 export class PublicService {
   static async getPublicFacilities(filters: any = {}, skip = 0, limit = 10) {
-    const query: any = { ...filters };
+    const query: any = { isDeleted: false, ...filters };
     if (!query.status && query.status !== 'all') {
       query.status = 'active';
     } else if (query.status === 'all') {

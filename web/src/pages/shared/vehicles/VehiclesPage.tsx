@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, Search, RefreshCw, Package, ChevronLeft, ChevronRight, ChevronDown, Filter, Loader2, X } from 'lucide-react';
+import { Plus, Search, Package, ChevronLeft, ChevronRight, ChevronDown, Loader2, X, ArrowUpDown } from 'lucide-react';
 import { vehicleTypeService, VehicleType, SlotSize } from '../../../services/vehicleType.service';
 import { floorService, Floor } from '../../../services/floor.service';
 import { facilityService, Facility } from '../../../services/facility.service';
@@ -24,7 +24,7 @@ function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
 }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
-  const active = value !== 'all';
+  const active = value !== 'all' && value !== 'none';
 
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -164,6 +164,11 @@ export default function VehiclesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Sorting
+  type SortField = 'name' | 'code' | 'createdAt' | 'none';
+  const [sortField, setSortField] = useState<SortField>('createdAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
   const fetchVehicles = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -181,11 +186,28 @@ export default function VehiclesPage() {
   // Reset page when filters change
   useEffect(() => { setCurrentPage(1); }, [search, filterSize]);
 
-  // Filter Logic
+  // Filter & Sort Logic
   const filtered = vehicles.filter((v) => {
     const matchesSearch = v.name.toLowerCase().includes(search.toLowerCase()) || v.code.toLowerCase().includes(search.toLowerCase());
     const matchesSize = filterSize === 'all' || v.slotSize === filterSize;
     return matchesSearch && matchesSize;
+  }).sort((a, b) => {
+    if (sortField === 'none') return 0;
+    
+    let aVal: any = a[sortField];
+    let bVal: any = b[sortField];
+    
+    if (sortField === 'name' || sortField === 'code') {
+      aVal = aVal?.toLowerCase() || '';
+      bVal = bVal?.toLowerCase() || '';
+    } else if (sortField === 'createdAt') {
+      aVal = new Date(aVal || 0).getTime();
+      bVal = new Date(bVal || 0).getTime();
+    }
+    
+    if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+    return 0;
   });
 
   // Pagination Logic
@@ -267,62 +289,119 @@ export default function VehiclesPage() {
 
 
       {/* Search & Filter */}
-      <motion.div variants={itemVariants} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
+      <motion.div variants={itemVariants} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap items-center gap-3">
+        {/* Search input */}
+        <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Tìm kiếm theo tên hoặc mã..." value={search}
+          <input type="text" placeholder="Tìm kiếm theo tên hoặc mã xe..." value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:border-transparent transition-all"
           />
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-48">
-            <DropFilter
-              width="100%"
-              value={filterSize}
-              onChange={(v) => setFilterSize(v as any)}
-              icon={Filter}
-              options={[
-                { value: 'all', label: 'Tất Cả Kích Thước' },
-                { value: 'small', label: 'Nhỏ' },
-                { value: 'medium', label: 'Vừa' },
-                { value: 'large', label: 'Lớn' },
-              ]}
-            />
-          </div>
-          {(search || filterSize !== 'all') && (
-            <button
-              onClick={() => { setSearch(''); setFilterSize('all'); }}
-              style={{
-                height: 40,
-                padding: '0 16px',
-                borderRadius: 10,
-                border: 'none',
-                background: '#fff1f1',
-                color: '#d32f2f',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                transition: 'background 0.2s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#fce4e4'}
-              onMouseLeave={e => e.currentTarget.style.background = '#fff1f1'}
-            >
-              <X size={15} />
-              Bỏ lọc
-            </button>
-          )}
-          <button
-            onClick={fetchVehicles}
-            title="Làm mới"
-            className="px-3 py-2 border border-gray-200 text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors flex items-center justify-center shrink-0"
-          >
-            <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
-          </button>
+
+        {/* Slot Size Filter */}
+        <div className="relative w-auto sm:w-48 shrink-0">
+          <DropFilter
+            width="100%"
+            value={filterSize}
+            onChange={(v) => setFilterSize(v as any)}
+            options={[
+              { value: 'all', label: 'Tất Cả Kích Thước' },
+              { value: 'small', label: 'Nhỏ' },
+              { value: 'medium', label: 'Vừa' },
+              { value: 'large', label: 'Lớn' },
+            ]}
+          />
         </div>
+
+        {/* Divider for large screens */}
+        <div className="h-6 w-px bg-gray-200 hidden xl:block mx-1" />
+
+        {/* Sorting Label */}
+        <span className="text-sm text-gray-500 font-medium shrink-0">Sắp xếp:</span>
+        
+        {/* Sort: Name */}
+        <div className="relative w-auto sm:w-36 shrink-0">
+          <DropFilter
+            width="100%"
+            value={sortField === 'name' ? sortDir : 'none'}
+            onChange={(v) => {
+              if (v === 'none') { setSortField('createdAt'); setSortDir('desc'); }
+              else { setSortField('name'); setSortDir(v as 'asc' | 'desc'); }
+            }}
+            icon={ArrowUpDown}
+            options={[
+              { value: 'none', label: 'Loại xe' },
+              { value: 'asc', label: 'Loại xe (A-Z)' },
+              { value: 'desc', label: 'Loại xe (Z-A)' },
+            ]}
+          />
+        </div>
+
+        {/* Sort: Code */}
+        <div className="relative w-auto sm:w-36 shrink-0">
+          <DropFilter
+            width="100%"
+            value={sortField === 'code' ? sortDir : 'none'}
+            onChange={(v) => {
+              if (v === 'none') { setSortField('createdAt'); setSortDir('desc'); }
+              else { setSortField('code'); setSortDir(v as 'asc' | 'desc'); }
+            }}
+            icon={ArrowUpDown}
+            options={[
+              { value: 'none', label: 'Mã xe' },
+              { value: 'asc', label: 'Mã xe (A-Z)' },
+              { value: 'desc', label: 'Mã xe (Z-A)' },
+            ]}
+          />
+        </div>
+
+        {/* Sort: CreatedAt */}
+        <div className="relative w-auto sm:w-36 shrink-0">
+          <DropFilter
+            width="100%"
+            value={sortField === 'createdAt' ? sortDir : 'none'}
+            onChange={(v) => {
+              if (v === 'none') { setSortField('createdAt'); setSortDir('desc'); }
+              else { setSortField('createdAt'); setSortDir(v as 'asc' | 'desc'); }
+            }}
+            icon={ArrowUpDown}
+            options={[
+              { value: 'none', label: 'Ngày tạo' },
+              { value: 'desc', label: 'Mới nhất' },
+              { value: 'asc', label: 'Cũ nhất' },
+            ]}
+          />
+        </div>
+
+        {/* Clear Filters Button */}
+        {(search || filterSize !== 'all' || sortField !== 'createdAt' || sortDir !== 'desc') && (
+          <button
+            onClick={() => { setSearch(''); setFilterSize('all'); setSortField('createdAt'); setSortDir('desc'); }}
+            style={{
+              height: 40,
+              padding: '0 16px',
+              borderRadius: 10,
+              border: 'none',
+              background: '#fff1f1',
+              color: '#d32f2f',
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#fce4e4'}
+            onMouseLeave={e => e.currentTarget.style.background = '#fff1f1'}
+            className="shrink-0"
+          >
+            <X size={15} />
+            Bỏ lọc
+          </button>
+        )}
+
       </motion.div>
 
       {/* Table */}

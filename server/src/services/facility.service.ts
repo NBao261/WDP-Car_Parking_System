@@ -39,7 +39,9 @@ export class FacilityService {
       await Floor.updateMany({ facilityId: id, isDeleted: false }, { status: 'inactive' });
       await ParkingSlot.updateMany({ facilityId: id, status: 'available' }, { status: 'maintenance' });
     } else if (data.status === 'active') {
-      // Tùy chọn: Khi activate toà nhà, có thể kích hoạt lại các tầng (nhưng tạm thời giữ nguyên để admin tự bật lại nếu cần)
+      // Cascade: floors → active, slots maintenance → available
+      await Floor.updateMany({ facilityId: id, isDeleted: false }, { status: 'active' });
+      await ParkingSlot.updateMany({ facilityId: id, status: 'maintenance' }, { status: 'available' });
     }
 
     return facility;

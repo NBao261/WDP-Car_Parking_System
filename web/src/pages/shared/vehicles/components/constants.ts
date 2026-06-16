@@ -25,7 +25,7 @@ export const ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
 export const DEFAULT_ICON = 'Car';
 
 export const SLOT_SIZE_LABELS: Record<SlotSize, { label: string; color: string }> = {
-  small: { label: 'Nhỏ', color: 'bg-blue-50 text-blue-700 border-blue-200/60' },
-  medium: { label: 'Vừa', color: 'bg-amber-50 text-amber-700 border-amber-200/60' },
-  large: { label: 'Lớn', color: 'bg-purple-50 text-purple-700 border-purple-200/60' },
+  small: { label: 'Nhỏ', color: 'bg-gray-100 text-gray-700 border-gray-200' },
+  medium: { label: 'Vừa', color: 'bg-gray-100 text-gray-700 border-gray-200' },
+  large: { label: 'Lớn', color: 'bg-gray-100 text-gray-700 border-gray-200' },
 };

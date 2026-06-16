@@ -95,7 +95,7 @@ export function PricingDetailModal({ isOpen, onClose, plan, facilities, vehicleT
                 </p>
                 <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 5, ...badgeStyle }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
-                  {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
+                  {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
                 </span>
               </div>
               <div className="flex items-center gap-4">

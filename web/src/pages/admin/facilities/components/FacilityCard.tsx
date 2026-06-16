@@ -166,7 +166,7 @@ export function FacilityCard({ facility, stats, onEdit, onViewFloors, onUpdate, 
         <div className="flex items-center gap-2 flex-shrink-0">
           <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 5, ...badgeStyle }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
-            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
+            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
           </span>
           <div className="relative -mr-2" onClick={(e) => e.stopPropagation()}>
             {loading ? (
@@ -335,7 +335,7 @@ export function FacilityListItem({ facility, stats, onViewFloors, onViewDetail }
           <span className="text-[15px] text-[#060606] font-semibold">{facility.name}</span>
           <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4, ...badgeStyle }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
-            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ TẮT'}
+            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
           </span>
         </div>
         <span className="text-[13px] block truncate" title={facility.address} style={{ color: '#9b9e9b' }}>{facility.address}</span>

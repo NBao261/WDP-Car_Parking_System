@@ -76,8 +76,6 @@ export default function FacilitiesPage() {
           <FacilityFilterBar
             search={data.search} setSearch={data.setSearch}
             statusFilter={data.statusFilter} setStatusFilter={data.setStatusFilter}
-            vehicleFilter={data.vehicleFilter} setVehicleFilter={data.setVehicleFilter}
-            vehicleTypes={data.vehicleTypes}
             viewMode={viewMode} setViewMode={setViewMode}
           />
 
@@ -96,7 +94,7 @@ export default function FacilitiesPage() {
                 <p className="text-xs text-gray-400 mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
               </div>
               <button
-                onClick={() => { data.setSearch(''); data.setStatusFilter('all'); data.setVehicleFilter('all'); }}
+                onClick={() => { data.setSearch(''); data.setStatusFilter('all'); }}
                 className="bg-[#f0f1f0] text-[#060606] font-medium px-5 py-2.5 rounded-xl hover:bg-gray-200 transition-colors"
               >
                 Xóa bộ lọc
@@ -206,8 +204,8 @@ export default function FacilitiesPage() {
             vehicleTypes={data.vehicleTypes}
             loading={data.mapLoading}
             isFacilityActive={data.viewFacility.status !== 'inactive'}
-            onRefreshSlots={async () => {
-              data.setMapLoading(true);
+            onRefreshSlots={async (silent = false) => {
+              if (!silent) data.setMapLoading(true);
               try {
                 const [res, vtRes] = await Promise.all([
                   slotService.getByFloor(data.mapFloor!._id),
@@ -224,7 +222,7 @@ export default function FacilitiesPage() {
               } catch {
                 toast.error('Lỗi tải dữ liệu');
               } finally {
-                data.setMapLoading(false);
+                if (!silent) data.setMapLoading(false);
               }
             }}
             onClose={() => data.setMapFloor(null)}
@@ -256,7 +254,7 @@ export default function FacilitiesPage() {
           floor={editingFloor}
           facilityId={data.viewFacility._id}
           vehicleTypes={data.vehicleTypes}
-          onSuccess={data.fetchAll}
+          onSuccess={data.refreshFloors}
           currentFloorCount={data.filteredFloors.length}
           maxFloors={data.viewFacility.totalFloors}
         />

@@ -1,27 +1,34 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, ChevronDown, LayoutGrid, List, X } from 'lucide-react';
-import { VehicleType } from '../../../../services/vehicleType.service';
 
 interface FacilityFilterBarProps {
   search: string;
   setSearch: (val: string) => void;
   statusFilter: string;
   setStatusFilter: (val: string) => void;
-  vehicleFilter: string;
-  setVehicleFilter: (val: string) => void;
-  vehicleTypes: VehicleType[];
   viewMode: 'grid' | 'list';
   setViewMode: (val: 'grid' | 'list') => void;
+  hideViewMode?: boolean;
 }
 
 const inputBase: React.CSSProperties = {
-  height: 40, background: '#ffffff',
-  border: '1.5px solid #e2e3e2', borderRadius: 10,
-  fontSize: 14, outline: 'none', cursor: 'pointer',
+  height: 40,
+  background: '#ffffff',
+  border: '1.5px solid #e2e3e2',
+  borderRadius: 10,
+  fontSize: 14,
+  outline: 'none',
+  cursor: 'pointer',
 };
 
-function DropFilter({ value, onChange, options }: {
-  label: string; value: string; onChange: (v: string) => void;
+function DropFilter({
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
   options: { value: string; label: string }[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -38,7 +45,7 @@ function DropFilter({ value, onChange, options }: {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const selectedOption = options.find(o => o.value === value) || options[0];
+  const selectedOption = options.find((o) => o.value === value) || options[0];
 
   return (
     <div className="relative" style={{ width: 180, flexShrink: 0 }} ref={dropdownRef}>
@@ -61,18 +68,22 @@ function DropFilter({ value, onChange, options }: {
           {selectedOption?.label}
         </span>
       </div>
-      
-      <ChevronDown 
-        size={15} 
-        style={{ 
-          position: 'absolute', right: 12, top: '50%', transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`, 
-          color: '#6b6e6b', pointerEvents: 'none',
-          transition: 'transform 0.2s ease'
-        }} 
+
+      <ChevronDown
+        size={15}
+        style={{
+          position: 'absolute',
+          right: 12,
+          top: '50%',
+          transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`,
+          color: '#6b6e6b',
+          pointerEvents: 'none',
+          transition: 'transform 0.2s ease',
+        }}
       />
 
       {isOpen && (
-        <div 
+        <div
           className="custom-scrollbar"
           style={{
             position: 'absolute',
@@ -87,7 +98,7 @@ function DropFilter({ value, onChange, options }: {
             overflowY: 'auto',
             overflowX: 'hidden',
             maxHeight: 280,
-            animation: 'fadeIn 0.15s ease-out'
+            animation: 'fadeIn 0.15s ease-out',
           }}
         >
           <style>
@@ -128,7 +139,7 @@ function DropFilter({ value, onChange, options }: {
                 fontWeight: value === o.value ? 500 : 400,
                 display: 'flex',
                 alignItems: 'center',
-                transition: 'background 0.15s ease, color 0.15s ease'
+                transition: 'background 0.15s ease, color 0.15s ease',
               }}
               onMouseEnter={(e) => {
                 if (value !== o.value) {
@@ -151,99 +162,132 @@ function DropFilter({ value, onChange, options }: {
 }
 
 export function FacilityFilterBar({
-  search, setSearch,
-  statusFilter, setStatusFilter,
-  vehicleFilter, setVehicleFilter,
-  vehicleTypes,
-  viewMode, setViewMode
+  search,
+  setSearch,
+  statusFilter,
+  setStatusFilter,
+  viewMode,
+  setViewMode,
+  hideViewMode = false,
 }: FacilityFilterBarProps) {
-  const hasActiveFilters = search !== '' || statusFilter !== 'all' || vehicleFilter !== 'all';
+  const hasActiveFilters = search !== '' || statusFilter !== 'all';
 
   const clearFilters = () => {
     setSearch('');
     setStatusFilter('all');
-    setVehicleFilter('all');
   };
 
   return (
-    <div className="mb-5">
-      <div className="flex flex-wrap items-center gap-3" style={{ minHeight: 48 }}>
-        {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#6b6e6b' }} />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Tìm tòa nhà, địa chỉ..."
-            style={{ ...inputBase, width: '100%', boxSizing: 'border-box', paddingLeft: 40, paddingRight: 16, cursor: 'text', transition: 'all 0.2s ease' }}
-            onFocus={e => { e.target.style.border = '1.5px solid #cce242'; e.target.style.boxShadow = '0 0 0 3px rgba(204,226,66,0.2)'; }}
-            onBlur={e => { e.target.style.border = '1.5px solid #e2e3e2'; e.target.style.boxShadow = 'none'; }}
-          />
-        </div>
-
-        {/* Dropdowns */}
-        <DropFilter
-          label="Trạng thái" value={statusFilter} onChange={setStatusFilter}
-          options={[
-            { value: 'all', label: 'Tất cả trạng thái' },
-            { value: 'active', label: 'Hoạt động' },
-            { value: 'inactive', label: 'Đã tắt' },
-          ]}
+    <div
+      className="mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap items-center gap-3"
+      style={{ minHeight: 48 }}
+    >
+      {/* Search */}
+      <div className="relative flex-1 min-w-[200px]">
+        <Search
+          size={15}
+          style={{
+            position: 'absolute',
+            left: 14,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#6b6e6b',
+          }}
         />
-        <DropFilter
-          label="Loại xe" value={vehicleFilter} onChange={setVehicleFilter}
-          options={[
-            { value: 'all', label: 'Tất cả loại xe' },
-            ...vehicleTypes.map(v => ({ value: v._id, label: v.name }))
-          ]}
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Tìm tòa nhà, địa chỉ..."
+          style={{
+            ...inputBase,
+            width: '100%',
+            boxSizing: 'border-box',
+            paddingLeft: 40,
+            paddingRight: 16,
+            cursor: 'text',
+            transition: 'all 0.2s ease',
+          }}
+          onFocus={(e) => {
+            e.target.style.border = '1.5px solid #cce242';
+            e.target.style.boxShadow = '0 0 0 3px rgba(204,226,66,0.2)';
+          }}
+          onBlur={(e) => {
+            e.target.style.border = '1.5px solid #e2e3e2';
+            e.target.style.boxShadow = 'none';
+          }}
         />
+      </div>
 
-        {hasActiveFilters && (
-          <button
-            onClick={clearFilters}
-            style={{
-              height: 40,
-              padding: '0 16px',
-              borderRadius: 10,
-              border: 'none',
-              background: '#fff1f1',
-              color: '#d32f2f',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              transition: 'background 0.2s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = '#fce4e4'}
-            onMouseLeave={e => e.currentTarget.style.background = '#fff1f1'}
-          >
-            <X size={15} />
-            Bỏ lọc
-          </button>
-        )}
+      {/* Dropdowns */}
+      <DropFilter
+        label="Trạng thái"
+        value={statusFilter}
+        onChange={setStatusFilter}
+        options={[
+          { value: 'all', label: 'Tất cả trạng thái' },
+          { value: 'active', label: 'Hoạt động' },
+          { value: 'inactive', label: 'Đã vô hiệu hóa' },
+        ]}
+      />
 
-        {/* View toggle */}
+      {hasActiveFilters && (
+        <button
+          onClick={clearFilters}
+          style={{
+            height: 40,
+            padding: '0 16px',
+            borderRadius: 10,
+            border: 'none',
+            background: '#fff1f1',
+            color: '#d32f2f',
+            fontSize: 14,
+            fontWeight: 500,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            transition: 'background 0.2s',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#fce4e4')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = '#fff1f1')}
+        >
+          <X size={15} />
+          Bỏ lọc
+        </button>
+      )}
+
+      {/* View toggle */}
+      {!hideViewMode && (
         <div className="flex gap-1 shrink-0 ml-auto">
-          {(['grid', 'list'] as const).map(mode => (
+          {(['grid', 'list'] as const).map((mode) => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
               style={{
-                width: 40, height: 40, borderRadius: 10, border: 'none', cursor: 'pointer',
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                border: 'none',
+                cursor: 'pointer',
                 background: viewMode === mode ? '#d7ee46' : '#f0f1f0',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 transition: 'background 0.15s',
               }}
             >
-              {mode === 'grid'
-                ? <LayoutGrid size={16} style={{ color: viewMode === 'grid' ? '#060606' : '#6b6e6b' }} />
-                : <List size={16} style={{ color: viewMode === 'list' ? '#060606' : '#6b6e6b' }} />}
+              {mode === 'grid' ? (
+                <LayoutGrid
+                  size={16}
+                  style={{ color: viewMode === 'grid' ? '#060606' : '#6b6e6b' }}
+                />
+              ) : (
+                <List size={16} style={{ color: viewMode === 'list' ? '#060606' : '#6b6e6b' }} />
+              )}
             </button>
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }
