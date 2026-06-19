@@ -96,6 +96,30 @@ export default function MainLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="feedback/index"
+        options={{
+          href: null,
+          title: 'Phản hồi',
+          headerTitle: 'Danh sách Phản hồi',
+        }}
+      />
+      <Tabs.Screen
+        name="feedback/create"
+        options={{
+          href: null,
+          title: 'Gửi Phản hồi',
+          headerTitle: 'Gửi Phản hồi',
+        }}
+      />
+      <Tabs.Screen
+        name="profile/change-password"
+        options={{
+          href: null,
+          title: 'Đổi Mật Khẩu',
+          headerTitle: 'Đổi Mật Khẩu',
+        }}
+      />
     </Tabs>
   );
 }

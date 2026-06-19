@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Button, Card } from "../../src/components";
@@ -18,14 +18,18 @@ export default function AccountScreen() {
   const menuItems = [
     {
       icon: "person-outline" as const,
-      label: "Thông tin cá nhân",
-      onPress: () => {},
+      label: "Đổi mật khẩu",
+      onPress: () => router.push("/profile/change-password" as any),
     },
-    { icon: "car-outline" as const, label: "Xe của tôi", onPress: () => {} },
     {
-      icon: "card-outline" as const,
-      label: "Phương thức thanh toán",
-      onPress: () => {},
+      icon: "chatbubble-ellipses-outline" as const,
+      label: "Gửi phản hồi",
+      onPress: () => router.push("/feedback/create" as any),
+    },
+    {
+      icon: "list-outline" as const,
+      label: "Danh sách phản hồi",
+      onPress: () => router.push("/feedback" as any),
     },
     {
       icon: "notifications-outline" as const,
@@ -78,7 +82,7 @@ export default function AccountScreen() {
       <Card variant="outlined">
         {menuItems.map((item, index) => (
           <View key={item.label}>
-            <View style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={item.onPress}>
               <View style={styles.menuLeft}>
                 <Ionicons
                   name={item.icon}
@@ -92,7 +96,7 @@ export default function AccountScreen() {
                 size={20}
                 color={Colors.textTertiary}
               />
-            </View>
+            </TouchableOpacity>
             {index < menuItems.length - 1 && <View style={styles.divider} />}
           </View>
         ))}

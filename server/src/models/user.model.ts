@@ -28,6 +28,7 @@ export interface IUser extends Document {
   lockedUntil: Date | null;
   mustChangePassword: boolean;
   lastLogin: Date | null;
+  deviceToken?: string;
   createdAt: Date;
   updatedAt: Date;
   isDeleted: boolean;
@@ -48,6 +49,7 @@ const userSchema = new Schema<IUser>(
     lockedUntil: { type: Date, default: null },
     mustChangePassword: { type: Boolean, default: true },
     lastLogin: { type: Date, default: null },
+    deviceToken: { type: String, default: null },
     isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }

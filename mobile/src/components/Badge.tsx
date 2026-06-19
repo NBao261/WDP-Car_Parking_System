@@ -41,7 +41,7 @@ const variantStyles: Record<BadgeVariant, ViewStyle> = {
   success: { backgroundColor: Colors.successLight },
   danger: { backgroundColor: Colors.dangerLight },
   warning: { backgroundColor: Colors.warningLight },
-  info: { backgroundColor: Colors.infoLight },
+  info: { backgroundColor: Colors.primaryLight },
   neutral: { backgroundColor: Colors.divider },
 };
 
@@ -49,7 +49,7 @@ const variantTextStyles: Record<BadgeVariant, { color: string }> = {
   success: { color: Colors.successDark },
   danger: { color: Colors.dangerDark },
   warning: { color: Colors.warningDark },
-  info: { color: Colors.infoDark },
+  info: { color: Colors.primaryDark },
   neutral: { color: Colors.textSecondary },
 };
 

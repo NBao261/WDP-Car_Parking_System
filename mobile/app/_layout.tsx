@@ -22,10 +22,15 @@ Notifications.setNotificationHandler({
   }),
 });
 
+import { usePushNotifications } from '../src/hooks/usePushNotifications';
+
 export default function RootLayout() {
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  
+  // Initialize push notifications (handles registration, token update, and listeners)
+  usePushNotifications();
 
   const [fontsLoaded] = useFonts({
     SpaceGrotesk_400Regular,
@@ -36,7 +41,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     checkAuth();
-    requestNotificationPermissions();
   }, [checkAuth]);
 
   useEffect(() => {
@@ -44,19 +48,6 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
-
-  const requestNotificationPermissions = async () => {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    if (finalStatus !== 'granted') {
-      console.log('Failed to get push token for push notification!');
-      return;
-    }
-  };
 
   useEffect(() => {
     if (isLoading || !fontsLoaded) return;

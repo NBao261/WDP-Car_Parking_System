@@ -127,4 +127,17 @@ export class UserController {
       next(error);
     }
   }
+
+  /** PUT /users/device-token — Cập nhật device token cho user hiện tại */
+  static async updateDeviceToken(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user!.userId;
+      const { deviceToken } = req.body;
+      const { NotificationService } = await import('../services/notification.service');
+      await NotificationService.updateDeviceToken(userId, deviceToken);
+      res.status(200).json({ success: true, message: 'Device token updated' });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
