@@ -55,7 +55,7 @@ export const sessionApi = {
 
 // Reservation API
 export const reservationApi = {
-  createReservation: (data: { facilityId: string; vehicleTypeId: string; licensePlate: string; startTime: string; endTime: string; }) => {
+  createReservation: (data: { facilityId: string; vehicleTypeId: string; licensePlate: string; startTime: string; }) => {
     return apiClient.post('/reservations', data);
   },
   getReservations: (status?: 'pending' | 'confirmed' | 'used' | 'cancelled' | 'expired') => {
