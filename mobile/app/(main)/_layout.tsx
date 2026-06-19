@@ -96,27 +96,6 @@ export default function MainLayout() {
           href: null,
         }}
       />
-      <Tabs.Screen
-        name="feedback/index"
-        options={{
-          href: null,
-          headerShown: false,
-        }}
-      />
-      <Tabs.Screen
-        name="feedback/create"
-        options={{
-          href: null,
-          headerShown: false,
-        }}
-      />
-      <Tabs.Screen
-        name="profile/change-password"
-        options={{
-          href: null,
-          headerShown: false,
-        }}
-      />
     </Tabs>
   );
 }

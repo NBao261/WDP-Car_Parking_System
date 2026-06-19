@@ -11,8 +11,8 @@ import {
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors, Typography, Spacing } from "../../../src/constants/theme";
-import { feedbackApi } from "../../../src/services/api";
+import { Colors, Typography, Spacing } from "../../src/constants/theme";
+import { feedbackApi } from "../../src/services/api";
 
 export default function FeedbackListScreen() {
   const router = useRouter();
@@ -132,7 +132,12 @@ export default function FeedbackListScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Phản hồi của tôi</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Phản hồi của tôi</Text>
+        </View>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => router.push("/feedback/create")}
