@@ -63,11 +63,19 @@ export default function BookingScreen() {
         api.getAvailableSlots(facilityId),
         api.getPublicFacilities(1, 100),
       ]);
+
+      const slots: AvailableSlot[] = slotRes || [];
+      setAvailableSlots(slots);
+
       if (vtRes.success) {
-        setVehicleTypes(vtRes.data);
-        if (vtRes.data.length > 0) setSelectedVehicleType(vtRes.data[0]._id);
+        // Only show vehicle types that this facility actually supports
+        // (i.e. they appear in the availableSlots response for this facility)
+        const supportedIds = new Set(slots.map((s) => s.vehicleTypeId));
+        const supported = (vtRes.data as any[]).filter((vt) => supportedIds.has(vt._id));
+        setVehicleTypes(supported);
+        if (supported.length > 0) setSelectedVehicleType(supported[0]._id);
       }
-      if (slotRes) setAvailableSlots(slotRes as AvailableSlot[]);
+
       const fac = facilities?.find((f: any) => f._id === facilityId);
       if (fac) setFacilityName(fac.name);
     } catch {
@@ -191,32 +199,32 @@ export default function BookingScreen() {
             >
               {vehicleTypes.map((vt) => {
                 const active = selectedVehicleType === vt._id;
+                const slotInfo = availableSlots.find(s => s.vehicleTypeId === vt._id);
+                const count = slotInfo?.availableCount ?? 0;
+                const noSlot = count === 0;
                 return (
                   <TouchableOpacity
                     key={vt._id}
-                    style={[styles.vtChip, active && styles.vtChipActive]}
+                    style={[styles.vtChip, active && styles.vtChipActive, noSlot && styles.vtChipFull]}
                     onPress={() => setSelectedVehicleType(vt._id)}
                   >
                     <Ionicons
                       name={getVehicleIcon(vt.name)}
                       size={18}
-                      color={active ? Colors.primary : Colors.textSecondary}
+                      color={active ? Colors.primary : noSlot ? Colors.textTertiary : Colors.textSecondary}
                     />
-                    <Text
-                      style={[
-                        styles.vtChipText,
-                        active && styles.vtChipTextActive,
-                      ]}
-                    >
+                    <Text style={[styles.vtChipText, active && styles.vtChipTextActive, noSlot && styles.vtChipTextFull]}>
                       {vt.name}
                     </Text>
-                    {active && (
+                    {/* Slot count badge */}
+                    <View style={[styles.slotCountBadge, { backgroundColor: noSlot ? Colors.dangerLight : count <= 5 ? Colors.warningLight : Colors.successLight }]}>
+                      <Text style={[styles.slotCountText, { color: noSlot ? Colors.danger : count <= 5 ? Colors.warning : Colors.success }]}>
+                        {count}
+                      </Text>
+                    </View>
+                    {active && !noSlot && (
                       <View style={styles.vtCheck}>
-                        <Ionicons
-                          name="checkmark"
-                          size={10}
-                          color={Colors.white}
-                        />
+                        <Ionicons name="checkmark" size={10} color={Colors.white} />
                       </View>
                     )}
                   </TouchableOpacity>
@@ -526,6 +534,25 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: "center",
     justifyContent: "center",
+  },
+  vtChipFull: {
+    borderColor: Colors.borderLight,
+    backgroundColor: Colors.surfaceElevated,
+    opacity: 0.6,
+  },
+  vtChipTextFull: {
+    color: Colors.textTertiary,
+  },
+  slotCountBadge: {
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 22,
+    alignItems: "center",
+  },
+  slotCountText: {
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.bold,
   },
 
   // Plate input
