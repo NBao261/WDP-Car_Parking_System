@@ -69,12 +69,7 @@ export default function HomeScreen() {
 
   const onRefresh = () => { setRefreshing(true); fetchData(); };
 
-  const quickActions = [
-    { icon: 'calendar-outline' as const, label: 'Đặt chỗ', onPress: () => router.push('/(main)/reservations' as any), color: Colors.secondary },
-    { icon: 'receipt-outline' as const, label: 'Lịch sử', onPress: () => router.push('/(main)/sessions' as any), color: Colors.success },
-    { icon: 'chatbubble-ellipses-outline' as const, label: 'Phản hồi', onPress: () => router.push('/feedback/create' as any), color: Colors.warning },
-    { icon: 'person-outline' as const, label: 'Tài khoản', onPress: () => router.push('/(main)/account' as any), color: Colors.info },
-  ];
+
 
   return (
     <View style={styles.root}>
@@ -141,25 +136,7 @@ export default function HomeScreen() {
         {/* ── Body ── */}
         <View style={styles.body}>
 
-          {/* Quick Actions */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Truy cập nhanh</Text>
-            <View style={styles.quickActionsGrid}>
-              {quickActions.map((qa) => (
-                <TouchableOpacity
-                  key={qa.label}
-                  style={styles.qaCard}
-                  onPress={qa.onPress}
-                  activeOpacity={0.75}
-                >
-                  <View style={[styles.qaIconWrap, { backgroundColor: qa.color + '18' }]}>
-                    <Ionicons name={qa.icon} size={22} color={qa.color} />
-                  </View>
-                  <Text style={styles.qaLabel}>{qa.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+
 
           {/* Active Session */}
           <View style={styles.section}>
