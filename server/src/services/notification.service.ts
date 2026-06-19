@@ -1,6 +1,6 @@
 import { Expo, ExpoPushMessage, ExpoPushTicket, ExpoPushReceipt } from 'expo-server-sdk';
 import { User } from '../models/user.model';
-import logger from '../utils/logger';
+import { logger } from '../config/logger';
 
 // Create a new Expo SDK client
 // optionally providing an access token if you have enabled push security

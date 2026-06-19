@@ -10,8 +10,8 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors, Typography, Spacing } from "../../../src/constants/theme";
-import { feedbackApi } from "../../../src/services/api";
+import { Colors, Typography, Spacing } from "../../src/constants/theme";
+import { feedbackApi } from "../../src/services/api";
 
 export default function FeedbackListScreen() {
   const router = useRouter();
