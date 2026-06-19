@@ -170,7 +170,7 @@ export default function AccountScreen() {
             icon="receipt-outline"
             label="Lịch sử gửi xe"
             subtitle="Xem lượt gửi đã hoàn thành"
-            onPress={() => router.push("/(main)/sessions" as any)}
+            onPress={() => router.push("/(main)/sessions?tab=history" as any)}
             color={Colors.success}
           />
           <View style={styles.divider} />
