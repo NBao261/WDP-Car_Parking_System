@@ -192,7 +192,7 @@ export default function HomeScreen() {
           </View>
 
           {/* ── Upcoming Reservations ── */}
-          <View style={styles.section}>
+          {upcomingRes.length > 0 && <View style={styles.section}>
             <View style={styles.sectionRow}>
               <Text style={styles.sectionTitle}>Đặt chỗ sắp tới</Text>
               {upcomingRes.length > 0 && (
@@ -278,7 +278,7 @@ export default function HomeScreen() {
                 );
               })
             )}
-          </View>
+          </View>}
         </View>
       </ScrollView>
     </View>
