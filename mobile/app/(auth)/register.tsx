@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Alert, TouchableOpacity, Image } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -67,7 +67,7 @@ export default function RegisterScreen() {
               </View>
               <View style={styles.logoContainer}>
                 <View style={styles.logoCircle}>
-                  <Ionicons name="person-add" size={36} color={Colors.primary} />
+                  <Image source={require('../../assets/images/logo.png')} style={{ width: 48, height: 48, resizeMode: 'contain' }} />
                 </View>
                 <Text style={styles.title}>Tạo tài khoản</Text>
                 <Text style={styles.subtitle}>Bắt đầu hành trình đỗ xe thông minh</Text>

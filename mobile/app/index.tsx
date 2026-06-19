@@ -23,7 +23,7 @@ export default function WelcomeScreen() {
           {/* Hero Section */}
           <View style={styles.hero}>
             <View style={styles.logoBadge}>
-              <Ionicons name="car-sport" size={28} color={Colors.white} />
+              <Image source={require('../assets/images/logo.png')} style={{ width: 36, height: 36, resizeMode: 'contain' }} />
             </View>
             <Text style={styles.title}>
               Smart{'\n'}Parking

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Alert, TouchableOpacity, Image } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -61,7 +61,7 @@ export default function LoginScreen() {
               </View>
               <View style={styles.logoContainer}>
                 <View style={styles.logoCircle}>
-                  <Ionicons name="car-sport" size={40} color={Colors.primary} />
+                  <Image source={require('../../assets/images/logo.png')} style={{ width: 48, height: 48, resizeMode: 'contain' }} />
                 </View>
                 <Text style={styles.title}>Smart Parking</Text>
                 <Text style={styles.subtitle}>Đăng nhập tài khoản Driver</Text>
