@@ -8,7 +8,7 @@ export const createFeedbackSchema = z.object({
     sessionId: z.string().regex(objectIdRegex, 'Invalid session ID').optional(),
     type: z.nativeEnum(FeedbackType, { required_error: 'Loại phản hồi không được để trống' }),
     description: z.string({ required_error: 'Mô tả không được để trống' }).min(1, 'Mô tả không được để trống'),
-    images: z.array(z.string().url('URL ảnh không hợp lệ')).optional().default([]),
+    images: z.array(z.string().min(1, 'Ảnh không hợp lệ')).optional().default([]),
   }),
 });
 

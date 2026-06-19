@@ -73,6 +73,28 @@ export const vehicleTypeApi = {
   }
 };
 
+// Feedback API
+export const feedbackApi = {
+  createFeedback: (data: { type: string; description: string; images?: string[]; sessionId?: string; }) => {
+    return apiClient.post('/feedbacks', data);
+  },
+  getFeedbacks: (params?: { page?: number; limit?: number; status?: string; type?: string }) => {
+    return apiClient.get('/feedbacks', { params });
+  }
+};
+
+export const authApi = {
+  changePassword: (data: any) => {
+    return apiClient.put('/auth/change-password', data);
+  }
+};
+
+export const userApi = {
+  updateDeviceToken: (deviceToken: string) => {
+    return apiClient.put('/users/device-token', { deviceToken });
+  }
+};
+
 // ─── Request Interceptor: Attach token ────────────────
 apiClient.interceptors.request.use(
   async (config) => {
