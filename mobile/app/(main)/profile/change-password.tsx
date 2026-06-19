@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, Alert, TextInput } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors, Spacing } from "../../src/constants/theme";
-import { Button } from "../../src/components";
-import { authApi } from "../../src/services/api";
+import { Colors, Spacing } from "../../../src/constants/theme";
+import { Button } from "../../../src/components";
+import { authApi } from "../../../src/services/api";
 
 export default function ChangePasswordScreen() {
   const router = useRouter();

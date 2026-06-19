@@ -13,9 +13,9 @@ import {
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors, Typography, Spacing } from "../../src/constants/theme";
-import { Button } from "../../src/components";
-import { feedbackApi } from "../../src/services/api";
+import { Colors, Typography, Spacing } from "../../../src/constants/theme";
+import { Button } from "../../../src/components";
+import { feedbackApi } from "../../../src/services/api";
 
 const FEEDBACK_TYPES = [
   { id: "lost_card", label: "Mất thẻ/Vé", icon: "card-outline" },
