@@ -12,4 +12,5 @@ export interface ParkingSession {
   checkOutTime: string | null;
   status: SessionStatus;
   totalFee: number;
+  pricingPlan?: any; 
 }
