@@ -110,9 +110,9 @@ export default function LoginScreen() {
                 activeOpacity={0.85}
               >
                 {loading ? (
-                  <Ionicons name="hourglass-outline" size={20} color={Colors.textPrimary} />
+                  <Ionicons name="hourglass-outline" size={20} color={Colors.white} />
                 ) : (
-                  <Ionicons name="log-in-outline" size={20} color={Colors.textPrimary} />
+                  <Ionicons name="log-in-outline" size={20} color={Colors.white} />
                 )}
                 <Text style={styles.loginBtnText}>{loading ? "Đang xử lý..." : "Đăng nhập"}</Text>
               </TouchableOpacity>
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   loginBtnText: {
     fontSize: 16,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: Colors.white,
   },
 
   // Footer

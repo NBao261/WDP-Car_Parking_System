@@ -129,9 +129,9 @@ export default function RegisterScreen() {
                 activeOpacity={0.85}
               >
                 {loading ? (
-                  <Ionicons name="hourglass-outline" size={20} color={Colors.textPrimary} />
+                  <Ionicons name="hourglass-outline" size={20} color={Colors.white} />
                 ) : (
-                  <Ionicons name="checkmark-circle-outline" size={20} color={Colors.textPrimary} />
+                  <Ionicons name="checkmark-circle-outline" size={20} color={Colors.white} />
                 )}
                 <Text style={styles.registerBtnText}>{loading ? "Đang xử lý..." : "Đăng ký"}</Text>
               </TouchableOpacity>
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   registerBtnText: {
     fontSize: 16,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: Colors.white,
   },
 
   // Footer

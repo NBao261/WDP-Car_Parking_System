@@ -75,7 +75,7 @@ export default function WelcomeScreen() {
             activeOpacity={0.85}
           >
             <Text style={styles.primaryBtnText}>Đăng nhập</Text>
-            <Ionicons name="arrow-forward" size={20} color={Colors.textPrimary} />
+            <Ionicons name="arrow-forward" size={20} color={Colors.white} />
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     borderRadius: 16, ...Shadows.md,
   },
   primaryBtnText: {
-    fontSize: 16, fontFamily: Typography.fontFamily.bold, color: Colors.textPrimary,
+    fontSize: 16, fontFamily: Typography.fontFamily.bold, color: Colors.white,
   },
   secondaryBtn: {
     paddingVertical: 16, alignItems: 'center', justifyContent: 'center',
