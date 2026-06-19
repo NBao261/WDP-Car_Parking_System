@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import { useLocalSearchParams } from 'expo-router';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
   ActivityIndicator, RefreshControl, Platform,
@@ -145,7 +146,8 @@ function EmptyState({ icon, title, subtitle, actionLabel, onAction }: {
 
 export default function ActivityScreen() {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>('active');
+  const { tab: initialTab } = useLocalSearchParams<{ tab?: Tab }>();
+  const [tab, setTab] = useState<Tab>((initialTab as Tab) || 'active');
   const [activeSessions, setActiveSessions] = useState<ParkingSession[]>([]);
   const [histSessions, setHistSessions] = useState<ParkingSession[]>([]);
   const [upcomingRes, setUpcomingRes] = useState<Reservation[]>([]);

@@ -76,8 +76,15 @@ export default function BookingScreen() {
         startTime: startTime.toISOString(),
       })) as any;
       if (res.success) {
-        Alert.alert("🎉 Đặt chỗ thành công!", "Chúng tôi đã giữ chỗ cho bạn.", [
-          { text: "Xem đặt chỗ", onPress: () => router.push("/(main)/sessions" as any) },
+        Alert.alert("🎉 Đặt chỗ thành công!", "Chúng tôi đã giữ chỗ cho bạn. Bạn có thể xem và quản lý đặt chỗ trong mục Hoạt động.", [
+          {
+            text: "Xem đặt chỗ của tôi",
+            onPress: () => {
+              // Pop back to main stack, then navigate to sessions with reserved tab
+              router.dismissAll();
+              router.replace("/(main)/sessions?tab=reserved" as any);
+            },
+          },
         ]);
       }
     } catch (err: any) {
