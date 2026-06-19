@@ -197,7 +197,7 @@ export default function AccountScreen() {
             icon="list-outline"
             label="Phản hồi của tôi"
             subtitle="Theo dõi trạng thái xử lý"
-            onPress={() => router.push("/feedback/index" as any)}
+            onPress={() => router.push("/feedback" as any)}
             color={Colors.info}
           />
         </MenuSection>
