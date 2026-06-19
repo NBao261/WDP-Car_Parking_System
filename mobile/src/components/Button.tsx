@@ -125,7 +125,7 @@ const variantStyles: Record<ButtonVariant, ViewStyle> = {
 };
 
 const variantTextStyles: Record<ButtonVariant, TextStyle> = {
-  primary: { color: Colors.white },
+  primary: { color: Colors.textPrimary }, // Dark text on neon background
   secondary: { color: Colors.textPrimary },
   outline: { color: Colors.textPrimary },
   ghost: { color: Colors.textPrimary },
