@@ -178,7 +178,7 @@ export default function AccountScreen() {
             icon="calendar-outline"
             label="Đặt chỗ của tôi"
             subtitle="Quản lý chỗ đã đặt trước"
-            onPress={() => router.push("/(main)/reservations" as any)}
+            onPress={() => router.push("/(main)/sessions?tab=reserved" as any)}
             color={Colors.secondary}
           />
         </MenuSection>
