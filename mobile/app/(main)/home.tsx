@@ -39,6 +39,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({ active: 0, completed: 0, reserved: 0 });
   const [activeSession, setActiveSession] = useState<any>(null);
+  const [upcomingRes, setUpcomingRes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -55,8 +56,14 @@ export default function HomeScreen() {
       const completed = sessions.filter((s: any) => s.status === 'completed');
       const reserved = reservations.filter((r: any) => ['pending','confirmed'].includes(r.status));
 
+      // Sort upcoming by startTime asc, take nearest 3
+      const upcoming = [...reserved]
+        .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+        .slice(0, 3);
+
       setStats({ active: active.length, completed: completed.length, reserved: reserved.length });
       setActiveSession(active[0] || null);
+      setUpcomingRes(upcoming);
     } catch (e) {
       console.log('Home fetch error:', e);
     } finally {
@@ -100,18 +107,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Big CTA */}
-            <TouchableOpacity
-              style={styles.ctaButton}
-              activeOpacity={0.85}
-              onPress={() => router.push('/(main)/facilities' as any)}
-            >
-              <Ionicons name="search" size={20} color={Colors.primary} />
-              <Text style={styles.ctaText}>Tìm bãi đỗ xe gần bạn...</Text>
-              <View style={styles.ctaArrow}>
-                <Ionicons name="arrow-forward" size={16} color={Colors.primary} />
-              </View>
-            </TouchableOpacity>
+
 
             {/* Stats Row */}
             <View style={styles.statsRow}>
@@ -194,6 +190,95 @@ export default function HomeScreen() {
               </View>
             )}
           </View>
+
+          {/* ── Upcoming Reservations ── */}
+          <View style={styles.section}>
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Đặt chỗ sắp tới</Text>
+              {upcomingRes.length > 0 && (
+                <TouchableOpacity onPress={() => router.push('/(main)/sessions?tab=reserved' as any)}>
+                  <Text style={styles.sectionLink}>Xem tất cả</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            {loading ? (
+              <ActivityIndicator color={Colors.primary} style={{ marginTop: 16 }} />
+            ) : upcomingRes.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <View style={styles.emptyIconWrap}>
+                  <Ionicons name="calendar-outline" size={28} color={Colors.textTertiary} />
+                </View>
+                <Text style={styles.emptyTitle}>Chưa có lịch đặt chỗ</Text>
+                <Text style={styles.emptySubtitle}>Đặt chỗ trước để đảm bảo vị trí</Text>
+                <TouchableOpacity
+                  style={styles.emptyBtn}
+                  onPress={() => router.push('/(main)/facilities' as any)}
+                >
+                  <Text style={styles.emptyBtnText}>Tìm bãi xe</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              upcomingRes.map((res: any) => {
+                const start = new Date(res.startTime);
+                const now = new Date();
+                const diffMs = start.getTime() - now.getTime();
+                const diffH = Math.floor(diffMs / 3600000);
+                const diffM = Math.floor((diffMs % 3600000) / 60000);
+                const countdown = diffMs <= 0
+                  ? 'Đã đến giờ'
+                  : diffH > 0 ? `${diffH}h ${diffM}m nữa` : `${diffM} phút nữa`;
+                const isUrgent = diffMs > 0 && diffMs < 60 * 60 * 1000; // < 1 hour
+                return (
+                  <TouchableOpacity
+                    key={res._id}
+                    style={styles.resCard}
+                    onPress={() => router.push('/(main)/sessions?tab=reserved' as any)}
+                    activeOpacity={0.85}
+                  >
+                    <View style={[styles.resAccent, { backgroundColor: isUrgent ? Colors.warning : Colors.secondary }]} />
+                    <View style={styles.resBody}>
+                      <View style={styles.resHeader}>
+                        <View style={styles.resIconWrap}>
+                          <Ionicons name="business-outline" size={18} color={Colors.secondary} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.resFacility} numberOfLines={1}>
+                            {res.facilityId?.name || 'Bãi xe'}
+                          </Text>
+                          <Text style={styles.resPlate}>{res.licensePlate}</Text>
+                        </View>
+                        <View style={[styles.countdownBadge, { backgroundColor: isUrgent ? Colors.warning + '18' : Colors.secondaryLight + '18' }]}>
+                          <Ionicons name="time-outline" size={12} color={isUrgent ? Colors.warning : Colors.secondary} />
+                          <Text style={[styles.countdownText, { color: isUrgent ? Colors.warning : Colors.secondary }]}>
+                            {countdown}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.resDetails}>
+                        <View style={styles.resDetailItem}>
+                          <Ionicons name="calendar-outline" size={13} color={Colors.textTertiary} />
+                          <Text style={styles.resDetailText}>
+                            {start.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                          </Text>
+                        </View>
+                        <View style={styles.resDetailItem}>
+                          <Ionicons name="time-outline" size={13} color={Colors.textTertiary} />
+                          <Text style={styles.resDetailText}>
+                            {start.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                          </Text>
+                        </View>
+                        <View style={[styles.statusChip, { backgroundColor: res.status === 'confirmed' ? Colors.successLight : Colors.warningLight }]}>
+                          <Text style={[styles.statusChipText, { color: res.status === 'confirmed' ? Colors.success : Colors.warning }]}>
+                            {res.status === 'confirmed' ? 'Đã xác nhận' : 'Chờ xác nhận'}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            )}
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -242,31 +327,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Typography.fontFamily.bold,
   },
-  ctaButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 20,
-    gap: 10,
-    ...Shadows.md,
-  },
-  ctaText: {
-    flex: 1,
-    color: Colors.placeholder,
-    fontSize: 15,
-    fontFamily: Typography.fontFamily.medium,
-  },
-  ctaArrow: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.primaryBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
   statsRow: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255,255,255,0.1)',
@@ -291,12 +352,50 @@ const styles = StyleSheet.create({
   // ── Body ──
   body: { padding: 20 },
   section: { marginBottom: 24 },
+  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: {
     fontSize: 16,
     fontFamily: Typography.fontFamily.semiBold,
     color: Colors.textPrimary,
-    marginBottom: 12,
   },
+  sectionLink: {
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.primary,
+  },
+
+  // Reservation cards
+  resCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16, overflow: 'hidden',
+    marginBottom: 10,
+    borderWidth: 1, borderColor: Colors.borderLight,
+    flexDirection: 'row',
+    ...Shadows.sm,
+  },
+  resAccent: { width: 4 },
+  resBody: { flex: 1, padding: 14 },
+  resHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  resIconWrap: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: Colors.secondaryLight + '18',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  resFacility: { fontSize: 14, fontFamily: Typography.fontFamily.semiBold, color: Colors.textPrimary },
+  resPlate: { fontSize: 12, color: Colors.textSecondary, fontFamily: Typography.fontFamily.medium, marginTop: 1 },
+  countdownBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4,
+  },
+  countdownText: { fontSize: 11, fontFamily: Typography.fontFamily.semiBold },
+  resDetails: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  resDetailItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  resDetailText: { fontSize: 12, color: Colors.textSecondary, fontFamily: Typography.fontFamily.medium },
+  statusChip: {
+    marginLeft: 'auto' as any, borderRadius: 12,
+    paddingHorizontal: 8, paddingVertical: 3,
+  },
+  statusChipText: { fontSize: 11, fontFamily: Typography.fontFamily.semiBold },
 
   // Quick Actions
   quickActionsGrid: {
