@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Typography, Spacing } from "../../../src/constants/theme";
 import { feedbackApi } from "../../../src/services/api";
@@ -22,8 +23,9 @@ export default function FeedbackListScreen() {
   const fetchFeedbacks = async () => {
     try {
       const res: any = await feedbackApi.getFeedbacks({ limit: 50 });
+      console.log("Feedbacks response:", JSON.stringify(res).substring(0, 300));
       if (res.success) {
-        setFeedbacks(res.data);
+        setFeedbacks(res.data || []);
       }
     } catch (error) {
       console.log("Error fetching feedbacks", error);
@@ -33,9 +35,13 @@ export default function FeedbackListScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchFeedbacks();
-  }, []);
+  // Re-fetch feedbacks every time the screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      fetchFeedbacks();
+    }, [])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
