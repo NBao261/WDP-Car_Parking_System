@@ -2,17 +2,17 @@
 // High-End Visual Design: Soft Structuralism (Light Mode)
 
 export const Colors = {
-  // Primary — Logo Blue
-  primary: '#2563EB',
-  primaryLight: '#60A5FA',
-  primaryDark: '#1D4ED8',
-  primaryBg: 'rgba(37, 99, 235, 0.1)',
+  // Primary — Logo Green
+  primary: '#9CCB45',
+  primaryLight: '#BDE36D',
+  primaryDark: '#7AA331',
+  primaryBg: 'rgba(156, 203, 69, 0.15)',
 
-  // Gradient Hero — Blue
-  gradientStart: '#1E3A8A',   // Deep Blue
-  gradientMid: '#2563EB',     // Primary Blue
-  gradientEnd: '#3B82F6',     // Light Blue
-  gradientAccent: '#93C5FD',  // Very Light Blue
+  // Gradient Hero — Green
+  gradientStart: '#7AA331',   // Deeper green
+  gradientMid: '#9CCB45',     // Primary green
+  gradientEnd: '#A3D151',     // Light green
+  gradientAccent: '#D3EF95',  // Very light green
 
   // Secondary
   secondary: '#7C3AED',
