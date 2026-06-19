@@ -19,7 +19,6 @@ export interface Reservation {
   };
   licensePlate: string;
   startTime: string; // ISO string
-  endTime: string; // ISO string
   status: ReservationStatus;
   cancellationFee?: number;
   createdAt: string;

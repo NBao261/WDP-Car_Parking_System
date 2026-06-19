@@ -16,7 +16,6 @@ export interface IReservation extends Document {
   slotId: mongoose.Types.ObjectId | null;
   licensePlate: string;
   startTime: Date;
-  endTime: Date;
   status: ReservationStatus;
   cancellationFee: number;
   createdAt: Date;
@@ -32,7 +31,6 @@ const reservationSchema = new Schema<IReservation>(
     slotId: { type: Schema.Types.ObjectId, ref: 'ParkingSlot', default: null },
     licensePlate: { type: String, required: true, uppercase: true, trim: true },
     startTime: { type: Date, required: true },
-    endTime: { type: Date, required: true },
     status: { type: String, enum: Object.values(ReservationStatus), default: ReservationStatus.PENDING },
     cancellationFee: { type: Number, default: 0, min: 0 },
   },

@@ -36,7 +36,7 @@ const formatDate = (dateString: string) => {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
-  });
+  }).replace(/[\u202F\u00A0]/g, ' ');
 };
 
 export default function ReservationCard({ reservation, onCancel, cancellingId }: Props) {
@@ -75,7 +75,7 @@ export default function ReservationCard({ reservation, onCancel, cancellingId }:
           <View style={styles.info}>
             <Text style={styles.label}>Thời gian đặt</Text>
             <Text style={styles.value}>
-              {formatDate(reservation.startTime)} - {formatDate(reservation.endTime)}
+              Vào bãi (dự kiến): {formatDate(reservation.startTime)}
             </Text>
           </View>
         </View>

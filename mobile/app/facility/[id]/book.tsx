@@ -41,22 +41,17 @@ export default function BookingScreen() {
   const [selectedVehicleType, setSelectedVehicleType] = useState<string>("");
   const [licensePlate, setLicensePlate] = useState("");
 
-  // Thời gian mặc định: Bắt đầu = Hiện tại + 30 phút, Kết thúc = Hiện tại + 2 tiếng rưỡi
+  // Thời gian mặc định: Bắt đầu = Hiện tại + 30 phút
   const [startTime, setStartTime] = useState(
     new Date(Date.now() + 35 * 60 * 1000),
   );
-  const [endTime, setEndTime] = useState(
-    new Date(Date.now() + 155 * 60 * 1000),
-  );
 
   const [showStart, setShowStart] = useState(false);
-  const [showEnd, setShowEnd] = useState(false);
   const [pickerMode, setPickerMode] = useState<"date" | "time">("date");
 
-  const openPicker = (field: "start" | "end", mode: "date" | "time") => {
+  const openPicker = (mode: "date" | "time") => {
     setPickerMode(mode);
-    if (field === "start") setShowStart(true);
-    else setShowEnd(true);
+    setShowStart(true);
   };
 
   useEffect(() => {
@@ -102,11 +97,6 @@ export default function BookingScreen() {
       return;
     }
 
-    if (endTime <= startTime) {
-      Alert.alert("Lỗi", "Thời gian kết thúc phải sau thời gian bắt đầu");
-      return;
-    }
-
     try {
       setSubmitting(true);
       const res = (await reservationApi.createReservation({
@@ -114,7 +104,6 @@ export default function BookingScreen() {
         vehicleTypeId: selectedVehicleType,
         licensePlate: licensePlate.trim(),
         startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
       })) as any;
 
       if (res.success) {
@@ -214,7 +203,7 @@ export default function BookingScreen() {
           <View style={{ flexDirection: "row", gap: Spacing.sm }}>
             <TouchableOpacity
               style={[styles.datePickerButton, { flex: 1 }]}
-              onPress={() => openPicker("start", "date")}
+              onPress={() => openPicker("date")}
             >
               <Ionicons
                 name="calendar-outline"
@@ -227,7 +216,7 @@ export default function BookingScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.datePickerButton, { flex: 1 }]}
-              onPress={() => openPicker("start", "time")}
+              onPress={() => openPicker("time")}
             >
               <Ionicons
                 name="time-outline"
@@ -265,68 +254,6 @@ export default function BookingScreen() {
                 }
                 if (Platform.OS === "ios" && event.type === "set") {
                   setShowStart(false);
-                }
-              }}
-            />
-          )}
-        </View>
-
-        <View style={styles.datePickerContainer}>
-          <Text style={styles.label}>Giờ kết thúc dự kiến (Ra bãi)</Text>
-          <View style={{ flexDirection: "row", gap: Spacing.sm }}>
-            <TouchableOpacity
-              style={[styles.datePickerButton, { flex: 1 }]}
-              onPress={() => openPicker("end", "date")}
-            >
-              <Ionicons
-                name="calendar-outline"
-                size={20}
-                color={Colors.textSecondary}
-              />
-              <Text style={styles.dateText}>
-                {endTime.toLocaleDateString("vi-VN")}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.datePickerButton, { flex: 1 }]}
-              onPress={() => openPicker("end", "time")}
-            >
-              <Ionicons
-                name="time-outline"
-                size={20}
-                color={Colors.textSecondary}
-              />
-              <Text style={styles.dateText}>
-                {endTime.toLocaleTimeString("vi-VN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          {showEnd && (
-            <DateTimePicker
-              value={endTime}
-              mode={pickerMode}
-              is24Hour={true}
-              display="default"
-              onChange={(event, date) => {
-                if (Platform.OS === "android") setShowEnd(false);
-                if (event.type === "set" && date) {
-                  const newDate = new Date(endTime);
-                  if (pickerMode === "date") {
-                    newDate.setFullYear(
-                      date.getFullYear(),
-                      date.getMonth(),
-                      date.getDate(),
-                    );
-                  } else {
-                    newDate.setHours(date.getHours(), date.getMinutes());
-                  }
-                  setEndTime(newDate);
-                }
-                if (Platform.OS === "ios" && event.type === "set") {
-                  setShowEnd(false);
                 }
               }}
             />

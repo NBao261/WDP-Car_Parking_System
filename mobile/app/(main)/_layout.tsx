@@ -90,6 +90,12 @@ export default function MainLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="scan-plate"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

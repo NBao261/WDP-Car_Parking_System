@@ -147,16 +147,8 @@ export default function SessionsScreen() {
               Lịch sử
             </Text>
           </TouchableOpacity>
+          </View>
         </View>
-      </View>
-      
-      <TouchableOpacity 
-          style={styles.scanButton} 
-          onPress={() => router.push('/scan-plate')}
-        >
-          <Ionicons name="scan" size={20} color={Colors.white} />
-          <Text style={styles.scanButtonText}>Scan Plate</Text>
-      </TouchableOpacity>
       </View>
 
       {/* Content */}
