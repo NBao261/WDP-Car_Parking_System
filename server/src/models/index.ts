@@ -11,3 +11,4 @@ export { Exception, ExceptionType, ExceptionStatus } from './exception.model';
 export { Feedback, FeedbackType, FeedbackStatus } from './feedback.model';
 export { AuditLog } from './auditLog.model';
 export { Role } from './role.model';
+export { ChatHistory } from './chatHistory.model';
