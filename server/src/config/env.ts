@@ -24,4 +24,8 @@ export const env = {
 
   // Logging
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
+
+  // Gemini AI (Chatbot)
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+  GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
 } as const;
