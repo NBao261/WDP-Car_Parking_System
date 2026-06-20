@@ -55,6 +55,11 @@ export const PERMISSIONS = {
   FEEDBACK_CREATE: 'feedback:create',
   FEEDBACK_READ: 'feedback:read',
   FEEDBACK_PROCESS: 'feedback:process',
+
+  // ── 3.9 Module AI Features ──
+  AI_CHATBOT: 'ai:chatbot',
+  AI_PRICING_SUGGESTION: 'ai:pricing_suggestion',
+  AI_MANAGE: 'ai:manage',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -107,6 +112,10 @@ export const DEFAULT_PERMISSIONS: Record<string, string[]> = {
     // Phản hồi (xem + xử lý)
     PERMISSIONS.FEEDBACK_READ,
     PERMISSIONS.FEEDBACK_PROCESS,
+    // AI Features (full)
+    PERMISSIONS.AI_CHATBOT,
+    PERMISSIONS.AI_PRICING_SUGGESTION,
+    PERMISSIONS.AI_MANAGE,
   ],
 
   // ACT-01: Parking Manager — quản lý vận hành, KHÔNG quản trị hệ thống
@@ -145,6 +154,10 @@ export const DEFAULT_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.FEEDBACK_PROCESS,
     // Quản lý nhân sự (phân công tòa nhà cho Staff — FR-18.6)
     PERMISSIONS.USER_ASSIGN_FACILITY,
+    // AI Features
+    PERMISSIONS.AI_CHATBOT,
+    PERMISSIONS.AI_PRICING_SUGGESTION,
+    PERMISSIONS.AI_MANAGE,
   ],
 
   // ACT-02: Parking Staff — vận hành trực tiếp tại bãi xe
