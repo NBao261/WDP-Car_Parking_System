@@ -3,6 +3,9 @@ import mongoose, { Schema, Document } from 'mongoose';
 // ─── Interface ────────────────────────────────────────────
 export interface IChatHistory extends Document {
   userId: mongoose.Types.ObjectId;
+  conversationId: string;
+  title?: string;
+  isFirstMessage?: boolean;
   message: string;
   intent: string;
   entities: Record<string, any>;
@@ -19,6 +22,9 @@ export interface IChatHistory extends Document {
 const chatHistorySchema = new Schema<IChatHistory>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    conversationId: { type: String, required: true, index: true },
+    title: { type: String, trim: true, default: '' },
+    isFirstMessage: { type: Boolean, default: false },
     message: { type: String, required: true, trim: true },
     intent: { type: String, required: true, trim: true },
     entities: { type: Schema.Types.Mixed, default: {} },
@@ -37,5 +43,6 @@ const chatHistorySchema = new Schema<IChatHistory>(
 
 // Index cho query lịch sử chat nhanh
 chatHistorySchema.index({ userId: 1, createdAt: -1 });
+chatHistorySchema.index({ conversationId: 1, createdAt: -1 });
 
 export const ChatHistory = mongoose.model<IChatHistory>('ChatHistory', chatHistorySchema);
