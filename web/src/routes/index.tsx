@@ -21,11 +21,12 @@ const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
 
 // ── Manager / Staff Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
-const AssignmentsPage = lazy(() => import('../pages/manager/components/assignments/AssignmentsPage'));
+const AssignmentsPage = lazy(() => import('../pages/manager/assignments/AssignmentsPage'));
 const VehiclesPage = lazy(() => import('../pages/shared/vehicles/VehiclesPage'));
 const SharedFacilitiesPage = lazy(() => import('../pages/shared/facilities/FacilitiesPage'));
 const SharedPricingPage = lazy(() => import('../pages/shared/pricing/PricingPage'));
 const SharedReportsPage = lazy(() => import('../pages/shared/reports/ReportsPage'));
+const ExceptionsManagerPage = lazy(() => import('../pages/manager/exceptionsManager/ExceptionsManagerPage'));
 // Staff Pages ──
 const VehicleCheckPage = lazy(() => import('../pages/staff/vehicleCheck/VehicleCheckPage'));
 const ActiveSessionsPage = lazy(() => import('../pages/staff/activeSessions/ActiveSessionsPage'));
@@ -108,6 +109,8 @@ export const router = createBrowserRouter([
               { path: 'pricing', element: <S><SharedPricingPage /></S> },
               // FR-6: Báo cáo
               { path: 'reports', element: <S><SharedReportsPage /></S> },
+              // FR-7: Ngoại lệ (Manager)
+              { path: 'exceptions', element: <S><ExceptionsManagerPage /></S> },
             ],
           },
         ],

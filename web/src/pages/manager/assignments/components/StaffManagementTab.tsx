@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Users, Search, RefreshCw, AlertCircle, Settings2, MoreVertical, User as UserIcon, ChevronDown, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Search, RefreshCw, AlertCircle, Settings2, MoreVertical, User as UserIcon, ChevronDown, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, AssignedFacility } from '../../../../types/user.types';
 import { StaffDetailModal } from './StaffDetailModal';
@@ -21,7 +21,7 @@ const getStaffFacilityNames = (staff: User, facilityMap: Record<string, string>)
   if (facilities.length === 0) return 'Chưa phân công';
   
   const names = facilities
-    .map((f) => {
+    .map((f: any) => {
       const id = typeof f === 'string' ? f : (f as AssignedFacility)._id;
       if (typeof f !== 'string' && (f as AssignedFacility).name) {
         return (f as AssignedFacility).name;
@@ -289,7 +289,7 @@ export function StaffManagementTab({
     if (filterFacility === 'unassigned') {
       matchesFacility = !s.assignedFacilities || s.assignedFacilities.length === 0;
     } else if (filterFacility !== 'all') {
-      const ids = (s.assignedFacilities ?? []).map(f => typeof f === 'string' ? f : (f as AssignedFacility)._id);
+      const ids = (s.assignedFacilities ?? []).map((f: any) => typeof f === 'string' ? f : (f as AssignedFacility)._id);
       matchesFacility = ids.includes(filterFacility);
     }
 
@@ -422,31 +422,71 @@ export function StaffManagementTab({
                   Hiển thị <span className="font-medium text-gray-900">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> đến <span className="font-medium text-gray-900">{Math.min(currentPage * ITEMS_PER_PAGE, totalFiltered)}</span> trong tổng số <span className="font-medium text-gray-900">{totalFiltered}</span> kết quả
                 </p>
                 <div className="flex gap-1.5">
+                  {totalPages >= 5 && (
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white"
+                      title="Trang đầu"
+                    >
+                      <ChevronsLeft size={16} />
+                    </button>
+                  )}
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white"
+                    title="Trang trước"
                   >
                     <ChevronLeft size={16} />
                   </button>
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPage(i + 1)}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === i + 1 
-                        ? 'bg-[#d7ee46] text-[#060606] border border-[#c4dc32] font-bold' 
-                        : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
+                  {(() => {
+                    let pages: (number | string)[] = [];
+                    if (totalPages <= 4) {
+                      pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+                    } else if (currentPage <= 3) {
+                      pages = [1, 2, 3, '...', totalPages];
+                    } else if (currentPage >= totalPages - 2) {
+                      pages = [1, '...', totalPages - 2, totalPages - 1, totalPages];
+                    } else {
+                      pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+                    }
+                    
+                    return pages.map((p, i) => (
+                      <button
+                        key={i}
+                        onClick={() => typeof p === 'number' && setCurrentPage(p)}
+                        disabled={p === '...'}
+                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                          p === '...' 
+                            ? 'text-gray-400 bg-transparent cursor-default' 
+                            : currentPage === p 
+                              ? 'bg-[#d7ee46] text-[#060606] border border-[#c4dc32] font-bold shadow-sm' 
+                              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ));
+                  })()}
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white"
+                    title="Trang sau"
                   >
                     <ChevronRight size={16} />
                   </button>
+                  {totalPages >= 5 && (
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white"
+                      title="Trang cuối"
+                    >
+                      <ChevronsRight size={16} />
+                    </button>
+                  )}
                 </div>
               </div>
             )}

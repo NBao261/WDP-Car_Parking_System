@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { userService } from '../../../../services/user.service';
-import { facilityService } from '../../../../services/facility.service';
-import { useAuthStore } from '../../../../store/useAuthStore';
-import { User, AssignedFacility } from '../../../../types/user.types';
-import { UserRole } from '../../../../../../shared/types';
+import { userService } from '../../../services/user.service';
+import { facilityService } from '../../../services/facility.service';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { User, AssignedFacility } from '../../../types/user.types';
+import { UserRole } from '../../../../../shared/types';
 
-import { AssignFacilityModal } from './AssignFacilityModal';
-import { StaffManagementTab } from './StaffManagementTab';
+import { AssignFacilityModal } from './components/AssignFacilityModal';
+import { StaffManagementTab } from './components/StaffManagementTab';
 
 export default function AssignmentsPage() {
   const { user } = useAuthStore();

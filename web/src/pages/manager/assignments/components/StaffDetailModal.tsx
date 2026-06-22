@@ -16,7 +16,7 @@ export function StaffDetailModal({ isOpen, onClose, staff, facilityMap }: StaffD
   const facilities = staff.assignedFacilities ?? [];
   const assignedFacilitiesNames = facilities.length === 0 
     ? []
-    : facilities.map(f => {
+    : facilities.map((f: any) => {
         const id = typeof f === 'string' ? f : (f as AssignedFacility)._id;
         return typeof f !== 'string' && (f as AssignedFacility).name ? (f as AssignedFacility).name : (facilityMap[id] || 'Tòa nhà không xác định');
       });
@@ -85,7 +85,7 @@ export function StaffDetailModal({ isOpen, onClose, staff, facilityMap }: StaffD
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Tòa nhà được phân công ({assignedFacilitiesNames.length})</p>
               {assignedFacilitiesNames.length > 0 ? (
                 <div className="flex flex-col gap-3">
-                  {assignedFacilitiesNames.map((facName, idx) => (
+                  {assignedFacilitiesNames.map((facName: string, idx: number) => (
                     <div key={idx} className="flex items-center gap-2 p-3 bg-indigo-50/60 rounded-xl border border-indigo-100">
                       <Building2 size={16} className="text-indigo-600" />
                       <span className="text-indigo-800 font-semibold text-sm">{facName}</span>

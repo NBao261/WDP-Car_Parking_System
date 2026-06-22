@@ -12,7 +12,7 @@ interface AssignModalProps {
 }
 
 export function AssignFacilityModal({ staff, managerFacilities, onClose, onSuccess }: AssignModalProps) {
-  const currentIds = (staff.assignedFacilities ?? []).map((f) =>
+  const currentIds = (staff.assignedFacilities ?? []).map((f: any) =>
     typeof f === 'string' ? f : (f as AssignedFacility)._id
   );
   const [selectedIds, setSelectedIds] = useState<string[]>(currentIds);
