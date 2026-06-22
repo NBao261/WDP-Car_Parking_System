@@ -42,6 +42,8 @@ export default function BookingScreen() {
   const [vehicleTypes, setVehicleTypes] = useState<any[]>([]);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [facilityName, setFacilityName] = useState("");
+  const [facilityOpenTime, setFacilityOpenTime] = useState<string>("06:00");
+  const [facilityCloseTime, setFacilityCloseTime] = useState<string>("22:00");
 
   const [selectedVehicleType, setSelectedVehicleType] = useState<string>("");
   const [licensePlate, setLicensePlate] = useState("");
@@ -77,7 +79,11 @@ export default function BookingScreen() {
       }
 
       const fac = facilities?.find((f: any) => f._id === facilityId);
-      if (fac) setFacilityName(fac.name);
+      if (fac) {
+        setFacilityName(fac.name);
+        setFacilityOpenTime(fac.openTime || "06:00");
+        setFacilityCloseTime(fac.closeTime || "22:00");
+      }
     } catch {
       Alert.alert("Lỗi", "Không thể tải dữ liệu, vui lòng thử lại.");
     } finally {
@@ -94,6 +100,32 @@ export default function BookingScreen() {
       Alert.alert("Thời gian không hợp lệ", "Phải đặt trước ít nhất 30 phút.");
       return;
     }
+
+    // Validate operation hours
+    const startH = startTime.getHours();
+    const startM = startTime.getMinutes();
+    const startMins = startH * 60 + startM;
+
+    const [openH, openM] = facilityOpenTime.split(':').map(Number);
+    const [closeH, closeM] = facilityCloseTime.split(':').map(Number);
+    const openMins = openH * 60 + openM;
+    const closeMins = closeH * 60 + closeM;
+
+    let isWithinOpenHours = false;
+    if (closeMins <= openMins) {
+      isWithinOpenHours = startMins >= openMins || startMins < closeMins;
+    } else {
+      isWithinOpenHours = startMins >= openMins && startMins < closeMins;
+    }
+
+    if (!isWithinOpenHours) {
+      Alert.alert(
+        "Ngoài giờ hoạt động",
+        `Bãi xe chỉ mở cửa từ ${facilityOpenTime} đến ${facilityCloseTime}. Vui lòng chọn thời gian khác.`
+      );
+      return;
+    }
+
     try {
       setSubmitting(true);
       const res = (await reservationApi.createReservation({
@@ -146,37 +178,39 @@ export default function BookingScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.root}>
         {/* ── Gradient Hero Header ── */}
-        <LinearGradient
-          colors={[Colors.gradientStart, Colors.gradientMid]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          <SafeAreaView edges={["top"]}>
-            <View style={styles.heroNav}>
-              <TouchableOpacity
-                onPress={() => router.back()}
-                style={styles.backBtn}
-              >
-                <Ionicons name="arrow-back" size={22} color={Colors.white} />
-              </TouchableOpacity>
-              <Text style={styles.heroNavTitle}>Đặt chỗ trước</Text>
-              <View style={{ width: 38 }} />
-            </View>
-            {facilityName ? (
-              <View style={styles.heroFacility}>
-                <Ionicons
-                  name="business-outline"
-                  size={14}
-                  color={Colors.textOnDarkMuted}
-                />
-                <Text style={styles.heroFacilityName} numberOfLines={1}>
-                  {facilityName}
-                </Text>
+        <View style={styles.heroWrapper}>
+          <LinearGradient
+            colors={[Colors.gradientStart, Colors.gradientMid]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
+          >
+            <SafeAreaView edges={["top"]}>
+              <View style={styles.heroNav}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={styles.backBtn}
+                >
+                  <Ionicons name="arrow-back" size={22} color={Colors.white} />
+                </TouchableOpacity>
+                <Text style={styles.heroNavTitle}>Đặt chỗ trước</Text>
+                <View style={{ width: 38 }} />
               </View>
-            ) : null}
-          </SafeAreaView>
-        </LinearGradient>
+              {facilityName ? (
+                <View style={styles.heroFacility}>
+                  <Ionicons
+                    name="business-outline"
+                    size={14}
+                    color={Colors.textOnDarkMuted}
+                  />
+                  <Text style={styles.heroFacilityName} numberOfLines={1}>
+                    {facilityName}
+                  </Text>
+                </View>
+              ) : null}
+            </SafeAreaView>
+          </LinearGradient>
+        </View>
 
         <ScrollView
           contentContainerStyle={styles.content}
@@ -334,10 +368,11 @@ export default function BookingScreen() {
                 color={Colors.info}
               />
               <Text style={styles.reminderText}>
-                Phải đặt trước ít nhất{" "}
+                Hoạt động:{" "}
                 <Text style={{ fontFamily: Typography.fontFamily.semiBold }}>
-                  30 phút
-                </Text>
+                  {facilityOpenTime} – {facilityCloseTime}
+                </Text>{" "}
+                (Đặt trước tối thiểu 30p)
               </Text>
             </View>
           </View>
@@ -419,7 +454,12 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
 
   // Hero
-  hero: { paddingHorizontal: 16, paddingBottom: 20 },
+  heroWrapper: {
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: 'hidden',
+  },
+  hero: { paddingHorizontal: 16, paddingBottom: 24 },
   heroNav: {
     flexDirection: "row",
     alignItems: "center",

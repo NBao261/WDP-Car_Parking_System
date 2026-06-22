@@ -325,10 +325,10 @@
 
 #### BE1
 
-- [ ] API Feedback (FR-17): create, list (by user / all), updateStatus
-- [ ] Push notification service: đặt chỗ thành công, nhắc thanh toán, hết hạn giữ chỗ
-- [ ] API Ngoại lệ nâng cao (FR-7): list exceptions for Manager, approve/reject
-- [ ] Optimize MongoDB queries: indexes cho licensePlate, sessionCode, slotCode
+- [x] API Feedback (FR-17): create, list (by user / all), updateStatus
+- [x] Push notification service: đặt chỗ thành công, nhắc thanh toán, hết hạn giữ chỗ
+- [x] API Ngoại lệ nâng cao (FR-7): list exceptions for Manager, approve/reject
+- [x] Optimize MongoDB queries: indexes cho licensePlate, sessionCode, slotCode
 - [ ] 🔬 **[RQ4]** Implement Load Balancing cho giờ cao điểm:
   - Thuật toán gốc: **NSGA-II** (multi-objective demand allocation) [P8] (Zhang et al., _Systems_ 2024), **DQN** [P9] (Chen et al., 2024)
   - Phiên bản áp dụng: **Threshold-based Load Balancing** — phát hiện tầng sắp đầy (occupancy ≥ 85%) → chuyển hướng xe đến tầng occupancy thấp nhất

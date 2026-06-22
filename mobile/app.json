@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "newArchEnabled": true,
-    "icon": "./assets/icon.png",
+    "icon": "../web/public/Logo_chu.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",

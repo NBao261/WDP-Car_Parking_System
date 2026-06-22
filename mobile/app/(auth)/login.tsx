@@ -61,7 +61,7 @@ export default function LoginScreen() {
               </View>
               <View style={styles.logoContainer}>
                 <View style={styles.logoCircle}>
-                  <Image source={require('../../assets/images/logo.png')} style={{ width: 48, height: 48, resizeMode: 'contain' }} />
+                  <Image source={require('../../assets/images/logo.png')} style={{ width: 180, height: 60, resizeMode: 'contain' }} />
                 </View>
                 <Text style={styles.title}>Smart Parking</Text>
                 <Text style={styles.subtitle}>Đăng nhập tài khoản Driver</Text>
@@ -165,14 +165,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 24,
     backgroundColor: Colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-    ...Shadows.sm,
+    marginBottom: 20,
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 5,
   },
   title: {
     fontSize: 28,
@@ -194,12 +198,16 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: Colors.surface,
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 24,
+    padding: 22,
     gap: 16,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadows.md,
+    borderColor: Colors.border,
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 4,
   },
   forgotPass: {
     alignSelf: 'flex-end',
@@ -216,10 +224,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     backgroundColor: Colors.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
-    marginTop: 8,
-    ...Shadows.sm,
+    borderRadius: 16,
+    paddingVertical: 17,
+    marginTop: 6,
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 16,
+    elevation: 6,
   },
   loginBtnDisabled: {
     backgroundColor: Colors.disabled,

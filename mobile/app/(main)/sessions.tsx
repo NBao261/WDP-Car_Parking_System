@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams } from 'expo-router';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
-  ActivityIndicator, RefreshControl, Platform,
+  ActivityIndicator, RefreshControl, Platform, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -252,12 +252,15 @@ export default function ActivityScreen() {
   return (
     <View style={styles.root}>
       {/* Header */}
-      <LinearGradient colors={[Colors.gradientStart, Colors.gradientMid]} style={styles.header}>
-        <SafeAreaView edges={['top']}>
-          <Text style={styles.headerTitle}>Hoạt động</Text>
-          <Text style={styles.headerSub}>Quản lý lượt gửi & đặt chỗ</Text>
-        </SafeAreaView>
-      </LinearGradient>
+      <View style={styles.headerWrapper}>
+        <LinearGradient colors={[Colors.gradientStart, Colors.gradientMid]} style={styles.header}>
+          <SafeAreaView edges={['top']}>
+            <Image source={require('../../assets/images/logo.png')} style={{ width: 100, height: 28, resizeMode: 'contain', marginTop: 12 }} />
+            <Text style={styles.headerTitle}>Hoạt động</Text>
+            <Text style={styles.headerSub}>Quản lý lượt gửi &amp; đặt chỗ</Text>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       {/* Tab bar */}
       <View style={styles.tabBar}>
@@ -282,9 +285,17 @@ export default function ActivityScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
 
-  header: { paddingHorizontal: 20, paddingBottom: 20 },
-  headerTitle: { fontSize: 24, fontFamily: Typography.fontFamily.bold, color: Colors.textOnDark, marginTop: 8 },
-  headerSub: { fontSize: 13, color: Colors.textOnDarkMuted, fontFamily: Typography.fontFamily.regular, marginTop: 2 },
+  headerWrapper: {
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 22,
+  },
+  headerTitle: { fontSize: 26, fontFamily: Typography.fontFamily.bold, color: Colors.textOnDark, marginTop: 8 },
+  headerSub: { fontSize: 13, color: Colors.textOnDarkMuted, fontFamily: Typography.fontFamily.regular, marginTop: 3 },
 
   tabBar: {
     flexDirection: 'row',
@@ -320,12 +331,16 @@ const styles = StyleSheet.create({
   // Card
   card: {
     backgroundColor: Colors.surface,
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadows.sm,
+    borderColor: Colors.border,
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   cardLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
