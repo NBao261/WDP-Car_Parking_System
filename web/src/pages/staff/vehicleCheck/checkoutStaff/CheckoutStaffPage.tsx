@@ -199,7 +199,7 @@ export default function CheckoutStaffPage({ onFlagException }: { onFlagException
               type="text"
               value={plate}
               onChange={(e) => setPlate(e.target.value.toUpperCase())}
-              placeholder="VD: 29A-123.45"
+              placeholder="VD: XX-XXX-XXXX"
               className="w-full text-center font-mono text-2xl font-bold uppercase tracking-widest text-[#060606] bg-gray-50 border border-gray-200 rounded-2xl py-4 focus:outline-none focus:border-[#d7ee46] focus:bg-white transition-all shadow-sm placeholder:text-gray-300"
             />
             {ocrSuccess && (

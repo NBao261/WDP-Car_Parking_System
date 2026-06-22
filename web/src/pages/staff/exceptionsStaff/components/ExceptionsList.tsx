@@ -42,15 +42,17 @@ interface ExceptionsListProps {
   onContinueCheckout: (plate: string) => void;
 }
 
-const STATUS_BADGE: Record<string, { bg: string; text: string; label: string }> = {
-  RESOLVED: { bg: "bg-[#e8f7f0]", text: "text-[#1d7a4a]", label: "Đã xử lý" },
-  NEW: { bg: "bg-[#fff3e0]", text: "text-[#c77700]", label: "Chờ xử lý" },
+const STATUS_BADGE: Record<string, { bg: string; text: string; border: string; label: string }> = {
+  RESOLVED:   { bg: "bg-[#9FE870]/10",   text: "text-[#2d6a1f]",  border: "border-[#9FE870]/50",  label: "Đã xử lý" },
+  NEW:        { bg: "bg-[#fef3c7]",     text: "text-[#92400e]",  border: "border-[#fcd34d]/60",  label: "Chờ xử lý" },
+  PROCESSING: { bg: "bg-[#dbeafe]",     text: "text-[#1e40af]",  border: "border-[#93c5fd]/60",  label: "Đang xử lý" },
+  REJECTED:   { bg: "bg-[#fee2e2]",     text: "text-[#991b1b]",  border: "border-[#fca5a5]/60",  label: "Từ chối" },
 };
 
-const TYPE_BADGE: Record<string, { bg: string; text: string }> = {
-  lost_card: { bg: "bg-[#fde8e8]", text: "text-[#b03030]" }, // Đỏ
-  overtime: { bg: "bg-[#fff3e0]", text: "text-[#c77700]" }, // Cam
-  default: { bg: "bg-[#f5f5f5]", text: "text-[#6b6b6b]" },
+const TYPE_BADGE: Record<string, { bg: string; text: string; border: string }> = {
+  lost_card: { bg: "bg-[#fee2e2]", text: "text-[#991b1b]", border: "border-[#fca5a5]/60" },
+  overtime:  { bg: "bg-[#fef3c7]", text: "text-[#92400e]", border: "border-[#fcd34d]/60" },
+  default:   { bg: "bg-[#f5f5f5]", text: "text-[#6b6b6b]", border: "border-[#e5e5e5]" },
 };
 
 export default function ExceptionsList({
@@ -84,14 +86,14 @@ export default function ExceptionsList({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Tìm biển số, mã vé, loại ngoại lệ…"
-            className="w-full h-10 pl-9 pr-4 border border-[#e8e9e8] rounded-[8px] text-sm focus:outline-none focus:border-[#060606]"
+            className="w-full h-10 pl-9 pr-4 border border-[#e8e9e8] rounded-[8px] text-sm focus:outline-none focus:border-[#1a1a1a] transition-colors"
           />
         </div>
         <div className="flex gap-2">
           <select
             value={filterStatus}
             onChange={(e) => onFilterChange(e.target.value)}
-            className="h-10 px-4 border border-[#e8e9e8] rounded-[8px] text-[13px] font-bold text-[#060606] outline-none focus:border-[#060606] cursor-pointer bg-white"
+            className="h-10 px-4 border border-[#e8e9e8] rounded-[8px] text-[13px] font-bold text-[#060606] outline-none focus:border-[#1a1a1a] cursor-pointer bg-white transition-colors"
           >
             <option value="ALL">Tất cả trạng thái</option>
             <option value={ExceptionStatus.NEW.toUpperCase()}>Chờ xử lý</option>
@@ -153,7 +155,7 @@ export default function ExceptionsList({
                       {exc.plate}
                     </td>
                     <td className="px-4 py-4 text-[12px]">
-                      <span className={`px-2 py-1 rounded-[6px] font-medium ${typeBadge.bg} ${typeBadge.text} whitespace-nowrap`}>
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${typeBadge.bg} ${typeBadge.text} ${typeBadge.border} whitespace-nowrap`}>
                         {exc.type}
                       </span>
                     </td>
@@ -166,7 +168,7 @@ export default function ExceptionsList({
                     </td>
                     <td className="px-4 py-4">
                       <span
-                        className={`px-2.5 py-1 rounded-[20px] text-[10px] font-bold uppercase tracking-wider ${statusBadge.bg} ${statusBadge.text} whitespace-nowrap`}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border} whitespace-nowrap`}
                       >
                         {statusBadge.label}
                       </span>
@@ -206,7 +208,7 @@ export default function ExceptionsList({
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium ${currentPage === i + 1 ? 'bg-[#d7ee46] text-[#060606]' : 'text-gray-600 hover:bg-gray-50'}`}
+                  className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${currentPage === i + 1 ? 'bg-[#1a1a1a] text-[#9FE870]' : 'text-gray-600 hover:bg-gray-50'}`}
                 >
                   {i + 1}
                 </button>

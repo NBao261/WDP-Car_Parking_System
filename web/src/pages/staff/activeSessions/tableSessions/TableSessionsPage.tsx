@@ -34,6 +34,31 @@ const calculateDuration = (checkInTime: string) => {
   return parts.join(' ');
 };
 
+const getActiveBadgeClasses = (checkInTime: string) => {
+  const diffHours = (Date.now() - new Date(checkInTime).getTime()) / (1000 * 60 * 60);
+  
+  if (diffHours < 24) {
+    // Trong ngày (0 - 24h): dùng màu #9FE870 đậm dần mỗi 4 tiếng
+    const steps = Math.floor(diffHours / 4);
+    switch (steps) {
+      case 0: return 'bg-[#9FE870]/20 text-[#062F28] border-[#9FE870]/30'; // 0-4h
+      case 1: return 'bg-[#9FE870]/40 text-[#062F28] border-[#9FE870]/50'; // 4-8h
+      case 2: return 'bg-[#9FE870]/60 text-[#062F28] border-[#9FE870]/70'; // 8-12h
+      case 3: return 'bg-[#9FE870]/80 text-[#062F28] border-[#9FE870]/90'; // 12-16h
+      case 4: return 'bg-[#9FE870] text-[#062F28] border-[#9FE870]'; // 16-20h
+      default: return 'bg-[#8BD65E] text-[#062F28] border-[#8BD65E]'; // 20-24h (đậm hơn chút)
+    }
+  } else {
+    // Từ 2 ngày trở lên (qua 24h là bắt đầu ngày thứ 2): dùng màu #062F28 đậm dần
+    const days = Math.floor(diffHours / 24);
+    switch (days) {
+      case 1: return 'bg-[#062F28]/60 text-white border-[#062F28]/70'; // Ngày 2 (24h-48h)
+      case 2: return 'bg-[#062F28]/80 text-white border-[#062F28]/90'; // Ngày 3 (48h-72h)
+      default: return 'bg-[#062F28] text-white border-[#062F28]'; // Ngày 4+
+    }
+  }
+};
+
 export default function TableSessionsPage({ 
   onTotalChange 
 }: { 
@@ -124,13 +149,13 @@ export default function TableSessionsPage({
           <input
             type="text" placeholder="Tìm kiếm biển số hoặc mã thẻ..." value={search} onChange={handleSearchChange}
             maxLength={12}
-            className="w-full pl-9 pr-4 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606]"
+            className="w-full pl-9 pr-4 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#9FE870] focus:ring-1 focus:ring-[#9FE870]/40 transition-colors"
           />
         </div>
         <div className="flex items-center gap-2">
           <select
             value={filterVehicleTypeId} onChange={e => { setFilterVehicleTypeId(e.target.value); setCurrentPage(1); }}
-            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-[#060606] bg-white focus:outline-none"
+            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-[#060606] bg-white focus:outline-none focus:border-[#9FE870] transition-colors"
           >
             <option value="All">Tất cả loại xe</option>
             {facilityVehicleTypes.map(vt => (
@@ -139,7 +164,7 @@ export default function TableSessionsPage({
           </select>
           <select
             value={filterGate} onChange={e => { setFilterGate(e.target.value); setCurrentPage(1); }}
-            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-[#060606] bg-white focus:outline-none"
+            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-[#060606] bg-white focus:outline-none focus:border-[#9FE870] transition-colors"
           >
             <option value="All">Tất cả cổng</option>
             {uniqueGates.map(gate => (
@@ -185,7 +210,7 @@ export default function TableSessionsPage({
                     <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
                       session.status === 'exception' 
                         ? 'bg-orange-50 text-orange-700 border-orange-100' 
-                        : 'bg-green-50 text-green-700 border-green-100'
+                        : getActiveBadgeClasses(session.checkInTime)
                     }`}>
                       {session.status}
                     </span>
@@ -193,7 +218,7 @@ export default function TableSessionsPage({
                   <td className="px-4 py-2.5 text-right">
                     <button
                       onClick={() => setSelectedSession(session)}
-                      className="px-3 py-1 bg-white border border-gray-200 text-[#060606] font-medium rounded-lg hover:bg-gray-50 transition-all text-xs shadow-sm"
+                      className="px-3 py-1 bg-white border border-gray-200 text-[#060606] font-medium rounded-lg hover:bg-[#f5ffe8] hover:border-[#9FE870] transition-all text-xs shadow-sm"
                     >
                       Chi tiết
                     </button>
@@ -225,7 +250,7 @@ export default function TableSessionsPage({
               <button
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
-                className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium ${currentPage === i + 1 ? 'bg-[#d7ee46] text-[#060606]' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${currentPage === i + 1 ? 'bg-[#1a1a1a] text-[#9FE870]' : 'text-gray-600 hover:bg-gray-50'}`}
               >
                 {i + 1}
               </button>
@@ -288,10 +313,10 @@ export default function TableSessionsPage({
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                   <p className="text-gray-400 text-xs mb-1">Trạng thái</p>
-                  <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold ${
+                  <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold border ${
                     selectedSession.status === 'exception'
-                      ? 'bg-orange-50 text-orange-700 border border-orange-100'
-                      : 'bg-green-50 text-green-700'
+                      ? 'bg-orange-50 text-orange-700 border-orange-100'
+                      : getActiveBadgeClasses(selectedSession.checkInTime)
                   }`}>{selectedSession.status}</span>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
