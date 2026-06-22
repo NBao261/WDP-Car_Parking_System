@@ -3,6 +3,6 @@ uvicorn[standard]
 paddlepaddle==2.6.2
 paddleocr
 opencv-contrib-python
-"numpy<2.0"
+numpy<2.0
 ultralytics
 huggingface_hub
