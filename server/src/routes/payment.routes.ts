@@ -13,6 +13,9 @@ router.post('/webhook', PaymentController.webhook);
 // Staff thu tiền mặt tại cổng & checkout
 router.post('/cash-checkout', verifyToken, PaymentController.cashCheckout);
 
+// Polling kiểm tra trạng thái thanh toán Momo
+router.get('/status/:transactionCode', verifyToken, PaymentController.checkStatus);
+
 // Xem lịch sử thanh toán của 1 session
 router.get('/:sessionId', verifyToken, PaymentController.getPaymentsBySession);
 
