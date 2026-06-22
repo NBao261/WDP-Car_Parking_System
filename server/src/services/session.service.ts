@@ -142,7 +142,9 @@ export class SessionService {
         );
       }
 
-      if (now > matchedReservation.endTime) {
+      const expirationTime = new Date(matchedReservation.startTime.getTime() + earlyWindow); // Hết hạn sau 30 phút (earlyWindow = 30 phút)
+
+      if (now > expirationTime) {
         throw new AppError('Đặt chỗ đã hết hạn. Vui lòng tạo đặt chỗ mới hoặc check-in walk-in.', 400);
       }
 

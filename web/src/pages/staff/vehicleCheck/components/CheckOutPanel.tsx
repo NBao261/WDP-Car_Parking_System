@@ -289,7 +289,6 @@ export default function CheckOutPanel({
     setPlateIn('');
     onChangePlate('');
     setCurrentSession(null);
-    setFeeData(null);
     setVehicleTypeName('Không có dữ liệu');
     setCheckInTimeDisplay('Không có dữ liệu');
     setOcrPreviewUrl(null);
@@ -518,7 +517,7 @@ export default function CheckOutPanel({
                         src={imgSrc}
                         alt="check-in"
                         className="max-w-full max-h-full object-contain"
-                        onError={(e) => {
+                        onError={() => {
                           console.error("Image failed to load:", imgSrc);
                         }}
                       />
