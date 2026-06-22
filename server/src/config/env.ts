@@ -28,4 +28,12 @@ export const env = {
   // Gemini AI (Chatbot)
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+
+  // Momo Payment
+  MOMO_PARTNER_CODE: process.env.MOMO_PARTNER_CODE || '',
+  MOMO_ACCESS_KEY: process.env.MOMO_ACCESS_KEY || '',
+  MOMO_SECRET_KEY: process.env.MOMO_SECRET_KEY || '',
+  MOMO_API_URL: process.env.MOMO_API_URL || 'https://test-payment.momo.vn/v2/gateway/api/create',
+  MOMO_QUERY_URL: process.env.MOMO_QUERY_URL || 'https://test-payment.momo.vn/v2/gateway/api/query',
+  MOMO_IPN_URL: process.env.MOMO_IPN_URL || 'http://localhost:8000/api/v1/payments/webhook',
 } as const;

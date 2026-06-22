@@ -35,10 +35,11 @@ export default function TerminalToolbar() {
         </button>
 
         {/* Hotkeys */}
-        <div className="flex gap-2.5 ml-2">
+        <div className="flex gap-2.5 ml-2 overflow-x-auto no-scrollbar">
           <span className="font-mono text-[#060606] font-medium whitespace-nowrap text-[10px]"><span className="text-[#6b6b6b]">Space:</span> Xe vào</span>
           <span className="font-mono text-[#060606] font-medium whitespace-nowrap text-[10px]"><span className="text-[#6b6b6b]">F1:</span> Reset xe vào</span>
-          <span className="font-mono text-[#060606] font-medium whitespace-nowrap text-[10px]"><span className="text-[#6b6b6b]">Enter:</span> Xe ra</span>
+          <span className="font-mono text-[#060606] font-medium whitespace-nowrap text-[10px]"><span className="text-[#6b6b6b]">F2/Enter:</span> Tiền mặt</span>
+          <span className="font-mono text-[#060606] font-medium whitespace-nowrap text-[10px]"><span className="text-[#6b6b6b]">F3:</span> Momo</span>
           <span className="font-mono text-[#060606] font-medium whitespace-nowrap text-[10px]"><span className="text-[#6b6b6b]">F10:</span> Reset xe ra</span>
           <span className="font-mono text-[#060606] font-medium whitespace-nowrap text-[10px]"><span className="text-[#6b6b6b]">F9:</span> Ngoại lệ</span>
           <span className="font-mono text-[#060606] font-medium whitespace-nowrap text-[10px]"><span className="text-[#6b6b6b]">F11:</span> Toàn màn hình</span>
