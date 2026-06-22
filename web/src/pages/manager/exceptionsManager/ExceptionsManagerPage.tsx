@@ -23,6 +23,7 @@ export default function ExceptionsManagerPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<ExceptionType | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<ExceptionStatus | 'all'>('all');
+  const [sortValue, setSortValue] = useState('createdAt_desc');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const LIMIT = 10;
@@ -34,7 +35,7 @@ export default function ExceptionsManagerPage() {
 
   useEffect(() => {
     fetchExceptions();
-  }, [page, filterType, filterStatus]);
+  }, [page, filterType, filterStatus, sortValue]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -48,12 +49,15 @@ export default function ExceptionsManagerPage() {
     setLoading(true);
     setError(null);
     try {
+      const [sortBy, sortOrder] = sortValue.split('_');
       const res: any = await exceptionService.getExceptions({
         page,
         limit: LIMIT,
         status: filterStatus === 'all' ? undefined : filterStatus,
         type: filterType === 'all' ? undefined : filterType,
         sessionId: searchTerm || undefined,
+        sortBy,
+        sortOrder: sortOrder as 'asc' | 'desc',
       });
       if (res.success) {
         const listData = Array.isArray(res.data) ? res.data : res.data?.data;
@@ -134,6 +138,8 @@ export default function ExceptionsManagerPage() {
           setFilterStatus={setFilterStatus}
           filterType={filterType}
           setFilterType={setFilterType}
+          sortValue={sortValue}
+          setSortValue={setSortValue}
         />
       </motion.div>
 
@@ -166,11 +172,12 @@ export default function ExceptionsManagerPage() {
               <table className="w-full text-left text-sm whitespace-nowrap">
                 <thead className="bg-rose-50/50 text-rose-700 font-semibold border-b border-rose-100/50">
                   <tr>
-                    <th className="px-6 py-4 rounded-tl-2xl w-[20%]">Mã lượt gửi / Xe</th>
+                    <th className="px-6 py-4 rounded-tl-2xl w-[15%]">Mã lượt gửi</th>
+                    <th className="px-6 py-4 w-[15%]">Xe</th>
                     <th className="px-6 py-4 w-[15%]">Loại ngoại lệ</th>
                     <th className="px-6 py-4 w-[15%]">Người tạo</th>
+                    <th className="px-6 py-4 w-[15%]">Ngày tạo</th>
                     <th className="px-6 py-4 w-[15%]">Trạng thái</th>
-                    <th className="px-6 py-4 w-[25%]">Ghi chú Quản lý</th>
                     <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Thao tác</th>
                   </tr>
                 </thead>
@@ -182,32 +189,27 @@ export default function ExceptionsManagerPage() {
                     
                     return (
                       <tr key={ex._id} className="hover:bg-gray-50/50 transition-colors group">
-                        <td className="px-6 py-4">
-                          <div className="font-medium text-gray-800">{sessionCode}</div>
-                          {licensePlate && <div className="text-gray-500 text-xs mt-0.5">{licensePlate}</div>}
+                        <td className="px-6 py-4 font-medium text-gray-800">
+                          {sessionCode}
+                        </td>
+                        <td className="px-6 py-4 text-gray-700">
+                          {licensePlate || '-'}
                         </td>
                         <td className="px-6 py-4">
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 font-medium">
                             {EXCEPTION_TYPE_LABELS[ex.type]}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="text-gray-700">{staffName}</div>
-                          <div className="text-gray-400 text-xs mt-0.5">{new Date(ex.createdAt).toLocaleString('vi-VN')}</div>
+                        <td className="px-6 py-4 text-gray-700">
+                          {staffName}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {new Date(ex.createdAt).toLocaleString('vi-VN')}
                         </td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(ex.status)}`}>
                             {EXCEPTION_STATUS_LABELS[ex.status]}
                           </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="max-w-[200px] sm:max-w-[300px] overflow-hidden text-ellipsis">
-                            {ex.managerNote ? (
-                              <span className="text-gray-600" title={ex.managerNote}>{ex.managerNote}</span>
-                            ) : (
-                              <span className="text-gray-400 italic">Chưa có</span>
-                            )}
-                          </div>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button

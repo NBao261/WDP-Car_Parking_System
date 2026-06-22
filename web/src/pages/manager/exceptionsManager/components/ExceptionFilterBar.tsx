@@ -1,7 +1,16 @@
-import { Search, ChevronDown, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, ChevronDown, Check, ArrowUpDown, X } from 'lucide-react';
 import { ExceptionStatus, ExceptionType, EXCEPTION_STATUS_LABELS, EXCEPTION_TYPE_LABELS } from '../../../../services/exception.service';
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
+const inputBase: React.CSSProperties = {
+  height: 40,
+  background: '#ffffff',
+  border: '1.5px solid #e2e3e2',
+  borderRadius: 10,
+  fontSize: 14,
+  outline: 'none',
+  cursor: 'pointer',
+};
 
 // ─── DropFilter Component ───
 function DropFilter({
@@ -9,68 +18,151 @@ function DropFilter({
   value,
   onChange,
   options,
+  width = 200,
+  icon: Icon
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
+  width?: number | string;
+  icon?: React.ElementType;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const active = value !== 'all' && value !== 'none';
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
-    };
+    }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const selectedLabel = options.find((opt) => opt.value === value)?.label || label;
+  const selectedOption = options.find((o) => o.value === value) || options[0];
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
+    <div className="relative" style={{ width, flexShrink: 0 }} ref={dropdownRef}>
+      <div
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full h-10 px-4 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 flex items-center justify-between hover:border-gray-300 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+        style={{
+          ...inputBase,
+          display: 'flex',
+          alignItems: 'center',
+          padding: Icon ? '0 32px 0 32px' : '0 32px 0 14px',
+          border: isOpen || active ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
+          boxShadow: isOpen ? '0 0 0 3px rgba(204,226,66,0.2)' : 'none',
+          color: active ? '#060606' : '#6b6e6b',
+          fontWeight: active ? 600 : 400,
+          transition: 'all 0.2s ease',
+          userSelect: 'none',
+        }}
       >
-        <span className="truncate pr-2 font-medium">{selectedLabel}</span>
-        <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
-            transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden z-50 py-1"
-          >
-            <div className="max-h-60 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full">
-              {options.map((opt) => {
-                const isSelected = value === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    onClick={() => {
-                      onChange(opt.value);
-                      setIsOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between group
-                      ${isSelected ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
-                  >
-                    <span className="truncate pr-2">{opt.label}</span>
-                    {isSelected && <Check size={16} className="text-emerald-500 shrink-0" />}
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
+        {Icon && (
+          <Icon size={14} style={{ position: 'absolute', left: 12, color: '#9ca3af' }} />
         )}
-      </AnimatePresence>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {selectedOption?.label}
+        </span>
+      </div>
+
+      <ChevronDown
+        size={15}
+        style={{
+          position: 'absolute',
+          right: 12,
+          top: '50%',
+          transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`,
+          color: '#6b6e6b',
+          pointerEvents: 'none',
+          transition: 'transform 0.2s ease',
+        }}
+      />
+
+      {isOpen && (
+        <div
+          className="custom-scrollbar"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            right: 0,
+            background: '#ffffff',
+            border: '1px solid #e2e3e2',
+            borderRadius: 12,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            zIndex: 50,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            maxHeight: 280,
+            animation: 'fadeIn 0.15s ease-out',
+          }}
+        >
+          <style>
+            {`
+              @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-4px); }
+                to { opacity: 1; transform: translateY(0); }
+              }
+              .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+              }
+              .custom-scrollbar::-webkit-scrollbar-track {
+                background: transparent;
+                margin: 4px 0;
+              }
+              .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: #e2e3e2;
+                border-radius: 4px;
+              }
+              .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: #c0c0c0;
+              }
+            `}
+          </style>
+          {options.map((o) => (
+            <div
+              key={o.value}
+              onClick={() => {
+                onChange(o.value);
+                setIsOpen(false);
+              }}
+              style={{
+                padding: '10px 14px',
+                fontSize: 14,
+                cursor: 'pointer',
+                color: value === o.value ? '#060606' : '#4a4a4a',
+                background: value === o.value ? '#f8fce2' : '#ffffff',
+                fontWeight: value === o.value ? 500 : 400,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                transition: 'background 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (value !== o.value) {
+                  e.currentTarget.style.background = '#fafafa';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (value !== o.value) {
+                  e.currentTarget.style.background = '#ffffff';
+                }
+              }}
+            >
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {o.label}
+              </span>
+              {value === o.value && (
+                <Check size={16} color="#10b981" style={{ flexShrink: 0, marginLeft: 8 }} />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -83,6 +175,8 @@ interface ExceptionFilterBarProps {
   setFilterStatus: (status: ExceptionStatus | 'all') => void;
   filterType: ExceptionType | 'all';
   setFilterType: (type: ExceptionType | 'all') => void;
+  sortValue?: string;
+  setSortValue?: (val: string) => void;
 }
 
 export function ExceptionFilterBar({
@@ -92,6 +186,8 @@ export function ExceptionFilterBar({
   setFilterStatus,
   filterType,
   setFilterType,
+  sortValue = 'createdAt_desc',
+  setSortValue,
 }: ExceptionFilterBarProps) {
   
   const statusOptions = [
@@ -110,39 +206,209 @@ export function ExceptionFilterBar({
     }))
   ];
 
+  const sortOptions = [
+    { value: 'createdAt_desc', label: 'Ngày tạo (Mới nhất)' },
+    { value: 'createdAt_asc', label: 'Ngày tạo (Cũ nhất)' },
+    { value: 'sessionId_asc', label: 'Mã lượt gửi (A-Z)' },
+    { value: 'sessionId_desc', label: 'Mã lượt gửi (Z-A)' },
+    { value: 'licensePlate_asc', label: 'Xe (A-Z)' },
+    { value: 'licensePlate_desc', label: 'Xe (Z-A)' },
+    { value: 'staffId_asc', label: 'Người tạo (A-Z)' },
+    { value: 'staffId_desc', label: 'Người tạo (Z-A)' },
+  ];
+
+  const [sortField, sortDir] = (sortValue || 'createdAt_desc').split('_');
+
   return (
-    <div className="mb-6 bg-gray-50 p-4 rounded-2xl border border-gray-200 flex flex-wrap items-center gap-4">
-      {/* Search Input */}
-      <div className="relative flex-1 min-w-[250px]">
-        <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Tìm kiếm theo mã lượt gửi..."
-          className="w-full h-10 pl-10 pr-4 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-shadow"
-        />
+    <div style={{
+      marginBottom: 24,
+      background: '#ffffff',
+      padding: '16px',
+      borderRadius: 16,
+      border: '1px solid #f0f1f0',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 16,
+    }}>
+      {/* Top Row: Search and Filters */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, width: '100%' }}>
+        {/* Search Input */}
+        <div style={{ position: 'relative', flex: '1 1 300px', minWidth: 200 }}>
+          <Search
+            size={16}
+            style={{
+              position: 'absolute',
+              left: 14,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: '#9b9e9b',
+              pointerEvents: 'none',
+            }}
+          />
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo mã lượt gửi..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              ...inputBase,
+              width: '100%',
+              padding: '0 16px 0 38px',
+              color: '#060606',
+              transition: 'all 0.2s ease',
+              cursor: 'text'
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = '#cce242';
+              e.target.style.boxShadow = '0 0 0 3px rgba(204,226,66,0.2)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = '#e2e3e2';
+              e.target.style.boxShadow = 'none';
+            }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          {/* Type Filter */}
+          <div className="relative w-auto sm:w-48 shrink-0">
+            <DropFilter
+              width="100%"
+              label="Loại ngoại lệ"
+              value={filterType}
+              onChange={(v) => setFilterType(v as ExceptionType | 'all')}
+              options={typeOptions}
+            />
+          </div>
+
+          {/* Status Filter */}
+          <div className="relative w-auto sm:w-48 shrink-0">
+            <DropFilter
+              width="100%"
+              label="Trạng thái"
+              value={filterStatus}
+              onChange={(v) => setFilterStatus(v as ExceptionStatus | 'all')}
+              options={statusOptions}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Type Filter */}
-      <div className="w-full sm:w-[200px]">
-        <DropFilter
-          label="Loại ngoại lệ"
-          value={filterType}
-          onChange={(v) => setFilterType(v as ExceptionType | 'all')}
-          options={typeOptions}
-        />
-      </div>
+      {/* Bottom Row: Sorting and Clear Filters */}
+      {setSortValue && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, width: '100%' }}>
+          <span className="text-sm text-gray-500 font-medium shrink-0">Sắp xếp:</span>
 
-      {/* Status Filter */}
-      <div className="w-full sm:w-[200px]">
-        <DropFilter
-          label="Trạng thái"
-          value={filterStatus}
-          onChange={(v) => setFilterStatus(v as ExceptionStatus | 'all')}
-          options={statusOptions}
-        />
-      </div>
+          {/* Sort: Ngày tạo */}
+          <div className="relative w-auto sm:w-36 shrink-0">
+            <DropFilter
+              width="100%"
+              label="Ngày tạo"
+              value={sortField === 'createdAt' ? sortDir : 'none'}
+              onChange={(v) => {
+                if (v === 'none') setSortValue('createdAt_desc');
+                else setSortValue(`createdAt_${v}`);
+              }}
+              icon={ArrowUpDown}
+              options={[
+                { value: 'none', label: 'Ngày tạo' },
+                { value: 'desc', label: 'Mới nhất' },
+                { value: 'asc', label: 'Cũ nhất' },
+              ]}
+            />
+          </div>
+
+          {/* Sort: Mã lượt gửi */}
+          <div className="relative w-auto sm:w-40 shrink-0">
+            <DropFilter
+              width="100%"
+              label="Mã lượt gửi"
+              value={sortField === 'sessionId' ? sortDir : 'none'}
+              onChange={(v) => {
+                if (v === 'none') setSortValue('createdAt_desc');
+                else setSortValue(`sessionId_${v}`);
+              }}
+              icon={ArrowUpDown}
+              options={[
+                { value: 'none', label: 'Mã lượt gửi' },
+                { value: 'asc', label: 'Mã (A-Z)' },
+                { value: 'desc', label: 'Mã (Z-A)' },
+              ]}
+            />
+          </div>
+
+          {/* Sort: Xe */}
+          <div className="relative w-auto sm:w-32 shrink-0">
+            <DropFilter
+              width="100%"
+              label="Xe"
+              value={sortField === 'licensePlate' ? sortDir : 'none'}
+              onChange={(v) => {
+                if (v === 'none') setSortValue('createdAt_desc');
+                else setSortValue(`licensePlate_${v}`);
+              }}
+              icon={ArrowUpDown}
+              options={[
+                { value: 'none', label: 'Xe' },
+                { value: 'asc', label: 'Xe (A-Z)' },
+                { value: 'desc', label: 'Xe (Z-A)' },
+              ]}
+            />
+          </div>
+
+          {/* Sort: Người tạo */}
+          <div className="relative w-auto sm:w-40 shrink-0">
+            <DropFilter
+              width="100%"
+              label="Người tạo"
+              value={sortField === 'staffId' ? sortDir : 'none'}
+              onChange={(v) => {
+                if (v === 'none') setSortValue('createdAt_desc');
+                else setSortValue(`staffId_${v}`);
+              }}
+              icon={ArrowUpDown}
+              options={[
+                { value: 'none', label: 'Người tạo' },
+                { value: 'asc', label: 'Tên (A-Z)' },
+                { value: 'desc', label: 'Tên (Z-A)' },
+              ]}
+            />
+          </div>
+
+          {/* Clear Filters Button */}
+          {(searchTerm || filterType !== 'all' || filterStatus !== 'all' || sortValue !== 'createdAt_desc') && (
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setFilterType('all');
+                setFilterStatus('all');
+                if (setSortValue) setSortValue('createdAt_desc');
+              }}
+              style={{
+                height: 40,
+                padding: '0 16px',
+                borderRadius: 10,
+                border: 'none',
+                background: '#fff1f1',
+                color: '#d32f2f',
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#fce4e4'}
+              onMouseLeave={e => e.currentTarget.style.background = '#fff1f1'}
+              className="shrink-0"
+            >
+              <X size={15} />
+              Bỏ lọc
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
