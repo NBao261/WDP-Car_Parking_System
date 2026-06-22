@@ -75,11 +75,23 @@ export const vehicleTypeApi = {
 
 // Feedback API
 export const feedbackApi = {
-  createFeedback: (data: { type: string; description: string; images?: string[]; sessionId?: string; }) => {
+  createFeedback: (data: { type: string; description: string; images?: string[]; sessionId?: string; facilityId?: string; }) => {
     return apiClient.post('/feedbacks', data);
   },
   getFeedbacks: (params?: { page?: number; limit?: number; status?: string; type?: string }) => {
     return apiClient.get('/feedbacks', { params });
+  }
+};
+
+export const locationApi = {
+  getNearbyFacilities: (params: { lat: number; lng: number; radius: number }) => {
+    return apiClient.get('/search/nearby', { params });
+  }
+};
+
+export const facilityApi = {
+  getFacilities: () => {
+    return apiClient.get('/facilities');
   }
 };
 

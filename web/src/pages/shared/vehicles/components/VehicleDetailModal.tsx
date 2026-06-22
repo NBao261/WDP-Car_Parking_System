@@ -103,6 +103,16 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ngày Tạo</p>
                 <p className="text-sm font-medium text-gray-800">{new Date(vehicle.createdAt).toLocaleDateString()}</p>
               </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Yêu cầu Biển số</p>
+                <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold border ${
+                  vehicle.requiresPlate !== false
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                }`}>
+                  {vehicle.requiresPlate !== false ? 'Có — Quét biển số' : 'Không — Dùng ảnh đối chiếu'}
+                </span>
+              </div>
             </div>
 
             <div>

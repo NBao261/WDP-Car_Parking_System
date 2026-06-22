@@ -182,6 +182,9 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
             <div className="space-y-3">
               <label className="block text-xs font-bold text-[#060606] text-center">
                 License Plate
+                {vehicleTypes.find((v) => v._id === vehicleTypeId)?.requiresPlate === false && (
+                  <span className="text-[#8bc34a] ml-2 font-normal">(Không yêu cầu biển số)</span>
+                )}
               </label>
 
               {/* Image Upload Zone */}
@@ -242,6 +245,11 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
               />
 
               {/* Manual plate input */}
+              {vehicleTypes.find((v) => v._id === vehicleTypeId)?.requiresPlate === false ? (
+                <div className="w-full text-center font-mono text-lg font-bold uppercase tracking-widest text-[#8bc34a] bg-[#f0f9dc] border border-[#d7ee46] rounded-2xl py-4">
+                  NOPLATE-AUTO — Xe không cần biển số
+                </div>
+              ) : (
               <input
                 type="text"
                 value={plate}
@@ -250,6 +258,7 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
                 disabled={step === "suggest"}
                 className="w-full text-center font-mono text-2xl font-bold uppercase tracking-widest text-[#060606] bg-gray-50 border border-gray-200 rounded-2xl py-4 focus:outline-none focus:border-[#d7ee46] focus:bg-white transition-all shadow-sm placeholder:text-gray-300 disabled:opacity-60"
               />
+              )}
               {ocrSuccess && (
                 <p className="text-center text-[10px] text-green-600 font-semibold">
                   ✓ Biển số đã được điền tự động từ ảnh — vui lòng kiểm tra lại
@@ -261,7 +270,7 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
             {step === "input" && (
               <button
                 type="submit"
-                disabled={loading || !plate.trim() || !selectedFacility || !vehicleTypeId}
+                disabled={loading || (!plate.trim() && vehicleTypes.find((v) => v._id === vehicleTypeId)?.requiresPlate !== false) || !selectedFacility || !vehicleTypeId}
                 className="w-full py-4 bg-[#e6f4a8] hover:bg-[#d7ee46] text-[#060606] font-bold rounded-2xl transition-all text-sm disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading

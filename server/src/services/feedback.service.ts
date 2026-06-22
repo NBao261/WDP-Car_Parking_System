@@ -8,20 +8,24 @@ export class FeedbackService {
    * FR-17.1: Tạo phản hồi (Driver only)
    */
   static async createFeedback(userId: string, data: {
-    sessionId?: string;
+    sessionId: string;
+    facilityId?: string;
     type: string;
     description: string;
     images?: string[];
   }): Promise<IFeedback> {
-    // Validate session nếu có
-    if (data.sessionId) {
-      const session = await ParkingSession.findById(data.sessionId);
-      if (!session) throw new AppError('Lượt gửi xe không tồn tại', 404);
-    }
+    // Luôn validate session
+    const session = await ParkingSession.findById(data.sessionId);
+    if (!session) throw new AppError('Lượt gửi xe không tồn tại', 404);
+    
+    // Luôn lấy facilityId từ session
+    const facilityId = session.facilityId?.toString();
+    if (!facilityId) throw new AppError('Không tìm thấy thông tin toà nhà của lượt gửi', 400);
 
     const feedback = await Feedback.create({
       userId,
-      sessionId: data.sessionId || null,
+      facilityId,
+      sessionId: data.sessionId,
       type: data.type,
       description: data.description,
       images: data.images || [],
@@ -33,6 +37,7 @@ export class FeedbackService {
     return feedback.populate([
       { path: 'userId', select: 'fullName email phone' },
       { path: 'sessionId', select: 'code licensePlate checkInTime' },
+      { path: 'facilityId', select: 'name' }
     ]);
   }
 
@@ -61,6 +66,7 @@ export class FeedbackService {
     if (query?.status) filter.status = query.status;
     if (query?.type) filter.type = query.type;
     if (query?.userId && role !== 'driver') filter.userId = query.userId;
+    if (query?.facilityId) filter.facilityId = query.facilityId;
 
     const sortBy = query?.sortBy || 'createdAt';
     const sortOrder = query?.sortOrder === 'asc' ? 1 : -1;
@@ -69,6 +75,7 @@ export class FeedbackService {
       Feedback.find(filter)
         .populate('userId', 'fullName email phone')
         .populate('sessionId', 'code licensePlate checkInTime')
+        .populate('facilityId', 'name')
         .sort({ [sortBy]: sortOrder })
         .skip(skip)
         .limit(limit)
@@ -112,6 +119,7 @@ export class FeedbackService {
     return feedback.populate([
       { path: 'userId', select: 'fullName email phone' },
       { path: 'sessionId', select: 'code licensePlate checkInTime' },
+      { path: 'facilityId', select: 'name' }
     ]);
   }
 
@@ -121,7 +129,8 @@ export class FeedbackService {
   static async getFeedbackById(feedbackId: string): Promise<IFeedback> {
     const feedback = await Feedback.findById(feedbackId)
       .populate('userId', 'fullName email phone')
-      .populate('sessionId', 'code licensePlate checkInTime');
+      .populate('sessionId', 'code licensePlate checkInTime')
+      .populate('facilityId', 'name');
 
     if (!feedback) throw new AppError('Phản hồi không tồn tại', 404);
     return feedback;

@@ -155,8 +155,25 @@ export class SessionService {
     }
 
     // Đảm bảo các trường bắt buộc đã có (dù từ reservation hay từ request)
-    if (!data.facilityId || !data.vehicleTypeId || !data.licensePlate) {
-      throw new AppError('Thiếu thông tin bắt buộc: facilityId, vehicleTypeId, licensePlate', 400);
+    if (!data.facilityId || !data.vehicleTypeId) {
+      throw new AppError('Thiếu thông tin bắt buộc: facilityId, vehicleTypeId', 400);
+    }
+
+    // Kiểm tra loại xe có yêu cầu biển số không
+    const vehicleType = await VehicleType.findById(data.vehicleTypeId);
+    if (!vehicleType || vehicleType.isDeleted) {
+      throw new AppError('Loại phương tiện không hợp lệ', 400);
+    }
+
+    const isNoPlateVehicle = vehicleType.requiresPlate === false;
+
+    if (!isNoPlateVehicle && !data.licensePlate) {
+      throw new AppError('Thiếu thông tin bắt buộc: licensePlate', 400);
+    }
+
+    // Auto-gen biển số cho xe không có biển
+    if (isNoPlateVehicle) {
+      data.licensePlate = `NOPLATE-${Date.now()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
     }
 
     // 1. Kiểm tra điều kiện
@@ -178,16 +195,19 @@ export class SessionService {
     }
 
     // 3. Kiểm tra xe đang có session active hoặc exception (biển số trùng)
-    const existingSession = await ParkingSession.findOne({
-      licensePlate: data.licensePlate.toUpperCase(),
-      status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] },
-    });
+    // Bỏ qua cho xe không biển số vì biển auto-gen luôn unique
+    if (!isNoPlateVehicle) {
+      const existingSession = await ParkingSession.findOne({
+        licensePlate: data.licensePlate!.toUpperCase(),
+        status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] },
+      });
 
-    if (existingSession) {
-      if (existingSession.status === SessionStatus.EXCEPTION) {
-        throw new AppError(`Xe biển số "${data.licensePlate}" đang có sự cố ngoại lệ cần xử lý (${existingSession.code}), không được phép vào gửi.`, 400);
+      if (existingSession) {
+        if (existingSession.status === SessionStatus.EXCEPTION) {
+          throw new AppError(`Xe biển số "${data.licensePlate}" đang có sự cố ngoại lệ cần xử lý (${existingSession.code}), không được phép vào gửi.`, 400);
+        }
+        throw new AppError(`Xe biển số "${data.licensePlate}" đang có lượt gửi chưa kết thúc (${existingSession.code})`, 400);
       }
-      throw new AppError(`Xe biển số "${data.licensePlate}" đang có lượt gửi chưa kết thúc (${existingSession.code})`, 400);
     }
 
     // 4. Tìm bảng giá active
@@ -218,7 +238,7 @@ export class SessionService {
     // Nếu không có reservationCode → kiểm tra xem có reservation nào match theo biển số không
     if (!matchedReservation) {
       const autoMatchReservation = await Reservation.findOne({
-        licensePlate: data.licensePlate.toUpperCase(),
+        licensePlate: data.licensePlate!.toUpperCase(),
         facilityId: data.facilityId,
         status: ReservationStatus.CONFIRMED,
         startTime: { $lte: new Date(Date.now() + 30 * 60 * 1000) },
@@ -318,7 +338,7 @@ export class SessionService {
     // 6. Tạo session
     const session = new ParkingSession({
       code: sessionCode,
-      licensePlate: data.licensePlate.toUpperCase(),
+      licensePlate: data.licensePlate!.toUpperCase(),
       vehicleTypeId: data.vehicleTypeId,
       facilityId: data.facilityId,
       floorId: slot.floorId,
@@ -455,7 +475,7 @@ export class SessionService {
     }
 
     const session = await ParkingSession.findOne(searchConditions)
-      .populate('vehicleTypeId', 'name code icon')
+      .populate('vehicleTypeId', 'name code icon requiresPlate')
       .populate('facilityId', 'name address')
       .populate('floorId', 'name')
       .populate('slotId', 'code status')
