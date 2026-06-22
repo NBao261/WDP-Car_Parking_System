@@ -39,4 +39,32 @@ router.get(
   AIController.getQuickReplies
 );
 
+// GET /ai/conversations — Lấy danh sách conversation của user
+router.get(
+  '/conversations',
+  checkPermission(PERMISSIONS.AI_CHATBOT),
+  AIController.getConversations
+);
+
+// GET /ai/conversations/:conversationId — Lấy tin nhắn trong conversation
+router.get(
+  '/conversations/:conversationId',
+  checkPermission(PERMISSIONS.AI_CHATBOT),
+  AIController.getConversationMessages
+);
+
+// DELETE /ai/conversations/:conversationId — Xóa conversation
+router.delete(
+  '/conversations/:conversationId',
+  checkPermission(PERMISSIONS.AI_CHATBOT),
+  AIController.deleteConversation
+);
+
+// PATCH /ai/conversations/:conversationId/title — Đổi tên conversation
+router.patch(
+  '/conversations/:conversationId/title',
+  checkPermission(PERMISSIONS.AI_CHATBOT),
+  AIController.renameConversation
+);
+
 export default router;
