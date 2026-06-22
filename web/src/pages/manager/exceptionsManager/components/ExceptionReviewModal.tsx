@@ -1,0 +1,147 @@
+import { X, Save, MessageSquare } from 'lucide-react';
+import { IException, EXCEPTION_STATUS_LABELS, EXCEPTION_TYPE_LABELS, ExceptionStatus } from '../../../../services/exception.service';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface ExceptionReviewModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  exception: IException | null;
+  onSubmitReview: (exceptionId: string, managerNote: string) => Promise<void>;
+  isSubmitting: boolean;
+}
+
+export function ExceptionReviewModal({
+  isOpen,
+  onClose,
+  exception,
+  onSubmitReview,
+  isSubmitting,
+}: ExceptionReviewModalProps) {
+  const [managerNote, setManagerNote] = useState(exception?.managerNote || '');
+
+  // Reset form when exception changes
+  useState(() => {
+    if (exception) {
+      setManagerNote(exception.managerNote || '');
+    }
+  });
+
+  if (!isOpen || !exception) return null;
+
+  const handleSubmit = async () => {
+    await onSubmitReview(exception._id, managerNote);
+  };
+
+  const getStatusColor = (status: ExceptionStatus) => {
+    switch (status) {
+      case ExceptionStatus.NEW: return 'bg-blue-50 text-blue-700 border-blue-200';
+      case ExceptionStatus.PROCESSING: return 'bg-amber-50 text-amber-700 border-amber-200';
+      case ExceptionStatus.RESOLVED: return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case ExceptionStatus.REJECTED: return 'bg-red-50 text-red-700 border-red-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
+  const sessionCode = typeof exception.sessionId === 'object' && exception.sessionId ? exception.sessionId.code : exception.sessionId || 'N/A';
+  const staffName = typeof exception.staffId === 'object' && exception.staffId ? exception.staffId.name : exception.staffId || 'Hệ thống';
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <h2 className="text-xl font-semibold text-gray-800">Duyệt Ngoại Lệ</h2>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 overflow-y-auto flex-1 space-y-6">
+            
+            {/* Info Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">Mã lượt gửi</span>
+                <span className="font-semibold text-gray-800">{sessionCode}</span>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">Loại ngoại lệ</span>
+                <span className="font-semibold text-gray-800">{EXCEPTION_TYPE_LABELS[exception.type]}</span>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">Nhân viên tạo</span>
+                <span className="font-medium text-gray-800">{staffName}</span>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">Trạng thái</span>
+                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(exception.status)}`}>
+                  {EXCEPTION_STATUS_LABELS[exception.status]}
+                </span>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Mô tả của nhân viên</h3>
+              <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl text-sm text-gray-700">
+                {exception.description || <span className="text-gray-400 italic">Không có mô tả chi tiết</span>}
+              </div>
+            </div>
+
+            {/* Manager Note Form */}
+            <div>
+              <label htmlFor="managerNote" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                <MessageSquare size={16} className="text-gray-400" />
+                Ghi chú của Quản lý (Review)
+              </label>
+              <textarea
+                id="managerNote"
+                value={managerNote}
+                onChange={(e) => setManagerNote(e.target.value)}
+                placeholder="Nhập ghi chú đánh giá của bạn ở đây..."
+                rows={4}
+                className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none transition-shadow"
+              />
+              <p className="text-xs text-gray-500 mt-2">Ghi chú này dùng để lưu trữ đánh giá nội bộ, không hiển thị cho khách hàng.</p>
+            </div>
+
+          </div>
+
+          {/* Footer */}
+          <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
+            <button
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Save size={16} />
+              )}
+              Lưu đánh giá
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+}

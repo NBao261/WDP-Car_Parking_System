@@ -124,4 +124,15 @@ export const exceptionService = {
   ): Promise<{ success: boolean; data: IException; message?: string }> => {
     return apiClient.patch(`/exceptions/${exceptionId}/resolve`, payload);
   },
+
+  /**
+   * Manager: Thêm ghi chú review ngoại lệ
+   * PATCH /api/v1/exceptions/:id/review
+   */
+  addManagerReview: async (
+    exceptionId: string,
+    payload: { managerNote: string }
+  ): Promise<{ success: boolean; data: IException; message?: string }> => {
+    return apiClient.patch(`/exceptions/${exceptionId}/review`, payload);
+  },
 };

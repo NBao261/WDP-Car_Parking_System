@@ -45,6 +45,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/manager/pricing', label: 'Bảng Giá', icon: Wallet, roles: [UserRole.MANAGER] },
   { path: '/manager/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.MANAGER] },
   { path: '/manager/reports', label: 'Báo Cáo', icon: ClipboardList, roles: [UserRole.MANAGER] },
+  { path: '/manager/exceptions', label: 'Quản Lý Ngoại Lệ', icon: AlertTriangle, roles: [UserRole.MANAGER] },
 
   // ── Staff ──
   { path: '/staff', label: 'Xe Ra Vào', icon: ScanLine, roles: [UserRole.STAFF] },
