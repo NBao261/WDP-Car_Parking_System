@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams } from 'expo-router';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
-  ActivityIndicator, RefreshControl, Platform, Image,
+  ActivityIndicator, RefreshControl, Platform, Image, Modal, StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -80,12 +80,17 @@ function SessionCard({ item }: { item: ParkingSession }) {
 }
 
 function ReservationCard2({ item, onCancel }: { item: Reservation; onCancel: (id: string) => void }) {
+  const [showQR, setShowQR] = React.useState(false);
   const checkinAt = new Date((item as any).startTime || (item as any).checkInTime);
   const now = new Date();
   const diffMs = checkinAt.getTime() - now.getTime();
   const diffH = Math.floor(diffMs / 3600000);
   const diffM = Math.floor((diffMs % 3600000) / 60000);
   const isUpcoming = diffMs > 0;
+  const isConfirmed = item.status === 'confirmed';
+
+  let QRCode: any = null;
+  try { QRCode = require('react-native-qrcode-svg').default; } catch {}
 
   return (
     <View style={styles.card}>
@@ -103,6 +108,7 @@ function ReservationCard2({ item, onCancel }: { item: Reservation; onCancel: (id
           </View>
         )}
       </View>
+
       <View style={styles.cardDetails}>
         <View style={styles.cardDetail}>
           <Ionicons name="business-outline" size={13} color={Colors.textTertiary} />
@@ -115,15 +121,93 @@ function ReservationCard2({ item, onCancel }: { item: Reservation; onCancel: (id
           </Text>
         </View>
       </View>
+
+      {/* QR Banner — chỉ hiện khi confirmed */}
+      {isConfirmed && (item as any).code && (
+        <TouchableOpacity style={styles.qrBanner} onPress={() => setShowQR(true)} activeOpacity={0.8}>
+          <View style={styles.qrLeft}>
+            {QRCode ? (
+              <QRCode value={(item as any).code} size={52} backgroundColor="transparent" />
+            ) : (
+              <Ionicons name="qr-code-outline" size={36} color={Colors.primary} />
+            )}
+          </View>
+          <View style={styles.qrRight}>
+            <Text style={styles.qrLabel}>Mã đặt chỗ — xuất trình tại cổng</Text>
+            <Text style={styles.qrCode}>{(item as any).code}</Text>
+            <Text style={styles.qrHint}>Chạm để phóng to</Text>
+          </View>
+          <Ionicons name="expand-outline" size={18} color={Colors.primary} style={{ opacity: 0.7 }} />
+        </TouchableOpacity>
+      )}
+
       {['pending', 'confirmed'].includes(item.status) && (
         <TouchableOpacity style={styles.cancelBtn} onPress={() => onCancel(item._id)}>
           <Ionicons name="close-circle-outline" size={16} color={Colors.danger} />
           <Text style={styles.cancelBtnText}>Huỷ đặt chỗ</Text>
         </TouchableOpacity>
       )}
+
+      {/* Modal QR — dùng React Native Modal để render đúng trên toàn màn hình */}
+      {QRCode && (
+        <Modal
+          visible={showQR}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={() => setShowQR(false)}
+        >
+          <StatusBar backgroundColor="rgba(0,0,0,0.85)" barStyle="light-content" />
+          <TouchableOpacity
+            style={styles.qrModalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowQR(false)}
+          >
+            {/* Bấm vào hộp không đóng, chỉ bấm ngoài mới đóng */}
+            <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+              <View style={styles.qrModalBox}>
+                {/* Nút đóng */}
+                <TouchableOpacity style={styles.qrModalClose} onPress={() => setShowQR(false)}>
+                  <Ionicons name="close" size={20} color={Colors.textSecondary} />
+                </TouchableOpacity>
+
+                <Text style={styles.qrModalTitle}>Xuất trình cho nhân viên</Text>
+                <Text style={styles.qrModalSub}>Tại cổng bãi xe</Text>
+
+                {/* QR Code lớn */}
+                <View style={styles.qrModalQrWrap}>
+                  <QRCode value={(item as any).code} size={230} />
+                </View>
+
+                {/* Mã text */}
+                <Text style={styles.qrModalCode}>{(item as any).code}</Text>
+
+                {/* Thông tin bên dưới */}
+                <View style={styles.qrModalInfo}>
+                  <View style={styles.qrModalInfoRow}>
+                    <Ionicons name="business-outline" size={13} color={Colors.textTertiary} />
+                    <Text style={styles.qrModalInfoText} numberOfLines={1}>
+                      {(item as any).facilityId?.name || '—'}
+                    </Text>
+                  </View>
+                  <View style={styles.qrModalInfoRow}>
+                    <Ionicons name="time-outline" size={13} color={Colors.textTertiary} />
+                    <Text style={styles.qrModalInfoText}>
+                      {checkinAt.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.qrModalDismiss}>Chạm ra ngoài để đóng</Text>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </View>
   );
 }
+
 
 function EmptyState({ icon, title, subtitle, actionLabel, onAction }: {
   icon: any; title: string; subtitle: string; actionLabel?: string; onAction?: () => void;
@@ -391,4 +475,76 @@ const styles = StyleSheet.create({
     borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10,
   },
   emptyActionText: { color: Colors.white, fontSize: 14, fontFamily: Typography.fontFamily.semiBold },
+
+  // QR Banner (inline trong card)
+  qrBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    marginTop: 12, borderTopWidth: 1, borderTopColor: Colors.borderLight, paddingTop: 12,
+    backgroundColor: Colors.primaryBg, borderRadius: 12, padding: 10,
+  },
+  qrLeft: { width: 60, height: 60, alignItems: 'center', justifyContent: 'center' },
+  qrRight: { flex: 1 },
+  qrLabel: { fontSize: 10, color: Colors.textTertiary, fontFamily: Typography.fontFamily.medium, marginBottom: 2 },
+  qrCode: { fontSize: 15, fontFamily: Typography.fontFamily.bold, color: Colors.primary, letterSpacing: 1.5 },
+  qrHint: { fontSize: 10, color: Colors.textTertiary, fontFamily: Typography.fontFamily.regular, marginTop: 2 },
+
+  // QR Modal (React Native Modal — flex layout, bao phủ toàn màn hình)
+  qrModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  qrModalBox: {
+    backgroundColor: Colors.white,
+    borderRadius: 24,
+    paddingTop: 48,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 340,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 20,
+  },
+  qrModalClose: {
+    position: 'absolute', top: 14, right: 14,
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: Colors.surfaceElevated,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  qrModalTitle: {
+    fontSize: 17, fontFamily: Typography.fontFamily.bold,
+    color: Colors.textPrimary, marginBottom: 2,
+  },
+  qrModalSub: {
+    fontSize: 12, color: Colors.textTertiary,
+    fontFamily: Typography.fontFamily.regular, marginBottom: 20,
+  },
+  qrModalQrWrap: {
+    padding: 16, backgroundColor: Colors.white,
+    borderRadius: 16, borderWidth: 1, borderColor: Colors.borderLight,
+    marginBottom: 16,
+  },
+  qrModalCode: {
+    fontSize: 20, fontFamily: Typography.fontFamily.bold,
+    color: Colors.primary, letterSpacing: 2.5, marginBottom: 16,
+  },
+  qrModalInfo: {
+    width: '100%', gap: 6,
+    borderTopWidth: 1, borderTopColor: Colors.borderLight, paddingTop: 14,
+  },
+  qrModalInfoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  qrModalInfoText: {
+    fontSize: 13, color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.regular, flex: 1,
+  },
+  qrModalDismiss: {
+    fontSize: 11, color: Colors.textTertiary,
+    fontFamily: Typography.fontFamily.regular, marginTop: 14,
+  },
 });

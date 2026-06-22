@@ -33,6 +33,8 @@ export interface CheckInPayload {
   gateIn: string;
   floorId?: string;
   slotId?: string;
+  reservationCode?: string;  // Thêm cho luồng đặt chỗ trước
+  checkInImage?: string;     // Ảnh xe đầu vào (URL hoặc base64)
 }
 
 export const sessionService = {
