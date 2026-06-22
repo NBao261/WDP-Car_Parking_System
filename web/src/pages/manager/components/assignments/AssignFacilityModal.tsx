@@ -1,7 +1,7 @@
 import { X, MapPin, Square, CheckSquare, AlertCircle, RefreshCw, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
-import { userService } from '../../../services/user.service';
-import { User, AssignedFacility } from '../../../types/user.types';
+import { userService } from '../../../../services/user.service';
+import { User, AssignedFacility } from '../../../../types/user.types';
 import { toast } from 'sonner';
 
 interface AssignModalProps {
