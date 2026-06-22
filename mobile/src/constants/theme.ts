@@ -2,11 +2,17 @@
 // High-End Visual Design: Soft Structuralism (Light Mode)
 
 export const Colors = {
-  // Primary — Electric Blue Accent
-  primary: '#2563EB',
-  primaryLight: '#3B82F6',
-  primaryDark: '#1D4ED8',
-  primaryBg: 'rgba(37, 99, 235, 0.08)', // Subtle blue glow
+  // Primary — Logo Green
+  primary: '#9CCB45',
+  primaryLight: '#BDE36D',
+  primaryDark: '#7AA331',
+  primaryBg: 'rgba(156, 203, 69, 0.15)',
+
+  // Gradient Hero — Green
+  gradientStart: '#7AA331',   // Deeper green
+  gradientMid: '#9CCB45',     // Primary green
+  gradientEnd: '#A3D151',     // Light green
+  gradientAccent: '#D3EF95',  // Very light green
 
   // Secondary
   secondary: '#7C3AED',
@@ -15,39 +21,46 @@ export const Colors = {
 
   // Success
   success: '#059669',
-  successLight: 'rgba(5, 150, 105, 0.1)',
+  successLight: 'rgba(5, 150, 105, 0.12)',
   successDark: '#047857',
 
   // Danger
   danger: '#DC2626',
-  dangerLight: 'rgba(220, 38, 38, 0.1)',
+  dangerLight: 'rgba(220, 38, 38, 0.12)',
   dangerDark: '#B91C1C',
 
   // Warning
   warning: '#D97706',
-  warningLight: 'rgba(217, 119, 6, 0.1)',
+  warningLight: 'rgba(217, 119, 6, 0.12)',
   warningDark: '#B45309',
+
+  // Info
+  info: '#0891B2',
+  infoLight: 'rgba(8, 145, 178, 0.12)',
 
   // Neutral — Soft Structuralism
   white: '#FFFFFF',
-  background: '#FDFBF7', // Editorial warm cream
-  surface: '#FFFFFF', // Pure white cards
-  surfaceElevated: '#F9F8F6', // Slightly off-white for contrast
-  border: 'rgba(0, 0, 0, 0.1)', // Subtle dark hairlines
-  borderLight: 'rgba(0, 0, 0, 0.04)', // Very subtle outer borders
+  background: '#F8FAFC',
+  surface: '#FFFFFF',
+  surfaceElevated: '#F1F5F9',
+  surfaceDark: '#0F172A',
+  border: 'rgba(0, 0, 0, 0.08)',
+  borderLight: 'rgba(0, 0, 0, 0.04)',
   divider: 'rgba(0, 0, 0, 0.06)',
-  disabled: '#E5E5E5',
-  placeholder: '#A3A3A3',
-  textPrimary: '#111111', // Deep black for massive typography
-  textSecondary: '#666666', // Muted text
-  textTertiary: '#999999',
+  disabled: '#E2E8F0',
+  placeholder: '#94A3B8',
+  textPrimary: '#0F172A',
+  textSecondary: '#64748B',
+  textTertiary: '#94A3B8',
+  textOnDark: '#FFFFFF',
+  textOnDarkMuted: 'rgba(255,255,255,0.65)',
   black: '#000000',
 
   // Slot status colors
   slotAvailable: '#059669',
   slotOccupied: '#DC2626',
   slotReserved: '#D97706',
-  slotMaintenance: '#999999',
+  slotMaintenance: '#94A3B8',
 } as const;
 
 export const Typography = {

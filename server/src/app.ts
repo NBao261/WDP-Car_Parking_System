@@ -28,6 +28,7 @@ import configRoutes from './routes/config.routes';
 import publicRoutes from './routes/public.routes';
 import roleRoutes from './routes/role.routes';
 import alprRoutes from './routes/alpr.routes';
+import aiRoutes from './routes/ai.routes';
 
 
 const app = express();
@@ -85,6 +86,7 @@ app.use(`${API_PREFIX}/reports`, reportRoutes);
 app.use(`${API_PREFIX}/config`, configRoutes);
 app.use(`${API_PREFIX}/roles`, roleRoutes);
 app.use(`${API_PREFIX}/alpr`, alprRoutes);
+app.use(`${API_PREFIX}/ai`, aiRoutes);
 
 
 // ─── Error Handling ───────────────────────────────────

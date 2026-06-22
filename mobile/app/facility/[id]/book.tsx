@@ -6,26 +6,31 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  TextInput,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
-import { Platform } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import {
   Colors,
   Typography,
   Spacing,
   BorderRadius,
+  Shadows,
 } from "../../../src/constants/theme";
-import { Button, TextInput, Loading, Card } from "../../../src/components";
-import {
-  reservationApi,
-  vehicleTypeApi,
-  api,
-} from "../../../src/services/api";
+import { Loading } from "../../../src/components";
+import { reservationApi, vehicleTypeApi, api } from "../../../src/services/api";
 import { AvailableSlot } from "../../../src/types/facility.types";
+
+const getVehicleIcon = (name: string): any => {
+  const n = (name || "").toLowerCase();
+  if (n.includes("ô tô") || n.includes("car")) return "car-sport-outline";
+  if (n.includes("xe tải") || n.includes("truck")) return "car-outline";
+  return "bicycle-outline";
+};
 
 export default function BookingScreen() {
   const router = useRouter();
@@ -36,28 +41,15 @@ export default function BookingScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [vehicleTypes, setVehicleTypes] = useState<any[]>([]);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
+  const [facilityName, setFacilityName] = useState("");
 
-  // Form State
   const [selectedVehicleType, setSelectedVehicleType] = useState<string>("");
   const [licensePlate, setLicensePlate] = useState("");
-
-  // Thời gian mặc định: Bắt đầu = Hiện tại + 30 phút, Kết thúc = Hiện tại + 2 tiếng rưỡi
   const [startTime, setStartTime] = useState(
     new Date(Date.now() + 35 * 60 * 1000),
   );
-  const [endTime, setEndTime] = useState(
-    new Date(Date.now() + 155 * 60 * 1000),
-  );
-
-  const [showStart, setShowStart] = useState(false);
-  const [showEnd, setShowEnd] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState<"date" | "time">("date");
-
-  const openPicker = (field: "start" | "end", mode: "date" | "time") => {
-    setPickerMode(mode);
-    if (field === "start") setShowStart(true);
-    else setShowEnd(true);
-  };
 
   useEffect(() => {
     fetchInitialData();
@@ -66,22 +58,28 @@ export default function BookingScreen() {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const [vtRes, slotRes] = await Promise.all<any>([
+      const [vtRes, slotRes, facilities] = await Promise.all<any>([
         vehicleTypeApi.getVehicleTypes(),
         api.getAvailableSlots(facilityId),
+        api.getPublicFacilities(1, 100),
       ]);
 
+      const slots: AvailableSlot[] = slotRes || [];
+      setAvailableSlots(slots);
+
       if (vtRes.success) {
-        setVehicleTypes(vtRes.data);
-        if (vtRes.data.length > 0) {
-          setSelectedVehicleType(vtRes.data[0]._id);
-        }
+        // Only show vehicle types that this facility actually supports
+        // (i.e. they appear in the availableSlots response for this facility)
+        const supportedIds = new Set(slots.map((s) => s.vehicleTypeId));
+        const supported = (vtRes.data as any[]).filter((vt) => supportedIds.has(vt._id));
+        setVehicleTypes(supported);
+        if (supported.length > 0) setSelectedVehicleType(supported[0]._id);
       }
-      if (slotRes) {
-        setAvailableSlots(slotRes as AvailableSlot[]);
-      }
-    } catch (error) {
-      Alert.alert("Lỗi", "Không thể tải dữ liệu ban đầu");
+
+      const fac = facilities?.find((f: any) => f._id === facilityId);
+      if (fac) setFacilityName(fac.name);
+    } catch {
+      Alert.alert("Lỗi", "Không thể tải dữ liệu, vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -89,404 +87,561 @@ export default function BookingScreen() {
 
   const handleBook = async () => {
     if (!licensePlate.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập biển số xe");
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập biển số xe.");
       return;
     }
-
-    const minAdvanceMs = 30 * 60 * 1000;
-    if (startTime.getTime() - Date.now() < minAdvanceMs) {
-      Alert.alert(
-        "Lỗi",
-        "Phải đặt trước ít nhất 30 phút so với thời gian bắt đầu",
-      );
+    if (startTime.getTime() - Date.now() < 30 * 60 * 1000) {
+      Alert.alert("Thời gian không hợp lệ", "Phải đặt trước ít nhất 30 phút.");
       return;
     }
-
-    if (endTime <= startTime) {
-      Alert.alert("Lỗi", "Thời gian kết thúc phải sau thời gian bắt đầu");
-      return;
-    }
-
     try {
       setSubmitting(true);
       const res = (await reservationApi.createReservation({
         facilityId,
         vehicleTypeId: selectedVehicleType,
-        licensePlate: licensePlate.trim(),
+        licensePlate: licensePlate.trim().toUpperCase(),
         startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
       })) as any;
-
       if (res.success) {
-        Alert.alert("Thành công", "Đặt chỗ thành công!", [
-          { text: "OK", onPress: () => router.push("/(main)/reservations") },
-        ]);
+        Alert.alert(
+          "Đặt chỗ thành công!",
+          "Chúng tôi đã giữ chỗ cho bạn. Bạn có thể xem và quản lý đặt chỗ trong mục Hoạt động.",
+          [
+            {
+              text: "Xem đặt chỗ của tôi",
+              onPress: () => {
+                // Pop back to main stack, then navigate to sessions with reserved tab
+                router.dismissAll();
+                router.replace("/(main)/sessions?tab=reserved" as any);
+              },
+            },
+          ],
+        );
       }
-    } catch (error: any) {
+    } catch (err: any) {
       Alert.alert(
         "Lỗi đặt chỗ",
-        error?.message || "Có lỗi xảy ra, vui lòng thử lại",
+        err?.message || "Có lỗi xảy ra, vui lòng thử lại.",
       );
     } finally {
       setSubmitting(false);
     }
   };
 
-  const formatDateTime = (date: Date) => {
-    return date.toLocaleString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
-  // Tính số lượng slot trống cho loại xe đang chọn
-  const currentAvailableSlots =
+  const currentAvailCount =
     availableSlots.find((s) => s.vehicleTypeId === selectedVehicleType)
       ?.availableCount || 0;
+  const selectedVehicleTypeName =
+    vehicleTypes.find((v) => v._id === selectedVehicleType)?.name || "";
+
+  const openPicker = (mode: "date" | "time") => {
+    setPickerMode(mode);
+    setShowPicker(true);
+  };
 
   if (loading) return <Loading />;
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView style={styles.container}>
-        <View style={styles.customHeader}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Tạo Đặt chỗ trước</Text>
-      <Text style={styles.subtitle}>
-        Điền thông tin xe và thời gian gửi để giữ chỗ.
-      </Text>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>1. Phương tiện</Text>
-        <Text style={styles.label}>Loại xe</Text>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={styles.vehicleTypeContainer}
-          style={{ marginBottom: Spacing.lg, marginHorizontal: -Spacing.lg, paddingHorizontal: Spacing.lg }}
+      <View style={styles.root}>
+        {/* ── Gradient Hero Header ── */}
+        <LinearGradient
+          colors={[Colors.gradientStart, Colors.gradientMid]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
         >
-          {vehicleTypes.map((vt) => (
-            <TouchableOpacity
-              key={vt._id}
-              style={[
-                styles.vehicleTypeItem,
-                selectedVehicleType === vt._id &&
-                  styles.vehicleTypeItemSelected,
-              ]}
-              onPress={() => setSelectedVehicleType(vt._id)}
+          <SafeAreaView edges={["top"]}>
+            <View style={styles.heroNav}>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.backBtn}
+              >
+                <Ionicons name="arrow-back" size={22} color={Colors.white} />
+              </TouchableOpacity>
+              <Text style={styles.heroNavTitle}>Đặt chỗ trước</Text>
+              <View style={{ width: 38 }} />
+            </View>
+            {facilityName ? (
+              <View style={styles.heroFacility}>
+                <Ionicons
+                  name="business-outline"
+                  size={14}
+                  color={Colors.textOnDarkMuted}
+                />
+                <Text style={styles.heroFacilityName} numberOfLines={1}>
+                  {facilityName}
+                </Text>
+              </View>
+            ) : null}
+          </SafeAreaView>
+        </LinearGradient>
+
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* ── Bước 1: Phương tiện ── */}
+          <View style={styles.stepHeader}>
+            <View style={styles.stepBadge}>
+              <Text style={styles.stepNum}>1</Text>
+            </View>
+            <Text style={styles.stepTitle}>Phương tiện</Text>
+          </View>
+          <View style={styles.card}>
+            {/* Vehicle type picker */}
+            <Text style={styles.fieldLabel}>Loại xe</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.vtRow}
             >
+              {vehicleTypes.map((vt) => {
+                const active = selectedVehicleType === vt._id;
+                const slotInfo = availableSlots.find(s => s.vehicleTypeId === vt._id);
+                const count = slotInfo?.availableCount ?? 0;
+                const noSlot = count === 0;
+                return (
+                  <TouchableOpacity
+                    key={vt._id}
+                    style={[styles.vtChip, active && styles.vtChipActive, noSlot && styles.vtChipFull]}
+                    onPress={() => setSelectedVehicleType(vt._id)}
+                  >
+                    <Ionicons
+                      name={getVehicleIcon(vt.name)}
+                      size={18}
+                      color={active ? Colors.primary : noSlot ? Colors.textTertiary : Colors.textSecondary}
+                    />
+                    <Text style={[styles.vtChipText, active && styles.vtChipTextActive, noSlot && styles.vtChipTextFull]}>
+                      {vt.name}
+                    </Text>
+                    {/* Slot count badge */}
+                    <View style={[styles.slotCountBadge, { backgroundColor: noSlot ? Colors.dangerLight : count <= 5 ? Colors.warningLight : Colors.successLight }]}>
+                      <Text style={[styles.slotCountText, { color: noSlot ? Colors.danger : count <= 5 ? Colors.warning : Colors.success }]}>
+                        {count}
+                      </Text>
+                    </View>
+                    {active && !noSlot && (
+                      <View style={styles.vtCheck}>
+                        <Ionicons name="checkmark" size={10} color={Colors.white} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <View style={styles.fieldDivider} />
+
+            {/* License plate */}
+            <Text style={styles.fieldLabel}>Biển số xe</Text>
+            <View style={styles.plateInput}>
+              <Ionicons
+                name="car-outline"
+                size={18}
+                color={Colors.textSecondary}
+              />
+              <TextInput
+                style={styles.plateField}
+                placeholder="Ví dụ: 30A-12345"
+                placeholderTextColor={Colors.placeholder}
+                value={licensePlate}
+                onChangeText={setLicensePlate}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+            </View>
+          </View>
+
+          {/* ── Bước 2: Thời gian ── */}
+          <View style={styles.stepHeader}>
+            <View style={styles.stepBadge}>
+              <Text style={styles.stepNum}>2</Text>
+            </View>
+            <Text style={styles.stepTitle}>Thời gian vào bãi</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.fieldLabel}>Ngày & giờ bắt đầu dự kiến</Text>
+            <View style={styles.dateRow}>
+              <TouchableOpacity
+                style={styles.dateBtn}
+                onPress={() => openPicker("date")}
+              >
+                <Ionicons
+                  name="calendar-outline"
+                  size={18}
+                  color={Colors.primary}
+                />
+                <Text style={styles.dateBtnText}>
+                  {startTime.toLocaleDateString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.dateBtn}
+                onPress={() => openPicker("time")}
+              >
+                <Ionicons
+                  name="time-outline"
+                  size={18}
+                  color={Colors.primary}
+                />
+                <Text style={styles.dateBtnText}>
+                  {startTime.toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {showPicker && (
+              <DateTimePicker
+                value={startTime}
+                mode={pickerMode}
+                is24Hour={true}
+                display="default"
+                onChange={(event, date) => {
+                  if (Platform.OS === "android") setShowPicker(false);
+                  if (event.type === "set" && date) {
+                    const newDate = new Date(startTime);
+                    if (pickerMode === "date") {
+                      newDate.setFullYear(
+                        date.getFullYear(),
+                        date.getMonth(),
+                        date.getDate(),
+                      );
+                    } else {
+                      newDate.setHours(date.getHours(), date.getMinutes());
+                    }
+                    setStartTime(newDate);
+                  }
+                  if (Platform.OS === "ios" && event.type === "set")
+                    setShowPicker(false);
+                }}
+              />
+            )}
+
+            {/* Reminder */}
+            <View style={styles.reminderBox}>
+              <Ionicons
+                name="information-circle-outline"
+                size={16}
+                color={Colors.info}
+              />
+              <Text style={styles.reminderText}>
+                Phải đặt trước ít nhất{" "}
+                <Text style={{ fontFamily: Typography.fontFamily.semiBold }}>
+                  30 phút
+                </Text>
+              </Text>
+            </View>
+          </View>
+
+          {/* ── Availability banner ── */}
+          <View
+            style={[
+              styles.availBanner,
+              {
+                backgroundColor:
+                  currentAvailCount > 0
+                    ? Colors.successLight
+                    : Colors.dangerLight,
+              },
+            ]}
+          >
+            <Ionicons
+              name={
+                currentAvailCount > 0
+                  ? "checkmark-circle-outline"
+                  : "close-circle-outline"
+              }
+              size={20}
+              color={currentAvailCount > 0 ? Colors.success : Colors.danger}
+            />
+            <View style={{ flex: 1 }}>
               <Text
                 style={[
-                  styles.vehicleTypeText,
-                  selectedVehicleType === vt._id &&
-                    styles.vehicleTypeTextSelected,
+                  styles.availTitle,
+                  {
+                    color:
+                      currentAvailCount > 0 ? Colors.success : Colors.danger,
+                  },
                 ]}
               >
-                {vt.name}
+                {currentAvailCount > 0 ? "Còn chỗ trống" : "Hết chỗ trống"}
               </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        <TextInput
-          label="Biển số xe"
-          placeholder="Ví dụ: 30A-12345"
-          value={licensePlate}
-          onChangeText={setLicensePlate}
-          autoCapitalize="characters"
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>2. Thời gian</Text>
-
-        <View style={styles.datePickerContainer}>
-          <Text style={styles.label}>Giờ bắt đầu dự kiến (Vào bãi)</Text>
-          <View style={{ flexDirection: "row", gap: Spacing.sm }}>
-            <TouchableOpacity
-              style={[styles.datePickerButton, { flex: 1 }]}
-              onPress={() => openPicker("start", "date")}
-            >
-              <Ionicons
-                name="calendar-outline"
-                size={20}
-                color={Colors.textSecondary}
-              />
-              <Text style={styles.dateText}>
-                {startTime.toLocaleDateString("vi-VN")}
+              <Text style={styles.availSub}>
+                {selectedVehicleTypeName}: còn{" "}
+                <Text
+                  style={{
+                    fontFamily: Typography.fontFamily.bold,
+                    color:
+                      currentAvailCount > 0 ? Colors.success : Colors.danger,
+                  }}
+                >
+                  {currentAvailCount} chỗ
+                </Text>{" "}
+                hiện tại
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.datePickerButton, { flex: 1 }]}
-              onPress={() => openPicker("start", "time")}
-            >
-              <Ionicons
-                name="time-outline"
-                size={20}
-                color={Colors.textSecondary}
-              />
-              <Text style={styles.dateText}>
-                {startTime.toLocaleTimeString("vi-VN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </Text>
-            </TouchableOpacity>
+            </View>
           </View>
-          {showStart && (
-            <DateTimePicker
-              value={startTime}
-              mode={pickerMode}
-              is24Hour={true}
-              display="default"
-              onChange={(event, date) => {
-                if (Platform.OS === "android") setShowStart(false);
-                if (event.type === "set" && date) {
-                  const newDate = new Date(startTime);
-                  if (pickerMode === "date") {
-                    newDate.setFullYear(
-                      date.getFullYear(),
-                      date.getMonth(),
-                      date.getDate(),
-                    );
-                  } else {
-                    newDate.setHours(date.getHours(), date.getMinutes());
-                  }
-                  setStartTime(newDate);
-                }
-                if (Platform.OS === "ios" && event.type === "set") {
-                  setShowStart(false);
-                }
-              }}
-            />
-          )}
-        </View>
 
-        <View style={styles.datePickerContainer}>
-          <Text style={styles.label}>Giờ kết thúc dự kiến (Ra bãi)</Text>
-          <View style={{ flexDirection: "row", gap: Spacing.sm }}>
-            <TouchableOpacity
-              style={[styles.datePickerButton, { flex: 1 }]}
-              onPress={() => openPicker("end", "date")}
-            >
-              <Ionicons
-                name="calendar-outline"
-                size={20}
-                color={Colors.textSecondary}
-              />
-              <Text style={styles.dateText}>
-                {endTime.toLocaleDateString("vi-VN")}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.datePickerButton, { flex: 1 }]}
-              onPress={() => openPicker("end", "time")}
-            >
-              <Ionicons
-                name="time-outline"
-                size={20}
-                color={Colors.textSecondary}
-              />
-              <Text style={styles.dateText}>
-                {endTime.toLocaleTimeString("vi-VN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          {showEnd && (
-            <DateTimePicker
-              value={endTime}
-              mode={pickerMode}
-              is24Hour={true}
-              display="default"
-              onChange={(event, date) => {
-                if (Platform.OS === "android") setShowEnd(false);
-                if (event.type === "set" && date) {
-                  const newDate = new Date(endTime);
-                  if (pickerMode === "date") {
-                    newDate.setFullYear(
-                      date.getFullYear(),
-                      date.getMonth(),
-                      date.getDate(),
-                    );
-                  } else {
-                    newDate.setHours(date.getHours(), date.getMinutes());
-                  }
-                  setEndTime(newDate);
-                }
-                if (Platform.OS === "ios" && event.type === "set") {
-                  setShowEnd(false);
-                }
-              }}
+          {/* ── Confirm button ── */}
+          <TouchableOpacity
+            style={[styles.confirmBtn, submitting && styles.confirmBtnLoading]}
+            onPress={handleBook}
+            disabled={submitting}
+            activeOpacity={0.85}
+          >
+            <Ionicons
+              name={submitting ? "hourglass-outline" : "calendar-outline"}
+              size={20}
+              color={Colors.white}
             />
-          )}
-        </View>
-      </View>
-
-      <View style={styles.infoBox}>
-        <Ionicons
-          name="information-circle-outline"
-          size={24}
-          color={Colors.primary}
-        />
-        <View style={styles.infoTextContainer}>
-          <Text style={styles.infoTitle}>Tình trạng bãi đỗ hiện tại</Text>
-          <Text style={styles.infoText}>
-            Loại xe bạn chọn đang còn{" "}
-            <Text
-              style={{
-                fontWeight: "bold",
-                color:
-                  currentAvailableSlots > 0 ? Colors.success : Colors.danger,
-              }}
-            >
-              {currentAvailableSlots} chỗ trống
+            <Text style={styles.confirmBtnText}>
+              {submitting ? "Đang xử lý..." : "Xác nhận đặt chỗ"}
             </Text>
-            .
-          </Text>
-        </View>
-      </View>
+          </TouchableOpacity>
 
-      <Button
-        title="Xác nhận Đặt chỗ"
-        onPress={handleBook}
-        loading={submitting}
-        size="lg"
-        fullWidth
-        style={styles.bookBtn}
-      />
-      </ScrollView>
-    </SafeAreaView>
+          <View style={{ height: 32 }} />
+        </ScrollView>
+      </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  customHeader: {
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.sm,
-    backgroundColor: Colors.background,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  content: {
-    padding: Spacing.lg,
-    paddingBottom: Spacing["3xl"],
-  },
-  title: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
-  },
-  subtitle: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xl,
-  },
-  section: {
-    marginBottom: Spacing.xl,
-    backgroundColor: Colors.white,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.divider,
-  },
-  sectionTitle: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semiBold,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.md,
-  },
-  label: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-  },
-  vehicleTypeContainer: {
+  root: { flex: 1, backgroundColor: Colors.background },
+
+  // Hero
+  hero: { paddingHorizontal: 16, paddingBottom: 20 },
+  heroNav: {
     flexDirection: "row",
-    gap: Spacing.sm,
-  },
-  vehicleTypeItem: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.md,
+    justifyContent: "space-between",
+    paddingTop: 8,
+    marginBottom: 12,
   },
-  vehicleTypeItemSelected: {
+  backBtn: {
+    width: 38,
+    height: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 19,
+  },
+  heroNavTitle: {
+    fontSize: 17,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.white,
+  },
+  heroFacility: { flexDirection: "row", alignItems: "center", gap: 6 },
+  heroFacilityName: {
+    fontSize: 13,
+    color: Colors.textOnDarkMuted,
+    fontFamily: Typography.fontFamily.medium,
+  },
+
+  // Content
+  content: { padding: 16, paddingBottom: 16 },
+
+  // Step header
+  stepHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
+    marginTop: 4,
+  },
+  stepBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepNum: {
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.white,
+  },
+  stepTitle: {
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.textPrimary,
+  },
+
+  // Card
+  card: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    ...Shadows.sm,
+  },
+  fieldLabel: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.textTertiary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 10,
+  },
+  fieldDivider: {
+    height: 1,
+    backgroundColor: Colors.borderLight,
+    marginVertical: 14,
+  },
+
+  // Vehicle type chips
+  vtRow: { flexDirection: "row", gap: 10, paddingBottom: 4 },
+  vtChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: Colors.borderLight,
+    backgroundColor: Colors.surfaceElevated,
+  },
+  vtChipActive: {
     borderColor: Colors.primary,
     backgroundColor: Colors.primaryBg,
   },
-  vehicleTypeText: {
-    fontSize: Typography.fontSize.sm,
+  vtChipText: {
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.medium,
     color: Colors.textSecondary,
   },
-  vehicleTypeTextSelected: {
+  vtChipTextActive: {
     color: Colors.primary,
-    fontWeight: Typography.fontWeight.semiBold,
+    fontFamily: Typography.fontFamily.semiBold,
   },
-  datePickerContainer: {
-    marginBottom: Spacing.md,
+  vtCheck: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  datePickerButton: {
+  vtChipFull: {
+    borderColor: Colors.borderLight,
+    backgroundColor: Colors.surfaceElevated,
+    opacity: 0.6,
+  },
+  vtChipTextFull: {
+    color: Colors.textTertiary,
+  },
+  slotCountBadge: {
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 22,
+    alignItems: "center",
+  },
+  slotCountText: {
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.bold,
+  },
+
+  // Plate input
+  plateInput: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
-    borderWidth: 1,
+    gap: 10,
+    borderWidth: 1.5,
     borderColor: Colors.border,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     backgroundColor: Colors.white,
   },
-  dateText: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.textPrimary,
-  },
-  infoBox: {
-    flexDirection: "row",
-    backgroundColor: Colors.primaryBg,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.sm,
-    marginBottom: Spacing.xl,
-    alignItems: "center",
-  },
-  infoTextContainer: {
+  plateField: {
     flex: 1,
+    fontSize: 16,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.textPrimary,
+    letterSpacing: 1,
   },
-  infoTitle: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.bold,
+
+  // Date row
+  dateRow: { flexDirection: "row", gap: 10, marginBottom: 12 },
+  dateBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: Colors.primary + "50",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: Colors.primaryBg,
+  },
+  dateBtnText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.semiBold,
     color: Colors.primaryDark,
-    marginBottom: 2,
   },
-  infoText: {
-    fontSize: Typography.fontSize.sm,
+
+  // Reminder
+  reminderBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 4,
+  },
+  reminderText: {
+    fontSize: 12,
     color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.regular,
   },
-  bookBtn: {
-    marginTop: Spacing.md,
+
+  // Availability banner
+  availBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 20,
+  },
+  availTitle: { fontSize: 14, fontFamily: Typography.fontFamily.semiBold },
+  availSub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.regular,
+    marginTop: 2,
+  },
+
+  // Confirm button
+  confirmBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    paddingVertical: 16,
+    marginBottom: 8,
+    ...Shadows.md,
+  },
+  confirmBtnLoading: { backgroundColor: Colors.primaryLight },
+  confirmBtnText: {
+    fontSize: 16,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.white,
   },
 });

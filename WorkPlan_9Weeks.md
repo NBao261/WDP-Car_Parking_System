@@ -8,7 +8,7 @@
 ## 👥 PHÂN CHIA NHÂN SỰ
 
 | Mã  | Vai trò             | Phụ trách chính                                            |
-| -----| ---------------------| ------------------------------------------------------------|
+| --- | ------------------- | ---------------------------------------------------------- |
 | BE1 | Backend Lead        | API core, DB design, Auth, Parking Session, Thanh toán     |
 | BE2 | Backend Developer   | API CRUD, Báo cáo, Ngoại lệ, Realtime (Socket.IO)          |
 | FE1 | Frontend Lead (Web) | Web Admin/Manager Dashboard, Báo cáo, Quản trị hệ thống    |
@@ -416,10 +416,10 @@
 
 #### FE3
 
-- [ ] Màn hình Gửi phản hồi (FR-17.1): chọn loại, mô tả, đính kèm ảnh
-- [ ] Màn hình Theo dõi phản hồi (FR-17.2): trạng thái xử lý
-- [ ] Màn hình Tài khoản: thông tin cá nhân, đổi mật khẩu, lịch sử
-- [ ] Nhận push notification
+- [x] xMàn hình Gửi phản hồi (FR-17.1): chọn loại, mô tả, đính kèm ảnh
+- [x] Màn hình Theo dõi phản hồi (FR-17.2): trạng thái xử lý
+- [x] Màn hình Tài khoản: thông tin cá nhân, đổi mật khẩu, lịch sử
+- [x] Nhận push notification
 
 **✅ Deliverable tuần 6–7:** Đặt chỗ trước, báo cáo thống kê, ngoại lệ nâng cao, phản hồi, realtime, push notification. **+ WSM scoring [P5 Amari 2023, P6 Shirazi 2025], Threshold Load Balancing [P8 Zhang 2024, P9 Chen 2024, P10 Wang 2022], AI Chatbot Query [P11 Quamar 2022, P12 Chen & Tsai 2021], và AI Pricing Suggestion [P15 Hong 2022, P17 Saharan 2020].**
 

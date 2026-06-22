@@ -2,6 +2,7 @@ import { Reservation, IReservation, ReservationStatus } from '../models/reservat
 import { ParkingSlot, SlotStatus } from '../models/parkingSlot.model';
 import { ParkingFacility } from '../models/parkingFacility.model';
 import { VehicleType } from '../models/vehicleType.model';
+import { PricingPlan } from '../models/pricingPlan.model';
 import { AppError } from '../middlewares/error.middleware';
 import { logger } from '../config/logger';
 import { generateReservationCode } from '../utils/codeGenerator';
@@ -18,12 +19,10 @@ export class ReservationService {
     vehicleTypeId: string;
     licensePlate: string;
     startTime: string;
-    endTime: string;
   }): Promise<IReservation> {
-    const { facilityId, vehicleTypeId, licensePlate, startTime, endTime } = data;
+    const { facilityId, vehicleTypeId, licensePlate, startTime } = data;
     const normalizedPlate = licensePlate.toUpperCase().trim();
     const start = new Date(startTime);
-    const end = new Date(endTime);
     const now = new Date();
 
     // Validate facility exists and is active
@@ -33,16 +32,15 @@ export class ReservationService {
 
     // Validate facility operating hours
     const startStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
-    const endStr = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
     
     if (facility.openTime !== facility.closeTime) {
       if (facility.openTime < facility.closeTime) {
-        if (startStr < facility.openTime || startStr >= facility.closeTime || endStr < facility.openTime || endStr > facility.closeTime) {
+        if (startStr < facility.openTime || startStr >= facility.closeTime) {
           throw new AppError(`Thời gian đặt chỗ phải nằm trong giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, 400);
         }
       } else {
         // Qua đêm (ví dụ 22:00 - 06:00) -> Không hợp lệ nếu nằm trong khoảng 06:00 - 22:00
-        if ((startStr < facility.openTime && startStr >= facility.closeTime) || (endStr < facility.openTime && endStr > facility.closeTime)) {
+        if (startStr < facility.openTime && startStr >= facility.closeTime) {
           throw new AppError(`Thời gian đặt chỗ phải nằm trong giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, 400);
         }
       }
@@ -52,15 +50,22 @@ export class ReservationService {
     const vehicleType = await VehicleType.findById(vehicleTypeId);
     if (!vehicleType) throw new AppError('Loại xe không tồn tại', 404);
 
+    // Validate pricing plan exists
+    const pricingPlan = await PricingPlan.findOne({
+      facilityId,
+      vehicleTypeId,
+      status: 'active',
+      isDeleted: false,
+    });
+    
+    if (!pricingPlan) {
+      throw new AppError('Bãi xe chưa có bảng giá áp dụng cho loại xe này', 400);
+    }
+
     // BR-6.2: Phải đặt trước ít nhất 30 phút
     const minAdvanceMs = 30 * 60 * 1000;
     if (start.getTime() - now.getTime() < minAdvanceMs) {
       throw new AppError('Phải đặt trước ít nhất 30 phút so với thời gian bắt đầu', 400);
-    }
-
-    // Validate endTime > startTime
-    if (end <= start) {
-      throw new AppError('Thời gian kết thúc phải sau thời gian bắt đầu', 400);
     }
 
     // BR-6.3: Tối đa 2 reservation active / user
@@ -106,7 +111,6 @@ export class ReservationService {
       slotId: availableSlot._id,
       licensePlate: normalizedPlate,
       startTime: start,
-      endTime: end,
       status: ReservationStatus.CONFIRMED,
     });
 

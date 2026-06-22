@@ -13,7 +13,6 @@ export const createReservationSchema = z.object({
       .max(15, 'Biển số xe tối đa 15 ký tự')
       .transform((val) => val.toUpperCase().trim()),
     startTime: z.string({ required_error: 'Thời gian bắt đầu không được để trống' }).datetime({ message: 'Thời gian bắt đầu không hợp lệ' }),
-    endTime: z.string({ required_error: 'Thời gian kết thúc không được để trống' }).datetime({ message: 'Thời gian kết thúc không hợp lệ' }),
   }),
 });
 

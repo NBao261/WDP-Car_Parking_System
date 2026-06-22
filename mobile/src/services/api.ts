@@ -55,7 +55,7 @@ export const sessionApi = {
 
 // Reservation API
 export const reservationApi = {
-  createReservation: (data: { facilityId: string; vehicleTypeId: string; licensePlate: string; startTime: string; endTime: string; }) => {
+  createReservation: (data: { facilityId: string; vehicleTypeId: string; licensePlate: string; startTime: string; }) => {
     return apiClient.post('/reservations', data);
   },
   getReservations: (status?: 'pending' | 'confirmed' | 'used' | 'cancelled' | 'expired') => {
@@ -70,6 +70,28 @@ export const reservationApi = {
 export const vehicleTypeApi = {
   getVehicleTypes: async (): Promise<any> => {
     return apiClient.get('/vehicle-types');
+  }
+};
+
+// Feedback API
+export const feedbackApi = {
+  createFeedback: (data: { type: string; description: string; images?: string[]; sessionId?: string; }) => {
+    return apiClient.post('/feedbacks', data);
+  },
+  getFeedbacks: (params?: { page?: number; limit?: number; status?: string; type?: string }) => {
+    return apiClient.get('/feedbacks', { params });
+  }
+};
+
+export const authApi = {
+  changePassword: (data: any) => {
+    return apiClient.put('/auth/change-password', data);
+  }
+};
+
+export const userApi = {
+  updateDeviceToken: (deviceToken: string) => {
+    return apiClient.put('/users/device-token', { deviceToken });
   }
 };
 

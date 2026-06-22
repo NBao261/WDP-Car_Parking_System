@@ -20,6 +20,9 @@ router.use(verifyToken);
 // GET /users/me — Mọi role đều dùng được (Staff xem assignedFacilities populated)
 router.get('/me', UserController.getMe);
 
+// PUT /users/device-token — Mọi role đều dùng được để lưu push token
+router.put('/device-token', UserController.updateDeviceToken);
+
 // ── Admin-only routes ────────────────────────────────────
 // SRS 3.7: Quản lý tài khoản — Admin full quyền, Manager chỉ được xem để phân công
 router.post('/', checkRole([UserRole.ADMIN]), validate(createUserSchema), checkPermission(PERMISSIONS.USER_MANAGE), UserController.createUser);
