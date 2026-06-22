@@ -142,7 +142,11 @@ export class SessionService {
         );
       }
 
-      if (now > matchedReservation.endTime) {
+      // Không có trường endTime trong IReservation nên tính toán dựa trên startTime + 1h
+      const lateWindow = 60 * 60 * 1000;
+      const endTime = new Date(matchedReservation.startTime.getTime() + lateWindow);
+
+      if (now > endTime) {
         throw new AppError('Đặt chỗ đã hết hạn. Vui lòng tạo đặt chỗ mới hoặc check-in walk-in.', 400);
       }
 
@@ -852,74 +856,103 @@ export class SessionService {
   }
 
   /**
-   * FR-10.3: Thu phí gửi xe và check-out
+   * FR-10.3: Thu phí gửi xe và check-out (Tạo Payment tiền mặt tự động)
    */
   static async checkOut(data: { sessionId: string, gateOut: string, staffOutId: string, checkOutImage?: string }): Promise<IParkingSession> {
-    const session = await ParkingSession.findById(data.sessionId);
-    if (!session) throw new AppError('Session không tồn tại', 404);
-    if (session.status === SessionStatus.COMPLETED) {
-      throw new AppError('Lượt gửi xe đã kết thúc', 400);
-    }
-    if (session.status === SessionStatus.EXCEPTION) {
-      throw new AppError('Lượt gửi xe đang có ngoại lệ chưa được xử lý. Vui lòng giải quyết ngoại lệ trước khi checkout.', 400);
-    }
+    const sessionMongoose = await mongoose.startSession();
+    sessionMongoose.startTransaction();
 
-    // Validate staff được phân công tại facility của session này (FR-18.6)
-    const staffUser = await User.findById(data.staffOutId).select('assignedFacilities');
-    if (!staffUser) throw new AppError('Staff user not found', 404);
-    const isAssigned = staffUser.assignedFacilities.some(
-      (fId) => fId.toString() === session.facilityId.toString()
-    );
-    if (!isAssigned) {
-      throw new AppError('Bạn không được phân công tại bãi xe này', 403);
-    }
-
-    const checkOutTime = new Date();
-    const feeResult = await this.calculateFee(data.sessionId, checkOutTime);
-
-    session.checkOutTime = checkOutTime;
-    session.gateOut = data.gateOut;
-    session.staffOutId = new mongoose.Types.ObjectId(data.staffOutId);
-    session.totalFee = feeResult.totalFee;
-    session.status = SessionStatus.COMPLETED;
-    if (data.checkOutImage) {
-      session.checkOutImage = data.checkOutImage;
-    }
-
-    await session.save();
-
-    // Update slot -> Available
-    const slot = await ParkingSlot.findById(session.slotId);
-    if (slot) {
-      slot.status = SlotStatus.AVAILABLE;
-      slot.currentSessionId = null;
-      slot.maintenanceReason = '';
-      await slot.save();
-    }
-
-    const populatedSession = await ParkingSession.findById(session._id)
-      .populate('vehicleTypeId', 'name code icon')
-      .populate('facilityId', 'name address')
-      .populate('floorId', 'name')
-      .populate('slotId', 'code status')
-      .populate('pricingPlanId', 'name feeType rates')
-      .populate('staffInId', 'name email')
-      .populate('staffOutId', 'name email');
-
-    // Emit socket event
     try {
-      getIO().to(`facility:${session.facilityId}`).emit('slot:statusChanged', {
-        slotId: session.slotId,
-        status: SlotStatus.AVAILABLE,
-        facilityId: session.facilityId,
+      const session = await ParkingSession.findById(data.sessionId).session(sessionMongoose);
+      if (!session) throw new AppError('Session không tồn tại', 404);
+      if (session.status === SessionStatus.COMPLETED) {
+        throw new AppError('Lượt gửi xe đã kết thúc', 400);
+      }
+      if (session.status === SessionStatus.EXCEPTION) {
+        throw new AppError('Lượt gửi xe đang có ngoại lệ chưa được xử lý. Vui lòng giải quyết ngoại lệ trước khi checkout.', 400);
+      }
+
+      // Validate staff được phân công tại facility của session này (FR-18.6)
+      const staffUser = await User.findById(data.staffOutId).select('assignedFacilities').session(sessionMongoose);
+      if (!staffUser) throw new AppError('Staff user not found', 404);
+      const isAssigned = staffUser.assignedFacilities.some(
+        (fId) => fId.toString() === session.facilityId.toString()
+      );
+      if (!isAssigned) {
+        throw new AppError('Bạn không được phân công tại bãi xe này', 403);
+      }
+
+      const checkOutTime = new Date();
+      // Không truyền session vào calculateFee vì nó chỉ đọc dữ liệu
+      const feeResult = await this.calculateFee(data.sessionId, checkOutTime);
+
+      // IMPORT ĐỘNG TRÁNH CIRCULAR DEPENDENCY VỚI MODEL/PAYMENT NẾU CẦN
+      const { Payment, PaymentMethod, PaymentStatus } = require('../models/payment.model');
+
+      // Tự động tạo một record Payment (CASH)
+      const transactionCode = `CASH${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      const payment = new Payment({
+        sessionId: data.sessionId,
+        transactionCode,
+        amount: feeResult.totalFee,
+        method: PaymentMethod.CASH,
+        status: PaymentStatus.COMPLETED,
+        staffId: data.staffOutId,
       });
-    } catch (err) {
-      // Ignore if socket is not initialized
+      await payment.save({ session: sessionMongoose });
+
+      session.checkOutTime = checkOutTime;
+      session.gateOut = data.gateOut;
+      session.staffOutId = new mongoose.Types.ObjectId(data.staffOutId);
+      session.totalFee = feeResult.totalFee;
+      session.status = SessionStatus.COMPLETED;
+      if (data.checkOutImage) {
+        session.checkOutImage = data.checkOutImage;
+      }
+
+      await session.save({ session: sessionMongoose });
+
+      // Update slot -> Available
+      const slot = await ParkingSlot.findById(session.slotId).session(sessionMongoose);
+      if (slot) {
+        slot.status = SlotStatus.AVAILABLE;
+        slot.currentSessionId = null;
+        slot.maintenanceReason = '';
+        await slot.save({ session: sessionMongoose });
+      }
+
+      // Commit Transaction
+      await sessionMongoose.commitTransaction();
+      sessionMongoose.endSession();
+
+      const populatedSession = await ParkingSession.findById(session._id)
+        .populate('vehicleTypeId', 'name code icon')
+        .populate('facilityId', 'name address')
+        .populate('floorId', 'name')
+        .populate('slotId', 'code status')
+        .populate('pricingPlanId', 'name feeType rates')
+        .populate('staffInId', 'name email')
+        .populate('staffOutId', 'name email');
+
+      // Emit socket event
+      try {
+        getIO().to(`facility:${session.facilityId}`).emit('slot:statusChanged', {
+          slotId: session.slotId,
+          status: SlotStatus.AVAILABLE,
+          facilityId: session.facilityId,
+        });
+      } catch (err) {
+        // Ignore if socket is not initialized
+      }
+
+      // 🔥 Background Upload: Đẩy cả ảnh checkIn và checkOut lên Cloudinary
+      UploadService.processCompletedSessionImages(session._id.toString()).catch(console.error);
+
+      return populatedSession!;
+    } catch (error) {
+      await sessionMongoose.abortTransaction();
+      sessionMongoose.endSession();
+      throw error;
     }
-
-    // 🔥 Background Upload: Đẩy cả ảnh checkIn và checkOut lên Cloudinary
-    UploadService.processCompletedSessionImages(session._id.toString()).catch(console.error);
-
-    return populatedSession!;
   }
 }
