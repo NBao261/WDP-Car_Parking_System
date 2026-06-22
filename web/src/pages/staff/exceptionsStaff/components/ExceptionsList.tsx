@@ -76,38 +76,37 @@ export default function ExceptionsList({
   const currentData = exceptionsList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden relative">
       {/* Toolbar */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="relative w-[300px]">
+      <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap bg-white">
+        <div className="relative max-w-sm w-full">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Tìm biển số, mã vé, loại ngoại lệ…"
-            className="w-full h-10 pl-9 pr-4 border border-[#e8e9e8] rounded-[8px] text-sm focus:outline-none focus:border-[#1a1a1a] transition-colors"
+            className="w-full pl-9 pr-4 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#9FE870] focus:ring-1 focus:ring-[#9FE870]/40 transition-colors"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <select
             value={filterStatus}
             onChange={(e) => onFilterChange(e.target.value)}
-            className="h-10 px-4 border border-[#e8e9e8] rounded-[8px] text-[13px] font-bold text-[#060606] outline-none focus:border-[#1a1a1a] cursor-pointer bg-white transition-colors"
+            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-[#060606] bg-white focus:outline-none focus:border-[#9FE870] transition-colors"
           >
             <option value="ALL">Tất cả trạng thái</option>
             <option value={ExceptionStatus.NEW.toUpperCase()}>Chờ xử lý</option>
-            {/* <option value={ExceptionStatus.PROCESSING.toUpperCase()}>Đang xử lý</option> */}
             <option value={ExceptionStatus.RESOLVED.toUpperCase()}>Đã xử lý</option>
           </select>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-[#e8e9e8] rounded-[14px] overflow-hidden shadow-sm">
-        <table className="w-full text-sm text-left table-fixed">
-          <thead className="bg-[#f5f5f5] text-[#6b6b6b] text-[11px] uppercase font-semibold border-b border-[#e8e9e8]">
-            <tr>
+      <div className="overflow-x-auto flex-1 bg-white">
+        <table className="w-full min-w-[1040px] table-fixed text-left text-sm whitespace-nowrap">
+          <thead className="sticky top-0 bg-white z-10">
+            <tr className="text-[11px] text-[#060606]/50 border-b border-gray-100 font-semibold uppercase tracking-wider">
               <th className="px-4 py-3 w-[5%] text-center">STT</th>
               <th className="px-4 py-3 w-[13%]">Mã Lượt Gửi / Thẻ</th>
               <th className="px-4 py-3 w-[12%]">Biển Số</th>
@@ -190,11 +189,11 @@ export default function ExceptionsList({
       </div>
 
       {/* Pagination */}
-      {exceptionsList.length > 0 && (
-        <div className="p-4 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Hiển thị {(currentPage - 1) * itemsPerPage + 1} đến {Math.min(currentPage * itemsPerPage, exceptionsList.length)} trên tổng số {exceptionsList.length} mục
-          </div>
+      <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-white">
+        <div className="text-sm text-gray-500">
+          Hiển thị {(currentPage - 1) * itemsPerPage + (exceptionsList.length > 0 ? 1 : 0)} đến {Math.min(currentPage * itemsPerPage, exceptionsList.length)} trên tổng số {exceptionsList.length} mục
+        </div>
+        {exceptionsList.length > 0 && (
           <div className="flex items-center gap-1">
             <button
               disabled={currentPage === 1}
@@ -222,8 +221,8 @@ export default function ExceptionsList({
               Sau
             </button>
           </div>
-        </div>
-      )}
-    </>
+        )}
+      </div>
+    </div>
   );
 }

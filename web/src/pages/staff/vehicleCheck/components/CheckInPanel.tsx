@@ -197,7 +197,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         qrScannerRef.current = scanner;
         await scanner.start(
           { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 240, height: 70 } },
+          { fps: 10, qrbox: { width: 200, height: 150 }, aspectRatio: 1.5 },
           (decodedText: string) => {
             scanner.stop().catch(() => {});
             setShowQrScanner(false);
@@ -411,9 +411,9 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
                 {/* QR Scanner area */}
                 {showQrScanner ? (
                   <div className="w-full flex flex-col gap-1">
-                    <div id="ci-qr-reader" className="w-full rounded-[4px] overflow-hidden" style={{ maxHeight: 100 }} />
-                    <p className="text-[9px] text-center text-[#9FE870] font-medium">Hướng vào mã QR trên điện thoại khách</p>
-                    <button onClick={toggleQrScanner} className="text-[9px] text-[#888] underline text-center">Đóng camera</button>
+                    <div id="ci-qr-reader" className="w-full rounded-[6px] overflow-hidden bg-black flex items-center justify-center min-h-[150px]" />
+                    <p className="text-[9px] text-center text-[#6b6b6b] font-medium mt-1">Hướng vào mã QR trên điện thoại khách</p>
+                    <button onClick={toggleQrScanner} className="text-[10px] text-red-500 font-semibold hover:underline text-center">Đóng camera</button>
                   </div>
                 ) : (
                   <>

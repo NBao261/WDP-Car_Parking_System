@@ -137,11 +137,11 @@ export default function ExceptionsStaffPage() {
   };
 
   return (
-    <div className="h-full max-w-[1400px] mx-auto pb-10 p-6">
-      <div className="flex justify-between items-start mb-6">
+    <div className="h-full flex flex-col gap-3 overflow-hidden p-4 lg:p-6">
+      <div className="flex justify-between items-start shrink-0 px-1 pt-1">
         <div>
-          <h2 className="text-[22px] font-bold text-[#060606]">Xử lí ngoại lệ</h2>
-          <p className="text-sm text-[#6b6b6b] mt-1">
+          <h2 className="text-xl font-bold text-[#060606]">Xử lí ngoại lệ</h2>
+          <p className="text-[12px] text-gray-400 mt-0.5">
             Các ngoại lệ bạn đã báo cáo và trạng thái giải quyết.
           </p>
         </div>
