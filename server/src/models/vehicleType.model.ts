@@ -12,6 +12,7 @@ export interface IVehicleType extends Document {
   slotSize: SlotSize;
   description: string;
   icon: string;
+  requiresPlate: boolean;
   floors: mongoose.Types.ObjectId[]; 
   isDeleted: boolean;
   createdAt: Date;
@@ -25,6 +26,7 @@ const vehicleTypeSchema = new Schema<IVehicleType>(
     slotSize: { type: String, enum: Object.values(SlotSize), required: true },
     description: { type: String, default: '' },
     icon: { type: String, default: '' },
+    requiresPlate: { type: Boolean, default: true },
     floors: [{ type: Schema.Types.ObjectId, ref: 'Floor' }], 
     isDeleted: { type: Boolean, default: false },
   },

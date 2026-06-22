@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { ScanLine, ImagePlus, RefreshCw, CheckCircle, X } from 'lucide-react';
+import { ImagePlus, RefreshCw, X } from 'lucide-react';
 import axios from 'axios';
 import { sessionService, ParkingSession } from '../../../../services/session.service';
 
@@ -39,54 +39,77 @@ export default function CheckOutPanel({
   const [ocrPreviewUrl, setOcrPreviewUrl] = useState<string | null>(null);
   const [ocrSuccess, setOcrSuccess] = useState(false);
   const [checkoutImageUrl, setCheckoutImageUrl] = useState<string | null>(null);
+  const [isNoPlateVehicle, setIsNoPlateVehicle] = useState(false);
+  const [manualConfirmed, setManualConfirmed] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    setOcrPreviewUrl(URL.createObjectURL(file));
+    const localUrl = URL.createObjectURL(file);
+    setOcrPreviewUrl(localUrl);
     setOcrSuccess(false);
     setIsUploading(true);
     const formData = new FormData();
     formData.append('image', file);
     try {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
-      const response = await axios.post(`${API_BASE_URL}/alpr/scan`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      if (response.data.success && response.data.data.normalizedPlate) {
-        const fp = formatPlate(response.data.data.normalizedPlate);
-
-        if (step === 'SEARCH') {
-          if (searchMode === 'plate') {
-            setSearchInput(fp);
-            onChangePlate(fp);
-            handleSearch(fp, 'plate');
-          } else {
-            // mode code -> just fill plate out, wait for card input
-            onChangePlate(fp);
-          }
-        } else if (step === 'CONFIRM') {
-          onChangePlate(fp);
-          if (fp.toUpperCase() !== plateIn.toUpperCase()) {
-            toast.error(`CẢNH BÁO: Biển số xe ra (${fp}) KHÔNG KHỚP với lúc vào (${plateIn})!`, {
-              duration: 5000,
-            });
-          } else {
-            toast.success(`Hợp lệ: Biển số xe ra khớp với lúc vào (${fp})`);
-          }
-        }
-
-        setOcrSuccess(true);
-        if (response.data.data.imageUrl) {
+      
+      if (isNoPlateVehicle) {
+        // Xe không biển số: chỉ upload ảnh
+        const response = await axios.post(`${API_BASE_URL}/upload/image`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        if (response.data.success && response.data.data?.imageUrl) {
           setCheckoutImageUrl(response.data.data.imageUrl);
+          // toast.success('Đã chụp ảnh xe ra (lưu server)!');
+        } else {
+          setCheckoutImageUrl(localUrl);
+          // toast.success('Đã chụp ảnh xe ra (lưu local)!');
         }
       } else {
-        toast.warning(response.data.message || 'Không nhận dạng được. Nhập tay.');
+        const response = await axios.post(`${API_BASE_URL}/alpr/scan`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        if (response.data.success && response.data.data.normalizedPlate) {
+          const fp = formatPlate(response.data.data.normalizedPlate);
+
+          if (step === 'SEARCH') {
+            if (searchMode === 'plate') {
+              setSearchInput(fp);
+              onChangePlate(fp);
+              handleSearch(fp, 'plate');
+            } else {
+              // mode code -> just fill plate out, wait for card input
+              onChangePlate(fp);
+            }
+          } else if (step === 'CONFIRM') {
+            onChangePlate(fp);
+            if (fp.toUpperCase() !== plateIn.toUpperCase()) {
+              toast.error(`CẢNH BÁO: Biển số xe ra (${fp}) KHÔNG KHỚP với lúc vào (${plateIn})!`, {
+                duration: 5000,
+              });
+            } else {
+              // toast.success(`Hợp lệ: Biển số xe ra khớp với lúc vào (${fp})`);
+            }
+          }
+
+          setOcrSuccess(true);
+          if (response.data.data.imageUrl) {
+            setCheckoutImageUrl(response.data.data.imageUrl);
+          }
+        } else {
+          // toast.warning(response.data.message || 'Không nhận dạng được. Nhập tay.');
+        }
       }
     } catch (error: any) {
-      toast.error(error.message || 'Lỗi xử lý ảnh.');
+      if (isNoPlateVehicle) {
+        setCheckoutImageUrl(localUrl);
+        // toast.success('Đã chụp ảnh xe ra (lưu local)!');
+      } else {
+        // toast.error(error.message || 'Lỗi xử lý ảnh.');
+      }
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -146,6 +169,7 @@ export default function CheckOutPanel({
         setPlateIn(session.licensePlate);
         const vehicleTypeObj = session.vehicleTypeId as any;
         setVehicleTypeName(vehicleTypeObj?.name || 'Không xác định');
+        setIsNoPlateVehicle(vehicleTypeObj?.requiresPlate === false);
         const checkInTimeStr = new Date(session.checkInTime).toLocaleTimeString('vi-VN', {
           hour: '2-digit',
           minute: '2-digit',
@@ -199,7 +223,8 @@ export default function CheckOutPanel({
 
         // So sánh trực tiếp plateOut với plateIn của session
         const actualPlateOut = mode === 'plate' ? query : plate;
-        if (actualPlateOut.toUpperCase() !== session.licensePlate.toUpperCase()) {
+        const isNoPlate = vehicleTypeObj?.requiresPlate === false;
+        if (!isNoPlate && actualPlateOut.toUpperCase() !== session.licensePlate.toUpperCase()) {
           toast.error(
             `CẢNH BÁO: Biển số xe ra (${actualPlateOut || 'Trống'}) KHÔNG KHỚP với lúc vào (${session.licensePlate})!`,
             { duration: 5000 }
@@ -222,8 +247,11 @@ export default function CheckOutPanel({
   const handleCheckOut = async () => {
     if (step === 'CONFIRM') {
       if (!currentSession) return;
-      if (plate.toUpperCase() !== plateIn.toUpperCase()) {
-        toast.error("LỖI: Biển số xe ra KHÔNG KHỚP với biển số vào. Không thể xác nhận xe ra!");
+      // Bỏ yêu cầu xác nhận thủ công đối với xe không biển số theo yêu cầu của user
+      const isMismatch = !isNoPlateVehicle && plate.toUpperCase() !== plateIn.toUpperCase();
+
+      if (isMismatch && !manualConfirmed) {
+        toast.error("LỖI: Biển số xe ra KHÔNG KHỚP với biển số vào. Xác nhận thủ công trước khi Enter!");
         return;
       }
 
@@ -271,6 +299,8 @@ export default function CheckOutPanel({
           setOcrPreviewUrl(null);
           setCheckoutImageUrl(null);
           setOcrSuccess(false);
+          setManualConfirmed(false);
+          setIsNoPlateVehicle(false);
           if (fileInputRef.current) fileInputRef.current.value = '';
 
           setTimeout(() => {
@@ -306,11 +336,12 @@ export default function CheckOutPanel({
     setPlateIn('');
     onChangePlate('');
     setCurrentSession(null);
-    setFeeData(null);
     setVehicleTypeName('Không có dữ liệu');
     setCheckInTimeDisplay('Không có dữ liệu');
     setOcrPreviewUrl(null);
     setOcrSuccess(false);
+    setManualConfirmed(false);
+    setIsNoPlateVehicle(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (onSearch) onSearch(null);
     if (onCheckOut) onCheckOut(null);
@@ -465,13 +496,13 @@ export default function CheckOutPanel({
           <label className="block text-[11px] font-semibold text-[#060606]">Biển số xe ra</label>
           <input
             type="text"
-            value={plate}
+            value={isNoPlateVehicle ? "KBS-AUTO" : plate}
             onChange={(e) => onChangePlate(e.target.value.toUpperCase())}
             onKeyDown={handleKeyDown}
-            disabled={step === 'SEARCH' || isSubmitting}
+            disabled={step === 'SEARCH' || isSubmitting || isNoPlateVehicle}
             className={`w-full h-12 text-[20px] font-mono px-3 border rounded-[6px] uppercase font-bold outline-none transition-all duration-200
               ${step === 'CONFIRM'
-                ? (isException
+                ? (isNoPlateVehicle || isException
                     ? 'bg-[#fff7ed] border-[#ea580c] text-[#ea580c] focus:border-[#c2410c]'
                     : isMismatch
                       ? 'bg-[#fef2f2] border-[#ef4444] text-[#ef4444] focus:border-[#dc2626]'
@@ -480,6 +511,19 @@ export default function CheckOutPanel({
               }`}
             placeholder="XXX-XX-XXXXX"
           />
+          {step === 'CONFIRM' && isMismatch && (
+            <label className="flex items-center gap-2 mt-1 cursor-pointer bg-red-50 p-2 rounded-md border border-red-200">
+              <input
+                type="checkbox"
+                className="w-4 h-4 text-red-600 rounded border-gray-300"
+                checked={manualConfirmed}
+                onChange={(e) => setManualConfirmed(e.target.checked)}
+              />
+              <span className="text-sm font-semibold text-red-700">
+                Xác nhận khớp xe thủ công (Bắt buộc)
+              </span>
+            </label>
+          )}
         </div>
       </div>
     </div>

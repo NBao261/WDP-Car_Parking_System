@@ -9,6 +9,7 @@ export interface VehicleType {
   slotSize: SlotSize;
   description: string;
   icon: string;
+  requiresPlate: boolean;
   floors?: {
     _id: string;
     name: string;
@@ -36,6 +37,7 @@ export interface CreateVehicleTypePayload {
   slotSize: SlotSize;
   description?: string;
   icon?: string;
+  requiresPlate?: boolean;
   floors?: string[];
 }
 
@@ -44,6 +46,7 @@ export interface UpdateVehicleTypePayload {
   slotSize?: SlotSize;
   description?: string;
   icon?: string;
+  requiresPlate?: boolean;
   floors?: string[];
 }
 

@@ -169,6 +169,7 @@ const seed = async () => {
         slotSize: SlotSize.SMALL,
         description: 'Xe đạp, xe đạp điện',
         icon: '🚲',
+        requiresPlate: false,
       },
       {
         name: 'Xe Tải nhẹ',

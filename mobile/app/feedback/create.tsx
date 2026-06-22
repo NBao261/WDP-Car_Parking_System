@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   ScrollView, Image, Alert,
@@ -9,7 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors, Typography, Spacing, Shadows } from "../../src/constants/theme";
-import { feedbackApi } from "../../src/services/api";
+import { feedbackApi, sessionApi } from "../../src/services/api";
 
 const FEEDBACK_TYPES = [
   { id: "lost_card",     label: "Mất thẻ/Vé",    icon: "card-outline"                  },
@@ -25,6 +25,44 @@ export default function CreateFeedbackScreen() {
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [selectedSessionId, setSelectedSessionId] = useState<string>("");
+  const [loadingSessions, setLoadingSessions] = useState(true);
+
+  useEffect(() => {
+    const loadSessions = async () => {
+      try {
+        setLoadingSessions(true);
+        // Load cả active và completed để user có thể feedback cho những phiên gần đây
+        const activeRes: any = await sessionApi.getMySessions('active');
+        const completedRes: any = await sessionApi.getMySessions('completed');
+        
+        let allSessions = [];
+        if (activeRes.success && activeRes.data) allSessions = [...allSessions, ...activeRes.data];
+        if (completedRes.success && completedRes.data) allSessions = [...allSessions, ...completedRes.data];
+
+        // Sắp xếp phiên mới nhất lên đầu
+        allSessions.sort((a, b) => new Date(b.checkInTime).getTime() - new Date(a.checkInTime).getTime());
+
+        // Lấy 5 phiên gửi xe gần nhất
+        const recentSessions = allSessions.slice(0, 5);
+
+        setSessions(recentSessions);
+        if (recentSessions.length > 0) {
+          setSelectedSessionId(recentSessions[0]._id);
+        } else {
+          Alert.alert("Chưa có lượt gửi xe", "Bạn cần có ít nhất một lượt gửi xe để có thể gửi phản hồi.", [
+            { text: "Đóng", onPress: () => router.back() }
+          ]);
+        }
+      } catch (err) {
+        console.log("Error loading sessions:", err);
+      } finally {
+        setLoadingSessions(false);
+      }
+    };
+    loadSessions();
+  }, []);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -44,9 +82,13 @@ export default function CreateFeedbackScreen() {
 
   const handleSubmit = async () => {
     if (!description.trim()) { Alert.alert("Thiếu mô tả", "Vui lòng mô tả vấn đề bạn gặp phải."); return; }
+    if (!selectedSessionId) { Alert.alert("Lỗi", "Vui lòng chọn lượt gửi xe để phản hồi."); return; }
+
     try {
       setSubmitting(true);
-      const res: any = await feedbackApi.createFeedback({ type: selectedType, description: description.trim(), images });
+      const payload: any = { type: selectedType, description: description.trim(), images, sessionId: selectedSessionId };
+
+      const res: any = await feedbackApi.createFeedback(payload);
       if (res.success) {
         Alert.alert("✅ Gửi thành công!", "Phản hồi của bạn đã được ghi nhận.", [
           { text: "OK", onPress: () => router.back() },
@@ -60,6 +102,14 @@ export default function CreateFeedbackScreen() {
   };
 
   const selectedTypeData = FEEDBACK_TYPES.find(t => t.id === selectedType);
+
+  if (loadingSessions) {
+    return (
+      <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text>Đang tải dữ liệu...</Text>
+      </View>
+    );
+  }
 
   return (
     <>
@@ -91,9 +141,37 @@ export default function CreateFeedbackScreen() {
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-          {/* ── Step 1: Loại vấn đề ── */}
+          {/* ── Step 1: Lượt gửi xe ── */}
+          {sessions.length > 0 && (
+            <>
+              <View style={styles.stepHeader}>
+                <View style={styles.stepBadge}><Text style={styles.stepNum}>1</Text></View>
+                <Text style={styles.stepTitle}>Chọn lượt gửi xe <Text style={{ color: Colors.danger }}>*</Text></Text>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
+                {sessions.map((sess) => {
+                  const active = selectedSessionId === sess._id;
+                  const date = new Date(sess.checkInTime);
+                  const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} ${date.getDate()}/${date.getMonth() + 1}`;
+                  return (
+                    <TouchableOpacity
+                      key={sess._id}
+                      style={[styles.typeChip, { marginRight: 10, width: 'auto', paddingHorizontal: 16 }, active && styles.typeChipActive]}
+                      onPress={() => setSelectedSessionId(sess._id)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="car-outline" size={17} color={active ? Colors.primary : Colors.textSecondary} />
+                      <Text style={[styles.typeChipText, active && styles.typeChipTextActive]}>Biển số: {sess.licensePlate || "Không biển"} - {timeString}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </>
+          )}
+
+          {/* ── Step 2: Loại vấn đề ── */}
           <View style={styles.stepHeader}>
-            <View style={styles.stepBadge}><Text style={styles.stepNum}>1</Text></View>
+            <View style={styles.stepBadge}><Text style={styles.stepNum}>2</Text></View>
             <Text style={styles.stepTitle}>Loại vấn đề</Text>
           </View>
           <View style={styles.typesGrid}>
@@ -118,9 +196,9 @@ export default function CreateFeedbackScreen() {
             })}
           </View>
 
-          {/* ── Step 2: Mô tả ── */}
+          {/* ── Step 3: Mô tả ── */}
           <View style={styles.stepHeader}>
-            <View style={styles.stepBadge}><Text style={styles.stepNum}>2</Text></View>
+            <View style={styles.stepBadge}><Text style={styles.stepNum}>3</Text></View>
             <Text style={styles.stepTitle}>Mô tả chi tiết</Text>
           </View>
           <View style={styles.card}>
@@ -137,9 +215,9 @@ export default function CreateFeedbackScreen() {
             <Text style={styles.charCount}>{description.length} ký tự</Text>
           </View>
 
-          {/* ── Step 3: Ảnh đính kèm ── */}
+          {/* ── Step 4: Ảnh đính kèm ── */}
           <View style={styles.stepHeader}>
-            <View style={styles.stepBadge}><Text style={styles.stepNum}>3</Text></View>
+            <View style={styles.stepBadge}><Text style={styles.stepNum}>4</Text></View>
             <Text style={styles.stepTitle}>Hình ảnh <Text style={styles.optional}>(tùy chọn)</Text></Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imgRow}>

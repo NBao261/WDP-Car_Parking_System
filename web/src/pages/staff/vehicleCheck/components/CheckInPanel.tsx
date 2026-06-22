@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { ImagePlus, RefreshCw, CheckCircle, X } from "lucide-react";
+import { ImagePlus, RefreshCw, X } from "lucide-react";
 import { apiClient } from "../../../../services/api";
 import { VehicleType } from "../../../../services/vehicleType.service";
 import { facilityService } from "../../../../services/facility.service";
@@ -42,23 +42,52 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     setIsUploading(true);
     const formData = new FormData();
     formData.append("image", file);
+
+    const selectedType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
+    const isNoPlate = selectedType?.requiresPlate === false;
+
     try {
-      // Dùng apiClient (có auth + timeout 35s cho ALPR)
-      const response: any = await apiClient.post('/alpr/scan', formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 35000,
-      } as any);
-      if (response.success && response.data?.normalizedPlate) {
-        const recognized = formatPlate(response.data.normalizedPlate);
-        setPlate(recognized);
-        if (response.data.imageUrl) setCheckInImage(response.data.imageUrl);
-        setOcrSuccess(true);
-        toast.success(`Đã nhận dạng: ${recognized} — kiểm tra lại trước khi xác nhận`);
+      if (isNoPlate) {
+        // Dùng API upload ảnh thay vì ALPR
+        const response: any = await apiClient.post('/upload/image', formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        if (response.success && response.data?.imageUrl) {
+          setCheckInImage(response.data.imageUrl);
+          // toast.success("Đã chụp ảnh xe (lưu server)!");
+        } else {
+          setCheckInImage(localUrl);
+          // toast.success("Đã chụp ảnh xe (lưu local)!");
+        }
       } else {
-        toast.warning(response.message || "Không nhận dạng được biển số. Vui lòng nhập tay.");
+        // Dùng apiClient (có auth + timeout 35s cho ALPR)
+        const response: any = await apiClient.post('/alpr/scan', formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+          timeout: 35000,
+        } as any);
+        if (response.success && response.data?.normalizedPlate) {
+          const recognized = formatPlate(response.data.normalizedPlate);
+          setPlate(recognized);
+          if (response.data.imageUrl) setCheckInImage(response.data.imageUrl);
+          setOcrSuccess(true);
+          // toast.success(`Đã nhận dạng: ${recognized} — kiểm tra lại trước khi xác nhận`);
+        } else {
+          // toast.warning(response.message || "Không nhận dạng được biển số. Vui lòng nhập tay.");
+          if (response.data?.imageUrl) {
+            setCheckInImage(response.data.imageUrl);
+          } else {
+            setCheckInImage(localUrl);
+          }
+        }
       }
     } catch (err: any) {
-      toast.error(err.message || "Lỗi xử lý ảnh.");
+      if (isNoPlate) {
+        setCheckInImage(localUrl);
+        // toast.success("Đã chụp ảnh xe (lưu local)!");
+      } else {
+        // toast.error(err.message || "Lỗi xử lý ảnh.");
+        setCheckInImage(localUrl);
+      }
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -82,8 +111,8 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
         e.preventDefault();
         const selectedType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
-        const isBike = selectedType?.name.toLowerCase().includes("xe đạp") || false;
-        if ((isBike || plate.trim().length > 0) && !isSubmitting) {
+        const isNoPlate = selectedType?.requiresPlate === false;
+        if ((isNoPlate || plate.trim().length > 0) && !isSubmitting) {
           handleCheckIn();
         }
       }
@@ -95,7 +124,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
       window.removeEventListener("keydown", onSpace);
       window.removeEventListener("HOTKEY_F1", onF1);
     };
-  }, [plate, isSubmitting, vehicleTypes, selectedVehicleTypeId]);
+  }, [plate, isSubmitting, vehicleTypes, selectedVehicleTypeId, checkInImage]);
 
   // ─── Terminal Session (từ sessionStorage, set lúc chọn ca) ────────────────
   const facilityId = sessionStorage.getItem("staff_facility_id") || "";
@@ -129,6 +158,8 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     if (!plate || vehicleTypes.length === 0) return;
 
     const guessVehicleCategory = (plateStr: string) => {
+      if (plateStr.startsWith('KBS-')) return null; // Bỏ qua đoán nếu là mã tự sinh
+      
       const cleanPlate = plateStr.replace(/[-.\s]/g, '').toUpperCase();
       // Regex cho biển số thông thường: 2 số tỉnh + 1/2 ký tự sê-ri + 4/5 số
       const match = cleanPlate.match(/^(\d{2})([A-Z0-9]{1,2})(\d{4,5})$/);
@@ -156,6 +187,8 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     };
 
     const category = guessVehicleCategory(plate);
+    if (!category) return; // Nếu không xác định được (ví dụ KBS-), không tự đổi loại xe
+
 
     // Tìm loại xe phù hợp nhất trong danh sách (dựa vào từ khoá tên)
     let targetType = vehicleTypes.find(v => {
@@ -183,12 +216,18 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
 
   const handleCheckIn = async () => {
     const selectedVehicleType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
-    const isBicycle = selectedVehicleType?.name.toLowerCase().includes("xe đạp") || false;
+    const isNoPlate = selectedVehicleType?.requiresPlate === false;
 
-    if (!isBicycle && !plate) {
+    if (!isNoPlate && !plate) {
       toast.error("Vui lòng nhập biển số xe!");
       return;
     }
+
+    if (isNoPlate && !checkInImage) {
+      toast.error("Xe không biển số: BẮT BUỘC phải chụp ảnh xe lúc vào!");
+      return;
+    }
+
     if (!facilityId || !selectedVehicleTypeId) {
       toast.error("Thiếu thông tin vị trí trực hoặc loại xe. Vui lòng đăng nhập lại!");
       return;
@@ -196,14 +235,14 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
 
     setIsSubmitting(true);
     try {
-      const actualPlate = isBicycle ? `XD-${Math.floor(100000 + Math.random() * 900000)}` : plate;
+      const actualPlate = isNoPlate ? `KBS-${Math.floor(100000 + Math.random() * 900000)}` : plate;
 
       const res = await sessionService.checkIn({
         facilityId,
         vehicleTypeId: selectedVehicleTypeId,
         licensePlate: actualPlate,
         gateIn,
-        ...(checkInImage && !isBicycle ? { checkInImage } : {}),
+        ...(checkInImage ? { checkInImage } : {}),
       });
 
       if (res.success) {
@@ -234,6 +273,13 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         setCheckInImage(null);
         setPreviewUrl(null);
         setOcrSuccess(false);
+
+        // Nếu vừa cho xe đạp vào, tự chuyển loại xe về mặc định (xe máy) để OCR hoạt động đúng
+        if (isNoPlate) {
+          const defaultType = vehicleTypes.find(v => v.requiresPlate !== false)
+            || vehicleTypes[0];
+          if (defaultType) setSelectedVehicleTypeId(defaultType._id);
+        }
       }
     } catch (error: any) {
       toast.error(error.message || "Lỗi khi tạo phiên đỗ xe!");
@@ -332,12 +378,12 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
           <label className="block text-[11px] font-semibold text-[#060606]">Biển số xe vào</label>
           <input
             type="text"
-            value={vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name.toLowerCase().includes("xe đạp") ? "XD-AUTO" : plate}
+            value={vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.requiresPlate === false ? "KBS-AUTO" : plate}
             onChange={(e) => setPlate(e.target.value.toUpperCase())}
             onKeyDown={(e) => { if (e.key === "Enter" || e.code === "Space") { e.preventDefault(); handleCheckIn(); } }}
             disabled={isSubmitting}
             className={`w-full h-12 text-[20px] font-mono px-3 border rounded-[6px] uppercase font-bold outline-none transition-all duration-200 disabled:opacity-70
-              ${(vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name.toLowerCase().includes("xe đạp") ? "XD-AUTO" : plate)
+              ${(vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.requiresPlate === false ? "KBS-AUTO" : plate)
                 ? 'bg-[#9FE870]/30 border-[#9FE870] text-[#062F28] focus:ring-2 focus:ring-[#9FE870]/40'
                 : 'bg-[#f5f5f4] border-[#e8e9e8] text-[#9b9b9b] focus:border-[#1a1a1a]'
               }`}
