@@ -1,0 +1,169 @@
+tags:
+  - name: Payments
+    description: "API quản lý thanh toán (Tạo intent, webhook, checkout tiền mặt)"
+
+paths:
+  /payments/create-intent:
+    post:
+      summary: "Tạo Payment Intent"
+      description: "Khởi tạo một giao dịch thanh toán trực tuyến (ví dụ: QR Code, E-wallet). Hệ thống sẽ tính phí và trả về đường dẫn giả lập thanh toán."
+      tags: [Payments]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sessionId
+                - method
+              properties:
+                sessionId:
+                  type: string
+                  description: "ID của ParkingSession"
+                  example: "60b8c62b4fbef72d..."
+                method:
+                  type: string
+                  description: "Phương thức thanh toán (qr_pay, e_wallet, bank_card)"
+                  example: "qr_pay"
+      responses:
+        "201":
+          description: "Tạo thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      payment:
+                        type: object
+                        description: "Thông tin Payment vừa tạo (trạng thái PENDING)"
+                      paymentUrl:
+                        type: string
+                        description: "URL để quét QR hoặc chuyển hướng thanh toán"
+        "400":
+          description: "Lỗi input (vd: phương thức không hợp lệ, phiên đã hoàn thành)"
+        "404":
+          description: "Không tìm thấy Session"
+
+  /payments/webhook:
+    post:
+      summary: "Webhook xác nhận thanh toán thành công"
+      description: "API nhận thông báo từ cổng thanh toán (VNPay/Momo). Cập nhật trạng thái Payment, Session và Slot thông qua MongoDB Transaction."
+      tags: [Payments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - transactionCode
+              properties:
+                transactionCode:
+                  type: string
+                  description: "Mã giao dịch được sinh ra ở bước create-intent"
+                  example: "TXN123456789"
+      responses:
+        "200":
+          description: "Xử lý thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Xác nhận thanh toán thành công"
+        "400":
+          description: "Thiếu tham số"
+        "404":
+          description: "Không tìm thấy giao dịch hoặc session"
+
+  /payments/cash-checkout:
+    post:
+      summary: "Checkout và thu tiền mặt tại cổng"
+      description: "Nhân viên bấm checkout sau khi đã thu tiền. Hệ thống tự động tạo một Payment (cash) COMPLETED, đóng Session và trả Slot. Tất cả bọc trong 1 Transaction."
+      tags: [Payments]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sessionId
+                - gateOut
+              properties:
+                sessionId:
+                  type: string
+                  description: "ID của lượt gửi xe"
+                gateOut:
+                  type: string
+                  description: "Tên/ID cổng ra"
+                  example: "Cổng Ra T2"
+                checkOutImage:
+                  type: string
+                  description: "URL ảnh chụp biển số lúc ra"
+      responses:
+        "200":
+          description: "Checkout thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    description: "Thông tin Session đã populate dữ liệu"
+        "400":
+          description: "Phiên lỗi hoặc đã kết thúc"
+        "401":
+          description: "Nhân viên chưa xác thực"
+        "404":
+          description: "Không tìm thấy session"
+
+  /payments/{sessionId}:
+    get:
+      summary: "Lấy lịch sử thanh toán của một phiên"
+      description: "Liệt kê các Payment liên quan đến 1 ParkingSession"
+      tags: [Payments]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema:
+            type: string
+          description: "ID của ParkingSession"
+      responses:
+        "200":
+          description: "Thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
