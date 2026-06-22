@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { toast } from 'sonner';
-import { ImagePlus, RefreshCw, CheckCircle, X, Camera } from 'lucide-react';
-import { apiClient } from '../../../../services/api';
-import { VehicleType } from '../../../../services/vehicleType.service';
-import { facilityService } from '../../../../services/facility.service';
-import { sessionService } from '../../../../services/session.service';
+import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
+import { ImagePlus, RefreshCw, X } from "lucide-react";
+import { apiClient } from "../../../../services/api";
+import { VehicleType } from "../../../../services/vehicleType.service";
+import { facilityService } from "../../../../services/facility.service";
+import { sessionService } from "../../../../services/session.service";
 
 interface CheckInPanelProps {
   onCheckIn: (data: any) => void;
@@ -23,16 +23,15 @@ function formatPlate(raw: string): string {
 }
 
 export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
-  const [plate, setPlate] = useState('');
+  const [plate, setPlate] = useState("");
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
-  const [selectedVehicleTypeId, setSelectedVehicleTypeId] = useState('');
+  const [selectedVehicleTypeId, setSelectedVehicleTypeId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkInImage, setCheckInImage] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [ocrSuccess, setOcrSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const manualTypeSelect = useRef(false); // Tracks if user manually picked a vehicle type
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -41,31 +40,29 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     setPreviewUrl(localUrl);
     setOcrSuccess(false);
     setIsUploading(true);
+    const formData = new FormData();
+    formData.append("image", file);
 
     const selectedType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
     const isNoPlate = selectedType?.requiresPlate === false;
 
-    const formData = new FormData();
-    formData.append('image', file);
-
     try {
       if (isNoPlate) {
-        // Xe không cần biển số: chỉ upload ảnh, không gọi OCR
+        // Dùng API upload ảnh thay vì ALPR
         const response: any = await apiClient.post('/upload/image', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        } as any);
+          headers: { "Content-Type": "multipart/form-data" },
+        });
         if (response.success && response.data?.imageUrl) {
           setCheckInImage(response.data.imageUrl);
-          toast.success('Đã chụp ảnh xe thành công!');
+          // toast.success("Đã chụp ảnh xe (lưu server)!");
         } else {
-          // Fallback: dùng local preview URL
           setCheckInImage(localUrl);
-          toast.success('Đã chụp ảnh xe!');
+          // toast.success("Đã chụp ảnh xe (lưu local)!");
         }
       } else {
-        // Xe có biển số: gọi ALPR scan để nhận dạng
+        // Dùng apiClient (có auth + timeout 35s cho ALPR)
         const response: any = await apiClient.post('/alpr/scan', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: { "Content-Type": "multipart/form-data" },
           timeout: 35000,
         } as any);
         if (response.success && response.data?.normalizedPlate) {
@@ -73,80 +70,69 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
           setPlate(recognized);
           if (response.data.imageUrl) setCheckInImage(response.data.imageUrl);
           setOcrSuccess(true);
-          toast.success(`Đã nhận dạng: ${recognized} — kiểm tra lại trước khi xác nhận`);
+          // toast.success(`Đã nhận dạng: ${recognized} — kiểm tra lại trước khi xác nhận`);
         } else {
-          toast.warning(response.message || 'Không nhận dạng được biển số. Vui lòng nhập tay.');
+          // toast.warning(response.message || "Không nhận dạng được biển số. Vui lòng nhập tay.");
+          if (response.data?.imageUrl) {
+            setCheckInImage(response.data.imageUrl);
+          } else {
+            setCheckInImage(localUrl);
+          }
         }
       }
     } catch (err: any) {
       if (isNoPlate) {
-        // Fallback cho no-plate: dùng local URL nếu upload thất bại
         setCheckInImage(localUrl);
-        toast.success('Đã chụp ảnh xe (lưu local)!');
+        // toast.success("Đã chụp ảnh xe (lưu local)!");
       } else {
-        toast.error(err.message || 'Lỗi xử lý ảnh.');
+        // toast.error(err.message || "Lỗi xử lý ảnh.");
+        setCheckInImage(localUrl);
       }
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const clearPreview = () => {
-    setPreviewUrl(null);
-    setOcrSuccess(false);
-    setCheckInImage(null);
-  };
+  const clearPreview = () => { setPreviewUrl(null); setOcrSuccess(false); setCheckInImage(null); };
 
   // Lắng nghe Hotkeys
   useEffect(() => {
-    const onF2 = () => {
-      const selectedType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
-      const isBike = selectedType?.name.toLowerCase().includes('xe đạp') || false;
-
-      // Chỉ check-in khi đã nhập đủ biển số (hoặc là xe đạp)
-      if ((isBike || plate.trim().length > 0) && !isSubmitting) {
-        handleCheckIn();
-      }
-    };
-
-    const onF10 = () => {
-      setPlate('');
+    const onF1 = () => {
+      setPlate("");
       setCheckInImage(null);
       setPreviewUrl(null);
       setOcrSuccess(false);
-      manualTypeSelect.current = false;
-      if (vehicleTypes.length > 0) {
-        setSelectedVehicleTypeId(vehicleTypes[0]._id);
-      }
     };
 
     const onSpace = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
+      if (e.code === "Space") {
         const target = e.target as HTMLElement;
-        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
         e.preventDefault();
         const selectedType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
-        const isBike = selectedType?.name.toLowerCase().includes('xe đạp') || false;
-        if ((isBike || plate.trim().length > 0) && !isSubmitting) {
+        const isNoPlate = selectedType?.requiresPlate === false;
+        if ((isNoPlate || plate.trim().length > 0) && !isSubmitting) {
           handleCheckIn();
         }
       }
     };
 
-    window.addEventListener('keydown', onSpace);
-    window.addEventListener('HOTKEY_F1', onF1);
+    window.addEventListener("keydown", onSpace);
+    window.addEventListener("HOTKEY_F1", onF1);
     return () => {
-      window.removeEventListener('keydown', onSpace);
-      window.removeEventListener('HOTKEY_F1', onF1);
+      window.removeEventListener("keydown", onSpace);
+      window.removeEventListener("HOTKEY_F1", onF1);
     };
-  }, [plate, isSubmitting, vehicleTypes, selectedVehicleTypeId]);
+  }, [plate, isSubmitting, vehicleTypes, selectedVehicleTypeId, checkInImage]);
 
   // ─── Terminal Session (từ sessionStorage, set lúc chọn ca) ────────────────
-  const facilityId = sessionStorage.getItem('staff_facility_id') || '';
-  const facilityName = sessionStorage.getItem('staff_facility_name') || 'Chưa chọn Toà nhà';
+  const facilityId = sessionStorage.getItem("staff_facility_id") || "";
+  const facilityName =
+    sessionStorage.getItem("staff_facility_name") || "Chưa chọn Toà nhà";
   // gateIn được auto-sinh khi staff chọn ca → nhất quán, không cần nhập tay
-  const gateIn = sessionStorage.getItem('staff_gate_name') || `Cổng - ${facilityName}`;
+  const gateIn =
+    sessionStorage.getItem("staff_gate_name") || `Cổng - ${facilityName}`;
 
   useEffect(() => {
     if (!facilityId) return;
@@ -160,11 +146,11 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         } else {
           // Toà nhà chưa có cấu hình loại xe nào
           setVehicleTypes([]);
-          setSelectedVehicleTypeId('');
-          toast.warning('Toà nhà này chưa được cấu hình loại xe. Liên hệ Admin.');
+          setSelectedVehicleTypeId("");
+          toast.warning("Toà nhà này chưa được cấu hình loại xe. Liên hệ Admin.");
         }
       })
-      .catch(() => toast.error('Không thể tải cấu hình loại xe'));
+      .catch(() => toast.error("Không thể tải cấu hình loại xe"));
   }, [facilityId]);
 
   // ─── TỰ ĐỘNG ĐOÁN LOẠI XE DỰA VÀO BIỂN SỐ ────────────────────────────
@@ -172,6 +158,8 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     if (!plate || vehicleTypes.length === 0) return;
 
     const guessVehicleCategory = (plateStr: string) => {
+      if (plateStr.startsWith('KBS-')) return null; // Bỏ qua đoán nếu là mã tự sinh
+      
       const cleanPlate = plateStr.replace(/[-.\s]/g, '').toUpperCase();
       // Regex cho biển số thông thường: 2 số tỉnh + 1/2 ký tự sê-ri + 4/5 số
       const match = cleanPlate.match(/^(\d{2})([A-Z0-9]{1,2})(\d{4,5})$/);
@@ -199,34 +187,25 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     };
 
     const category = guessVehicleCategory(plate);
+    if (!category) return; // Nếu không xác định được (ví dụ KBS-), không tự đổi loại xe
+
 
     // Tìm loại xe phù hợp nhất trong danh sách (dựa vào từ khoá tên)
-    let targetType = vehicleTypes.find((v) => {
+    let targetType = vehicleTypes.find(v => {
       const lowerName = v.name.toLowerCase();
       if (category === 'Truck') return lowerName.includes('tải') || lowerName.includes('truck');
-      if (category === 'ElectricMotorbike')
-        return lowerName.includes('máy điện') || lowerName.includes('xe điện');
-      if (category === 'Car')
-        return (
-          lowerName === 'ô tô' ||
-          lowerName === 'car' ||
-          (lowerName.includes('ô tô') && !lowerName.includes('điện'))
-        );
-      if (category === 'Motorbike')
-        return (
-          lowerName === 'xe máy' ||
-          lowerName === 'motorbike' ||
-          (lowerName.includes('máy') && !lowerName.includes('điện'))
-        );
+      if (category === 'ElectricMotorbike') return lowerName.includes('máy điện') || lowerName.includes('xe điện');
+      if (category === 'Car') return lowerName === 'ô tô' || lowerName === 'car' || (lowerName.includes('ô tô') && !lowerName.includes('điện'));
+      if (category === 'Motorbike') return lowerName === 'xe máy' || lowerName === 'motorbike' || (lowerName.includes('máy') && !lowerName.includes('điện'));
       return false;
     });
 
     // Fallback nếu không tìm thấy loại chính xác
     if (!targetType) {
       if (category === 'Truck' || category === 'Car') {
-        targetType = vehicleTypes.find((v) => v.name.toLowerCase().includes('ô tô'));
+        targetType = vehicleTypes.find(v => v.name.toLowerCase().includes('ô tô'));
       } else {
-        targetType = vehicleTypes.find((v) => v.name.toLowerCase().includes('máy'));
+        targetType = vehicleTypes.find(v => v.name.toLowerCase().includes('máy'));
       }
     }
 
@@ -240,44 +219,49 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     const isNoPlate = selectedVehicleType?.requiresPlate === false;
 
     if (!isNoPlate && !plate) {
-      toast.error('Vui lòng nhập biển số xe!');
+      toast.error("Vui lòng nhập biển số xe!");
       return;
     }
+
+    if (isNoPlate && !checkInImage) {
+      toast.error("Xe không biển số: BẮT BUỘC phải chụp ảnh xe lúc vào!");
+      return;
+    }
+
     if (!facilityId || !selectedVehicleTypeId) {
-      toast.error('Thiếu thông tin vị trí trực hoặc loại xe. Vui lòng đăng nhập lại!');
+      toast.error("Thiếu thông tin vị trí trực hoặc loại xe. Vui lòng đăng nhập lại!");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const actualPlate = isBicycle ? `XD-${Math.floor(100000 + Math.random() * 900000)}` : plate;
+      const actualPlate = isNoPlate ? `KBS-${Math.floor(100000 + Math.random() * 900000)}` : plate;
 
       const res = await sessionService.checkIn({
         facilityId,
         vehicleTypeId: selectedVehicleTypeId,
         licensePlate: actualPlate,
         gateIn,
-        ...(checkInImage && !isBicycle ? { checkInImage } : {}),
+        ...(checkInImage ? { checkInImage } : {}),
       });
 
       if (res.success) {
-        const floorName = (res.data.floorId as any)?.name || 'Tầng Auto';
-        const slotCode = (res.data.slotId as any)?.code || 'Slot Auto';
+        const floorName = (res.data.floorId as any)?.name || "Tầng Auto";
+        const slotCode = (res.data.slotId as any)?.code || "Slot Auto";
 
         const now = new Date();
         const actualCheckInTime = res.data.checkInTime ? new Date(res.data.checkInTime) : now;
         onCheckIn({
           cardCode: res.data.cardCode,
           plate: res.data.licensePlate,
-          vehicleType: vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name || '',
-          checkInTime: actualCheckInTime.toLocaleTimeString('vi-VN', {
-            hour: '2-digit',
-            minute: '2-digit',
+          vehicleType:
+            vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name || "",
+          checkInTime: actualCheckInTime.toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
           }),
-          checkInDate: actualCheckInTime.toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
+          checkInDate: actualCheckInTime.toLocaleDateString("vi-VN", {
+            day: "2-digit", month: "2-digit", year: "numeric"
           }),
           gate: gateIn,
           zone: `${floorName} - Slot: ${slotCode}`,
@@ -285,13 +269,20 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         toast.success(`Đã cấp phát: ${floorName} - Slot: ${slotCode}. Đã tự động mở chắn!`);
 
         // Tự động xoá form để sẵn sàng đón xe tiếp theo (thông tin xác nhận vẫn giữ lại)
-        setPlate('');
+        setPlate("");
         setCheckInImage(null);
         setPreviewUrl(null);
         setOcrSuccess(false);
+
+        // Nếu vừa cho xe đạp vào, tự chuyển loại xe về mặc định (xe máy) để OCR hoạt động đúng
+        if (isNoPlate) {
+          const defaultType = vehicleTypes.find(v => v.requiresPlate !== false)
+            || vehicleTypes[0];
+          if (defaultType) setSelectedVehicleTypeId(defaultType._id);
+        }
       }
     } catch (error: any) {
-      toast.error(error.message || 'Lỗi khi tạo phiên đỗ xe!');
+      toast.error(error.message || "Lỗi khi tạo phiên đỗ xe!");
     } finally {
       setIsSubmitting(false);
     }
@@ -306,178 +297,98 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-[11px] font-semibold text-[#6b6b6b] mb-1">Toà nhà</label>
-            <input
-              type="text"
-              value={facilityName}
-              readOnly
-              className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none"
-            />
+            <input type="text" value={facilityName} readOnly
+              className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none" />
           </div>
           <div>
             <label className="block text-[11px] font-semibold text-[#6b6b6b] mb-1">Cổng trực</label>
-            <input
-              type="text"
-              value={gateIn}
-              readOnly
-              className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none"
-            />
+            <input type="text" value={gateIn} readOnly
+              className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none" />
           </div>
         </div>
 
-        {/* Loại xe */}
-        <div>
-          <label className="block text-[11px] font-semibold text-[#060606] mb-1">Loại xe</label>
-          <select
-            value={selectedVehicleTypeId}
-            onChange={(e) => setSelectedVehicleTypeId(e.target.value)}
-            className="w-full h-8 px-3 border border-[#e8e9e8] rounded-[6px] text-[12px] font-medium outline-none focus:border-[#060606]"
-          >
-            {vehicleTypes.length === 0 && <option value="">Đang tải...</option>}
-            {vehicleTypes.map((vt) => (
-              <option key={vt._id} value={vt._id}>
-                {vt.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Biển số xe — ô nhập lớn làm điểm nhấn */}
-        <div className="flex-1 flex flex-col gap-2 min-h-0 relative">
-          <label className="block text-[12px] font-semibold text-[#060606] shrink-0">
-            Biển số xe
-            {vehicleTypes
-              .find((v) => v._id === selectedVehicleTypeId)
-              ?.name.toLowerCase()
-              .includes('xe đạp') && (
-              <span className="text-[#8bc34a] ml-2 font-normal">(Bỏ qua với Xe đạp)</span>
-            )}
-          </label>
-
-          {/* Nếu là xe đạp -> Tạo lớp phủ bóng mờ disabled */}
-          {vehicleTypes
-            .find((v) => v._id === selectedVehicleTypeId)
-            ?.name.toLowerCase()
-            .includes('xe đạp') && (
-            <div className="absolute inset-0 top-6 z-10 bg-white/40 backdrop-blur-[1px] flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[#e8e9e8]">
-              <span className="bg-black/70 text-white text-[12px] px-3 py-1.5 rounded-[6px] font-medium shadow-md">
-                Xe đạp không cần chụp và nhập biển
-              </span>
-            </div>
-          )}
-
-          {/* OCR Upload Zone */}
-          {!previewUrl ? (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              className="w-full flex-1 min-h-[80px] border-2 border-dashed border-[#e8e9e8] rounded-[10px] py-2 flex flex-col items-center justify-center gap-2 text-[#6b6b6b] hover:border-[#d7ee46] hover:bg-[#f9ffe0] hover:text-[#060606] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isUploading ? (
-                <>
-                  <RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" />
-                  <span className="text-[13px] font-semibold text-[#8bc34a]">
-                    Đang nhận dạng biển số...
-                  </span>
-                </>
-              ) : (
-                <>
-                  <ImagePlus className="w-7 h-7 text-[#aaa]" />
-                  <span className="text-[13px] font-semibold">Chụp / Upload ảnh biển số (OCR)</span>
-                  <span className="text-[11px] text-[#aaa]">
-                    Hỗ trợ JPG, PNG — chụp thẳng góc, đủ sáng
-                  </span>
-                </>
-              )}
-            </button>
-          ) : (
-            <div
-              className="relative mx-auto rounded-[10px] overflow-hidden border-2 border-[#d7ee46] bg-[#f5f5f4] flex-1 min-h-0"
-              style={{ aspectRatio: '1/1', maxHeight: '160px' }}
-            >
-              <img src={previewUrl} alt="preview" className="w-full h-full object-contain" />
-              {isUploading && (
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
-                  <RefreshCw className="w-6 h-6 animate-spin text-[#d7ee46]" />
-                  <span className="text-white text-[12px] font-semibold">
-                    Đang nhận dạng biển số...
-                  </span>
-                </div>
-              )}
-              {ocrSuccess && (
-                <div className="absolute bottom-2 left-2 bg-green-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
-                  <CheckCircle className="w-3.5 h-3.5" /> OCR OK
-                </div>
-              )}
+        {/* Row 2: Ảnh biển số Vào + Khung dự phòng */}
+        <div className="flex gap-4 flex-1 min-h-0">
+          <div className="flex-1 flex flex-col gap-1 min-h-0 relative">
+            <label className="block text-[11px] font-semibold text-[#6b6b6b]">Ảnh biển số Vào</label>
+            {!previewUrl ? (
               <button
                 type="button"
-                onClick={clearPreview}
-                className="absolute top-2 right-2 w-6 h-6 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition shadow-md"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="flex-1 border-2 border-dashed border-[#c8c9c8] rounded-[6px] flex flex-col items-center justify-center gap-2 hover:border-[#9FE870] hover:bg-[#f5ffe8] transition-all duration-200 disabled:opacity-60"
               >
-                <X className="w-3.5 h-3.5" />
+                {isUploading ? (
+                  <RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" />
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <img src="/Logo_chu.png" alt="LYNC PARK" className="h-14 mb-3 object-contain" />
+                    <ImagePlus className="w-4 h-4 text-[#6b6b6b] mb-3" />
+                    <span className="text-[10px] font-semibold text-[#6b6b6b]">Chụp / Upload ảnh biển số (OCR)</span>
+                    <span className="text-[9px] text-[#aaa]">Hỗ trợ JPG, PNG — chụp thẳng góc, đủ sáng</span>
+                  </div>
+                )}
               </button>
+            ) : (
+              <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden flex-1 bg-[#f5f5f4]">
+                <img src={previewUrl} alt="preview" className="w-full h-full object-contain" />
+                <button type="button" onClick={clearPreview} className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
+              </div>
+            )}
+            <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
+          </div>
+
+          <div className="flex-1 flex flex-col gap-1 min-h-0">
+            <label className="block text-[11px] font-semibold text-[#6b6b6b]">Khung dự phòng</label>
+            <div className="flex-1 border-2 border-dashed border-[#e8e9e8] rounded-[6px] flex flex-col items-center justify-center gap-2 bg-[#fdfdfd]">
+              <div className="flex flex-col items-center opacity-60">
+                <img src="/Logo_chu.png" alt="LYNC PARK" className="h-14 mb-3 object-contain" />
+                <ImagePlus className="w-4 h-4 text-[#6b6b6b] mb-3" />
+                <span className="text-[10px] font-semibold text-[#6b6b6b]">Chụp / Upload ảnh biển số (OCR)</span>
+                <span className="text-[9px] text-[#aaa]">Hỗ trợ JPG, PNG — chụp thẳng góc, đủ sáng</span>
+              </div>
             </div>
-          )}
-
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            ref={fileInputRef}
-            className="hidden"
-            onChange={handleImageUpload}
-          />
-
-          <input
-            type="text"
-            value={
-              vehicleTypes
-                .find((v) => v._id === selectedVehicleTypeId)
-                ?.name.toLowerCase()
-                .includes('xe đạp')
-                ? 'XD-AUTO'
-                : plate
-            }
-            onChange={(e) => setPlate(e.target.value.toUpperCase())}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleCheckIn();
-              }
-            }}
-            disabled={isSubmitting}
-            className="w-full shrink-0 text-[18px] font-mono px-3 py-2 border border-[#e8e9e8] rounded-[8px] uppercase font-bold text-[#060606] placeholder-gray-300 outline-none focus:border-[#060606] focus:ring-1 focus:ring-[#060606] disabled:opacity-50"
-            placeholder="XXX-XXX.XX"
-          />
-          {ocrSuccess && (
-            <p className="text-[10px] text-green-600 font-semibold text-center -mt-1">
-              ✓ Biển số tự động — kiểm tra lại trước khi xác nhận
-            </p>
-          )}
+          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2 mt-auto shrink-0 z-20">
-          <button
-            onClick={handleCheckIn}
-            disabled={
-              isSubmitting ||
-              (!vehicleTypes
-                .find((v) => v._id === selectedVehicleTypeId)
-                ?.name.toLowerCase()
-                .includes('xe đạp') &&
-                !plate)
-            }
-            className="flex-1 h-10 bg-[#060606] text-[#d7ee46] rounded-[8px] font-bold text-[13px] hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" /> Đang xử lý...
-              </>
-            ) : (
-              'Ghi nhận xe vào (F2)'
-            )}
-          </button>
+        {/* Row 3: Loại xe + Trạng thái OCR */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="block text-[11px] font-semibold text-[#060606]">Loại xe</label>
+            <select value={selectedVehicleTypeId} onChange={(e) => setSelectedVehicleTypeId(e.target.value)}
+              className="w-full h-8 px-3 border border-[#e8e9e8] rounded-[6px] text-[12px] font-medium outline-none focus:border-[#060606]">
+              {vehicleTypes.length === 0 && <option value="">Đang tải...</option>}
+              {vehicleTypes.map((vt) => (<option key={vt._id} value={vt._id}>{vt.name}</option>))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-[11px] font-semibold text-[#060606]">Trạng thái OCR</label>
+            <div className={`w-full h-8 rounded-[6px] text-[12px] font-bold flex items-center justify-center border transition-colors ${
+              ocrSuccess
+                ? 'bg-[#9FE870]/20 text-[#2d6a1f] border-[#9FE870]'
+                : 'bg-[#f5f5f4] text-[#a8a29e] border-[#e8e9e8]'
+            }`}>
+              {ocrSuccess ? '✓ Quét thành công' : 'Chưa quét'}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 4: Biển số xe vào */}
+        <div className="flex flex-col gap-1">
+          <label className="block text-[11px] font-semibold text-[#060606]">Biển số xe vào</label>
+          <input
+            type="text"
+            value={vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.requiresPlate === false ? "KBS-AUTO" : plate}
+            onChange={(e) => setPlate(e.target.value.toUpperCase())}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.code === "Space") { e.preventDefault(); handleCheckIn(); } }}
+            disabled={isSubmitting}
+            className={`w-full h-12 text-[20px] font-mono px-3 border rounded-[6px] uppercase font-bold outline-none transition-all duration-200 disabled:opacity-70
+              ${(vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.requiresPlate === false ? "KBS-AUTO" : plate)
+                ? 'bg-[#9FE870]/30 border-[#9FE870] text-[#062F28] focus:ring-2 focus:ring-[#9FE870]/40'
+                : 'bg-[#f5f5f4] border-[#e8e9e8] text-[#9b9b9b] focus:border-[#1a1a1a]'
+              }`}
+            placeholder="XXX-XX-XXXXX"
+          />
         </div>
       </div>
     </div>

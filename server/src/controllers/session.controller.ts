@@ -54,6 +54,7 @@ export class SessionController {
         checkInImage,
       });
 
+      
       res.status(201).json({ success: true, data: session });
     } catch (error) {
       next(error);
@@ -191,3 +192,5 @@ export class SessionController {
     }
   }
 }
+
+

@@ -16,7 +16,6 @@ import { UploadService } from './upload.service';
 interface CheckConditionsResult {
   eligible: boolean;
   reason?: string;
-  availableSlotCount: number;
 }
 
 interface SuggestedFloor {
@@ -50,7 +49,7 @@ export class SessionService {
     // 1. Kiểm tra facility tồn tại + active
     const facility = await ParkingFacility.findById(facilityId);
     if (!facility || facility.status !== 'active') {
-      return { eligible: false, reason: 'Bãi xe không hoạt động hoặc không tồn tại', availableSlotCount: 0 };
+      return { eligible: false, reason: 'Bãi xe không hoạt động hoặc không tồn tại' };
     }
 
     // 2. Kiểm tra giờ hoạt động
@@ -70,14 +69,14 @@ export class SessionService {
       }
 
       if (isClosed) {
-        return { eligible: false, reason: `Bãi xe đang đóng. Giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, availableSlotCount: 0 };
+        return { eligible: false, reason: `Bãi xe đang đóng. Giờ hoạt động: ${facility.openTime} - ${facility.closeTime}` };
       }
     }
 
     // 3. Kiểm tra vehicleType tồn tại
     const vehicleType = await VehicleType.findById(vehicleTypeId);
     if (!vehicleType || vehicleType.isDeleted) {
-      return { eligible: false, reason: 'Loại phương tiện không hợp lệ', availableSlotCount: 0 };
+      return { eligible: false, reason: 'Loại phương tiện không hợp lệ' };
     }
 
     // 4. Kiểm tra loại xe có được phục vụ trong facility (qua floor.allowedVehicleTypes)
@@ -89,25 +88,25 @@ export class SessionService {
     });
 
     if (floorsServingVehicle.length === 0) {
-      return { eligible: false, reason: `Bãi xe không phục vụ loại xe "${vehicleType.name}"`, availableSlotCount: 0 };
+      return { eligible: false, reason: `Bãi xe không phục vụ loại xe "${vehicleType.name}"` };
     }
 
     // 5. Kiểm tra slot trống
-    const availableSlotCount = await ParkingSlot.countDocuments({
+    const hasAvailableSlot = await ParkingSlot.exists({
       facilityId,
       vehicleTypeId,
       status: SlotStatus.AVAILABLE,
       isDeleted: false,
     });
 
-    if (availableSlotCount === 0) {
-      return { eligible: false, reason: `Bãi đầy cho loại xe "${vehicleType.name}"`, availableSlotCount: 0 };
+    if (!hasAvailableSlot) {
+      return { eligible: false, reason: `Bãi đầy cho loại xe "${vehicleType.name}"` };
     }
 
     // 6. Blacklist check (placeholder — chưa có model Blacklist)
     // TODO: Implement blacklist check when Blacklist model is available
 
-    return { eligible: true, availableSlotCount };
+    return { eligible: true };
   }
 
   /**
@@ -270,45 +269,13 @@ export class SessionService {
           throw new AppError('Slot đã chọn không khả dụng', 400);
         }
       } else {
-        // Auto-assign: tìm slot available, ưu tiên floor ít xe nhất
-        const floorQuery: any = {
-          facilityId: data.facilityId,
-          allowedVehicleTypes: data.vehicleTypeId,
-          isDeleted: false,
-          status: 'active',
-        };
-
-        if (data.floorId) {
-          floorQuery._id = data.floorId;
-        }
-
-        // Aggregate: tìm floor có nhiều slot trống nhất
-        const floorSlotCounts = await ParkingSlot.aggregate([
-          {
-            $match: {
-              facilityId: new mongoose.Types.ObjectId(data.facilityId),
-              vehicleTypeId: new mongoose.Types.ObjectId(data.vehicleTypeId),
-              status: SlotStatus.AVAILABLE,
-              isDeleted: false,
-              ...(data.floorId ? { floorId: new mongoose.Types.ObjectId(data.floorId) } : {}),
-            },
-          },
-          { $group: { _id: '$floorId', count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-        ]);
-
-        if (floorSlotCounts.length === 0) {
-          throw new AppError('Không còn slot trống phù hợp', 400);
-        }
-
-        // Lấy slot đầu tiên từ floor có nhiều chỗ trống nhất
-        const bestFloorId = floorSlotCounts[0]._id;
+        // Auto-assign: tim slot available nhanh nhat bang findOne
         slot = await ParkingSlot.findOne({
-          floorId: bestFloorId,
           facilityId: data.facilityId,
           vehicleTypeId: data.vehicleTypeId,
           status: SlotStatus.AVAILABLE,
           isDeleted: false,
+          ...(data.floorId ? { floorId: data.floorId } : {}),
         }).sort({ code: 1 });
 
         if (!slot) {
@@ -366,8 +333,9 @@ export class SessionService {
       await matchedReservation.save();
     }
 
-    // 8. Return session populated
+    // 8. Return session populated (Loi b? image l>n ` t`i u network & DB read latency)
     const populatedSession = await ParkingSession.findById(session._id)
+      .select('-checkInImage -checkOutImage')
       .populate('vehicleTypeId', 'name code icon')
       .populate('facilityId', 'name address')
       .populate('floorId', 'name')
