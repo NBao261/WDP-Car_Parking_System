@@ -3,6 +3,8 @@ import { IException, EXCEPTION_STATUS_LABELS, EXCEPTION_TYPE_LABELS, ExceptionSt
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { createPortal } from 'react-dom';
+
 interface ExceptionReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -46,10 +48,9 @@ export function ExceptionReviewModal({
   const sessionCode = typeof exception.sessionId === 'object' && exception.sessionId ? exception.sessionId.code : exception.sessionId || 'N/A';
   const staffName = typeof exception.staffId === 'object' && exception.staffId ? exception.staffId.name : exception.staffId || 'Hệ thống';
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
-        <motion.div
+  const modalContent = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+      <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
@@ -92,10 +93,30 @@ export function ExceptionReviewModal({
             </div>
 
             {/* Description */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Mô tả của nhân viên</h3>
-              <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl text-sm text-gray-700">
-                {exception.description || <span className="text-gray-400 italic">Không có mô tả chi tiết</span>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Mô tả ban đầu (Lúc báo cáo)</h3>
+                <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl text-sm text-gray-700 flex-1">
+                  {exception.description || <span className="text-gray-400 italic">Không có mô tả chi tiết</span>}
+                </div>
+              </div>
+
+              <div className="flex flex-col">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  Cách xử lý của bảo vệ
+                  {exception.resolvedByStaffId && (
+                    <span className="text-xs font-normal text-emerald-600 ml-2">
+                      (Bởi: {typeof exception.resolvedByStaffId === 'object' ? exception.resolvedByStaffId.name : exception.resolvedByStaffId})
+                    </span>
+                  )}
+                </h3>
+                <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl text-sm text-gray-700 flex-1">
+                  {exception.status === ExceptionStatus.RESOLVED ? (
+                     exception.staffNote || <span className="text-gray-400 italic">Không có ghi chú khi xử lý</span>
+                  ) : (
+                     <span className="text-amber-600 italic">Chưa được xử lý</span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -111,7 +132,7 @@ export function ExceptionReviewModal({
                 onChange={(e) => setManagerNote(e.target.value)}
                 placeholder="Nhập ghi chú đánh giá của bạn ở đây..."
                 rows={4}
-                className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none transition-shadow"
+                className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#c4dc32] focus:ring-1 focus:ring-[#c4dc32] resize-none transition-shadow"
               />
               <p className="text-xs text-gray-500 mt-2">Ghi chú này dùng để lưu trữ đánh giá nội bộ, không hiển thị cho khách hàng.</p>
             </div>
@@ -123,25 +144,31 @@ export function ExceptionReviewModal({
             <button
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-60"
             >
               Hủy
             </button>
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm disabled:opacity-60"
             >
               {isSubmitting ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-[#060606] border-t-transparent rounded-full animate-spin" />
               ) : (
                 <Save size={16} />
               )}
-              Lưu đánh giá
+              Duyệt
             </button>
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+  );
+
+  return createPortal(
+    <AnimatePresence>
+      {isOpen && modalContent}
+    </AnimatePresence>,
+    document.body
   );
 }
