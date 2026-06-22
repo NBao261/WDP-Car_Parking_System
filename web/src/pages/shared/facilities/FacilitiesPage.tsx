@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Building2 } from 'lucide-react';
+import { Plus, Building2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { FacilityFormModal } from './components/FacilityFormModal';
 import { FloorFormModal } from './components/FloorFormModal';
 import { FacilityCard, FacilityListItem } from './components/FacilityCard';
@@ -135,34 +135,74 @@ export default function FacilitiesPage() {
           {data.totalFiltered > 0 && data.totalPages > 1 && (
             <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-100">
               <span className="text-sm text-gray-500">
-                Hiển thị {((data.currentPage - 1) * data.itemsPerPage) + 1} - {Math.min(data.currentPage * data.itemsPerPage, data.totalFiltered)} trong số {data.totalFiltered} cơ sở
+                Hiển thị <span className="font-medium text-gray-900">{((data.currentPage - 1) * data.itemsPerPage) + 1}</span> đến <span className="font-medium text-gray-900">{Math.min(data.currentPage * data.itemsPerPage, data.totalFiltered)}</span> trong tổng số <span className="font-medium text-gray-900">{data.totalFiltered}</span> kết quả
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex gap-1.5">
+                {data.totalPages >= 5 && (
+                  <button
+                    onClick={() => data.setCurrentPage(1)}
+                    disabled={data.currentPage === 1}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white"
+                    title="Trang đầu"
+                  >
+                    <ChevronsLeft size={16} />
+                  </button>
+                )}
                 <button
                   onClick={() => data.setCurrentPage((p: number) => Math.max(1, p - 1))}
                   disabled={data.currentPage === 1}
-                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white"
+                  title="Trang trước"
                 >
-                  Trước
+                  <ChevronLeft size={16} />
                 </button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: data.totalPages }).map((_, i) => (
+                {(() => {
+                  let pages: (number | string)[] = [];
+                  if (data.totalPages <= 4) {
+                    pages = Array.from({ length: data.totalPages }, (_, i) => i + 1);
+                  } else if (data.currentPage <= 3) {
+                    pages = [1, 2, 3, '...', data.totalPages];
+                  } else if (data.currentPage >= data.totalPages - 2) {
+                    pages = [1, '...', data.totalPages - 2, data.totalPages - 1, data.totalPages];
+                  } else {
+                    pages = [1, '...', data.currentPage - 1, data.currentPage, data.currentPage + 1, '...', data.totalPages];
+                  }
+                  
+                  return pages.map((p, i) => (
                     <button
                       key={i}
-                      onClick={() => data.setCurrentPage(i + 1)}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${data.currentPage === i + 1 ? 'bg-[#cce242] text-[#060606] border border-[#b8cc30]' : 'text-gray-600 hover:bg-gray-100'}`}
+                      onClick={() => typeof p === 'number' && data.setCurrentPage(p)}
+                      disabled={p === '...'}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                        p === '...' 
+                          ? 'text-gray-400 bg-transparent cursor-default' 
+                          : data.currentPage === p 
+                            ? 'bg-[#cce242] text-[#060606] border border-[#b8cc30] font-bold shadow-sm' 
+                            : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
                     >
-                      {i + 1}
+                      {p}
                     </button>
-                  ))}
-                </div>
+                  ));
+                })()}
                 <button
                   onClick={() => data.setCurrentPage((p: number) => Math.min(data.totalPages, p + 1))}
                   disabled={data.currentPage === data.totalPages}
-                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white"
+                  title="Trang sau"
                 >
-                  Sau
+                  <ChevronRight size={16} />
                 </button>
+                {data.totalPages >= 5 && (
+                  <button
+                    onClick={() => data.setCurrentPage(data.totalPages)}
+                    disabled={data.currentPage === data.totalPages}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white"
+                    title="Trang cuối"
+                  >
+                    <ChevronsRight size={16} />
+                  </button>
+                )}
               </div>
             </div>
           )}
