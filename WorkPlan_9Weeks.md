@@ -112,6 +112,7 @@
 - [x] Trang Login / Quên mật khẩu
 - [x] Layout Admin Panel hoàn chỉnh
 - [x] Trang Quản lý Tài khoản (FR-18): danh sách, tạo/sửa/khóa, filter
+- [x] Module Phân công Tòa nhà (FR-18.6): UI chọn và gán bãi xe cho nhân viên
 - [x] Trang Phân quyền (FR-19): gán vai trò, xem quyền
 
 #### FE2
