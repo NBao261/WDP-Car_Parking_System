@@ -140,7 +140,7 @@ export default function ExceptionsStaffPage() {
     <div className="h-full max-w-[1400px] mx-auto pb-10 p-6">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h2 className="text-[22px] font-bold text-[#060606]">Ngoại lệ của tôi</h2>
+          <h2 className="text-[22px] font-bold text-[#060606]">Xử lí ngoại lệ</h2>
           <p className="text-sm text-[#6b6b6b] mt-1">
             Các ngoại lệ bạn đã báo cáo và trạng thái giải quyết.
           </p>
@@ -148,14 +148,14 @@ export default function ExceptionsStaffPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="px-4 py-2 text-[13px] font-bold bg-[#060606] text-white rounded-[8px] hover:bg-[#222] transition-colors"
+            className="px-4 py-2 text-[13px] font-bold bg-[#1a1a1a] text-[#9FE870] rounded-[8px] hover:bg-black transition-colors"
           >
             + Tạo Ngoại Lệ
           </button>
           <button
             onClick={fetchExceptions}
             disabled={isLoading}
-            className="px-4 py-2 text-[13px] font-medium border border-[#e8e9e8] rounded-[8px] hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-[13px] font-medium border border-[#e8e9e8] rounded-[8px] hover:bg-[#f5ffe8] hover:border-[#9FE870] transition-colors disabled:opacity-50"
           >
             {isLoading ? "Đang tải..." : "↻ Làm mới"}
           </button>

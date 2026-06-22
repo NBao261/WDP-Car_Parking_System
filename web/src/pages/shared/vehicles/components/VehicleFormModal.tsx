@@ -30,7 +30,7 @@ interface FormErrors {
 export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalProps) {
   const isEdit = !!vehicle;
   const [form, setForm] = useState<CreateVehicleTypePayload>({
-    name: '', code: '', slotSize: '' as SlotSize, description: '', icon: '', floors: []
+    name: '', code: '', slotSize: '' as SlotSize, description: '', icon: '', requiresPlate: true, floors: []
   });
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [floorsList, setFloorsList] = useState<Floor[]>([]);
@@ -52,10 +52,11 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
           slotSize: vehicle.slotSize,
           description: vehicle.description || '',
           icon: vehicle.icon || '',
+          requiresPlate: vehicle.requiresPlate !== false,
           floors: vehicle.floors ? vehicle.floors.map(f => f._id) : []
         });
       } else {
-        setForm({ name: '', code: '', slotSize: '' as SlotSize, description: '', icon: '', floors: [] });
+        setForm({ name: '', code: '', slotSize: '' as SlotSize, description: '', icon: '', requiresPlate: true, floors: [] });
       }
     }
   }, [isOpen, vehicle]);
@@ -111,6 +112,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
           slotSize: form.slotSize,
           description: form.description,
           icon: form.icon,
+          requiresPlate: form.requiresPlate,
           floors: form.floors
         };
         await vehicleTypeService.update(vehicle._id, payload);
@@ -261,6 +263,31 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                   <span>⚠</span> {errors.slotSize}
                 </p>
               )}
+            </div>
+
+            {/* Requires Plate Toggle */}
+            <div>
+              <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">Yêu cầu Biển số</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {form.requiresPlate !== false
+                      ? 'Loại xe này cần quét biển số khi vào/ra'
+                      : 'Xe không cần biển số (VD: xe đạp) — dùng ảnh đối chiếu'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, requiresPlate: !f.requiresPlate }))}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                    form.requiresPlate !== false ? 'bg-[#8bc34a]' : 'bg-gray-300'
+                  }`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                    form.requiresPlate !== false ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
             </div>
 
             {/* Facilities & Floors */}

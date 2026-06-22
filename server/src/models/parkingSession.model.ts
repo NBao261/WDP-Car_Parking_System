@@ -61,7 +61,6 @@ const parkingSessionSchema = new Schema<IParkingSession>(
 );
 
 parkingSessionSchema.index({ licensePlate: 1, status: 1 });
-parkingSessionSchema.index({ cardCode: 1 });
 parkingSessionSchema.index({ facilityId: 1, status: 1 });
 parkingSessionSchema.index({ checkInTime: -1 });
 

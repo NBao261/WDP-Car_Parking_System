@@ -92,7 +92,9 @@ export function useCheckinFlow() {
   // ── Bước 1: Kiểm tra điều kiện + gợi ý tầng ─────────────────
   const handleCheckAvailability = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!plate.trim() || !selectedFacility || !vehicleTypeId) return;
+    const selectedType = vehicleTypes.find((v) => v._id === vehicleTypeId);
+    const isNoPlate = selectedType?.requiresPlate === false;
+    if ((!isNoPlate && !plate.trim()) || !selectedFacility || !vehicleTypeId) return;
 
     setLoading(true);
     setError("");
@@ -137,10 +139,14 @@ export function useCheckinFlow() {
     setError("");
 
     try {
+      const selectedType = vehicleTypes.find((v) => v._id === vehicleTypeId);
+      const isNoPlate = selectedType?.requiresPlate === false;
+      const actualPlate = isNoPlate ? `NOPLATE-AUTO` : plate;
+
       const checkinRes: any = await apiClient.post("/sessions/check-in", {
         facilityId: selectedFacility._id,
         vehicleTypeId,
-        licensePlate: plate,
+        licensePlate: actualPlate,
         gateIn: gate,
         floorId,
         checkInImage,

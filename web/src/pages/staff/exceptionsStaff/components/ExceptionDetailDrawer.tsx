@@ -14,10 +14,10 @@ interface ExceptionDetailDrawerProps {
 }
 
 const STATUS_BADGE: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  RESOLVED:   { bg: "bg-[#e8f7f0]",  text: "text-[#1d7a4a]", border: "border-[#e8f7f0]",  label: "ĐÃ XỬ LÝ" },
-  REJECTED:   { bg: "bg-[#fde8e8]",  text: "text-[#b03030]", border: "border-[#fde8e8]",  label: "TỪ CHỐI" },
-  NEW:        { bg: "bg-[#fff3e0]",  text: "text-[#c77700]", border: "border-[#fff3e0]",  label: "CHỜ XỬ LÝ" },
-  PROCESSING: { bg: "bg-[#e3ecf8]",  text: "text-[#1a5fa8]", border: "border-[#e3ecf8]",  label: "ĐANG XỬ LÝ" },
+  RESOLVED:   { bg: "bg-[#9FE870]/10",  text: "text-[#2d6a1f]",  border: "border-[#9FE870]/50",  label: "ĐÃ XỬ LÝ" },
+  REJECTED:   { bg: "bg-[#fee2e2]",     text: "text-[#991b1b]",  border: "border-[#fca5a5]/60",  label: "TỪ CHỐI" },
+  NEW:        { bg: "bg-[#fef3c7]",     text: "text-[#92400e]",  border: "border-[#fcd34d]/60",  label: "CHỜ XỬ LÝ" },
+  PROCESSING: { bg: "bg-[#dbeafe]",     text: "text-[#1e40af]",  border: "border-[#93c5fd]/60",  label: "ĐANG XỬ LÝ" },
 };
 
 export default function ExceptionDetailDrawer({
@@ -160,7 +160,7 @@ export default function ExceptionDetailDrawer({
                 {selectedException.code}
               </p>
               <span
-                className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase tracking-wider ${badge.bg} ${badge.text}`}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${badge.bg} ${badge.text} ${badge.border}`}
               >
                 {badge.label}
               </span>
@@ -178,7 +178,7 @@ export default function ExceptionDetailDrawer({
           {/* BLOCK 1: THÔNG TIN XE VÀ LƯỢT GỬI */}
           <div>
             <h4 className="text-[12px] font-bold text-[#060606] uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[#060606] rounded-sm"></span>
+              <span className="w-1.5 h-4 bg-[#9FE870] rounded-sm"></span>
               Thông tin xe và lượt gửi
             </h4>
             <div className="bg-white border border-[#e8e9e8] rounded-[10px] p-4 space-y-3 shadow-sm">
@@ -208,7 +208,7 @@ export default function ExceptionDetailDrawer({
           {/* BLOCK 2: THÔNG TIN NGOẠI LỆ */}
           <div>
             <h4 className="text-[12px] font-bold text-[#060606] uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-[#e74c3c] rounded-sm"></span>
+              <span className="w-1.5 h-4 bg-[#ef4444] rounded-sm"></span>
               Thông tin ngoại lệ
             </h4>
             <div className="bg-white border border-[#e8e9e8] rounded-[10px] p-4 space-y-3 shadow-sm">
@@ -245,10 +245,10 @@ export default function ExceptionDetailDrawer({
           {canResolve && (
             <div>
               <h4 className="text-[12px] font-bold text-[#060606] uppercase tracking-wider mb-4 flex items-center gap-2">
-                <span className="w-1.5 h-4 bg-[#f39c12] rounded-sm"></span>
-                Thực hiện Xử lý Ngoại lệ
-              </h4>
-              <div className="bg-[#fffdf5] border border-[#fdeab1] rounded-[10px] p-4 space-y-4 shadow-sm animate-in fade-in">
+              <span className="w-1.5 h-4 bg-[#f39c12] rounded-sm"></span>
+              Thực hiện Xử lý Ngoại lệ
+            </h4>
+            <div className="bg-[#fffdf5] border border-[#fdeab1] rounded-[10px] p-4 space-y-4 shadow-sm animate-in fade-in">
                 
                 {/* Dành cho Sai Biển Số */}
                 {selectedException.typeEnum === ExceptionType.WRONG_PLATE && (
@@ -332,9 +332,9 @@ export default function ExceptionDetailDrawer({
           {isResolved && (
             <div>
               <h4 className="text-[12px] font-bold text-[#060606] uppercase tracking-wider mb-4 flex items-center gap-2">
-                <span className="w-1.5 h-4 bg-[#2ecc71] rounded-sm"></span>
-                Thông tin xử lý
-              </h4>
+              <span className="w-1.5 h-4 bg-[#9FE870] rounded-sm"></span>
+              Thông tin xử lý
+            </h4>
               <div className="bg-white border border-[#e8e9e8] rounded-[10px] p-4 space-y-3 shadow-sm">
                 <div className="flex justify-between text-[13px]">
                   <span className="text-[#6b6b6b]">Người xử lý:</span>
@@ -391,7 +391,7 @@ export default function ExceptionDetailDrawer({
             <button
               onClick={handleResolve}
               disabled={isResolving}
-              className="flex-[2] h-11 bg-[#f39c12] text-white font-bold rounded-[8px] hover:bg-[#d68910] transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-[2] h-11 bg-[#1a1a1a] text-[#9FE870] font-bold rounded-[8px] hover:bg-black transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isResolving && <Loader2 className="w-4 h-4 animate-spin" />}
               Lưu Xử Lý

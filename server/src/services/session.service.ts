@@ -16,7 +16,6 @@ import { UploadService } from './upload.service';
 interface CheckConditionsResult {
   eligible: boolean;
   reason?: string;
-  availableSlotCount: number;
 }
 
 interface SuggestedFloor {
@@ -50,7 +49,7 @@ export class SessionService {
     // 1. Kiểm tra facility tồn tại + active
     const facility = await ParkingFacility.findById(facilityId);
     if (!facility || facility.status !== 'active') {
-      return { eligible: false, reason: 'Bãi xe không hoạt động hoặc không tồn tại', availableSlotCount: 0 };
+      return { eligible: false, reason: 'Bãi xe không hoạt động hoặc không tồn tại' };
     }
 
     // 2. Kiểm tra giờ hoạt động
@@ -70,14 +69,14 @@ export class SessionService {
       }
 
       if (isClosed) {
-        return { eligible: false, reason: `Bãi xe đang đóng. Giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, availableSlotCount: 0 };
+        return { eligible: false, reason: `Bãi xe đang đóng. Giờ hoạt động: ${facility.openTime} - ${facility.closeTime}` };
       }
     }
 
     // 3. Kiểm tra vehicleType tồn tại
     const vehicleType = await VehicleType.findById(vehicleTypeId);
     if (!vehicleType || vehicleType.isDeleted) {
-      return { eligible: false, reason: 'Loại phương tiện không hợp lệ', availableSlotCount: 0 };
+      return { eligible: false, reason: 'Loại phương tiện không hợp lệ' };
     }
 
     // 4. Kiểm tra loại xe có được phục vụ trong facility (qua floor.allowedVehicleTypes)
@@ -89,25 +88,25 @@ export class SessionService {
     });
 
     if (floorsServingVehicle.length === 0) {
-      return { eligible: false, reason: `Bãi xe không phục vụ loại xe "${vehicleType.name}"`, availableSlotCount: 0 };
+      return { eligible: false, reason: `Bãi xe không phục vụ loại xe "${vehicleType.name}"` };
     }
 
     // 5. Kiểm tra slot trống
-    const availableSlotCount = await ParkingSlot.countDocuments({
+    const hasAvailableSlot = await ParkingSlot.exists({
       facilityId,
       vehicleTypeId,
       status: SlotStatus.AVAILABLE,
       isDeleted: false,
     });
 
-    if (availableSlotCount === 0) {
-      return { eligible: false, reason: `Bãi đầy cho loại xe "${vehicleType.name}"`, availableSlotCount: 0 };
+    if (!hasAvailableSlot) {
+      return { eligible: false, reason: `Bãi đầy cho loại xe "${vehicleType.name}"` };
     }
 
     // 6. Blacklist check (placeholder — chưa có model Blacklist)
     // TODO: Implement blacklist check when Blacklist model is available
 
-    return { eligible: true, availableSlotCount };
+    return { eligible: true };
   }
 
   /**
@@ -142,11 +141,9 @@ export class SessionService {
         );
       }
 
-      // Không có trường endTime trong IReservation nên tính toán dựa trên startTime + 1h
-      const lateWindow = 60 * 60 * 1000;
-      const endTime = new Date(matchedReservation.startTime.getTime() + lateWindow);
+      const expirationTime = new Date(matchedReservation.startTime.getTime() + earlyWindow); // Hết hạn sau 30 phút (earlyWindow = 30 phút)
 
-      if (now > endTime) {
+      if (now > expirationTime) {
         throw new AppError('Đặt chỗ đã hết hạn. Vui lòng tạo đặt chỗ mới hoặc check-in walk-in.', 400);
       }
 
@@ -157,8 +154,25 @@ export class SessionService {
     }
 
     // Đảm bảo các trường bắt buộc đã có (dù từ reservation hay từ request)
-    if (!data.facilityId || !data.vehicleTypeId || !data.licensePlate) {
-      throw new AppError('Thiếu thông tin bắt buộc: facilityId, vehicleTypeId, licensePlate', 400);
+    if (!data.facilityId || !data.vehicleTypeId) {
+      throw new AppError('Thiếu thông tin bắt buộc: facilityId, vehicleTypeId', 400);
+    }
+
+    // Kiểm tra loại xe có yêu cầu biển số không
+    const vehicleType = await VehicleType.findById(data.vehicleTypeId);
+    if (!vehicleType || vehicleType.isDeleted) {
+      throw new AppError('Loại phương tiện không hợp lệ', 400);
+    }
+
+    const isNoPlateVehicle = vehicleType.requiresPlate === false;
+
+    if (!isNoPlateVehicle && !data.licensePlate) {
+      throw new AppError('Thiếu thông tin bắt buộc: licensePlate', 400);
+    }
+
+    // Auto-gen biển số cho xe không có biển
+    if (isNoPlateVehicle) {
+      data.licensePlate = `NOPLATE-${Date.now()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
     }
 
     // 1. Kiểm tra điều kiện
@@ -180,16 +194,19 @@ export class SessionService {
     }
 
     // 3. Kiểm tra xe đang có session active hoặc exception (biển số trùng)
-    const existingSession = await ParkingSession.findOne({
-      licensePlate: data.licensePlate.toUpperCase(),
-      status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] },
-    });
+    // Bỏ qua cho xe không biển số vì biển auto-gen luôn unique
+    if (!isNoPlateVehicle) {
+      const existingSession = await ParkingSession.findOne({
+        licensePlate: data.licensePlate!.toUpperCase(),
+        status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] },
+      });
 
-    if (existingSession) {
-      if (existingSession.status === SessionStatus.EXCEPTION) {
-        throw new AppError(`Xe biển số "${data.licensePlate}" đang có sự cố ngoại lệ cần xử lý (${existingSession.code}), không được phép vào gửi.`, 400);
+      if (existingSession) {
+        if (existingSession.status === SessionStatus.EXCEPTION) {
+          throw new AppError(`Xe biển số "${data.licensePlate}" đang có sự cố ngoại lệ cần xử lý (${existingSession.code}), không được phép vào gửi.`, 400);
+        }
+        throw new AppError(`Xe biển số "${data.licensePlate}" đang có lượt gửi chưa kết thúc (${existingSession.code})`, 400);
       }
-      throw new AppError(`Xe biển số "${data.licensePlate}" đang có lượt gửi chưa kết thúc (${existingSession.code})`, 400);
     }
 
     // 4. Tìm bảng giá active
@@ -220,7 +237,7 @@ export class SessionService {
     // Nếu không có reservationCode → kiểm tra xem có reservation nào match theo biển số không
     if (!matchedReservation) {
       const autoMatchReservation = await Reservation.findOne({
-        licensePlate: data.licensePlate.toUpperCase(),
+        licensePlate: data.licensePlate!.toUpperCase(),
         facilityId: data.facilityId,
         status: ReservationStatus.CONFIRMED,
         startTime: { $lte: new Date(Date.now() + 30 * 60 * 1000) },
@@ -252,45 +269,13 @@ export class SessionService {
           throw new AppError('Slot đã chọn không khả dụng', 400);
         }
       } else {
-        // Auto-assign: tìm slot available, ưu tiên floor ít xe nhất
-        const floorQuery: any = {
-          facilityId: data.facilityId,
-          allowedVehicleTypes: data.vehicleTypeId,
-          isDeleted: false,
-          status: 'active',
-        };
-
-        if (data.floorId) {
-          floorQuery._id = data.floorId;
-        }
-
-        // Aggregate: tìm floor có nhiều slot trống nhất
-        const floorSlotCounts = await ParkingSlot.aggregate([
-          {
-            $match: {
-              facilityId: new mongoose.Types.ObjectId(data.facilityId),
-              vehicleTypeId: new mongoose.Types.ObjectId(data.vehicleTypeId),
-              status: SlotStatus.AVAILABLE,
-              isDeleted: false,
-              ...(data.floorId ? { floorId: new mongoose.Types.ObjectId(data.floorId) } : {}),
-            },
-          },
-          { $group: { _id: '$floorId', count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-        ]);
-
-        if (floorSlotCounts.length === 0) {
-          throw new AppError('Không còn slot trống phù hợp', 400);
-        }
-
-        // Lấy slot đầu tiên từ floor có nhiều chỗ trống nhất
-        const bestFloorId = floorSlotCounts[0]._id;
+        // Auto-assign: tim slot available nhanh nhat bang findOne
         slot = await ParkingSlot.findOne({
-          floorId: bestFloorId,
           facilityId: data.facilityId,
           vehicleTypeId: data.vehicleTypeId,
           status: SlotStatus.AVAILABLE,
           isDeleted: false,
+          ...(data.floorId ? { floorId: data.floorId } : {}),
         }).sort({ code: 1 });
 
         if (!slot) {
@@ -320,7 +305,7 @@ export class SessionService {
     // 6. Tạo session
     const session = new ParkingSession({
       code: sessionCode,
-      licensePlate: data.licensePlate.toUpperCase(),
+      licensePlate: data.licensePlate!.toUpperCase(),
       vehicleTypeId: data.vehicleTypeId,
       facilityId: data.facilityId,
       floorId: slot.floorId,
@@ -348,8 +333,9 @@ export class SessionService {
       await matchedReservation.save();
     }
 
-    // 8. Return session populated
+    // 8. Return session populated (Loi b? image l>n ` t`i u network & DB read latency)
     const populatedSession = await ParkingSession.findById(session._id)
+      .select('-checkInImage -checkOutImage')
       .populate('vehicleTypeId', 'name code icon')
       .populate('facilityId', 'name address')
       .populate('floorId', 'name')
@@ -457,7 +443,7 @@ export class SessionService {
     }
 
     const session = await ParkingSession.findOne(searchConditions)
-      .populate('vehicleTypeId', 'name code icon')
+      .populate('vehicleTypeId', 'name code icon requiresPlate')
       .populate('facilityId', 'name address')
       .populate('floorId', 'name')
       .populate('slotId', 'code status')

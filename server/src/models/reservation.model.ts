@@ -39,7 +39,6 @@ const reservationSchema = new Schema<IReservation>(
 
 reservationSchema.index({ userId: 1, status: 1 });
 reservationSchema.index({ startTime: 1, status: 1 });
-reservationSchema.index({ code: 1 }, { unique: true });
 reservationSchema.index({ licensePlate: 1, status: 1 });
 
 export const Reservation = mongoose.model<IReservation>('Reservation', reservationSchema);

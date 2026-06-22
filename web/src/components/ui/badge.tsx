@@ -19,9 +19,9 @@ const badgeVariants = cva(
       variant: {
         default: 'bg-brand text-white',
         secondary: 'bg-gray-100 text-gray-700',
-        success: 'bg-green-50 text-green-700',
-        warning: 'bg-orange-100 text-orange-700',
-        destructive: 'bg-red-50 text-red-700',
+        success: 'bg-[#dbeafe] text-[#1e40af] border border-[#93c5fd]/60',
+        warning: 'bg-[#fef3c7] text-[#92400e] border border-[#fcd34d]/60',
+        destructive: 'bg-[#fee2e2] text-[#991b1b] border border-[#fca5a5]/60',
         info: 'bg-blue-50 text-blue-700',
         accent: 'bg-accent/20 text-accent-darker',
       },
