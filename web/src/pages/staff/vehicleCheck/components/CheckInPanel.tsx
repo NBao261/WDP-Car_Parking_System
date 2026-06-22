@@ -39,6 +39,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     const localUrl = URL.createObjectURL(file);
     setPreviewUrl(localUrl);
     setOcrSuccess(false);
+    setPlate(""); // CLEAR old plate when uploading a new image
     setIsUploading(true);
     const formData = new FormData();
     formData.append("image", file);
@@ -218,7 +219,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     const selectedVehicleType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
     const isNoPlate = selectedVehicleType?.requiresPlate === false;
 
-    if (!isNoPlate && !plate) {
+    if (!isNoPlate && !plate.trim()) {
       toast.error("Vui lòng nhập biển số xe!");
       return;
     }

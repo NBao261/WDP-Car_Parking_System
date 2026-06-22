@@ -82,7 +82,7 @@ export function StaffDetailModal({ isOpen, onClose, staff, facilityMap }: StaffD
             </div>
 
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Tòa nhà được phân công</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Tòa nhà được phân công ({assignedFacilitiesNames.length})</p>
               {assignedFacilitiesNames.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   {assignedFacilitiesNames.map((facName, idx) => (

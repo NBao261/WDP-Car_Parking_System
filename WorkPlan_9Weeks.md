@@ -213,10 +213,10 @@
 
 #### BE1
 
-- [ ] API Payment (FR-16): create payment, confirm payment
+- [x] API Payment (FR-16): create payment, confirm payment
   - Ghi nhận: mã giao dịch, session, số tiền, phương thức, Staff
-- [ ] Logic thanh toán online: tạo payment intent, webhook callback
-- [ ] MongoDB Transaction cho flow: tạo payment + update session + update slot
+- [x] Logic thanh toán online: tạo payment intent, webhook callback
+- [x] MongoDB Transaction cho flow: tạo payment + update session + update slot
 
 #### BE2
 
