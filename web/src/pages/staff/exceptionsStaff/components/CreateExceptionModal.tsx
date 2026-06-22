@@ -166,7 +166,7 @@ export default function CreateExceptionModal({
               <button
                 onClick={handleSearch}
                 disabled={isSearching}
-                className="h-11 px-6 bg-[#060606] text-white font-bold rounded-[8px] hover:bg-[#222] transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="h-11 px-6 bg-[#1a1a1a] text-[#9FE870] font-bold rounded-[8px] hover:bg-black transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                 Tìm

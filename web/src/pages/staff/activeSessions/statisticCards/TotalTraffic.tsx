@@ -13,7 +13,7 @@ export default function TotalTraffic({
   return (
     <div className="bg-white rounded-xl px-5 py-3 shadow-sm border border-gray-100 flex items-center justify-between h-full">
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-[#060606]/5 text-[#060606]">
+        <div className="p-2 rounded-lg bg-[#9FE870]/20 text-[#2d6a1f]">
           <ArrowRightLeft className="w-4 h-4" />
         </div>
         <span className="text-[13px] text-[#060606]/60 font-semibold">Lưu lượng hôm nay</span>

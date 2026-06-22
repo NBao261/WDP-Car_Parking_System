@@ -61,10 +61,12 @@ export default function CheckOutPanel({
         if (step === 'SEARCH') {
           if (searchMode === 'plate') {
             setSearchInput(fp);
+            onChangePlate(fp);
+            handleSearch(fp, 'plate');
+          } else {
+            // mode code -> just fill plate out, wait for card input
+            onChangePlate(fp);
           }
-          // Luôn lưu plate từ OCR vào state plate của form (chờ đối chiếu)
-          onChangePlate(fp);
-          // toast.success(`Đã nhận dạng ảnh xe ra: ${fp}`);
         } else if (step === 'CONFIRM') {
           onChangePlate(fp);
           if (fp.toUpperCase() !== plateIn.toUpperCase()) {
@@ -99,40 +101,44 @@ export default function CheckOutPanel({
 
   // ─── Hotkeys ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    const onF4 = () => {
-      if (step === 'SEARCH' && searchInputRef.current) searchInputRef.current.focus();
-    };
-    const onF8 = () => {
-      if (step === 'CONFIRM') {
-        if (!isSubmitting) handleCheckOut();
-      }
-    };
     const onF10 = () => handleReset();
 
-    window.addEventListener('HOTKEY_F4', onF4);
-    window.addEventListener('HOTKEY_F8', onF8);
+    const onEnter = (e: KeyboardEvent) => {
+      if (e.code === 'Enter') {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+        e.preventDefault();
+        if (step === 'SEARCH') {
+          handleSearch();
+        } else if (step === 'CONFIRM') {
+          if (!isSubmitting) handleCheckOut();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', onEnter);
     window.addEventListener('HOTKEY_F10', onF10);
     return () => {
-      window.removeEventListener('HOTKEY_F4', onF4);
-      window.removeEventListener('HOTKEY_F8', onF8);
+      window.removeEventListener('keydown', onEnter);
       window.removeEventListener('HOTKEY_F10', onF10);
     };
-  }, [step, isSubmitting]);
+  }, [step, isSubmitting, searchInput, searchMode, currentSession, plate, plateIn]);
 
   // ─── Terminal session info ──────────────────────────────────────────────────
   const building = sessionStorage.getItem('staff_facility_name') || 'Chưa chọn Toà nhà';
   const gateOut = sessionStorage.getItem('staff_gate_name') || `Cổng - ${building}`;
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
-  const handleSearch = async () => {
-    const query = searchInput.trim();
+  const handleSearch = async (overrideQuery?: string, overrideMode?: 'code' | 'plate') => {
+    const query = (typeof overrideQuery === 'string' ? overrideQuery : searchInput).trim();
+    const mode = overrideMode || searchMode;
     if (!query) {
-      toast.error(searchMode === 'code' ? 'Vui lòng nhập mã thẻ!' : 'Vui lòng nhập biển số xe!');
+      toast.error(mode === 'code' ? 'Vui lòng nhập mã thẻ!' : 'Vui lòng nhập biển số xe!');
       return;
     }
     setIsSubmitting(true);
     try {
-      const params = searchMode === 'code' ? { cardCode: query } : { licensePlate: query };
+      const params = mode === 'code' ? { cardCode: query } : { licensePlate: query };
       const res = await sessionService.searchSession(params);
       if (res.success && res.data) {
         const session = res.data;
@@ -170,7 +176,7 @@ export default function CheckOutPanel({
           onCheckOut({
             ticketCode: session.code || '—',
             plateIn: session.licensePlate,
-            plateOut: plate,
+            plateOut: mode === 'plate' ? query : plate,
             checkInTime: checkInTimeStr,
             checkOutTime: checkOutTimeStr,
             checkInDate: new Date(session.checkInTime).toLocaleDateString('vi-VN', {
@@ -184,20 +190,22 @@ export default function CheckOutPanel({
             fee,
             feeDetails: feeDetails,
             paymentStatus: 'Chưa thanh toán',
+            rawCheckInTime: session.checkInTime,
           });
         }
 
         setStep('CONFIRM');
         if (onSearch) onSearch(session);
 
-        // So sánh trực tiếp plate (vừa được OCR trước khi bấm Tìm Xe) với plateIn của session
-        if (plate.toUpperCase() !== session.licensePlate.toUpperCase()) {
+        // So sánh trực tiếp plateOut với plateIn của session
+        const actualPlateOut = mode === 'plate' ? query : plate;
+        if (actualPlateOut.toUpperCase() !== session.licensePlate.toUpperCase()) {
           toast.error(
-            `CẢNH BÁO: Biển số xe ra (${plate || 'Trống'}) KHÔNG KHỚP với lúc vào (${session.licensePlate})!`,
+            `CẢNH BÁO: Biển số xe ra (${actualPlateOut || 'Trống'}) KHÔNG KHỚP với lúc vào (${session.licensePlate})!`,
             { duration: 5000 }
           );
         } else {
-          // toast.success(`Hợp lệ: Biển số xe ra khớp với lúc vào (${plate})`);
+          // toast.success(`Hợp lệ: Biển số xe ra khớp với lúc vào (${actualPlateOut})`);
         }
       }
     } catch (error: any) {
@@ -214,7 +222,10 @@ export default function CheckOutPanel({
   const handleCheckOut = async () => {
     if (step === 'CONFIRM') {
       if (!currentSession) return;
-      if (plate.toUpperCase() !== plateIn.toUpperCase()) return;
+      if (plate.toUpperCase() !== plateIn.toUpperCase()) {
+        toast.error("LỖI: Biển số xe ra KHÔNG KHỚP với biển số vào. Không thể xác nhận xe ra!");
+        return;
+      }
 
       setIsSubmitting(true);
       try {
@@ -225,21 +236,21 @@ export default function CheckOutPanel({
         if (checkOutRes.success) {
           const actualCheckOutTime = checkOutRes.data.checkOutTime
             ? new Date(checkOutRes.data.checkOutTime).toLocaleTimeString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })
+              hour: '2-digit',
+              minute: '2-digit',
+            })
             : new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
           const actualCheckOutDate = checkOutRes.data.checkOutTime
             ? new Date(checkOutRes.data.checkOutTime).toLocaleDateString('vi-VN', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-              })
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            })
             : new Date().toLocaleDateString('vi-VN', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-              });
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            });
 
           // toast.success("Đã xác nhận thanh toán & mở barie xe ra thành công!");
           onCheckOut((prev: any) => ({
@@ -256,6 +267,12 @@ export default function CheckOutPanel({
           setCheckInTimeDisplay('Không có dữ liệu');
           setCurrentSession(null);
           setStep('SEARCH');
+
+          setOcrPreviewUrl(null);
+          setCheckoutImageUrl(null);
+          setOcrSuccess(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+
           setTimeout(() => {
             onCheckOut(null);
           }, 2000);
@@ -309,17 +326,13 @@ export default function CheckOutPanel({
   const isException = currentSession?.status === 'exception';
 
   return (
-    <div className="flex flex-col bg-white rounded-[16px] border border-[#e8e9e8] shadow-lg shadow-blue-500/20 px-5 pt-4 pb-4 h-full min-h-0 overflow-hidden">
+    <div className="flex flex-col bg-white rounded-[16px] border border-[#e8e9e8] shadow-lg shadow-[#9FE870]/20 px-5 pt-4 pb-4 h-full min-h-0 overflow-hidden">
       <h2 className="text-[17px] font-bold text-[#060606] mb-3 shrink-0">Đăng Ký Xe Ra</h2>
 
-      {/* ── STATE: SEARCH / CONFIRM — FORM CHÍNH ── */}
-      <div
-        className="flex flex-col gap-2.5 flex-1 min-h-0 overflow-y-auto pr-1"
-        style={{ scrollbarWidth: 'thin' }}
-      >
-        {/* Toà nhà + Cổng trực */}
-        <div className="flex gap-3">
-          <div className="flex-1">
+      <div className="flex flex-col gap-4 flex-1 min-h-0">
+        {/* Row 1: Toà nhà + Cổng trực */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
             <label className="block text-[11px] font-semibold text-[#6b6b6b] mb-1">Toà nhà</label>
             <input
               type="text"
@@ -328,7 +341,7 @@ export default function CheckOutPanel({
               className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none"
             />
           </div>
-          <div className="flex-1">
+          <div>
             <label className="block text-[11px] font-semibold text-[#6b6b6b] mb-1">Cổng trực</label>
             <input
               type="text"
@@ -339,266 +352,135 @@ export default function CheckOutPanel({
           </div>
         </div>
 
-        {/* OCR Upload Zone — chỉ hiển thị ở bước SEARCH */}
-        {step === 'SEARCH' && (
-          <div className="flex-1 flex flex-col min-h-0 justify-center">
+        {/* Row 2: Ảnh biển số Vào + Ảnh biển số Ra */}
+        <div className="flex gap-4 flex-1 min-h-0">
+          <div className="flex-1 flex flex-col gap-1 min-h-0">
+            <label className="block text-[11px] font-semibold text-[#6b6b6b]">Ảnh biển số Vào</label>
+            <div className="flex-1 border-2 border-dashed border-[#e8e9e8] rounded-[6px] flex flex-col items-center justify-center gap-2 bg-[#fdfdfd] overflow-hidden relative">
+              {currentSession?.checkInImage ? (
+                (() => {
+                  const SERVER_URL = (
+                    import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'
+                  ).replace(/\/api\/v1\/?$/, '');
+                  let imgSrc = currentSession.checkInImage;
+                  if (!imgSrc.startsWith('http')) {
+                    const cleanPath = imgSrc.startsWith('/') ? imgSrc : `/${imgSrc}`;
+                    imgSrc = `${SERVER_URL}${cleanPath}`;
+                  }
+                  return <img src={imgSrc} alt="check-in" className="w-full h-full object-contain" />;
+                })()
+              ) : (
+                <div className="flex flex-col items-center opacity-60">
+                  <img src="/Logo_chu.png" alt="LYNC PARK" className="h-14 mb-3 object-contain" />
+                  <ImagePlus className="w-4 h-4 text-[#6b6b6b] mb-3" />
+                  <span className="text-[10px] font-semibold text-[#6b6b6b]">Ảnh biển số (OCR)</span>
+                  <span className="text-[9px] text-[#aaa]">Chưa có dữ liệu</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col gap-1 min-h-0 relative">
+            <label className="block text-[11px] font-semibold text-[#6b6b6b]">Ảnh biển số Ra</label>
             {!ocrPreviewUrl ? (
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="w-full flex-1 min-h-[80px] border-2 border-dashed border-[#e8e9e8] rounded-[10px] py-2 flex flex-col items-center justify-center gap-2 text-[#6b6b6b] hover:border-[#d7ee46] hover:bg-[#f9ffe0] hover:text-[#060606] transition-all"
+                className="flex-1 border-2 border-dashed border-[#c8c9c8] rounded-[6px] flex flex-col items-center justify-center gap-2 hover:border-[#9FE870] hover:bg-[#f5ffe8] transition-all duration-200 disabled:opacity-60"
               >
                 {isUploading ? (
-                  <>
-                    <RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" />
-                    <span className="text-[13px] font-semibold text-[#8bc34a]">
-                      Đang nhận dạng biển số...
-                    </span>
-                  </>
+                  <RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" />
                 ) : (
-                  <>
-                    <ScanLine className="w-7 h-7 text-[#aaa]" />
-                    <span className="text-[13px] font-semibold">Scan ảnh biển số (OCR)</span>
-                    <span className="text-[11px] text-[#aaa]">
-                      Chụp thẳng góc, đủ sáng — tự điền biển số
-                    </span>
-                  </>
+                  <div className="flex flex-col items-center">
+                    <img src="/Logo_chu.png" alt="LYNC PARK" className="h-14 mb-3 object-contain" />
+                    <ImagePlus className="w-4 h-4 text-[#6b6b6b] mb-3" />
+                    <span className="text-[10px] font-semibold text-[#6b6b6b]">Chụp / Upload ảnh biển số (OCR)</span>
+                    <span className="text-[9px] text-[#aaa]">Hỗ trợ JPG, PNG — chụp thẳng góc, đủ sáng</span>
+                  </div>
                 )}
               </button>
             ) : (
-              <div
-                className="relative mx-auto rounded-[10px] overflow-hidden border-2 border-[#d7ee46] bg-[#f5f5f4] flex-1 min-h-0"
-                style={{ aspectRatio: '1/1', maxHeight: '140px' }}
-              >
-                <img src={ocrPreviewUrl} alt="ocr" className="w-full h-full object-contain" />
-                {isUploading && (
-                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
-                    <RefreshCw className="w-5 h-5 animate-spin text-[#d7ee46]" />
-                    <span className="text-white text-[11px] font-semibold">Đang nhận dạng...</span>
-                  </div>
-                )}
-                {ocrSuccess && (
-                  <div className="absolute bottom-2 left-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" /> OCR OK
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={clearOcrPreview}
-                  className="absolute top-2 right-2 w-5 h-5 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center shadow-md"
-                >
-                  <X className="w-3 h-3" />
-                </button>
+              <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden flex-1 bg-[#f5f5f4]">
+                <img src={ocrPreviewUrl} alt="preview" className="w-full h-full object-contain" />
+                <button type="button" onClick={clearOcrPreview} className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
               </div>
             )}
+            <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
           </div>
-        )}
-        {/* File input (dùng chung cho cả SEARCH và CONFIRM) */}
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleImageUpload}
-        />
+        </div>
 
-        {/* Tìm kiếm & Loại xe */}
-        <div className="flex gap-3">
-          <div className="flex-[7] flex flex-col justify-end">
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-[11px] font-semibold text-[#6b6b6b]">
-                {searchMode === 'code' ? 'Mã thẻ từ' : 'Biển số xe (tìm kiếm)'}
+        {/* Row 3: Mã thẻ từ/vé + Loại xe + Trạng thái OCR */}
+        <div className="grid grid-cols-2 gap-4 items-end">
+          <div className="flex flex-col gap-1 relative">
+            <div className="flex justify-between w-full">
+              <label className="text-[11px] font-semibold text-[#060606]">
+                {searchMode === 'code' ? 'Mã thẻ từ/vé' : 'Biển số xe (tìm kiếm)'}
               </label>
               <button
                 onClick={() => {
                   setSearchMode((m) => (m === 'code' ? 'plate' : 'code'));
                   setSearchInput('');
                 }}
-                disabled={step !== 'SEARCH'}
-                className="text-[10px] text-[#2563eb] underline disabled:opacity-40 hover:no-underline"
+                className="text-[9px] text-[#1a1a1a] underline whitespace-nowrap hover:no-underline font-medium"
               >
-                {searchMode === 'code'
-                  ? 'Khách mất thẻ? Tìm theo biển số'
-                  : '← Quay lại tìm theo mã thẻ'}
+                {searchMode === 'code' ? 'Khách mất thẻ? Tìm theo biển số' : 'Quay lại tìm mã thẻ'}
               </button>
             </div>
-            <div className="flex gap-2">
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value.toUpperCase())}
+              onKeyDown={handleKeyDown}
+              placeholder={searchMode === 'code' ? 'VD: CARD-1A2B-3C4D' : 'VD: 29A-12345'}
+              disabled={isSubmitting || step !== 'SEARCH'}
+              className="w-full h-8 px-3 border border-[#e8e9e8] rounded-[6px] text-[12px] font-medium outline-none focus:border-[#060606] disabled:opacity-50"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] font-semibold text-[#060606]">Loại xe</label>
               <input
-                ref={searchInputRef}
                 type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value.toUpperCase())}
-                onKeyDown={handleKeyDown}
-                placeholder={searchMode === 'code' ? 'VD: CARD-1A2B-3C4D' : 'VD: 29A-12345'}
-                disabled={isSubmitting || step !== 'SEARCH'}
-                className="flex-1 w-full min-w-0 h-8 px-3 border border-[#e8e9e8] rounded-[6px] text-[12px] font-medium outline-none focus:border-[#060606] disabled:opacity-50"
+                value={vehicleTypeName}
+                readOnly
+                className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none"
               />
             </div>
-          </div>
-
-          <div className="flex-[3] flex flex-col justify-end">
-            <label className="block text-[11px] font-semibold text-[#6b6b6b] mb-1">Loại xe</label>
-            <input
-              type="text"
-              value={vehicleTypeName}
-              readOnly
-              className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none"
-            />
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] font-semibold text-[#060606]">Trạng thái OCR</label>
+              <div className={`w-full h-8 rounded-[6px] text-[12px] font-bold flex items-center justify-center border transition-colors ${ocrSuccess
+                ? (isMismatch ? 'bg-[#fef2f2] text-[#ef4444] border-[#fca5a5]' : 'bg-[#9FE870]/20 text-[#2d6a1f] border-[#9FE870]')
+                : 'bg-[#f5f5f4] text-[#a8a29e] border-[#e8e9e8]'
+                }`}>
+                {ocrSuccess ? (isMismatch ? '✕ Không khớp biển số' : '✓ Quét thành công') : 'Chưa quét'}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Hình ảnh lúc vào và ra (để so sánh) */}
-        {step === 'CONFIRM' && (
-          <div className="flex gap-2 mb-1 flex-1 min-h-[110px]">
-            <div className="flex-1 flex flex-col">
-              <label className="text-[11px] font-semibold text-[#6b6b6b] mb-1 text-center">
-                Ảnh lúc ra (hiện tại)
-              </label>
-              <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex flex-1 justify-center items-center group">
-                {ocrPreviewUrl ? (
-                  <>
-                    <img
-                      src={ocrPreviewUrl}
-                      alt="check-out"
-                      className="max-w-full max-h-full object-contain"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[11px] font-semibold gap-1"
-                    >
-                      <ImagePlus className="w-5 h-5" />
-                      <span>Chụp lại</span>
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="w-full h-full flex flex-col items-center justify-center gap-1 text-[#6b6b6b] hover:text-[#060606] hover:bg-[#f9ffe0] transition-colors"
-                  >
-                    {isUploading ? (
-                      <>
-                        <RefreshCw className="w-5 h-5 animate-spin text-[#8bc34a]" />
-                        <span className="text-[10px]">Đang quét...</span>
-                      </>
-                    ) : (
-                      <>
-                        <ImagePlus className="w-6 h-6 text-[#aaa] group-hover:text-[#d7ee46]" />
-                        <span className="text-[10px] font-semibold">Chụp ảnh xe ra</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="flex-1 flex flex-col">
-              <label className="text-[11px] font-semibold text-[#6b6b6b] mb-1 text-center">
-                Ảnh lúc vào (so sánh)
-              </label>
-              <div className="relative rounded-[8px] overflow-hidden border border-[#e8e9e8] bg-[#f5f5f4] flex flex-1 justify-center items-center">
-                {currentSession?.checkInImage ? (
-                  (() => {
-                    const SERVER_URL = (
-                      import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'
-                    ).replace(/\/api\/v1\/?$/, '');
-                    
-                    let imgSrc = currentSession.checkInImage;
-                    if (!imgSrc.startsWith('http')) {
-                       const cleanPath = imgSrc.startsWith('/') ? imgSrc : `/${imgSrc}`;
-                       imgSrc = `${SERVER_URL}${cleanPath}`;
-                    }
-                    
-                    return (
-                      <img
-                        src={imgSrc}
-                        alt="check-in"
-                        className="max-w-full max-h-full object-contain"
-                        onError={(e) => {
-                          console.error("Image failed to load:", imgSrc);
-                        }}
-                      />
-                    );
-                  })()
-                ) : (
-                  <span className="text-[10px] text-[#aaa]">Không có ảnh</span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Biển số xe ra */}
-        <div className="flex flex-col shrink-0">
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-[12px] font-semibold text-[#060606]">Biển số xe ra</label>
-            {step === 'CONFIRM' && !isException && (
-              <span className="text-[10px] text-[#1d7a4a] font-medium">
-                ✓ Tự động điền từ hệ thống
-              </span>
-            )}
-            {isException && (
-              <span className="text-[10px] text-[#ea580c] font-bold uppercase animate-pulse">
-                ! Đang Ngoại Lệ
-              </span>
-            )}
-          </div>
+        {/* Row 4: Biển số xe ra (Input for plate) */}
+        <div className="flex flex-col gap-1 shrink-0">
+          <label className="block text-[11px] font-semibold text-[#060606]">Biển số xe ra</label>
           <input
             type="text"
             value={plate}
             onChange={(e) => onChangePlate(e.target.value.toUpperCase())}
             onKeyDown={handleKeyDown}
             disabled={step === 'SEARCH' || isSubmitting}
-            className={`flex-1 w-full text-[24px] font-mono px-4 border rounded-[8px] uppercase font-bold outline-none transition-colors 
-                ${step === 'CONFIRM' ? (isException ? 'bg-[#fff7ed] border-[#ea580c] text-[#ea580c] focus:border-[#c2410c]' : isMismatch ? 'bg-[#fef2f2] border-[#DF0101] text-[#DF0101] focus:border-[#DF0101]' : 'bg-[#f0fdf4] border-[#1d7a4a] text-[#1d7a4a] focus:border-[#155d38]') : 'bg-[#f5f5f4] border-[#e8e9e8] text-[#9b9b9b]'}`}
+            className={`w-full h-12 text-[20px] font-mono px-3 border rounded-[6px] uppercase font-bold outline-none transition-all duration-200
+              ${step === 'CONFIRM'
+                ? (isException
+                    ? 'bg-[#fff7ed] border-[#ea580c] text-[#ea580c] focus:border-[#c2410c]'
+                    : isMismatch
+                      ? 'bg-[#fef2f2] border-[#ef4444] text-[#ef4444] focus:border-[#dc2626]'
+                      : 'bg-[#9FE870]/30 border-[#9FE870] text-[#062F28] focus:ring-2 focus:ring-[#9FE870]/40')
+                : 'bg-[#f5f5f4] border-[#e8e9e8] text-[#9b9b9b]'
+              }`}
+            placeholder="XXX-XX-XXXXX"
           />
         </div>
-        {/* Đã bỏ phần hiển thị phí ở đây vì panel bên dưới (Xác Nhận Xe Ra) đã hiển thị */}
-      </div>
-
-      {/* Nút hành động */}
-      <div className="flex gap-3 h-[42px] shrink-0 mt-3">
-        <button
-          onClick={handleReset}
-          disabled={isSubmitting}
-          className="flex-[1] bg-white border border-[#e8e9e8] rounded-[8px] font-medium text-[#6b6b6b] hover:bg-gray-50 transition-colors disabled:opacity-50"
-        >
-          Hủy
-        </button>
-        <button
-          onClick={step === 'SEARCH' ? handleSearch : handleCheckOut}
-          disabled={
-            step === 'SEARCH'
-              ? isSubmitting || !searchInput || !ocrPreviewUrl
-              : isSubmitting || isMismatch || isException
-          }
-          className={`flex-[4] font-bold rounded-[8px] transition-all text-[15px] shadow-sm 
-            ${
-              isException
-                ? 'bg-[#ea580c] text-white disabled:opacity-100 cursor-not-allowed'
-                : isMismatch
-                  ? 'bg-[#DF0101] text-white disabled:opacity-100 cursor-not-allowed'
-                  : step === 'CONFIRM'
-                    ? 'bg-[#1d7a4a] text-white hover:bg-[#155d38] disabled:opacity-50'
-                    : 'bg-[#d7ee46] text-[#060606] hover:brightness-95 disabled:opacity-50'
-            }`}
-        >
-          {isSubmitting
-            ? 'Đang xử lý...'
-            : isException
-              ? 'Đang Xử Lý Ngoại Lệ'
-              : isMismatch
-                ? 'Không khớp biển số lúc vào'
-                : step === 'CONFIRM'
-                  ? 'Mở chắn'
-                  : !searchInput || !ocrPreviewUrl
-                    ? 'Cần Đủ Thông Tin & Ảnh Chụp'
-                    : 'Tìm xe'}
-        </button>
       </div>
     </div>
   );

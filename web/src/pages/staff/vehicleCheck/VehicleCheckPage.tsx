@@ -6,7 +6,6 @@ import CheckInPanel from "./components/CheckInPanel";
 import CheckOutPanel from "./components/CheckOutPanel";
 import CheckInConfirmPanel from "./components/CheckInConfirmPanel";
 import CheckOutConfirmPanel from "./components/CheckOutConfirmPanel";
-import TerminalToolbar from "./components/TerminalToolbar";
 import GlobalExceptionPanel from "./components/GlobalExceptionPanel";
 
 export default function VehicleCheckPage() {
@@ -28,17 +27,9 @@ export default function VehicleCheckPage() {
       // Ignore if user is typing in an input and presses a non-function key, 
       // but function keys should be intercepted.
       switch (e.key) {
-        case "F2":
+        case "F1":
           e.preventDefault();
-          window.dispatchEvent(new CustomEvent("HOTKEY_F2"));
-          break;
-        case "F4":
-          e.preventDefault();
-          window.dispatchEvent(new CustomEvent("HOTKEY_F4"));
-          break;
-        case "F8":
-          e.preventDefault();
-          window.dispatchEvent(new CustomEvent("HOTKEY_F8"));
+          window.dispatchEvent(new CustomEvent("HOTKEY_F1"));
           break;
         case "F9":
           e.preventDefault();
@@ -47,6 +38,14 @@ export default function VehicleCheckPage() {
         case "F10":
           e.preventDefault();
           window.dispatchEvent(new CustomEvent("HOTKEY_F10"));
+          break;
+        case "F11":
+          e.preventDefault();
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+          }
           break;
         default:
           break;
@@ -65,8 +64,8 @@ export default function VehicleCheckPage() {
       {/* Toaster riêng cho fullscreen — hiển thị toast ngay trong stacking context của fullscreen */}
       <Toaster position="top-right" richColors />
 
-      {/* 4 Panels — rows: 3fr (thao tác) / 2fr (xác nhận) */}
-      <div className="flex-1 grid grid-cols-2 grid-rows-[3fr_2fr] gap-4 px-6 pb-4 overflow-hidden min-h-0">
+      {/* 4 Panels — rows: 7fr (thao tác) / 3fr (xác nhận) */}
+      <div className="flex-1 grid grid-cols-2 grid-rows-[7fr_3fr] gap-4 px-6 pb-4 overflow-hidden min-h-0">
         <CheckInPanel onCheckIn={setCheckInResult} />
         <CheckOutPanel
           plate={coPlateCam}
@@ -78,9 +77,6 @@ export default function VehicleCheckPage() {
         <CheckInConfirmPanel data={checkInResult} />
         <CheckOutConfirmPanel data={checkOutResult} />
       </div>
-
-      {/* BOTTOM TOOLBAR */}
-      <TerminalToolbar onFlagException={() => setShowExceptionPanel(true)} />
 
       {/* GLOBAL EXCEPTION SLIDE-OVER PANEL */}
       {showExceptionPanel && (

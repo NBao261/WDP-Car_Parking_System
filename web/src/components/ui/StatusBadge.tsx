@@ -12,7 +12,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
   switch (status) {
     case 'active':
       return (
-        <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 border border-green-200/50">
+        <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-[#dbeafe] text-[#1e40af] border border-[#93c5fd]/60">
           Active
         </span>
       );
@@ -24,7 +24,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
       );
     case 'locked':
       return (
-        <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-200/50">
+        <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-[#fef3c7] text-[#92400e] border border-[#fcd34d]/60">
           Locked
         </span>
       );
