@@ -20,8 +20,25 @@ interface CheckOutConfirmPanelProps {
       lostCardFee?: number;
     };
     paymentStatus?: string;
+    rawCheckInTime?: string;
   };
 }
+
+const calculateDuration = (checkInTime: string) => {
+  const diff = Date.now() - new Date(checkInTime).getTime();
+  if (diff < 0) return '0p';
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  
+  const parts = [];
+  if (days > 0) parts.push(`${days} ngày`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0 || parts.length === 0) parts.push(`${minutes}p`);
+  
+  return parts.join(' ');
+};
 
 export default function CheckOutConfirmPanel({ data }: CheckOutConfirmPanelProps) {
   const {
@@ -36,7 +53,8 @@ export default function CheckOutConfirmPanel({ data }: CheckOutConfirmPanelProps
     gateOut = "—",
     fee = 0,
     feeDetails,
-    paymentStatus = "—"
+    paymentStatus = "—",
+    rawCheckInTime
   } = data || {};
 
   return (
@@ -107,25 +125,23 @@ export default function CheckOutConfirmPanel({ data }: CheckOutConfirmPanelProps
             {paymentStatus}
           </span>
           {/* Bảng kê chi tiết phí (nhỏ gọn) */}
-          {feeDetails && (
-            <div className="mt-2 text-[10px] text-[#6b6b6b] space-y-0.5 text-right">
-              {feeDetails.durationHours !== undefined && (
-                <div>Thời gian: <span className="font-medium text-[#060606]">{feeDetails.durationHours}h</span></div>
-              )}
-              {feeDetails.baseFee !== undefined && (
+          <div className="mt-2 text-[10px] text-[#6b6b6b] space-y-0.5 text-right">
+            {(rawCheckInTime || feeDetails?.durationHours !== undefined) && (
+              <div>Thời gian: <span className="font-medium text-[#060606]">{rawCheckInTime ? calculateDuration(rawCheckInTime) : `${feeDetails?.durationHours}h`}</span></div>
+            )}
+            {feeDetails?.baseFee !== undefined && (
                 <div>Cơ bản: <span className="font-medium text-[#060606]">{feeDetails.baseFee.toLocaleString("vi-VN")}₫</span></div>
               )}
-              {!!feeDetails.overnightFee && (
+              {!!feeDetails?.overnightFee && (
                 <div>Qua đêm: <span className="font-medium text-[#b45309]">{feeDetails.overnightFee.toLocaleString("vi-VN")}₫</span></div>
               )}
-              {!!feeDetails.exceptionSurcharge && (
+              {!!feeDetails?.exceptionSurcharge && (
                 <div>Phụ phí: <span className="font-medium text-[#b03030]">{feeDetails.exceptionSurcharge.toLocaleString("vi-VN")}₫</span></div>
               )}
-              {!!feeDetails.lostCardFee && (
+              {!!feeDetails?.lostCardFee && (
                 <div>Mất thẻ: <span className="font-medium text-[#b03030]">{feeDetails.lostCardFee.toLocaleString("vi-VN")}₫</span></div>
               )}
             </div>
-          )}
         </div>
       </div>
     </div>
