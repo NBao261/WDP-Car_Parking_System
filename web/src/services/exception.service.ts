@@ -50,6 +50,8 @@ export interface IException {
   type: ExceptionType;
   description: string;
   staffId: { _id: string; name: string; email: string } | string;
+  resolvedByStaffId?: { _id: string; name: string; email: string } | string;
+  staffNote?: string;
   managerId: { _id: string; name: string; email: string } | null | string;
   managerNote: string;
   surcharge: number;
