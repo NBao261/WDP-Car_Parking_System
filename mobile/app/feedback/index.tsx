@@ -96,22 +96,24 @@ export default function FeedbackListScreen() {
   return (
     <View style={styles.root}>
       {/* Header */}
-      <LinearGradient colors={[Colors.gradientStart, Colors.gradientMid]} style={styles.header}>
-        <SafeAreaView edges={["top"]}>
-          <View style={styles.headerRow}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-              <Ionicons name="arrow-back" size={22} color={Colors.white} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Phản hồi của tôi</Text>
-            <TouchableOpacity
-              style={styles.addBtn}
-              onPress={() => router.push("/feedback/create" as any)}
-            >
-              <Ionicons name="add" size={22} color={Colors.white} />
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+      <View style={styles.headerWrapper}>
+        <LinearGradient colors={[Colors.gradientStart, Colors.gradientMid]} style={styles.header}>
+          <SafeAreaView edges={["top"]}>
+            <View style={styles.headerRow}>
+              <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                <Ionicons name="arrow-back" size={22} color={Colors.white} />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Phản hồi của tôi</Text>
+              <TouchableOpacity
+                style={styles.addBtn}
+                onPress={() => router.push("/feedback/create" as any)}
+              >
+                <Ionicons name="add" size={22} color={Colors.white} />
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       {loading ? (
         <ActivityIndicator color={Colors.primary} style={{ marginTop: 60 }} />
@@ -143,7 +145,12 @@ export default function FeedbackListScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
 
-  header: { paddingHorizontal: 16, paddingBottom: 16 },
+  headerWrapper: {
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: 'hidden',
+  },
+  header: { paddingHorizontal: 16, paddingBottom: 20 },
   headerRow: { flexDirection: "row", alignItems: "center", paddingTop: 8 },
   backBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   headerTitle: { flex: 1, textAlign: "center", fontSize: 18, fontFamily: Typography.fontFamily.bold, color: Colors.white },

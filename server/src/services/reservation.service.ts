@@ -286,7 +286,35 @@ export class ReservationService {
       .populate('slotId', 'code floorId')
       .populate('userId', 'fullName email phone');
 
-    if (!reservation) throw new AppError('Đặt chỗ không tồn tại', 404);
+    if (!reservation) throw new AppError('\u0110\u1eb7t ch\u1ed7 kh\u00f4ng t\u1ed3n t\u1ea1i', 404);
+    return reservation;
+  }
+
+  /**
+   * Tra c\u1ee9u reservation theo m\u00e3 \u0111\u1eb7t ch\u1ed7 (code)
+   * D\u00f9ng b\u1edfi Staff t\u1ea1i c\u1ed5ng khi qu\u00e9t QR ho\u1eb7c nh\u1eadp tay
+   */
+  static async getByCode(code: string): Promise<IReservation> {
+    const reservation = await Reservation.findOne({ code: code.trim().toUpperCase() })
+      .populate('facilityId', 'name address openTime closeTime')
+      .populate('vehicleTypeId', 'name requiresPlate')
+      .populate('slotId', 'code floorId')
+      .populate({ path: 'slotId', populate: { path: 'floorId', select: 'name' } })
+      .populate('userId', 'fullName email phone');
+
+    if (!reservation) throw new AppError('Không tìm thấy mã đặt chỗ', 404);
+
+    if (reservation.status !== ReservationStatus.CONFIRMED) {
+      const statusMsg: Record<string, string> = {
+        cancelled: 'đã bị hủy',
+        expired:   'đã hết hạn',
+        used:      'đã sử dụng',
+        pending:   'đang chờ xác nhận',
+      };
+      const msg = statusMsg[reservation.status] || reservation.status;
+      throw new AppError(`Đặt chỗ ${msg}, không thể check-in`, 400);
+    }
+
     return reservation;
   }
 }

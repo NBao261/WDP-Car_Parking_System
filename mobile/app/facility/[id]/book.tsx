@@ -42,6 +42,8 @@ export default function BookingScreen() {
   const [vehicleTypes, setVehicleTypes] = useState<any[]>([]);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [facilityName, setFacilityName] = useState("");
+  const [facilityOpenTime, setFacilityOpenTime] = useState<string>("06:00");
+  const [facilityCloseTime, setFacilityCloseTime] = useState<string>("22:00");
 
   const [selectedVehicleType, setSelectedVehicleType] = useState<string>("");
   const [licensePlate, setLicensePlate] = useState("");
@@ -50,6 +52,71 @@ export default function BookingScreen() {
   );
   const [showPicker, setShowPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState<"date" | "time">("date");
+  const [plateError, setPlateError] = useState<string>('');
+
+  // Tự động chuẩn hoá biển số cực thông minh khi người dùng đang gõ
+  // Định dạng chuẩn: XX-XX-123.45 (dùng '-' thay khoảng trắng để khớp OCR)
+  const autoFormatPlate = (text: string): string => {
+    let s = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!s) return '';
+
+    let prefix = '';
+    let tail = '';
+
+    const typeName = vehicleTypes.find(v => v._id === selectedVehicleType)?.name?.toLowerCase() || '';
+    const isCar = typeName.includes('ô tô') || typeName.includes('car');
+
+    if (isCar) {
+      // Ô tô: 2 số + 1-2 chữ cái + phần số đuôi
+      const match = s.match(/^(\d{2}[A-Z]{1,2})(\d*)$/);
+      if (match) {
+        prefix = match[1];
+        tail = match[2];
+      } else {
+        prefix = s;
+      }
+    } else {
+      // Xe máy: 4 ký tự đầu (VD: 29A1) làm prefix
+      if (s.length >= 4) {
+        prefix = s.substring(0, 4);
+        tail = s.substring(4);
+      } else {
+        prefix = s;
+      }
+    }
+
+    // Thêm dấu '-' sau 2 số đầu (mã vùng)
+    prefix = prefix.replace(/^(\d{2})([A-Z])/, '$1-$2');
+
+    if (tail) {
+      tail = tail.substring(0, 5); // Tối đa 5 số đuôi
+      if (tail.length === 5) {
+        tail = tail.substring(0, 3) + '.' + tail.substring(3);
+      }
+      // Dùng '-' thay khoảng trắng để khớp chuẩn OCR
+      return prefix + '-' + tail;
+    }
+
+    return prefix;
+  };
+
+  /**
+   * Kiểm tra biển số xe Việt Nam hợp lệ (chuẩn OCR với '-').
+   *   Xe máy:  29-A1-123.45
+   *   Ô tô:    30-A-123.45
+   *   Biển đôi: 51-AA-123.45
+   *   Biển ngắn (4-5 số): 29-A1-1234 / 30-A-12345
+   */
+  const isValidPlate = (plate: string): boolean => {
+    const p = plate.trim();
+    // Xe máy: 29-A1-123.45 hoặc 29-A1-1234
+    const moto = /^\d{2}-[A-Z]\d-(\d{3}\.\d{2}|\d{4,5})$/.test(p);
+    // Ô tô 1 chữ: 30-A-123.45 hoặc 30-A-1234
+    const car1 = /^\d{2}-[A-Z]-(\d{3}\.\d{2}|\d{4,5})$/.test(p);
+    // Ô tô 2 chữ (biển đôi): 51-AA-123.45 hoặc 51-AA-1234
+    const car2 = /^\d{2}-[A-Z]{2}-(\d{3}\.\d{2}|\d{4,5})$/.test(p);
+    return moto || car1 || car2;
+  };
 
   useEffect(() => {
     fetchInitialData();
@@ -77,7 +144,11 @@ export default function BookingScreen() {
       }
 
       const fac = facilities?.find((f: any) => f._id === facilityId);
-      if (fac) setFacilityName(fac.name);
+      if (fac) {
+        setFacilityName(fac.name);
+        setFacilityOpenTime(fac.openTime || "06:00");
+        setFacilityCloseTime(fac.closeTime || "22:00");
+      }
     } catch {
       Alert.alert("Lỗi", "Không thể tải dữ liệu, vui lòng thử lại.");
     } finally {
@@ -86,20 +157,55 @@ export default function BookingScreen() {
   };
 
   const handleBook = async () => {
-    if (!licensePlate.trim()) {
+    // Format một lần cuối cùng trước khi submit
+    const finalPlate = autoFormatPlate(licensePlate);
+    if (!finalPlate.trim()) {
       Alert.alert("Thiếu thông tin", "Vui lòng nhập biển số xe.");
+      return;
+    }
+    if (!isValidPlate(finalPlate)) {
+      Alert.alert(
+        "Biển số không hợp lệ",
+        `"${finalPlate}" không đúng định dạng biển số Việt Nam.\n\nVí dụ hợp lệ:\n• Xe máy: 29-A1-123.45\n• Ô tô: 30-A-123.45`
+      );
       return;
     }
     if (startTime.getTime() - Date.now() < 30 * 60 * 1000) {
       Alert.alert("Thời gian không hợp lệ", "Phải đặt trước ít nhất 30 phút.");
       return;
     }
+
+    // Validate operation hours
+    const startH = startTime.getHours();
+    const startM = startTime.getMinutes();
+    const startMins = startH * 60 + startM;
+
+    const [openH, openM] = facilityOpenTime.split(':').map(Number);
+    const [closeH, closeM] = facilityCloseTime.split(':').map(Number);
+    const openMins = openH * 60 + openM;
+    const closeMins = closeH * 60 + closeM;
+
+    let isWithinOpenHours = false;
+    if (closeMins <= openMins) {
+      isWithinOpenHours = startMins >= openMins || startMins < closeMins;
+    } else {
+      isWithinOpenHours = startMins >= openMins && startMins < closeMins;
+    }
+
+    if (!isWithinOpenHours) {
+      Alert.alert(
+        "Ngoài giờ hoạt động",
+        `Bãi xe chỉ mở cửa từ ${facilityOpenTime} đến ${facilityCloseTime}. Vui lòng chọn thời gian khác.`
+      );
+      return;
+    }
+
     try {
       setSubmitting(true);
       const res = (await reservationApi.createReservation({
         facilityId,
         vehicleTypeId: selectedVehicleType,
-        licensePlate: licensePlate.trim().toUpperCase(),
+        licensePlate: finalPlate,
         startTime: startTime.toISOString(),
       })) as any;
       if (res.success) {
@@ -110,7 +216,6 @@ export default function BookingScreen() {
             {
               text: "Xem đặt chỗ của tôi",
               onPress: () => {
-                // Pop back to main stack, then navigate to sessions with reserved tab
                 router.dismissAll();
                 router.replace("/(main)/sessions?tab=reserved" as any);
               },
@@ -145,44 +250,44 @@ export default function BookingScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.root}>
-        {/* ── Gradient Hero Header ── */}
-        <LinearGradient
-          colors={[Colors.gradientStart, Colors.gradientMid]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          <SafeAreaView edges={["top"]}>
-            <View style={styles.heroNav}>
-              <TouchableOpacity
-                onPress={() => router.back()}
-                style={styles.backBtn}
-              >
-                <Ionicons name="arrow-back" size={22} color={Colors.white} />
-              </TouchableOpacity>
-              <Text style={styles.heroNavTitle}>Đặt chỗ trước</Text>
-              <View style={{ width: 38 }} />
-            </View>
-            {facilityName ? (
-              <View style={styles.heroFacility}>
-                <Ionicons
-                  name="business-outline"
-                  size={14}
-                  color={Colors.textOnDarkMuted}
-                />
-                <Text style={styles.heroFacilityName} numberOfLines={1}>
-                  {facilityName}
-                </Text>
+        <View style={styles.heroWrapper}>
+          <LinearGradient
+            colors={[Colors.gradientStart, Colors.gradientMid]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
+          >
+            <SafeAreaView edges={["top"]}>
+              <View style={styles.heroNav}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={styles.backBtn}
+                >
+                  <Ionicons name="arrow-back" size={22} color={Colors.white} />
+                </TouchableOpacity>
+                <Text style={styles.heroNavTitle}>Đặt chỗ trước</Text>
+                <View style={{ width: 38 }} />
               </View>
-            ) : null}
-          </SafeAreaView>
-        </LinearGradient>
+              {facilityName ? (
+                <View style={styles.heroFacility}>
+                  <Ionicons
+                    name="business-outline"
+                    size={14}
+                    color={Colors.textOnDarkMuted}
+                  />
+                  <Text style={styles.heroFacilityName} numberOfLines={1}>
+                    {facilityName}
+                  </Text>
+                </View>
+              ) : null}
+            </SafeAreaView>
+          </LinearGradient>
+        </View>
 
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          {/* ── Bước 1: Phương tiện ── */}
           <View style={styles.stepHeader}>
             <View style={styles.stepBadge}>
               <Text style={styles.stepNum}>1</Text>
@@ -190,7 +295,6 @@ export default function BookingScreen() {
             <Text style={styles.stepTitle}>Phương tiện</Text>
           </View>
           <View style={styles.card}>
-            {/* Vehicle type picker */}
             <Text style={styles.fieldLabel}>Loại xe</Text>
             <ScrollView
               horizontal
@@ -216,7 +320,6 @@ export default function BookingScreen() {
                     <Text style={[styles.vtChipText, active && styles.vtChipTextActive, noSlot && styles.vtChipTextFull]}>
                       {vt.name}
                     </Text>
-                    {/* Slot count badge */}
                     <View style={[styles.slotCountBadge, { backgroundColor: noSlot ? Colors.dangerLight : count <= 5 ? Colors.warningLight : Colors.successLight }]}>
                       <Text style={[styles.slotCountText, { color: noSlot ? Colors.danger : count <= 5 ? Colors.warning : Colors.success }]}>
                         {count}
@@ -232,29 +335,55 @@ export default function BookingScreen() {
               })}
             </ScrollView>
 
-            <View style={styles.fieldDivider} />
-
-            {/* License plate */}
             <Text style={styles.fieldLabel}>Biển số xe</Text>
-            <View style={styles.plateInput}>
+            <View style={[styles.plateInput, plateError ? { borderColor: Colors.danger } : {}]}>
               <Ionicons
-                name="car-outline"
+                name="newspaper-outline"
                 size={18}
-                color={Colors.textSecondary}
+                color={plateError ? Colors.danger : Colors.textSecondary}
               />
               <TextInput
                 style={styles.plateField}
-                placeholder="Ví dụ: 30A-12345"
+                placeholder={
+                  (() => {
+                    const typeName = vehicleTypes.find(v => v._id === selectedVehicleType)?.name?.toLowerCase() || '';
+                    if (typeName.includes('ô tô') || typeName.includes('car')) return "Ví dụ: 30-A-123.45";
+                    return "Ví dụ: 29-A1-123.45";
+                  })()
+                }
                 placeholderTextColor={Colors.placeholder}
                 value={licensePlate}
-                onChangeText={setLicensePlate}
+                onChangeText={(text) => {
+                  const formatted = autoFormatPlate(text);
+                  setLicensePlate(formatted);
+                  // Chỉ validate khi đã gõ đủ chiều dài tối thiểu (tránh lỗi khi đang gõ)
+                  if (formatted.length >= 8) {
+                    setPlateError(isValidPlate(formatted) ? '' : 'Biển số không đúng định dạng');
+                  } else {
+                    setPlateError('');
+                  }
+                }}
                 autoCapitalize="characters"
-                autoCorrect={false}
+                maxLength={15}
               />
             </View>
+            {plateError ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                <Ionicons name="alert-circle" size={13} color={Colors.danger} />
+                <Text style={{ fontSize: 12, color: Colors.danger, fontFamily: Typography.fontFamily.medium }}>
+                  {plateError}
+                </Text>
+              </View>
+            ) : licensePlate.length >= 8 && isValidPlate(licensePlate) ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                <Ionicons name="checkmark-circle" size={13} color={Colors.success} />
+                <Text style={{ fontSize: 12, color: Colors.success, fontFamily: Typography.fontFamily.medium }}>
+                  Biển số hợp lệ
+                </Text>
+              </View>
+            ) : null}
           </View>
 
-          {/* ── Bước 2: Thời gian ── */}
           <View style={styles.stepHeader}>
             <View style={styles.stepBadge}>
               <Text style={styles.stepNum}>2</Text>
@@ -334,10 +463,11 @@ export default function BookingScreen() {
                 color={Colors.info}
               />
               <Text style={styles.reminderText}>
-                Phải đặt trước ít nhất{" "}
+                Hoạt động:{" "}
                 <Text style={{ fontFamily: Typography.fontFamily.semiBold }}>
-                  30 phút
-                </Text>
+                  {facilityOpenTime} – {facilityCloseTime}
+                </Text>{" "}
+                (Đặt trước tối thiểu 30p)
               </Text>
             </View>
           </View>
@@ -419,7 +549,12 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
 
   // Hero
-  hero: { paddingHorizontal: 16, paddingBottom: 20 },
+  heroWrapper: {
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: 'hidden',
+  },
+  hero: { paddingHorizontal: 16, paddingBottom: 24 },
   heroNav: {
     flexDirection: "row",
     alignItems: "center",

@@ -68,6 +68,19 @@ export class ReservationController {
   }
 
   /**
+   * GET /reservations/by-code/:code
+   * Tra cứu reservation theo mã đặt chỗ — Staff quét QR hoặc nhập tay tại cổng
+   */
+  static async getByCode(req: Request, res: Response, next: NextFunction) {
+    try {
+      const reservation = await ReservationService.getByCode(req.params.code as string);
+      res.status(200).json({ success: true, data: reservation });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * POST /reservations/auto-expire
    * BR-6.4: Trigger tự động hủy reservation quá hạn (Admin/Cron)
    */

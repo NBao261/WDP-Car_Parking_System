@@ -41,6 +41,15 @@ router.get(
   ReservationController.getReservations
 );
 
+// Tra cứu reservation theo mã — Staff/Manager dùng tại cổng check-in (QR hoặc nhập tay)
+// ⚠️ PHẢI đặt trước /:id routes để tránh bị match nhầm
+router.get(
+  '/by-code/:code',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
+  checkPermission(PERMISSIONS.SLOT_READ),
+  ReservationController.getByCode
+);
+
 // Xem chi tiết reservation
 router.get(
   '/:id',
