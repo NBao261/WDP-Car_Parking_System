@@ -147,7 +147,7 @@
 - [x] Trang Quản lý Tòa nhà (FR-1): CRUD + trạng thái
 - [x] Trang Quản lý Loại xe (FR-2): CRUD
 - [x] Trang Phân tầng (FR-3): gán loại xe cho tầng, sơ đồ tầng
-- [x] Trang Cấu hình Hệ thống (FR-20): form cấu hình chung
+- [ ] Trang Cấu hình Hệ thống (FR-20): form cấu hình chung
 
 #### FE2
 
