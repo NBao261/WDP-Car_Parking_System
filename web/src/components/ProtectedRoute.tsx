@@ -26,12 +26,11 @@ export const AuthRedirect = ({ children }: { children: JSX.Element }) => {
   const { isAuthenticated, user } = useAuthStore();
 
   if (isAuthenticated && user) {
-    const dashboardPath =
-      user.role === UserRole.ADMIN
-        ? '/admin'
-        : user.role === UserRole.MANAGER
-          ? '/manager'
-          : '/staff/shift-selection';
+    let dashboardPath = '/staff/shift-selection';
+    if (user.role === UserRole.ADMIN) dashboardPath = '/admin';
+    else if (user.role === UserRole.MANAGER) dashboardPath = '/manager';
+    else if (user.role === UserRole.DRIVER) dashboardPath = '/driver';
+    
     return <Navigate to={dashboardPath} replace />;
   }
 

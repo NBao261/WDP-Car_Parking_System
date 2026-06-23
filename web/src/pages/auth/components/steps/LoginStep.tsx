@@ -33,7 +33,7 @@ export function LoginStep({ changeView }: LoginStepProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validationResult = loginSchema.safeParse({ email, password });
+    const validationResult = loginSchema.safeParse({ email: email.trim(), password });
     if (!validationResult.success) {
       const errors = validationResult.error.flatten().fieldErrors;
       setFieldErrors({
@@ -49,7 +49,7 @@ export function LoginStep({ changeView }: LoginStepProps) {
     setErrorMessage("");
 
     try {
-      const response = await authService.login(email, password);
+      const response = await authService.login(email.trim(), password);
       const { user, tokens } = response.data;
 
       // 1. Lưu auth vào store (không có assignedFacilities chưa)
@@ -79,6 +79,8 @@ export function LoginStep({ changeView }: LoginStepProps) {
           navigate('/manager');
         } else if (user.role === UserRole.STAFF) {
           navigate('/staff/shift-selection');
+        } else if (user.role === UserRole.DRIVER) {
+          navigate('/driver');
         } else {
           navigate('/unauthorized');
         }
@@ -146,6 +148,16 @@ export function LoginStep({ changeView }: LoginStepProps) {
         <div className="flex-grow border-t border-[#E7E7F1]"></div>
         <span className="flex-shrink-0 mx-4 text-[#7B7B7B] text-[12px] bg-white px-2">or</span>
         <div className="flex-grow border-t border-[#E7E7F1]"></div>
+      </div>
+
+      <div className="text-center mb-[16px]">
+        <button
+          type="button"
+          onClick={() => changeView("register")}
+          className="w-full py-[12px] border border-[#E7E7F1] rounded-[8px] text-[#062F28] font-semibold text-[14px] hover:bg-[#F5F5F5] transition-colors"
+        >
+          Tạo tài khoản mới
+        </button>
       </div>
 
       <div className="mt-2 text-center flex flex-col gap-1">

@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { X, User, Shield, Key, ChevronRight, ChevronLeft, Check, RefreshCw, AlertCircle, Building2 } from 'lucide-react';
 import { User as UserType } from '../../../../types/user.types';
 import { useUserForm } from '../hooks/useUserForm';
@@ -46,7 +47,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
   const facilityStepId = isEdit ? 4 : 3;
   const isOnFacilityStep = showFacilityStep && currentStep === facilityStepId;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* Backdrop */}
       <motion.div
@@ -253,6 +254,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
           </div>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 }
