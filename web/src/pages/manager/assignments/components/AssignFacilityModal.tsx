@@ -94,9 +94,6 @@ export function AssignFacilityModal({ staff, managerFacilities, onClose, onSucce
 
         {/* Footer */}
         <div className="px-4 py-3.5 border-t border-gray-100 flex gap-3">
-          <button onClick={onClose} className="w-1/3 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-            Hủy
-          </button>
           <button
             onClick={handleSave}
             disabled={saving}

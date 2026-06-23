@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Users, Search, RefreshCw, AlertCircle, Settings2, MoreVertical, User as UserIcon, ChevronDown, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Users, Search, RefreshCw, AlertCircle, Settings2, MoreVertical, User as UserIcon, ChevronDown, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, ArrowUpDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, AssignedFacility } from '../../../../types/user.types';
 import { StaffDetailModal } from './StaffDetailModal';
@@ -237,6 +237,16 @@ function StaffRow({ staff, managerFacilities, facilityMap, onAssignClick, onView
               <button 
                 onClick={(e) => { 
                   e.stopPropagation(); 
+                  onViewClick(staff);
+                  setMenuOpen(false); 
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+              >
+                <Eye size={14} /> Xem chi tiết
+              </button>
+              <button 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
                   if (!noFacilities) {
                     onAssignClick(staff); 
                     setMenuOpen(false); 
@@ -269,6 +279,7 @@ export function StaffManagementTab({
 }: StaffManagementTabProps) {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterFacility, setFilterFacility] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<string>('none');
   
   const [detailStaff, setDetailStaff] = useState<User | undefined>();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -278,7 +289,7 @@ export function StaffManagementTab({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterStatus, filterFacility]);
+  }, [searchTerm, filterStatus, filterFacility, sortOrder]);
 
   const filteredStaff = staffList.filter((s) => {
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -294,13 +305,19 @@ export function StaffManagementTab({
     }
 
     return matchesSearch && matchesStatus && matchesFacility;
+  }).sort((a, b) => {
+    if (sortOrder === 'name_asc') return a.name.localeCompare(b.name);
+    if (sortOrder === 'name_desc') return b.name.localeCompare(a.name);
+    if (sortOrder === 'email_asc') return a.email.localeCompare(b.email);
+    if (sortOrder === 'email_desc') return b.email.localeCompare(a.email);
+    return 0;
   });
 
   const totalFiltered = filteredStaff.length;
   const totalPages = Math.ceil(totalFiltered / ITEMS_PER_PAGE);
   const paginatedStaff = filteredStaff.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  const hasActiveFilter = searchTerm !== '' || filterStatus !== 'all' || filterFacility !== 'all';
+  const hasActiveFilter = searchTerm !== '' || filterStatus !== 'all' || filterFacility !== 'all' || sortOrder !== 'none';
 
   return (
     <motion.div className="space-y-6" initial="hidden" animate="visible" variants={containerVariants}>
@@ -340,12 +357,30 @@ export function StaffManagementTab({
           width={180}
         />
 
+        <div className="w-px h-8 bg-gray-200 mx-1 hidden sm:block" />
+        <span className="text-sm font-medium text-gray-500 hidden sm:block">Sắp xếp:</span>
+
+        <DropFilter
+          value={sortOrder}
+          onChange={setSortOrder}
+          options={[
+            { value: 'none', label: 'Mặc định' },
+            { value: 'name_asc', label: 'Tên (A-Z)' },
+            { value: 'name_desc', label: 'Tên (Z-A)' },
+            { value: 'email_asc', label: 'Email (A-Z)' },
+            { value: 'email_desc', label: 'Email (Z-A)' }
+          ]}
+          width={160}
+          icon={ArrowUpDown}
+        />
+
         {hasActiveFilter && (
           <button
             onClick={() => {
               setSearchTerm('');
               setFilterStatus('all');
               setFilterFacility('all');
+              setSortOrder('none');
             }}
             className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors text-sm font-medium whitespace-nowrap border border-red-100"
           >

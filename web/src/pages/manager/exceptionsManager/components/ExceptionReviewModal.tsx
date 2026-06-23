@@ -107,11 +107,6 @@ export function ExceptionReviewModal({
               <div className="flex flex-col">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Cách xử lý của bảo vệ
-                  {exception.resolvedByStaffId && (
-                    <span className="text-xs font-normal text-emerald-600 ml-2">
-                      (Bởi: {typeof exception.resolvedByStaffId === 'object' ? exception.resolvedByStaffId.name : exception.resolvedByStaffId})
-                    </span>
-                  )}
                 </h3>
                 <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl text-sm text-gray-700 flex-1">
                   {exception.status === ExceptionStatus.RESOLVED ? (
@@ -144,13 +139,6 @@ export function ExceptionReviewModal({
 
           {/* Footer */}
           <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
-            <button
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-60"
-            >
-              Hủy
-            </button>
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
