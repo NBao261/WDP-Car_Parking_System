@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, RefreshControl,
-  ActivityIndicator, ScrollView, TouchableOpacity, TextInput,
+  ActivityIndicator, ScrollView, TouchableOpacity, TextInput, Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,8 +24,31 @@ function OccupancyBar({ total = 100, available = 60 }: { total?: number; availab
   );
 }
 
+/** So sánh giờ hiện tại với giờ mở/đóng cửa của bãi xe */
+function isFacilityOpenNow(facility: Facility): boolean {
+  // Nếu status không phải active → luôn đóng cửa
+  if (facility.status !== 'active') return false;
+
+  const open = (facility as any).openTime as string | undefined;
+  const close = (facility as any).closeTime as string | undefined;
+  if (!open || !close) return true; // Không có giờ → mặc định mở
+
+  const now = new Date();
+  const [openH, openM] = open.split(':').map(Number);
+  const [closeH, closeM] = close.split(':').map(Number);
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const openMins = openH * 60 + openM;
+  const closeMins = closeH * 60 + closeM;
+
+  // Xử lý trường hợp qua nửa đêm (ví dụ: 22:00 – 06:00)
+  if (closeMins <= openMins) {
+    return nowMins >= openMins || nowMins < closeMins;
+  }
+  return nowMins >= openMins && nowMins < closeMins;
+}
+
 function FacilityCard({ facility, onPress }: { facility: Facility; onPress: () => void }) {
-  const isOpen = facility.status === 'active';
+  const isOpen = isFacilityOpenNow(facility);
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       {/* Colored top bar */}
@@ -60,19 +83,19 @@ function FacilityCard({ facility, onPress }: { facility: Facility; onPress: () =
           <View style={styles.detailItem}>
             <Ionicons name="time-outline" size={14} color={Colors.textTertiary} />
             <Text style={styles.detailText}>
-              {facility.operationHours?.open || '06:00'} – {facility.operationHours?.close || '22:00'}
-            </Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Ionicons name="car-outline" size={14} color={Colors.textTertiary} />
-            <Text style={styles.detailText}>
-              {(facility as any).totalSlots || '—'} chỗ
+              {(facility as any).openTime || '06:00'} – {(facility as any).closeTime || '22:00'}
             </Text>
           </View>
           <View style={styles.detailItem}>
             <Ionicons name="layers-outline" size={14} color={Colors.textTertiary} />
             <Text style={styles.detailText}>
-              {(facility as any).floors?.length || 0} tầng
+              {(facility as any).totalFloors ?? 0} tầng
+            </Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Ionicons name="car-outline" size={14} color={Colors.textTertiary} />
+            <Text style={styles.detailText}>
+              {(facility as any).availableSlots ?? '—'} chỗ trống
             </Text>
           </View>
         </View>
@@ -106,8 +129,44 @@ export default function FacilitiesScreen() {
   const fetchFacilities = async (isRefresh = false) => {
     if (!isRefresh) setLoading(true);
     try {
-      const data = await api.getPublicFacilities(1, 50, debouncedSearch, statusFilter, vehicleTypeIdFilter);
-      setFacilities(data);
+      // Gọi API với status='all' để lấy tất cả, sau đó lọc local theo thời gian thực
+      const data = await api.getPublicFacilities(1, 50, debouncedSearch, 'all', vehicleTypeIdFilter);
+      
+      // Tính số chỗ trống cho từng bãi xe
+      const withSlots = await Promise.all(
+        data.map(async (f: any) => {
+          try {
+            const slots = await api.getAvailableSlots(f._id);
+            const total = slots.reduce((sum: number, s: any) => sum + s.availableCount, 0);
+            return { ...f, availableSlots: total };
+          } catch {
+            return { ...f, availableSlots: null };
+          }
+        })
+      );
+
+      let processed = withSlots;
+
+      // 1. Lọc theo trạng thái đóng/mở thực tế
+      if (statusFilter === 'active') {
+        processed = processed.filter(f => isFacilityOpenNow(f));
+      } else if (statusFilter === 'inactive') {
+        processed = processed.filter(f => !isFacilityOpenNow(f));
+      }
+
+      // 2. Sắp xếp: Ưu tiên bãi đang mở cửa lên trước, sau đó sắp xếp theo số chỗ trống giảm dần
+      processed.sort((a, b) => {
+        const aOpen = isFacilityOpenNow(a) ? 1 : 0;
+        const bOpen = isFacilityOpenNow(b) ? 1 : 0;
+        if (aOpen !== bOpen) {
+          return bOpen - aOpen; // 1 (mở) lên trước 0 (đóng)
+        }
+        const aSlots = a.availableSlots || 0;
+        const bSlots = b.availableSlots || 0;
+        return bSlots - aSlots; // Nhiều chỗ trống hơn lên trước
+      });
+
+      setFacilities(processed);
     } catch (error) {
       console.log('Failed to fetch facilities', error);
     } finally {
@@ -135,35 +194,38 @@ export default function FacilitiesScreen() {
   return (
     <View style={styles.root}>
       {/* ── Gradient Header ── */}
-      <LinearGradient
-        colors={[Colors.gradientStart, Colors.gradientMid]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <SafeAreaView edges={['top']}>
-          <Text style={styles.headerTitle}>Bãi đỗ xe</Text>
-          <Text style={styles.headerSub}>Tìm và chọn bãi xe phù hợp</Text>
+      <View style={styles.headerWrapper}>
+        <LinearGradient
+          colors={[Colors.gradientStart, Colors.gradientMid]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}
+        >
+          <SafeAreaView edges={['top']}>
+            <Image source={require('../../assets/images/logo.png')} style={{ width: 100, height: 28, resizeMode: 'contain', marginTop: 12 }} />
+            <Text style={styles.headerTitle}>Bãi đỗ xe</Text>
+            <Text style={styles.headerSub}>Tìm và chọn bãi xe phù hợp</Text>
 
-          {/* Search bar */}
-          <View style={styles.searchWrap}>
-            <Ionicons name="search-outline" size={18} color={Colors.textSecondary} style={{ marginLeft: 12 }} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Tìm kiếm bãi xe, địa chỉ..."
-              placeholderTextColor={Colors.placeholder}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              returnKeyType="search"
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')} style={{ paddingRight: 12 }}>
-                <Ionicons name="close-circle" size={18} color={Colors.textTertiary} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+            {/* Search bar */}
+            <View style={styles.searchWrap}>
+              <Ionicons name="search-outline" size={18} color={Colors.textSecondary} style={{ marginLeft: 12 }} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Tìm kiếm bãi xe, địa chỉ..."
+                placeholderTextColor={Colors.placeholder}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                returnKeyType="search"
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')} style={{ paddingRight: 12 }}>
+                  <Ionicons name="close-circle" size={18} color={Colors.textTertiary} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       {/* ── Filter chips ── */}
       <View style={styles.filtersWrap}>
@@ -248,15 +310,27 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
 
   // Header
-  header: { paddingHorizontal: 20, paddingBottom: 20 },
-  headerTitle: { fontSize: 24, fontFamily: Typography.fontFamily.bold, color: Colors.textOnDark, marginTop: 8 },
-  headerSub: { fontSize: 13, color: Colors.textOnDarkMuted, fontFamily: Typography.fontFamily.regular, marginTop: 2, marginBottom: 14 },
+  headerWrapper: {
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 22,
+  },
+  headerTitle: { fontSize: 26, fontFamily: Typography.fontFamily.bold, color: Colors.textOnDark, marginTop: 8 },
+  headerSub: { fontSize: 13, color: Colors.textOnDarkMuted, fontFamily: Typography.fontFamily.regular, marginTop: 3, marginBottom: 16 },
 
   searchWrap: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: Colors.white,
-    borderRadius: 14, overflow: 'hidden',
-    ...Shadows.sm,
+    borderRadius: 16, overflow: 'hidden',
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   searchInput: {
     flex: 1, height: 46,
@@ -278,7 +352,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 6,
     borderRadius: 20,
     backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1, borderColor: Colors.borderLight,
+    borderWidth: 1, borderColor: Colors.border,
   },
   chipActive: {
     backgroundColor: Colors.primaryBg,
@@ -302,12 +376,16 @@ const styles = StyleSheet.create({
   // Facility Card
   card: {
     backgroundColor: Colors.surface,
-    borderRadius: 18,
+    borderRadius: 20,
     marginBottom: 14,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadows.md,
+    borderColor: Colors.border,
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 3,
   },
   cardAccent: { height: 4 },
   cardBody: { padding: 16 },

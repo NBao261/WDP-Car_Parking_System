@@ -68,7 +68,22 @@ export default function FacilityDetailScreen() {
 
   const onRefresh = async () => { setRefreshing(true); await loadData(); setRefreshing(false); };
 
-  const isOpen = facility?.status === "active";
+  const isActive = facility?.status === 'active';
+
+  const isOpen = (() => {
+    if (!isActive) return false;
+    const open = (facility as any).openTime as string | undefined;
+    const close = (facility as any).closeTime as string | undefined;
+    if (!open || !close) return true;
+    const now = new Date();
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+    const [openH, openM] = open.split(':').map(Number);
+    const [closeH, closeM] = close.split(':').map(Number);
+    const openMins = openH * 60 + openM;
+    const closeMins = closeH * 60 + closeM;
+    if (closeMins <= openMins) return nowMins >= openMins || nowMins < closeMins;
+    return nowMins >= openMins && nowMins < closeMins;
+  })();
 
   if (loading) {
     return (
@@ -93,39 +108,41 @@ export default function FacilityDetailScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.root}>
         {/* ── Gradient Hero Header ── */}
-        <LinearGradient
-          colors={[Colors.gradientStart, Colors.gradientMid]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          <SafeAreaView edges={["top"]}>
-            {/* Back button row */}
-            <View style={styles.heroNav}>
-              <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                <Ionicons name="arrow-back" size={22} color={Colors.white} />
-              </TouchableOpacity>
-              <Text style={styles.heroNavTitle}>Chi tiết bãi xe</Text>
-              <View style={{ width: 38 }} />
-            </View>
-
-            {/* Facility name + status */}
-            <View style={styles.heroBody}>
-              <View style={styles.heroIconWrap}>
-                <Ionicons name="business" size={26} color={Colors.primary} />
+        <View style={styles.heroWrapper}>
+          <LinearGradient
+            colors={[Colors.gradientStart, Colors.gradientMid]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
+          >
+            <SafeAreaView edges={["top"]}>
+              {/* Back button row */}
+              <View style={styles.heroNav}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                  <Ionicons name="arrow-back" size={22} color={Colors.white} />
+                </TouchableOpacity>
+                <Text style={styles.heroNavTitle}>Chi tiết bãi xe</Text>
+                <View style={{ width: 38 }} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.heroName}>{facility.name}</Text>
-                <View style={[styles.statusPill, { backgroundColor: isOpen ? Colors.success + "25" : Colors.danger + "25" }]}>
-                  <View style={[styles.statusDot, { backgroundColor: isOpen ? Colors.success : Colors.danger }]} />
-                  <Text style={[styles.statusText, { color: isOpen ? Colors.success : Colors.danger }]}>
-                    {isOpen ? "Đang mở cửa" : "Đóng cửa"}
-                  </Text>
+
+              {/* Facility name + status */}
+              <View style={styles.heroBody}>
+                <View style={styles.heroIconWrap}>
+                  <Ionicons name="business" size={26} color={Colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.heroName}>{facility.name}</Text>
+                  <View style={[styles.statusPill, { backgroundColor: isOpen ? Colors.success + "25" : Colors.danger + "25" }]}>
+                    <View style={[styles.statusDot, { backgroundColor: isOpen ? Colors.success : Colors.danger }]} />
+                    <Text style={[styles.statusText, { color: isOpen ? Colors.success : Colors.danger }]}>
+                      {isOpen ? "Đang mở cửa" : "Đóng cửa"}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
+            </SafeAreaView>
+          </LinearGradient>
+        </View>
 
         {/* ── Scrollable Content ── */}
         <ScrollView
@@ -141,7 +158,7 @@ export default function FacilityDetailScreen() {
             <InfoRow
               icon="time-outline"
               label="Giờ hoạt động"
-              value={`${facility.operationHours?.open || "06:00"} – ${facility.operationHours?.close || "22:00"}`}
+              value={`${facility.openTime || "06:00"} – ${facility.closeTime || "22:00"}`}
             />
           </View>
 
@@ -221,13 +238,13 @@ export default function FacilityDetailScreen() {
             </Text>
           </View>
           <TouchableOpacity
-            style={[styles.bookBtn, !isOpen && styles.bookBtnDisabled]}
-            onPress={() => isOpen ? router.push(`/facility/${id}/book`) : null}
+            style={[styles.bookBtn, !isActive && styles.bookBtnDisabled]}
+            onPress={() => isActive ? router.push(`/facility/${id}/book`) : null}
             activeOpacity={0.85}
           >
             <Ionicons name="calendar-outline" size={18} color={Colors.white} />
             <Text style={styles.bookBtnText}>
-              {isOpen ? "Đặt chỗ ngay" : "Bãi xe đóng cửa"}
+              {isActive ? "Đặt chỗ trước" : "Ngừng hoạt động"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -240,7 +257,12 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
 
   // Hero
-  hero: { paddingHorizontal: 16, paddingBottom: 20 },
+  heroWrapper: {
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: 'hidden',
+  },
+  hero: { paddingHorizontal: 16, paddingBottom: 24 },
   heroNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 8, marginBottom: 16 },
   backBtn: { width: 38, height: 38, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 19 },
   heroNavTitle: { fontSize: 16, fontFamily: Typography.fontFamily.semiBold, color: Colors.white },

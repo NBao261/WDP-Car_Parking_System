@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { ImagePlus, RefreshCw, X } from 'lucide-react';
 import axios from 'axios';
 import { sessionService, ParkingSession } from '../../../../services/session.service';
+import { paymentService } from '../../../../services/payment.service';
 
 interface CheckOutPanelProps {
   plate: string;
@@ -41,8 +42,22 @@ export default function CheckOutPanel({
   const [checkoutImageUrl, setCheckoutImageUrl] = useState<string | null>(null);
   const [isNoPlateVehicle, setIsNoPlateVehicle] = useState(false);
   const [manualConfirmed, setManualConfirmed] = useState(false);
+
+  // Momo States
+  const [momoQR, setMomoQR] = useState<string | null>(null);
+  const [transactionCode, setTransactionCode] = useState<string | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -125,6 +140,18 @@ export default function CheckOutPanel({
   // ─── Hotkeys ────────────────────────────────────────────────────────────────
   useEffect(() => {
     const onF10 = () => handleReset();
+    const onF2 = (e: KeyboardEvent) => {
+      if (step === 'CONFIRM' && !isSubmitting) {
+        e.preventDefault();
+        handleCashCheckOut();
+      }
+    };
+    const onF3 = (e: KeyboardEvent) => {
+      if (step === 'CONFIRM' && !isSubmitting && !momoQR) {
+        e.preventDefault();
+        handleMomoCheckOut();
+      }
+    };
 
     const onEnter = (e: KeyboardEvent) => {
       if (e.code === 'Enter') {
@@ -134,18 +161,22 @@ export default function CheckOutPanel({
         if (step === 'SEARCH') {
           handleSearch();
         } else if (step === 'CONFIRM') {
-          if (!isSubmitting) handleCheckOut();
+          if (!isSubmitting && !momoQR) handleCashCheckOut();
         }
       }
     };
 
     window.addEventListener('keydown', onEnter);
     window.addEventListener('HOTKEY_F10', onF10);
+    window.addEventListener('keydown', (e) => e.key === 'F2' && onF2(e));
+    window.addEventListener('keydown', (e) => e.key === 'F3' && onF3(e));
     return () => {
       window.removeEventListener('keydown', onEnter);
       window.removeEventListener('HOTKEY_F10', onF10);
+      window.removeEventListener('keydown', (e) => e.key === 'F2' && onF2(e));
+      window.removeEventListener('keydown', (e) => e.key === 'F3' && onF3(e));
     };
-  }, [step, isSubmitting, searchInput, searchMode, currentSession, plate, plateIn]);
+  }, [step, isSubmitting, searchInput, searchMode, currentSession, plate, plateIn, momoQR]);
 
   // ─── Terminal session info ──────────────────────────────────────────────────
   const building = sessionStorage.getItem('staff_facility_name') || 'Chưa chọn Toà nhà';
@@ -244,71 +275,121 @@ export default function CheckOutPanel({
     }
   };
 
-  const handleCheckOut = async () => {
+  const finishCheckOutProcess = (checkOutResData: any, methodStr: string) => {
+    const actualCheckOutTime = checkOutResData.checkOutTime
+      ? new Date(checkOutResData.checkOutTime).toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+      : new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const actualCheckOutDate = checkOutResData.checkOutTime
+      ? new Date(checkOutResData.checkOutTime).toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+      : new Date().toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+
+    onCheckOut((prev: any) => ({
+      ...prev,
+      checkOutTime: actualCheckOutTime,
+      checkOutDate: actualCheckOutDate,
+      paymentStatus: methodStr,
+    }));
+
+    handleReset();
+
+    setTimeout(() => {
+      onCheckOut(null);
+    }, 2000);
+  };
+
+  const validateMismatch = () => {
+    const isMismatch = !isNoPlateVehicle && plate.toUpperCase() !== plateIn.toUpperCase();
+    if (isMismatch && !manualConfirmed) {
+      toast.error("LỖI: Biển số xe ra KHÔNG KHỚP với biển số vào. Xác nhận thủ công trước!");
+      return false;
+    }
+    return true;
+  };
+
+  const handleCashCheckOut = async () => {
     if (step === 'CONFIRM') {
       if (!currentSession) return;
-      // Bỏ yêu cầu xác nhận thủ công đối với xe không biển số theo yêu cầu của user
-      const isMismatch = !isNoPlateVehicle && plate.toUpperCase() !== plateIn.toUpperCase();
-
-      if (isMismatch && !manualConfirmed) {
-        toast.error("LỖI: Biển số xe ra KHÔNG KHỚP với biển số vào. Xác nhận thủ công trước khi Enter!");
-        return;
-      }
+      if (!validateMismatch()) return;
 
       setIsSubmitting(true);
       try {
-        const checkOutRes = await sessionService.checkOut(currentSession._id, {
+        const checkOutRes = await paymentService.cashCheckout({
+          sessionId: currentSession._id,
           gateOut: gateOut.trim(),
           checkOutImage: checkoutImageUrl || undefined,
         });
         if (checkOutRes.success) {
-          const actualCheckOutTime = checkOutRes.data.checkOutTime
-            ? new Date(checkOutRes.data.checkOutTime).toLocaleTimeString('vi-VN', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })
-            : new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-          const actualCheckOutDate = checkOutRes.data.checkOutTime
-            ? new Date(checkOutRes.data.checkOutTime).toLocaleDateString('vi-VN', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            })
-            : new Date().toLocaleDateString('vi-VN', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            });
-
-          // toast.success("Đã xác nhận thanh toán & mở barie xe ra thành công!");
-          onCheckOut((prev: any) => ({
-            ...prev,
-            checkOutTime: actualCheckOutTime,
-            checkOutDate: actualCheckOutDate,
-            paymentStatus: 'Đã thanh toán',
-          }));
-
-          setSearchInput('');
-          setPlateIn('');
-          onChangePlate('');
-          setVehicleTypeName('Không có dữ liệu');
-          setCheckInTimeDisplay('Không có dữ liệu');
-          setCurrentSession(null);
-          setStep('SEARCH');
-
-          setOcrPreviewUrl(null);
-          setCheckoutImageUrl(null);
-          setOcrSuccess(false);
-          setManualConfirmed(false);
-          setIsNoPlateVehicle(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-
-          setTimeout(() => {
-            onCheckOut(null);
-          }, 2000);
+          toast.success("Đã thu tiền mặt & mở barie xe ra thành công!");
+          finishCheckOutProcess(checkOutRes.data, 'Tiền mặt');
         }
       } catch (error: any) {
-        toast.error(error.message || 'Lỗi khi check-out!');
+        toast.error(error.message || 'Lỗi khi check-out bằng tiền mặt!');
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  const handleMomoCheckOut = async () => {
+    if (step === 'CONFIRM') {
+      if (!currentSession) return;
+      if (!validateMismatch()) return;
+
+      setIsSubmitting(true);
+      try {
+        const res = await paymentService.createIntent({
+          sessionId: currentSession._id,
+          method: 'e_wallet'
+        });
+        
+        if (res.success && (res.data?.qrCodeUrl || res.data?.paymentUrl)) {
+          // Momo qrCodeUrl is actually a raw EMVCo string or payUrl. We MUST generate an image from it.
+          const qrContent = res.data.qrCodeUrl || res.data.paymentUrl;
+          const finalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrContent)}`;
+          setMomoQR(finalQrUrl);
+          setTransactionCode(res.data.payment.transactionCode);
+          setIsPolling(true);
+          
+          // Start polling
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = setInterval(async () => {
+            try {
+              const statusRes = await paymentService.checkStatus(res.data.payment.transactionCode);
+              if (statusRes.data?.isPaid) {
+                // Success!
+                if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                toast.success("Khách đã thanh toán Momo thành công!");
+                
+                setMomoQR(null); // Clear modal
+                
+                // Perform final checkout logically (the backend already closed the session via webhook/polling)
+                // We just need to update UI. We mock the checkout time for UI since it's already closed.
+                const mockSessionForUI = {
+                  ...currentSession,
+                  checkOutTime: new Date().toISOString()
+                };
+                finishCheckOutProcess(mockSessionForUI, 'Momo');
+              }
+            } catch (err) {
+              console.error("Polling error", err);
+            }
+          }, 3000);
+        } else {
+          toast.error("Không thể tạo mã QR Momo!");
+        }
+      } catch (error: any) {
+        toast.error(error.message || 'Lỗi khi tạo giao dịch Momo!');
       } finally {
         setIsSubmitting(false);
       }
@@ -325,12 +406,16 @@ export default function CheckOutPanel({
         }
         handleSearch();
       } else {
-        handleCheckOut();
+        handleCashCheckOut();
       }
     }
   };
 
   const handleReset = () => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    setMomoQR(null);
+    setIsPolling(false);
+    setTransactionCode(null);
     setStep('SEARCH');
     setSearchInput('');
     setPlateIn('');
@@ -524,8 +609,58 @@ export default function CheckOutPanel({
               </span>
             </label>
           )}
+
+          {/* Payment Actions */}
+          {step === 'CONFIRM' && (
+            <div className="mt-3">
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCashCheckOut}
+                  disabled={isSubmitting}
+                  className="flex-1 h-12 bg-[#9FE870] hover:bg-[#8bc34a] text-[#062F28] font-bold rounded-[8px] transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                >
+                  [F2 / Enter] Thu Tiền Mặt
+                </button>
+                <button
+                  onClick={handleMomoCheckOut}
+                  disabled={isSubmitting}
+                  className="flex-1 h-12 bg-[#A50064] hover:bg-[#8a0053] text-white font-bold rounded-[8px] transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                >
+                  [F3] Quét QR Momo
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Momo QR Modal Overlay */}
+      {momoQR && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[16px] p-6 w-[400px] max-w-[90%] shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
+            <h3 className="text-xl font-bold text-[#A50064] mb-1">Thanh toán Momo</h3>
+            <p className="text-sm text-gray-500 mb-4 text-center">Tài xế sử dụng ứng dụng Momo hoặc ứng dụng ngân hàng để quét mã QR dưới đây</p>
+            
+            <div className="bg-white p-3 rounded-xl border-2 border-pink-100 shadow-inner mb-4">
+              <img src={momoQR} alt="Momo QR Code" className="w-56 h-56 object-contain" />
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm text-[#A50064] font-medium mb-6 bg-pink-50 px-4 py-2 rounded-full">
+              <RefreshCw className="w-4 h-4 animate-spin" /> Đang chờ khách thanh toán...
+            </div>
+            
+            <button 
+              onClick={() => {
+                setMomoQR(null);
+                if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+              }} 
+              className="w-full h-11 border-2 border-gray-200 text-gray-600 font-bold rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <X className="w-4 h-4" /> Hủy giao dịch Momo
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

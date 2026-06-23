@@ -16,10 +16,10 @@ export default function MainLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textTertiary,
+        tabBarInactiveTintColor: '#9EA894',
         tabBarLabelStyle: {
           fontSize: 11,
-          fontFamily: Typography.fontFamily.medium,
+          fontFamily: Typography.fontFamily.semiBold,
           marginTop: 0,
         },
         tabBarStyle: {
@@ -28,11 +28,11 @@ export default function MainLayout() {
           height: Platform.OS === 'ios' ? 84 : 64,
           paddingBottom: Platform.OS === 'ios' ? 24 : 8,
           paddingTop: 6,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.06,
+          shadowColor: '#3A5A1A',
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.08,
           shadowRadius: 16,
-          elevation: 16,
+          elevation: 12,
         },
         headerStyle: {
           backgroundColor: Colors.white,

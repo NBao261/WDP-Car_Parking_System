@@ -31,12 +31,29 @@ export class PaymentController {
   static async webhook(req: Request, res: Response, next: NextFunction) {
     try {
       const { transactionCode } = req.body; // Tuỳ API gateway mà lấy từ query hay body
-      if (!transactionCode) {
+      // Nếu Momo, data trả về nằm trong req.body: partnerCode, orderId, resultCode, signature...
+      const orderId = req.body.orderId || transactionCode;
+      
+      if (!orderId) {
         return next(new AppError('Thiếu mã giao dịch', 400));
       }
 
-      await PaymentService.confirmPaymentWebhook(transactionCode);
+      await PaymentService.confirmPaymentWebhook(orderId);
       res.status(200).json({ success: true, message: 'Xác nhận thanh toán thành công' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/v1/payments/status/:transactionCode
+   * API Polling kiểm tra trạng thái thanh toán Momo
+   */
+  static async checkStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { transactionCode } = req.params;
+      const isPaid = await PaymentService.checkMomoOrderStatus(transactionCode);
+      res.status(200).json({ success: true, data: { isPaid } });
     } catch (error) {
       next(error);
     }

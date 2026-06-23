@@ -23,7 +23,7 @@ export default function WelcomeScreen() {
           {/* Hero Section */}
           <View style={styles.hero}>
             <View style={styles.logoBadge}>
-              <Image source={require('../assets/images/logo.png')} style={{ width: 36, height: 36, resizeMode: 'contain' }} />
+              <Image source={require('../assets/images/logo.png')} style={{ width: 140, height: 48, resizeMode: 'contain' }} />
             </View>
             <Text style={styles.title}>
               Smart{'\n'}Parking
@@ -102,16 +102,16 @@ const styles = StyleSheet.create({
   
   // Background blobs for visual interest
   blob1: {
-    position: 'absolute', top: -50, right: -50, width: 200, height: 200,
-    borderRadius: 100, backgroundColor: Colors.primaryLight + '50', zIndex: -1,
+    position: 'absolute', top: -60, right: -60, width: 220, height: 220,
+    borderRadius: 110, backgroundColor: '#A8D16428', zIndex: -1,
   },
   blob2: {
-    position: 'absolute', top: 250, left: -100, width: 250, height: 250,
-    borderRadius: 125, backgroundColor: Colors.secondaryLight + '40', zIndex: -1,
+    position: 'absolute', top: 270, left: -120, width: 260, height: 260,
+    borderRadius: 130, backgroundColor: '#7DB83A18', zIndex: -1,
   },
   blob3: {
-    position: 'absolute', bottom: 50, right: -150, width: 300, height: 300,
-    borderRadius: 150, backgroundColor: Colors.gradientStart + '30', zIndex: -1,
+    position: 'absolute', bottom: 60, right: -160, width: 320, height: 320,
+    borderRadius: 160, backgroundColor: '#D6EDA820', zIndex: -1,
   },
 
   content: {
@@ -125,10 +125,16 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logoBadge: {
-    width: 56, height: 56, borderRadius: 16,
+    paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20,
     backgroundColor: Colors.white,
+    alignSelf: 'flex-start',
     alignItems: 'center', justifyContent: 'center',
-    marginBottom: 24, ...Shadows.md,
+    marginBottom: 28,
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 4,
   },
   title: {
     fontSize: 42,
@@ -141,10 +147,10 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   tagline: {
-    fontSize: 16,
-    fontFamily: Typography.fontFamily.medium,
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.regular,
     color: Colors.textSecondary,
-    marginTop: 16,
+    marginTop: 14,
     lineHeight: 24,
     maxWidth: '85%',
   },
@@ -154,9 +160,13 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   featureCard: {
-    borderRadius: 24,
-    padding: 24,
-    ...Shadows.md,
+    borderRadius: 28,
+    padding: 26,
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 6,
   },
   featureIconBox: {
     width: 48, height: 48, borderRadius: 14,
@@ -179,10 +189,14 @@ const styles = StyleSheet.create({
   smallCard: {
     flex: 1,
     backgroundColor: Colors.surface,
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 20,
-    borderWidth: 1, borderColor: Colors.borderLight,
-    ...Shadows.sm,
+    borderWidth: 1, borderColor: Colors.border,
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 2,
   },
   smallIconBox: {
     width: 44, height: 44, borderRadius: 12,
@@ -205,16 +219,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: Colors.primary,
     paddingVertical: 18, paddingHorizontal: 24,
-    borderRadius: 16, ...Shadows.md,
+    borderRadius: 18,
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.30,
+    shadowRadius: 16,
+    elevation: 6,
   },
   primaryBtnText: {
     fontSize: 16, fontFamily: Typography.fontFamily.bold, color: Colors.white,
   },
   secondaryBtn: {
-    paddingVertical: 16, alignItems: 'center', justifyContent: 'center',
-    borderRadius: 16, backgroundColor: Colors.surfaceElevated,
+    paddingVertical: 15, alignItems: 'center', justifyContent: 'center',
+    borderRadius: 18,
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   secondaryBtnText: {
-    fontSize: 15, fontFamily: Typography.fontFamily.semiBold, color: Colors.textPrimary,
+    fontSize: 15, fontFamily: Typography.fontFamily.semiBold, color: Colors.textSecondary,
   },
 });

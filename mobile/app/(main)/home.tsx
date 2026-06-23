@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  RefreshControl, ActivityIndicator, Platform,
+  RefreshControl, ActivityIndicator, Platform, Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -86,48 +86,51 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* ── Hero Gradient ── */}
-        <LinearGradient
-          colors={[Colors.gradientStart, Colors.gradientMid, Colors.gradientEnd]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          <SafeAreaView edges={['top']}>
-            {/* Header row */}
-            <View style={styles.heroHeader}>
-              <View>
-                <Text style={styles.greeting}>Xin chào 👋</Text>
-                <Text style={styles.heroName}>{user?.name || 'Tài xế'}</Text>
+        <View style={styles.heroWrapper}>
+          <LinearGradient
+            colors={[Colors.gradientStart, Colors.gradientMid, Colors.gradientEnd]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
+          >
+            <SafeAreaView edges={['top']}>
+              {/* Header row */}
+              <View style={styles.heroHeader}>
+                <View>
+                  <Image source={require('../../assets/images/logo.png')} style={{ width: 100, height: 28, resizeMode: 'contain', marginBottom: 6 }} />
+                  <Text style={styles.greeting}>Xin chào 👋</Text>
+                  <Text style={styles.heroName}>{user?.name || 'Tài xế'}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.avatarCircle}
+                  onPress={() => router.push('/(main)/account' as any)}
+                >
+                  <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={styles.avatarCircle}
-                onPress={() => router.push('/(main)/account' as any)}
-              >
-                <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
-              </TouchableOpacity>
-            </View>
 
 
 
-            {/* Stats Row */}
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNum}>{loading ? '—' : stats.active}</Text>
-                <Text style={styles.statLbl}>Đang đỗ</Text>
+              {/* Stats Row */}
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNum}>{loading ? '—' : stats.active}</Text>
+                  <Text style={styles.statLbl}>Đang đỗ</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                  <Text style={styles.statNum}>{loading ? '—' : stats.reserved}</Text>
+                  <Text style={styles.statLbl}>Đã đặt</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                  <Text style={styles.statNum}>{loading ? '—' : stats.completed}</Text>
+                  <Text style={styles.statLbl}>Hoàn thành</Text>
+                </View>
               </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statNum}>{loading ? '—' : stats.reserved}</Text>
-                <Text style={styles.statLbl}>Đã đặt</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statNum}>{loading ? '—' : stats.completed}</Text>
-                <Text style={styles.statLbl}>Hoàn thành</Text>
-              </View>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
+            </SafeAreaView>
+          </LinearGradient>
+        </View>
 
         {/* ── Body ── */}
         <View style={styles.body}>
@@ -286,10 +289,15 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: '#F5F7F2' },
   scrollContent: { paddingBottom: 32 },
 
   // ── Hero ──
+  heroWrapper: {
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+  },
   hero: {
     paddingHorizontal: 20,
     paddingBottom: 32,
@@ -297,9 +305,9 @@ const styles = StyleSheet.create({
   heroHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 16,
-    marginBottom: 24,
+    alignItems: 'flex-start',
+    paddingTop: 12,
+    marginBottom: 22,
   },
   greeting: {
     fontSize: 14,
@@ -316,9 +324,9 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(255,255,255,0.20)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -330,10 +338,12 @@ const styles = StyleSheet.create({
 
   statsRow: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 18,
     paddingVertical: 16,
     paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   statItem: { flex: 1, alignItems: 'center' },
   statNum: {
@@ -351,11 +361,11 @@ const styles = StyleSheet.create({
 
   // ── Body ──
   body: { padding: 20 },
-  section: { marginBottom: 24 },
-  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  section: { marginBottom: 26 },
+  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: Typography.fontFamily.semiBold,
+    fontFamily: Typography.fontFamily.bold,
     color: Colors.textPrimary,
   },
   sectionLink: {
@@ -367,11 +377,15 @@ const styles = StyleSheet.create({
   // Reservation cards
   resCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 16, overflow: 'hidden',
+    borderRadius: 18, overflow: 'hidden',
     marginBottom: 10,
-    borderWidth: 1, borderColor: Colors.borderLight,
+    borderWidth: 1, borderColor: Colors.border,
     flexDirection: 'row',
-    ...Shadows.sm,
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   resAccent: { width: 4 },
   resBody: { flex: 1, padding: 14 },
@@ -428,8 +442,14 @@ const styles = StyleSheet.create({
   },
 
   // Active Session Card
-  activeSessionCard: { borderRadius: 18, overflow: 'hidden', ...Shadows.md },
-  activeSessionGradient: { padding: 18 },
+  activeSessionCard: { borderRadius: 22, overflow: 'hidden',
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 6,
+  },
+  activeSessionGradient: { padding: 20 },
   activeSessionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -470,11 +490,11 @@ const styles = StyleSheet.create({
   // Empty State
   emptyCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 28,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: Colors.border,
     borderStyle: 'dashed',
   },
   emptyIconWrap: {
