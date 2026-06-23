@@ -6,7 +6,6 @@ import { useAuthStore } from '../../../../store/useAuthStore';
 export function useDashboard() {
   const [sessions, setSessions] = useState<ParkingSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
   
   const token = useAuthStore(state => state.token);
 
@@ -23,9 +22,6 @@ export function useDashboard() {
 
   useEffect(() => {
     fetchSessions();
-
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -48,17 +44,6 @@ export function useDashboard() {
 
   const activeSession = sessions.find(s => s.status === SessionStatus.ACTIVE || s.status === SessionStatus.PENDING_PAYMENT);
 
-  let diffHrs = 0;
-  let diffMins = 0;
-  let checkInDate = null;
-
-  if (activeSession) {
-    checkInDate = new Date(activeSession.checkInTime);
-    const diffMs = currentTime.getTime() - checkInDate.getTime();
-    diffHrs = Math.floor(diffMs / 3600000);
-    diffMins = Math.floor((diffMs % 3600000) / 60000);
-  }
-
   const qrUrl = activeSession 
     ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${activeSession.code}&bgcolor=ffffff&color=000000&margin=10`
     : '';
@@ -66,9 +51,6 @@ export function useDashboard() {
   return {
     loading,
     activeSession,
-    checkInDate,
-    diffHrs,
-    diffMins,
     qrUrl
   };
 }
