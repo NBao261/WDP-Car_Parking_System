@@ -27,7 +27,7 @@ export default function ManagerDashboard() {
   useEffect(() => { fetchStaff(); }, [fetchStaff]);
 
   return (
-    <div className="min-h-screen bg-[#f4f5f4] p-6 max-w-[1200px] mx-auto">
+    <div>
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#060606]">Tổng Quan</h1>
