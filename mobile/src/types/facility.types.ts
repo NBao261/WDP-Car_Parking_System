@@ -2,13 +2,14 @@ export interface Facility {
   _id: string;
   name: string;
   address: string;
-  location?: { lat: number; lng: number };
+  totalFloors: number;
+  openTime: string;   // HH:mm
+  closeTime: string;  // HH:mm
+  description?: string;
+  images?: string[];
   status: 'active' | 'inactive';
-  operationHours?: {
-    open: string;
-    close: string;
-  };
-  capacity?: number;
+  // Virtual field added by mobile after fetching available-slots
+  availableSlots?: number | null;
 }
 
 export interface VehicleTypeInfo {

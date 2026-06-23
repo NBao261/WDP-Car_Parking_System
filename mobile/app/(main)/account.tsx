@@ -7,6 +7,7 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -112,30 +113,33 @@ export default function AccountScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* ── Profile Hero ── */}
-        <LinearGradient
-          colors={[Colors.gradientStart, Colors.gradientMid]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          <SafeAreaView edges={["top"]}>
-            <View style={styles.heroContent}>
-              <View style={styles.avatarLarge}>
-                <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
+        <View style={styles.heroWrapper}>
+          <LinearGradient
+            colors={[Colors.gradientStart, Colors.gradientMid]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
+          >
+            <SafeAreaView edges={["top"]}>
+              <View style={styles.heroContent}>
+                <Image source={require('../../assets/images/logo.png')} style={{ width: 120, height: 36, resizeMode: 'contain', marginBottom: 16 }} />
+                <View style={styles.avatarLarge}>
+                  <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
+                </View>
+                <Text style={styles.heroName}>{user?.name || "Driver"}</Text>
+                <Text style={styles.heroEmail}>{user?.email}</Text>
+                <View style={styles.roleBadge}>
+                  <Ionicons
+                    name="car-sport"
+                    size={12}
+                    color={Colors.gradientAccent}
+                  />
+                  <Text style={styles.roleText}>Tài xế</Text>
+                </View>
               </View>
-              <Text style={styles.heroName}>{user?.name || "Driver"}</Text>
-              <Text style={styles.heroEmail}>{user?.email}</Text>
-              <View style={styles.roleBadge}>
-                <Ionicons
-                  name="car-sport"
-                  size={12}
-                  color={Colors.gradientAccent}
-                />
-                <Text style={styles.roleText}>Tài xế</Text>
-              </View>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
+            </SafeAreaView>
+          </LinearGradient>
+        </View>
 
         {/* ── Info Cards ── */}
         <View style={styles.infoRow}>
@@ -221,7 +225,14 @@ const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 40 },
 
   // Hero
-  hero: { paddingBottom: 24 },
+  heroWrapper: {
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+  },
+  hero: {
+    paddingBottom: 28,
+  },
   heroContent: { alignItems: "center", paddingVertical: 24 },
   avatarLarge: {
     width: 80,
@@ -273,11 +284,15 @@ const styles = StyleSheet.create({
   infoCard: {
     flex: 1,
     backgroundColor: Colors.surface,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadows.sm,
+    borderColor: Colors.border,
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   infoCardRight: {},
   infoLabel: {
@@ -306,11 +321,15 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: Colors.border,
     overflow: "hidden",
-    ...Shadows.sm,
+    shadowColor: '#5E8F25',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   menuItem: {
     flexDirection: "row",

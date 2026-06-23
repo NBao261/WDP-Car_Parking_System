@@ -37,7 +37,7 @@ export default function CreateFeedbackScreen() {
         const activeRes: any = await sessionApi.getMySessions('active');
         const completedRes: any = await sessionApi.getMySessions('completed');
         
-        let allSessions = [];
+        let allSessions: any[] = [];
         if (activeRes.success && activeRes.data) allSessions = [...allSessions, ...activeRes.data];
         if (completedRes.success && completedRes.data) allSessions = [...allSessions, ...completedRes.data];
 
@@ -116,28 +116,30 @@ export default function CreateFeedbackScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.root}>
         {/* ── Gradient Header ── */}
-        <LinearGradient
-          colors={[Colors.gradientStart, Colors.gradientMid]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          <SafeAreaView edges={["top"]}>
-            <View style={styles.heroNav}>
-              <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                <Ionicons name="arrow-back" size={22} color={Colors.white} />
-              </TouchableOpacity>
-              <Text style={styles.heroTitle}>Gửi phản hồi</Text>
-              <View style={{ width: 38 }} />
-            </View>
-            <View style={styles.heroBody}>
-              <View style={styles.heroIconWrap}>
-                <Ionicons name="chatbubble-ellipses" size={22} color={Colors.primary} />
+        <View style={styles.heroWrapper}>
+          <LinearGradient
+            colors={[Colors.gradientStart, Colors.gradientMid]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
+          >
+            <SafeAreaView edges={["top"]}>
+              <View style={styles.heroNav}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                  <Ionicons name="arrow-back" size={22} color={Colors.white} />
+                </TouchableOpacity>
+                <Text style={styles.heroTitle}>Gửi phản hồi</Text>
+                <View style={{ width: 38 }} />
               </View>
-              <Text style={styles.heroSub}>Giúp chúng tôi cải thiện dịch vụ tốt hơn</Text>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
+              <View style={styles.heroBody}>
+                <View style={styles.heroIconWrap}>
+                  <Ionicons name="chatbubble-ellipses" size={22} color={Colors.primary} />
+                </View>
+                <Text style={styles.heroSub}>Giúp chúng tôi cải thiện dịch vụ tốt hơn</Text>
+              </View>
+            </SafeAreaView>
+          </LinearGradient>
+        </View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
@@ -260,7 +262,12 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
 
   // Hero
-  hero: { paddingHorizontal: 16, paddingBottom: 20 },
+  heroWrapper: {
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: 'hidden',
+  },
+  hero: { paddingHorizontal: 16, paddingBottom: 24 },
   heroNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 8, marginBottom: 16 },
   backBtn: { width: 38, height: 38, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 19 },
   heroTitle: { fontSize: 17, fontFamily: Typography.fontFamily.bold, color: Colors.white },
