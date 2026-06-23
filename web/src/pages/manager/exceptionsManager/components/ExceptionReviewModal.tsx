@@ -57,8 +57,11 @@ export function ExceptionReviewModal({
           className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-800">Duyệt Ngoại Lệ</h2>
+          <div className="flex items-start justify-between p-6 border-b border-gray-100">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-800">Xem lại Ngoại Lệ</h2>
+              <p className="text-sm text-gray-500 mt-1">Xem xét thông tin chi tiết và ghi lại đánh giá của bạn</p>
+            </div>
             <button
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
@@ -158,7 +161,7 @@ export function ExceptionReviewModal({
               ) : (
                 <Save size={16} />
               )}
-              Duyệt
+              Lưu đánh giá
             </button>
           </div>
         </motion.div>

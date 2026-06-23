@@ -217,10 +217,10 @@ export default function ExceptionsManagerPage() {
                               setSelectedException(ex);
                               setIsModalOpen(true);
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-rose-600 bg-rose-50 border border-rose-100 rounded-lg hover:bg-rose-100 transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
                           >
                             <FileText size={16} />
-                            Duyệt
+                            Xem lại
                           </button>
                         </td>
                       </tr>
