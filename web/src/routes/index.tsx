@@ -4,6 +4,7 @@ import { UserRole } from '../../../shared/types';
 import { ProtectedRoute, AuthRedirect } from '../components/ProtectedRoute';
 import MainLayout from '../layouts/MainLayout';
 import StaffLayout from '../layouts/StaffLayout';
+import DriverLayout from '../layouts/DriverLayout';
 
 // ── Auth Pages ──
 import LoginPage from '../pages/auth/LoginPage';
@@ -19,7 +20,7 @@ const UsersPage = lazy(() => import('../pages/admin/users/UsersPage'));
 const UserDetailPage = lazy(() => import('../pages/admin/users/UserDetailPage'));
 const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
 
-// ── Manager / Staff Pages ──
+// ── Manager / Staff / Driver Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
 const AssignmentsPage = lazy(() => import('../pages/manager/assignments/AssignmentsPage'));
 const VehiclesPage = lazy(() => import('../pages/shared/vehicles/VehiclesPage'));
@@ -127,6 +128,25 @@ export const router = createBrowserRouter([
               { index: true, element: <S><VehicleCheckPage /></S> },
               { path: 'active-sessions', element: <S><ActiveSessionsPage /></S> },
               { path: 'exceptions', element: <S><ExceptionsStaffPage /></S> },
+            ],
+          },
+        ],
+      },
+      // ── Driver Routes ────────────────────────────────
+      {
+        path: 'driver',
+        element: (
+          <ProtectedRoute allowedRoles={[UserRole.DRIVER]} />
+        ),
+        children: [
+          {
+            element: <DriverLayout />,
+            children: [
+              { index: true, element: <S><DriverDashboard /></S> },
+              { path: 'facilities', element: <S><DriverFacilitiesPage /></S> },
+              { path: 'book/:facilityId', element: <S><ReservationPage /></S> },
+              { path: 'active-session', element: <S><DriverDashboard /></S> },
+              { path: 'history', element: <S><HistoryPage /></S> },
             ],
           },
         ],

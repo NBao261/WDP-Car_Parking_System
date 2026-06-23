@@ -4,8 +4,9 @@ import { LoginStep } from "./steps/LoginStep";
 import { ForgotStep } from "./steps/ForgotStep";
 import { OtpStep } from "./steps/OtpStep";
 import { ResetStep } from "./steps/ResetStep";
+import { RegisterStep } from "./steps/RegisterStep";
 
-export type ViewState = "login" | "forgot" | "otp" | "reset";
+export type ViewState = "login" | "forgot" | "otp" | "reset" | "register";
 
 export function LoginForm() {
   const [view, setView] = useState<ViewState>("login");
@@ -27,6 +28,10 @@ export function LoginForm() {
     reset: {
       title: "Tạo mật khẩu mới",
       subtitle: "Mật khẩu mới của bạn phải khác với mật khẩu đã sử dụng."
+    },
+    register: {
+      title: "Đăng Ký Tài Khoản",
+      subtitle: "Tạo tài khoản LYNC Park để bắt đầu sử dụng dịch vụ."
     }
   };
 
@@ -53,6 +58,7 @@ export function LoginForm() {
           {view === "forgot" && <ForgotStep changeView={setView} email={email} setEmail={setEmail} />}
           {view === "otp" && <OtpStep changeView={setView} />}
           {view === "reset" && <ResetStep changeView={setView} />}
+          {view === "register" && <RegisterStep changeView={setView} />}
         </motion.div>
       </AnimatePresence>
     </div>

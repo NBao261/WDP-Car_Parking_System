@@ -57,4 +57,7 @@ export const sessionService = {
   getActiveSessions: async (params: any): Promise<{ success: boolean; data: ParkingSession[]; pagination?: any }> => {
     return apiClient.get('/sessions/active', { params });
   },
+  getMySessions: async (): Promise<{ success: boolean; data: ParkingSession[] }> => {
+    return apiClient.get('/sessions/my-sessions');
+  },
 };

@@ -45,8 +45,8 @@ export default function CheckOutPanel({
 
   // Momo States
   const [momoQR, setMomoQR] = useState<string | null>(null);
-  const [transactionCode, setTransactionCode] = useState<string | null>(null);
-  const [isPolling, setIsPolling] = useState(false);
+  const [_transactionCode, setTransactionCode] = useState<string | null>(null);
+  const [_isPolling, setIsPolling] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

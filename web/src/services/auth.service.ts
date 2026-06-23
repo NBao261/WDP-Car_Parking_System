@@ -6,6 +6,10 @@ export const authService = {
     return apiClient.post('/auth/login', { email, password });
   },
 
+  register: async (data: any): Promise<{ success: boolean }> => {
+    return apiClient.post('/auth/register', data);
+  },
+
   // TODO: Verify with backend team if these endpoints exist
   forgotPassword: async (email: string): Promise<{ success: boolean; message: string }> => {
     return apiClient.post('/auth/forgot-password', { email });
