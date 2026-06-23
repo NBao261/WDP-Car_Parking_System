@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { PaymentModal } from './components/PaymentModal';
 import { useDashboard } from './hooks/useDashboard';
-import { NoSessionCard } from './components/NoSessionCard';
-import { ActiveSessionCard } from './components/ActiveSessionCard';
+import { EmptyActiveState } from './components/EmptyActiveState';
+import { ActiveParkingCard } from './components/ActiveParkingCard';
 
 const DriverDashboard: React.FC = () => {
   const { 
     loading, 
     activeSession, 
-    checkInDate, 
-    diffHrs, 
-    diffMins, 
     qrUrl 
   } = useDashboard();
   
@@ -26,40 +23,47 @@ const DriverDashboard: React.FC = () => {
     );
   }
 
-  if (!activeSession) {
-    return <NoSessionCard />;
-  }
-
   return (
-    <div className="w-full h-full flex flex-col items-center pt-6 pb-20">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-4xl"
-      >
-        <div className="flex items-center justify-between mb-6 px-2">
-          <h1 className="text-3xl font-bold text-brand font-outfit">Bảng Điều Khiển</h1>
-          <span className="bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Đang Gửi Xe
-          </span>
-        </div>
+    <div className="w-full h-full flex flex-col items-center pt-6 pb-20 relative overflow-x-hidden">
+      <AnimatePresence mode="wait">
+        {!activeSession ? (
+          <motion.div
+            key="empty-state"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="w-full h-full flex-1"
+          >
+            <EmptyActiveState />
+          </motion.div>
+        ) : (
+          <motion.div 
+            key="active-state"
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 30 }}
+            transition={{ duration: 0.5, type: 'spring', bounce: 0.3 }}
+            className="w-full max-w-5xl"
+          >
+            <div className="flex items-center justify-between mb-8 px-2">
+              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Bảng Điều Khiển</h1>
+            </div>
 
-        <ActiveSessionCard 
-          activeSession={activeSession}
-          qrUrl={qrUrl}
-          diffHrs={diffHrs}
-          diffMins={diffMins}
-          checkInDate={checkInDate!}
-          onShowPayment={() => setShowPaymentModal(true)}
-        />
-      </motion.div>
+            <ActiveParkingCard 
+              activeSession={activeSession}
+              qrUrl={qrUrl}
+              onShowPayment={() => setShowPaymentModal(true)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <PaymentModal 
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        sessionId={activeSession._id}
-        amount={activeSession.totalFee || 0}
+        sessionId={activeSession?._id || ''}
+        amount={activeSession?.totalFee || 0}
       />
     </div>
   );
