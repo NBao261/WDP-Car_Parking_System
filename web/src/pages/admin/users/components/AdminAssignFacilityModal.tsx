@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, MapPin, Square, CheckSquare, AlertCircle, RefreshCw, CheckCircle, Building2 } from 'lucide-react';
 import { User, AssignedFacility } from '../../../../types/user.types';
 import { userService } from '../../../../services/user.service';
@@ -67,7 +68,7 @@ export function AdminAssignFacilityModal({ user, onClose, onSuccess }: AdminAssi
 
   const roleLabel = user.role === 'manager' ? 'Manager' : 'Staff';
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col" style={{ maxHeight: '82vh' }}>
         {/* Header */}
@@ -184,6 +185,7 @@ export function AdminAssignFacilityModal({ user, onClose, onSuccess }: AdminAssi
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
