@@ -1,7 +1,7 @@
 import { X, MapPin, Square, CheckSquare, AlertCircle, RefreshCw, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
-import { userService } from '../../../services/user.service';
-import { User, AssignedFacility } from '../../../types/user.types';
+import { userService } from '../../../../services/user.service';
+import { User, AssignedFacility } from '../../../../types/user.types';
 import { toast } from 'sonner';
 
 interface AssignModalProps {
@@ -12,7 +12,7 @@ interface AssignModalProps {
 }
 
 export function AssignFacilityModal({ staff, managerFacilities, onClose, onSuccess }: AssignModalProps) {
-  const currentIds = (staff.assignedFacilities ?? []).map((f) =>
+  const currentIds = (staff.assignedFacilities ?? []).map((f: any) =>
     typeof f === 'string' ? f : (f as AssignedFacility)._id
   );
   const [selectedIds, setSelectedIds] = useState<string[]>(currentIds);
@@ -94,9 +94,6 @@ export function AssignFacilityModal({ staff, managerFacilities, onClose, onSucce
 
         {/* Footer */}
         <div className="px-4 py-3.5 border-t border-gray-100 flex gap-3">
-          <button onClick={onClose} className="w-1/3 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-            Hủy
-          </button>
           <button
             onClick={handleSave}
             disabled={saving}

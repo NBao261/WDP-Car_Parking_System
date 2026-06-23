@@ -298,7 +298,7 @@ export default function PricingPage() {
             sortValue={facilitySort}
             onSortChange={setFacilitySort}
             sortOptions={[
-              { value: 'default', label: 'Số Bảng giá' },
+              { value: 'default', label: 'Tất cả bảng giá' },
               { value: 'planCount_desc', label: 'Nhiều bảng giá nhất' },
               { value: 'planCount_asc', label: 'Ít bảng giá nhất' },
             ]}

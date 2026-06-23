@@ -91,26 +91,30 @@ export class UserService {
       throw new AppError('Manager can only assign facilities to Staff users', 403);
     }
 
-    // Guard: Manager chỉ được assign facility mà chính mình đang quản lý
-    if (callerRole === 'manager' && callerUserId) {
-      const caller = await User.findById(callerUserId);
-      if (!caller) throw new AppError('Caller not found', 404);
-      const callerFacilityIds = caller.assignedFacilities.map((fId) => fId.toString());
-      const unauthorized = facilityIds.filter((fId) => !callerFacilityIds.includes(fId));
-      if (unauthorized.length > 0) {
-        throw new AppError(
-          `Manager can only assign facilities they are assigned to. Unauthorized: ${unauthorized.join(', ')}`,
-          403
-        );
-      }
-    }
-
     const oldIds = user.assignedFacilities.map((fId) => fId.toString());
     const newIds = facilityIds;
 
     // Xác định facility bị xóa và thêm mới
     const removedIds = oldIds.filter((fId) => !newIds.includes(fId));
     const addedIds = newIds.filter((fId) => !oldIds.includes(fId));
+
+    // Guard: Manager chỉ được assign hoặc gỡ facility mà chính mình đang quản lý
+    if (callerRole === 'manager' && callerUserId) {
+      const caller = await User.findById(callerUserId);
+      if (!caller) throw new AppError('Caller not found', 404);
+      const callerFacilityIds = caller.assignedFacilities.map((fId) => fId.toString());
+      
+      const unauthorizedAdded = addedIds.filter((fId) => !callerFacilityIds.includes(fId));
+      const unauthorizedRemoved = removedIds.filter((fId) => !callerFacilityIds.includes(fId));
+      
+      if (unauthorizedAdded.length > 0 || unauthorizedRemoved.length > 0) {
+        const unauthorized = [...unauthorizedAdded, ...unauthorizedRemoved];
+        throw new AppError(
+          `Manager can only assign facilities they are assigned to. Unauthorized: ${unauthorized.join(', ')}`,
+          403
+        );
+      }
+    }
 
     const updated = await User.findByIdAndUpdate(
       targetUserId,

@@ -23,7 +23,7 @@ export class ExceptionController {
    */
   static async getExceptions(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await ExceptionService.getExceptions(req.query);
+      const result = await ExceptionService.getExceptions(req.query, req.user!);
       res.status(200).json({
         success: true,
         data: result.data,

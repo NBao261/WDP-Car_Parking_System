@@ -39,7 +39,7 @@ export function OverviewTab({ managerFacilities, staffList }: OverviewTabProps) 
               <p className="text-xs text-gray-400">Nhân viên được phân công:</p>
               <p className="text-sm font-bold text-[#060606]">
                 {staffList.filter((s) =>
-                  s.assignedFacilities?.some((f) =>
+                  s.assignedFacilities?.some((f: any) =>
                     (typeof f === 'string' ? f : (f as AssignedFacility)._id) === facility._id
                   )
                 ).length} nhân viên

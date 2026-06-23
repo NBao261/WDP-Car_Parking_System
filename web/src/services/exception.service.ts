@@ -50,6 +50,8 @@ export interface IException {
   type: ExceptionType;
   description: string;
   staffId: { _id: string; name: string; email: string } | string;
+  resolvedByStaffId?: { _id: string; name: string; email: string } | string;
+  staffNote?: string;
   managerId: { _id: string; name: string; email: string } | null | string;
   managerNote: string;
   surcharge: number;
@@ -123,5 +125,16 @@ export const exceptionService = {
     payload: { staffNote: string; newLicensePlate?: string; newSlotId?: string }
   ): Promise<{ success: boolean; data: IException; message?: string }> => {
     return apiClient.patch(`/exceptions/${exceptionId}/resolve`, payload);
+  },
+
+  /**
+   * Manager: Thêm ghi chú review ngoại lệ
+   * PATCH /api/v1/exceptions/:id/review
+   */
+  addManagerReview: async (
+    exceptionId: string,
+    payload: { managerNote: string }
+  ): Promise<{ success: boolean; data: IException; message?: string }> => {
+    return apiClient.patch(`/exceptions/${exceptionId}/review`, payload);
   },
 };

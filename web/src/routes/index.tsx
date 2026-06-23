@@ -12,9 +12,8 @@ import UnauthorizedPage from '../pages/error/UnauthorizedPage';
 
 // ── Admin Pages ──
 import DashboardPage from '../pages/admin/dashboard/DashboardPage';
-const AdminFacilitiesPage = lazy(() => import('../pages/admin/facilities/FacilitiesPage'));
 
-const PricingPage = lazy(() => import('../pages/admin/pricing/PricingPage'));
+
 const BillingPage = lazy(() => import('../pages/admin/billing/BillingPage'));
 const ConfigPage = lazy(() => import('../pages/admin/config/ConfigPage'));
 const UsersPage = lazy(() => import('../pages/admin/users/UsersPage'));
@@ -23,11 +22,12 @@ const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
 
 // ── Manager / Staff / Driver Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
-const DriverDashboard = lazy(() => import('../pages/driver/dashboard/DriverDashboard'));
-const DriverFacilitiesPage = lazy(() => import('../pages/driver/facilities/FacilitiesPage'));
-const ReservationPage = lazy(() => import('../pages/driver/book/ReservationPage'));
-const HistoryPage = lazy(() => import('../pages/driver/history/HistoryPage'));
+const AssignmentsPage = lazy(() => import('../pages/manager/assignments/AssignmentsPage'));
 const VehiclesPage = lazy(() => import('../pages/shared/vehicles/VehiclesPage'));
+const SharedFacilitiesPage = lazy(() => import('../pages/shared/facilities/FacilitiesPage'));
+const SharedPricingPage = lazy(() => import('../pages/shared/pricing/PricingPage'));
+const SharedReportsPage = lazy(() => import('../pages/shared/reports/ReportsPage'));
+const ExceptionsManagerPage = lazy(() => import('../pages/manager/exceptionsManager/ExceptionsManagerPage'));
 // Staff Pages ──
 const VehicleCheckPage = lazy(() => import('../pages/staff/vehicleCheck/VehicleCheckPage'));
 const ActiveSessionsPage = lazy(() => import('../pages/staff/activeSessions/ActiveSessionsPage'));
@@ -81,9 +81,9 @@ export const router = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
             children: [
               { index: true, element: <DashboardPage /> },
-              { path: 'facilities', element: <S><AdminFacilitiesPage /></S> },
+              { path: 'facilities', element: <S><SharedFacilitiesPage /></S> },
               // FR-5: Quản lý Bảng giá
-              { path: 'pricing', element: <S><PricingPage /></S> },
+              { path: 'pricing', element: <S><SharedPricingPage /></S> },
               { path: 'billing', element: <S><BillingPage /></S> },
               { path: 'config', element: <S><ConfigPage /></S> },
               // { path: 'logs', element: <S><LogsPage /></S> },
@@ -102,7 +102,16 @@ export const router = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]} />,
             children: [
               { index: true, element: <ManagerDashboard /> },
+              { path: 'assignments', element: <S><AssignmentsPage /></S> },
               { path: 'vehicles', element: <S><VehiclesPage /></S> },
+              // FR-1,2,3: Quản lý Tòa nhà & Phân tầng
+              { path: 'facilities', element: <S><SharedFacilitiesPage /></S> },
+              // FR-5: Quản lý Bảng giá
+              { path: 'pricing', element: <S><SharedPricingPage /></S> },
+              // FR-6: Báo cáo
+              { path: 'reports', element: <S><SharedReportsPage /></S> },
+              // FR-7: Ngoại lệ (Manager)
+              { path: 'exceptions', element: <S><ExceptionsManagerPage /></S> },
             ],
           },
         ],

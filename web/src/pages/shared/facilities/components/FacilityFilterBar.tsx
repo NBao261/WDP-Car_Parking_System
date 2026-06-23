@@ -184,37 +184,13 @@ export function FacilityFilterBar({
     >
       {/* Search */}
       <div className="relative flex-1 min-w-[200px]">
-        <Search
-          size={15}
-          style={{
-            position: 'absolute',
-            left: 14,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: '#6b6e6b',
-          }}
-        />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
+          type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Tìm tòa nhà, địa chỉ..."
-          style={{
-            ...inputBase,
-            width: '100%',
-            boxSizing: 'border-box',
-            paddingLeft: 40,
-            paddingRight: 16,
-            cursor: 'text',
-            transition: 'all 0.2s ease',
-          }}
-          onFocus={(e) => {
-            e.target.style.border = '1.5px solid #cce242';
-            e.target.style.boxShadow = '0 0 0 3px rgba(204,226,66,0.2)';
-          }}
-          onBlur={(e) => {
-            e.target.style.border = '1.5px solid #e2e3e2';
-            e.target.style.boxShadow = 'none';
-          }}
+          className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:border-transparent transition-all"
         />
       </div>
 
