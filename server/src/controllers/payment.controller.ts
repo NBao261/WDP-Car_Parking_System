@@ -53,7 +53,7 @@ export class PaymentController {
   static async checkStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const { transactionCode } = req.params;
-      const isPaid = await PaymentService.checkMomoOrderStatus(transactionCode);
+      const isPaid = await PaymentService.checkMomoOrderStatus(transactionCode as string);
       res.status(200).json({ success: true, data: { isPaid } });
     } catch (error) {
       next(error);
