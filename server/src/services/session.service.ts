@@ -619,6 +619,15 @@ export class SessionService {
       if (daysDiff > 0 && pricingPlan.overnightFee > 0) {
         overnightFee = pricingPlan.overnightFee * daysDiff;
       }
+
+      // Phí quá giờ: tính số giờ xe đậu NGOÀI giờ hoạt động của bãi
+      if (pricingPlan.overtimeFeePerHour > 0) {
+        const facility = await ParkingFacility.findById(session.facilityId);
+        if (facility && facility.openTime !== facility.closeTime) {
+          const otMinutes = this.calculateOvertimeMinutes(checkInTime, checkOutTime, facility.openTime, facility.closeTime);
+          overtimeFee = Math.ceil(otMinutes / 60) * pricingPlan.overtimeFeePerHour;
+        }
+      }
     }
     // ═══════════════════════════════════════════════════
     // NHÁNH 2: DURATION_BASED (theo thời gian gửi)
@@ -652,36 +661,8 @@ export class SessionService {
       if (pricingPlan.overtimeFeePerHour > 0) {
         const facility = await ParkingFacility.findById(session.facilityId);
         if (facility && facility.openTime !== facility.closeTime) {
-          // Bãi có giờ hoạt động cố định (không phải 24h)
-          const [oH, oM] = facility.openTime.split(':').map(Number);
-          const [cH, cM] = facility.closeTime.split(':').map(Number);
-          const openMin = oH * 60 + oM;
-          const closeMin = cH * 60 + cM;
-
-          // Duyệt từng phút từ checkIn → checkOut, đếm số phút ngoài giờ hoạt động
-          let overtimeMinutes = 0;
-          const cursor = new Date(checkInTime);
-
-          while (cursor < checkOutTime) {
-            const minuteOfDay = cursor.getHours() * 60 + cursor.getMinutes();
-            let isOutside: boolean;
-
-            if (openMin < closeMin) {
-              // Bãi bình thường: VD 06:00-22:00 → ngoài giờ = trước 06:00 hoặc từ 22:00
-              isOutside = minuteOfDay < openMin || minuteOfDay >= closeMin;
-            } else {
-              // Bãi qua đêm: VD 22:00-06:00 → ngoài giờ = từ 06:00 đến 22:00
-              isOutside = minuteOfDay >= closeMin && minuteOfDay < openMin;
-            }
-
-            if (isOutside) {
-              overtimeMinutes++;
-            }
-            cursor.setTime(cursor.getTime() + 60000); // +1 phút
-          }
-
-          const overtimeHours = Math.ceil(overtimeMinutes / 60);
-          overtimeFee = overtimeHours * pricingPlan.overtimeFeePerHour;
+          const otMinutes = this.calculateOvertimeMinutes(checkInTime, checkOutTime, facility.openTime, facility.closeTime);
+          overtimeFee = Math.ceil(otMinutes / 60) * pricingPlan.overtimeFeePerHour;
         }
       }
     }
@@ -740,6 +721,43 @@ export class SessionService {
         daysDiff
       }
     };
+  }
+
+  /**
+   * Helper: Tính số phút xe đậu NGOÀI giờ hoạt động của bãi.
+   * Dùng chung cho flat_rate và duration_based.
+   */
+  private static calculateOvertimeMinutes(
+    checkIn: Date, checkOut: Date,
+    openTime: string, closeTime: string
+  ): number {
+    const [oH, oM] = openTime.split(':').map(Number);
+    const [cH, cM] = closeTime.split(':').map(Number);
+    const openMin = oH * 60 + oM;
+    const closeMin = cH * 60 + cM;
+
+    let overtimeMinutes = 0;
+    const cursor = new Date(checkIn);
+
+    while (cursor < checkOut) {
+      const minuteOfDay = cursor.getHours() * 60 + cursor.getMinutes();
+      let isOutside: boolean;
+
+      if (openMin < closeMin) {
+        // Bãi bình thường: VD 06:00-22:00 → ngoài giờ = trước 06:00 hoặc từ 22:00
+        isOutside = minuteOfDay < openMin || minuteOfDay >= closeMin;
+      } else {
+        // Bãi qua đêm: VD 22:00-06:00 → ngoài giờ = từ 06:00 đến 22:00
+        isOutside = minuteOfDay >= closeMin && minuteOfDay < openMin;
+      }
+
+      if (isOutside) {
+        overtimeMinutes++;
+      }
+      cursor.setTime(cursor.getTime() + 60000); // +1 phút
+    }
+
+    return overtimeMinutes;
   }
 
   /**
@@ -846,21 +864,26 @@ export class SessionService {
       }
       const segmentEnd = checkOut < segEndDate ? checkOut : segEndDate;
 
-      // Tính số giờ (làm tròn lên) × đơn giá
+      // Tính phí theo phút (tránh làm tròn lên từng segment gây tính dư)
       const durationMs = segmentEnd.getTime() - current.getTime();
-      const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
+      const durationMinutes = durationMs / (1000 * 60);
+      const perMinuteRate = interval.amount / 60;
 
       if (interval.isOvertime) {
-        overtimeFee += durationHours * interval.amount;
+        overtimeFee += durationMinutes * perMinuteRate;
       } else {
-        baseFee += durationHours * interval.amount;
+        baseFee += durationMinutes * perMinuteRate;
       }
 
       // Chuyển sang segment tiếp theo
       current.setTime(segmentEnd.getTime());
     }
 
-    // ── Bước 3: Áp dụng maxDailyFee (giá trần) chỉ lên baseFee ──
+    // ── Bước 3: Làm tròn lên hàng đơn vị (chỉ làm tròn 1 lần ở cuối) ──
+    baseFee = Math.ceil(baseFee);
+    overtimeFee = Math.ceil(overtimeFee);
+
+    // ── Bước 4: Áp dụng maxDailyFee (giá trần) chỉ lên baseFee ──
     if (maxDailyFee > 0) {
       const startDay = new Date(checkIn.getFullYear(), checkIn.getMonth(), checkIn.getDate());
       const endDay = new Date(checkOut.getFullYear(), checkOut.getMonth(), checkOut.getDate());
