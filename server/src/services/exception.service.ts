@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { Exception, ExceptionStatus, ExceptionType, IException } from '../models/exception.model';
 import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
 import { ParkingSlot, SlotStatus } from '../models/parkingSlot.model';
+import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 
 interface CreateExceptionDto {
@@ -41,6 +42,16 @@ export class ExceptionService {
     }
     if (session.status === SessionStatus.COMPLETED) {
       throw new AppError('Không thể tạo ngoại lệ cho lượt gửi đã kết thúc', 400);
+    }
+
+    // Kiểm tra staff có được phân công tại bãi xe này không (chống IDOR)
+    const staffUser = await User.findById(data.staffId).select('assignedFacilities');
+    if (!staffUser) throw new AppError('Staff không tồn tại', 404);
+    const isAssigned = staffUser.assignedFacilities.some(
+      (fId) => fId.toString() === session.facilityId.toString()
+    );
+    if (!isAssigned) {
+      throw new AppError('Bạn không được phân công tại bãi xe này', 403);
     }
 
     const exception = new Exception({
@@ -160,6 +171,16 @@ export class ExceptionService {
     // Thực hiện các hành động tương ứng với loại ngoại lệ
     const session = await ParkingSession.findById(exception.sessionId);
     if (!session) throw new AppError('Lượt gửi xe liên quan không tồn tại', 404);
+
+    // Kiểm tra staff có được phân công tại bãi xe này không (chống IDOR)
+    const staffUser = await User.findById(data.staffId).select('assignedFacilities');
+    if (!staffUser) throw new AppError('Staff không tồn tại', 404);
+    const isAssigned = staffUser.assignedFacilities.some(
+      (fId) => fId.toString() === session.facilityId.toString()
+    );
+    if (!isAssigned) {
+      throw new AppError('Bạn không được phân công tại bãi xe này', 403);
+    }
 
     if (exception.type === ExceptionType.WRONG_PLATE) {
       if (!data.newLicensePlate) {
