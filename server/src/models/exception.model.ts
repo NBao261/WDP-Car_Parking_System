@@ -25,6 +25,11 @@ export interface IException extends Document {
   managerNote: string;                                // Ghi chú của manager
   surcharge: number;
   status: ExceptionStatus;
+  actualPlate?: string;
+  expectedPlate?: string;
+  checkInImage?: string;
+  checkOutImage?: string;
+  cardCode?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +46,11 @@ const exceptionSchema = new Schema<IException>(
     managerNote: { type: String, default: '' },
     surcharge: { type: Number, default: 0, min: 0 },
     status: { type: String, enum: Object.values(ExceptionStatus), default: ExceptionStatus.NEW },
+    actualPlate: { type: String },
+    expectedPlate: { type: String },
+    checkInImage: { type: String },
+    checkOutImage: { type: String },
+    cardCode: { type: String },
   },
   { timestamps: true }
 );
