@@ -9,6 +9,11 @@ export const createExceptionSchema = z.object({
     type: z.nativeEnum(ExceptionType, { required_error: 'Vui lòng chọn loại ngoại lệ hợp lệ' }),
     description: z.string({ required_error: 'Vui lòng cung cấp mô tả' }).min(1, 'Mô tả không được để trống'),
     surcharge: z.number().min(0).optional(),
+    actualPlate: z.string().optional(),
+    expectedPlate: z.string().optional(),
+    checkInImage: z.string().optional(),
+    checkOutImage: z.string().optional(),
+    cardCode: z.string().optional(),
   }),
 });
 
