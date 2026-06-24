@@ -648,9 +648,41 @@ export class SessionService {
         overnightFee = pricingPlan.overnightFee * daysDiff;
       }
 
-      // Phí quá giờ (nếu durationHours > 24)
-      if (durationHours > 24 && pricingPlan.overtimeFeePerHour > 0) {
-        overtimeFee = (durationHours - 24) * pricingPlan.overtimeFeePerHour;
+      // Phí quá giờ: tính số giờ xe đậu NGOÀI giờ hoạt động của bãi
+      if (pricingPlan.overtimeFeePerHour > 0) {
+        const facility = await ParkingFacility.findById(session.facilityId);
+        if (facility && facility.openTime !== facility.closeTime) {
+          // Bãi có giờ hoạt động cố định (không phải 24h)
+          const [oH, oM] = facility.openTime.split(':').map(Number);
+          const [cH, cM] = facility.closeTime.split(':').map(Number);
+          const openMin = oH * 60 + oM;
+          const closeMin = cH * 60 + cM;
+
+          // Duyệt từng phút từ checkIn → checkOut, đếm số phút ngoài giờ hoạt động
+          let overtimeMinutes = 0;
+          const cursor = new Date(checkInTime);
+
+          while (cursor < checkOutTime) {
+            const minuteOfDay = cursor.getHours() * 60 + cursor.getMinutes();
+            let isOutside: boolean;
+
+            if (openMin < closeMin) {
+              // Bãi bình thường: VD 06:00-22:00 → ngoài giờ = trước 06:00 hoặc từ 22:00
+              isOutside = minuteOfDay < openMin || minuteOfDay >= closeMin;
+            } else {
+              // Bãi qua đêm: VD 22:00-06:00 → ngoài giờ = từ 06:00 đến 22:00
+              isOutside = minuteOfDay >= closeMin && minuteOfDay < openMin;
+            }
+
+            if (isOutside) {
+              overtimeMinutes++;
+            }
+            cursor.setTime(cursor.getTime() + 60000); // +1 phút
+          }
+
+          const overtimeHours = Math.ceil(overtimeMinutes / 60);
+          overtimeFee = overtimeHours * pricingPlan.overtimeFeePerHour;
+        }
       }
     }
     // ═══════════════════════════════════════════════════
@@ -687,6 +719,7 @@ export class SessionService {
 
     for (const exc of resolvedExceptions) {
       exceptionSurcharge += exc.surcharge || 0;
+      if (exc.type === ExceptionType.LOST_CARD) lostCardFeeTotal += pricingPlan.lostCardFee || 0;
     }
 
     const totalFee = baseFee + overnightFee + overtimeFee + exceptionSurcharge + lostCardFeeTotal;
