@@ -10,6 +10,11 @@ interface CreateExceptionDto {
   description: string;
   staffId: string;
   surcharge?: number;
+  actualPlate?: string;
+  expectedPlate?: string;
+  checkInImage?: string;
+  checkOutImage?: string;
+  cardCode?: string;
 }
 
 interface ResolveExceptionDto {
@@ -44,6 +49,11 @@ export class ExceptionService {
       description: data.description,
       staffId: new mongoose.Types.ObjectId(data.staffId),
       surcharge: data.surcharge || 0,
+      actualPlate: data.actualPlate,
+      expectedPlate: data.expectedPlate,
+      checkInImage: data.checkInImage,
+      checkOutImage: data.checkOutImage,
+      cardCode: data.cardCode,
       status: ExceptionStatus.NEW,
     });
 

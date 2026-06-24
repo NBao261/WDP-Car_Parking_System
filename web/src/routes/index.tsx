@@ -33,6 +33,11 @@ const VehicleCheckPage = lazy(() => import('../pages/staff/vehicleCheck/VehicleC
 const ActiveSessionsPage = lazy(() => import('../pages/staff/activeSessions/ActiveSessionsPage'));
 const ExceptionsStaffPage = lazy(() => import('../pages/staff/exceptionsStaff/ExceptionsStaffPage'));
 const ShiftSelectionPage = lazy(() => import('../pages/staff/shiftSelection/ShiftSelectionPage'));
+// Driver Pages ──
+const DriverDashboard = lazy(() => import('../pages/driver/dashboard/DriverDashboard'));
+const DriverFacilitiesPage = lazy(() => import('../pages/driver/facilities/FacilitiesPage'));
+const ReservationPage = lazy(() => import('../pages/driver/book/ReservationPage'));
+const HistoryPage = lazy(() => import('../pages/driver/history/HistoryPage'));
 
 const Loading = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
