@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { ImagePlus, RefreshCw, X } from 'lucide-react';
+import { ImagePlus, RefreshCw, X, Building2, DoorOpen } from 'lucide-react';
 import axios from 'axios';
 import { sessionService, ParkingSession } from '../../../../services/session.service';
 import { paymentService } from '../../../../services/payment.service';
@@ -27,6 +27,7 @@ export default function CheckOutPanel({
   onChangePlate,
   onCheckOut,
   onSearch,
+  onFlagException,
 }: CheckOutPanelProps) {
   const [searchInput, setSearchInput] = useState('');
   const [searchMode, setSearchMode] = useState<'code' | 'plate'>('code');
@@ -42,6 +43,15 @@ export default function CheckOutPanel({
   const [checkoutImageUrl, setCheckoutImageUrl] = useState<string | null>(null);
   const [isNoPlateVehicle, setIsNoPlateVehicle] = useState(false);
   const [manualConfirmed, setManualConfirmed] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [panelMsg, setPanelMsg] = useState<{text: string, type: 'error'|'success'|'warning'} | null>(null);
+
+  const showMsg = (text: string, type: 'error'|'success'|'warning' = 'error') => {
+    setPanelMsg({ text, type });
+    setTimeout(() => {
+      setPanelMsg(prev => prev?.text === text ? null : prev);
+    }, 5000);
+  };
 
   // Momo States
   const [momoQR, setMomoQR] = useState<string | null>(null);
@@ -70,7 +80,7 @@ export default function CheckOutPanel({
     formData.append('image', file);
     try {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
-      
+
       if (isNoPlateVehicle) {
         // Xe không biển số: chỉ upload ảnh
         const response = await axios.post(`${API_BASE_URL}/upload/image`, formData, {
@@ -102,9 +112,7 @@ export default function CheckOutPanel({
           } else if (step === 'CONFIRM') {
             onChangePlate(fp);
             if (fp.toUpperCase() !== plateIn.toUpperCase()) {
-              toast.error(`CẢNH BÁO: Biển số xe ra (${fp}) KHÔNG KHỚP với lúc vào (${plateIn})!`, {
-                duration: 5000,
-              });
+              showMsg(`CẢNH BÁO: Biển số xe ra (${fp}) KHÔNG KHỚP với lúc vào (${plateIn})!`);
             } else {
               // toast.success(`Hợp lệ: Biển số xe ra khớp với lúc vào (${fp})`);
             }
@@ -158,7 +166,11 @@ export default function CheckOutPanel({
         const target = e.target as HTMLElement;
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
         e.preventDefault();
-        if (step === 'SEARCH') {
+        if (paymentSuccess) {
+          setPaymentSuccess(false);
+          handleReset();
+          if (onCheckOut) onCheckOut(null);
+        } else if (step === 'SEARCH') {
           handleSearch();
         } else if (step === 'CONFIRM') {
           if (!isSubmitting && !momoQR) handleCashCheckOut();
@@ -176,7 +188,7 @@ export default function CheckOutPanel({
       window.removeEventListener('keydown', (e) => e.key === 'F2' && onF2(e));
       window.removeEventListener('keydown', (e) => e.key === 'F3' && onF3(e));
     };
-  }, [step, isSubmitting, searchInput, searchMode, currentSession, plate, plateIn, momoQR]);
+  }, [step, isSubmitting, searchInput, searchMode, currentSession, plate, plateIn, momoQR, paymentSuccess]);
 
   // ─── Terminal session info ──────────────────────────────────────────────────
   const building = sessionStorage.getItem('staff_facility_name') || 'Chưa chọn Toà nhà';
@@ -187,7 +199,7 @@ export default function CheckOutPanel({
     const query = (typeof overrideQuery === 'string' ? overrideQuery : searchInput).trim();
     const mode = overrideMode || searchMode;
     if (!query) {
-      toast.error(mode === 'code' ? 'Vui lòng nhập mã thẻ!' : 'Vui lòng nhập biển số xe!');
+      showMsg(mode === 'code' ? 'Vui lòng nhập mã thẻ!' : 'Vui lòng nhập biển số xe!');
       return;
     }
     setIsSubmitting(true);
@@ -246,6 +258,7 @@ export default function CheckOutPanel({
             feeDetails: feeDetails,
             paymentStatus: 'Chưa thanh toán',
             rawCheckInTime: session.checkInTime,
+            zone: `${(session.floorId as any)?.name || "Tầng Auto"} - Slot: ${(session.slotId as any)?.code || "Slot Auto"}`,
           });
         }
 
@@ -256,16 +269,13 @@ export default function CheckOutPanel({
         const actualPlateOut = mode === 'plate' ? query : plate;
         const isNoPlate = vehicleTypeObj?.requiresPlate === false;
         if (!isNoPlate && actualPlateOut.toUpperCase() !== session.licensePlate.toUpperCase()) {
-          toast.error(
-            `CẢNH BÁO: Biển số xe ra (${actualPlateOut || 'Trống'}) KHÔNG KHỚP với lúc vào (${session.licensePlate})!`,
-            { duration: 5000 }
-          );
+          showMsg(`CẢNH BÁO: Biển số xe ra (${actualPlateOut || 'Trống'}) KHÔNG KHỚP với lúc vào (${session.licensePlate})!`);
         } else {
           // toast.success(`Hợp lệ: Biển số xe ra khớp với lúc vào (${actualPlateOut})`);
         }
       }
     } catch (error: any) {
-      toast.error(error.message || 'Không tìm thấy trong hệ thống!');
+      showMsg(error.message || 'Không tìm thấy trong hệ thống!');
       setPlateIn('');
       setVehicleTypeName('Không có dữ liệu');
       setCurrentSession(null);
@@ -301,17 +311,13 @@ export default function CheckOutPanel({
       paymentStatus: methodStr,
     }));
 
-    handleReset();
-
-    setTimeout(() => {
-      onCheckOut(null);
-    }, 2000);
+    setPaymentSuccess(true);
   };
 
   const validateMismatch = () => {
     const isMismatch = !isNoPlateVehicle && plate.toUpperCase() !== plateIn.toUpperCase();
     if (isMismatch && !manualConfirmed) {
-      toast.error("LỖI: Biển số xe ra KHÔNG KHỚP với biển số vào. Xác nhận thủ công trước!");
+      showMsg("LỖI: Biển số xe ra KHÔNG KHỚP với biển số vào. Xác nhận thủ công trước!");
       return false;
     }
     return true;
@@ -330,11 +336,11 @@ export default function CheckOutPanel({
           checkOutImage: checkoutImageUrl || undefined,
         });
         if (checkOutRes.success) {
-          toast.success("Đã thu tiền mặt & mở barie xe ra thành công!");
+          showMsg("Đã thu tiền mặt & mở barie xe ra thành công!", "success");
           finishCheckOutProcess(checkOutRes.data, 'Tiền mặt');
         }
       } catch (error: any) {
-        toast.error(error.message || 'Lỗi khi check-out bằng tiền mặt!');
+        showMsg(error.message || 'Lỗi khi check-out bằng tiền mặt!');
       } finally {
         setIsSubmitting(false);
       }
@@ -352,7 +358,7 @@ export default function CheckOutPanel({
           sessionId: currentSession._id,
           method: 'e_wallet'
         });
-        
+
         if (res.success && (res.data?.qrCodeUrl || res.data?.paymentUrl)) {
           // Momo qrCodeUrl is actually a raw EMVCo string or payUrl. We MUST generate an image from it.
           const qrContent = res.data.qrCodeUrl || res.data.paymentUrl;
@@ -360,7 +366,7 @@ export default function CheckOutPanel({
           setMomoQR(finalQrUrl);
           setTransactionCode(res.data.payment.transactionCode);
           setIsPolling(true);
-          
+
           // Start polling
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = setInterval(async () => {
@@ -369,10 +375,10 @@ export default function CheckOutPanel({
               if (statusRes.data?.isPaid) {
                 // Success!
                 if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-                toast.success("Khách đã thanh toán Momo thành công!");
-                
+                showMsg("Khách đã thanh toán Momo thành công!", "success");
+
                 setMomoQR(null); // Clear modal
-                
+
                 // Perform final checkout logically (the backend already closed the session via webhook/polling)
                 // We just need to update UI. We mock the checkout time for UI since it's already closed.
                 const mockSessionForUI = {
@@ -386,10 +392,10 @@ export default function CheckOutPanel({
             }
           }, 3000);
         } else {
-          toast.error("Không thể tạo mã QR Momo!");
+          showMsg("Không thể tạo mã QR Momo!");
         }
       } catch (error: any) {
-        toast.error(error.message || 'Lỗi khi tạo giao dịch Momo!');
+        showMsg(error.message || 'Lỗi khi tạo giao dịch Momo!');
       } finally {
         setIsSubmitting(false);
       }
@@ -399,9 +405,13 @@ export default function CheckOutPanel({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (step === 'SEARCH') {
+      if (paymentSuccess) {
+        setPaymentSuccess(false);
+        handleReset();
+        if (onCheckOut) onCheckOut(null);
+      } else if (step === 'SEARCH') {
         if (!searchInput || !ocrPreviewUrl) {
-          toast.warning('Vui lòng chụp ảnh xe ra trước khi tìm kiếm!');
+          showMsg('Vui lòng chụp ảnh xe ra trước khi tìm kiếm!', 'warning');
           return;
         }
         handleSearch();
@@ -426,6 +436,8 @@ export default function CheckOutPanel({
     setOcrPreviewUrl(null);
     setOcrSuccess(false);
     setManualConfirmed(false);
+    setPaymentSuccess(false);
+    setPanelMsg(null);
     setIsNoPlateVehicle(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (onSearch) onSearch(null);
@@ -438,41 +450,56 @@ export default function CheckOutPanel({
   }, []);
 
   // ─── Render ─────────────────────────────────────────────────────────────────
-  const isMismatch = step === 'CONFIRM' && plate.toUpperCase() !== plateIn.toUpperCase();
+  const isMismatch = step === 'CONFIRM' && !isNoPlateVehicle && plate.toUpperCase() !== plateIn.toUpperCase();
   const isException = currentSession?.status === 'exception';
 
   return (
-    <div className="flex flex-col bg-white rounded-[16px] border border-[#e8e9e8] shadow-lg shadow-[#9FE870]/20 px-5 pt-4 pb-4 h-full min-h-0 overflow-hidden">
-      <h2 className="text-[17px] font-bold text-[#060606] mb-3 shrink-0">Đăng Ký Xe Ra</h2>
+    <div className="flex flex-col h-full min-h-0 relative">
 
-      <div className="flex flex-col gap-4 flex-1 min-h-0">
-        {/* Row 1: Toà nhà + Cổng trực */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-[11px] font-semibold text-[#6b6b6b] mb-1">Toà nhà</label>
-            <input
-              type="text"
-              value={building}
-              readOnly
-              className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none"
-            />
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-[20px] shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <div className="w-7 h-7 rounded-md border border-[#A3E635]/50 bg-[#ECFCCB] flex items-center justify-center text-[#65A30D] shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
           </div>
-          <div>
-            <label className="block text-[11px] font-semibold text-[#6b6b6b] mb-1">Cổng trực</label>
-            <input
-              type="text"
-              value={gateOut}
-              readOnly
-              className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none"
-            />
+          <div className="flex flex-col min-w-0">
+            <h2 className="text-[14px] font-bold text-[#060606] uppercase leading-tight tracking-tight truncate">Đăng Ký Xe Ra</h2>
+            <div className="flex items-center gap-1.5 text-[10px] text-[#888] font-medium mt-0.5 whitespace-nowrap overflow-hidden">
+              <span className="flex items-center gap-1 truncate"><Building2 className="w-3 h-3 text-[#aaa] shrink-0" /> <span className="truncate">Tòa nhà: {building}</span></span>
+              <span className="text-[#ccc] shrink-0">|</span>
+              <span className="flex items-center gap-1 truncate"><DoorOpen className="w-3 h-3 text-[#aaa] shrink-0" /> <span className="truncate">Cổng: {gateOut}</span></span>
+            </div>
           </div>
         </div>
 
-        {/* Row 2: Ảnh biển số Vào + Ảnh biển số Ra */}
-        <div className="flex gap-4 flex-1 min-h-0">
-          <div className="flex-1 flex flex-col gap-1 min-h-0">
-            <label className="block text-[11px] font-semibold text-[#6b6b6b]">Ảnh biển số Vào</label>
-            <div className="flex-1 border-2 border-dashed border-[#e8e9e8] rounded-[6px] flex flex-col items-center justify-center gap-2 bg-[#fdfdfd] overflow-hidden relative">
+        {/* Trạng thái Tìm kiếm / OCR */}
+        <div className="flex-none ml-3">
+          <div className={`h-7 px-3 rounded-[4px] text-[12px] font-bold flex items-center justify-center transition-colors ${currentSession ? 'bg-[#ECFCCB] text-[#1A202C] border border-[#A3E635]' : 'bg-[#f9f9f9] text-[#888] border border-[#e8e9e8]'
+            }`}>
+            {currentSession ? '✓ Đã tìm thấy vé' : '● Chưa quét'}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 flex-1 min-h-0">
+
+        {/* Row 1: Ảnh biển số Vào + Ảnh biển số Ra */}
+        <div className="flex gap-3 relative shrink-0">
+          {/* Badge Khớp / Không khớp */}
+          {step === 'CONFIRM' && !isMismatch && !isNoPlateVehicle && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#A3E635] text-[#1A202C] px-4 py-1 rounded-[4px] font-bold text-[12px] z-10 shadow-sm border border-[#84CC16]">
+              Khớp
+            </div>
+          )}
+          {step === 'CONFIRM' && isMismatch && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#EF4444] text-white px-4 py-1 rounded-[4px] font-bold text-[12px] z-10 shadow-sm border border-[#DC2626]">
+              Không khớp
+            </div>
+          )}
+
+          <div className="flex-1 flex flex-col gap-1.5 min-h-0">
+            <label className="block text-[10px] font-semibold text-[#6b6b6b]">Ảnh biển số vào</label>
+            <div className="h-[210px] w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 bg-[#fdfdfd] overflow-hidden relative">
               {currentSession?.checkInImage ? (
                 (() => {
                   const SERVER_URL = (
@@ -486,9 +513,9 @@ export default function CheckOutPanel({
                   return <img src={imgSrc} alt="check-in" className="w-full h-full object-contain" />;
                 })()
               ) : (
-                <div className="flex flex-col items-center opacity-60">
-                  <img src="/Logo_chu.png" alt="LYNC PARK" className="h-14 mb-3 object-contain" />
-                  <ImagePlus className="w-4 h-4 text-[#6b6b6b] mb-3" />
+                <div className="flex flex-col items-center">
+                  <img src="/Logo_chu.png" alt="LYNC PARK" className="h-16 mb-2 object-contain" />
+                  <ImagePlus className="w-4 h-4 text-[#6b6b6b] mb-2" />
                   <span className="text-[10px] font-semibold text-[#6b6b6b]">Ảnh biển số (OCR)</span>
                   <span className="text-[9px] text-[#aaa]">Chưa có dữ liệu</span>
                 </div>
@@ -496,28 +523,28 @@ export default function CheckOutPanel({
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col gap-1 min-h-0 relative">
-            <label className="block text-[11px] font-semibold text-[#6b6b6b]">Ảnh biển số Ra</label>
+          <div className="flex-1 flex flex-col gap-1.5 relative min-h-0">
+            <label className="block text-[10px] font-semibold text-[#6b6b6b]">Ảnh biển số ra</label>
             {!ocrPreviewUrl ? (
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="flex-1 border-2 border-dashed border-[#c8c9c8] rounded-[6px] flex flex-col items-center justify-center gap-2 hover:border-[#9FE870] hover:bg-[#f5ffe8] transition-all duration-200 disabled:opacity-60"
+                className="h-[210px] w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 hover:border-[#A3E635] hover:bg-[#ECFCCB] transition-all duration-200 disabled:opacity-60 bg-[#fcfcfc]"
               >
                 {isUploading ? (
                   <RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" />
                 ) : (
                   <div className="flex flex-col items-center">
-                    <img src="/Logo_chu.png" alt="LYNC PARK" className="h-14 mb-3 object-contain" />
-                    <ImagePlus className="w-4 h-4 text-[#6b6b6b] mb-3" />
+                    <img src="/Logo_chu.png" alt="LYNC PARK" className="h-16 mb-2 object-contain" />
+                    <ImagePlus className="w-4 h-4 text-[#aaa] mb-2" />
                     <span className="text-[10px] font-semibold text-[#6b6b6b]">Chụp / Upload ảnh biển số (OCR)</span>
                     <span className="text-[9px] text-[#aaa]">Hỗ trợ JPG, PNG — chụp thẳng góc, đủ sáng</span>
                   </div>
                 )}
               </button>
             ) : (
-              <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden flex-1 bg-[#f5f5f4]">
+              <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden h-[200px] bg-[#f5f5f4]">
                 <img src={ocrPreviewUrl} alt="preview" className="w-full h-full object-contain" />
                 <button type="button" onClick={clearOcrPreview} className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
               </div>
@@ -526,19 +553,51 @@ export default function CheckOutPanel({
           </div>
         </div>
 
-        {/* Row 3: Mã thẻ từ/vé + Loại xe + Trạng thái OCR */}
-        <div className="grid grid-cols-2 gap-4 items-end">
-          <div className="flex flex-col gap-1 relative">
-            <div className="flex justify-between w-full">
-              <label className="text-[11px] font-semibold text-[#060606]">
-                {searchMode === 'code' ? 'Mã thẻ từ/vé' : 'Biển số xe (tìm kiếm)'}
+        {/* Row 2: Biển số xe vào & Biển số xe ra */}
+        <div className="grid grid-cols-2 gap-2 mt-1">
+          <div className="flex flex-col gap-1">
+            <label className="block text-[10px] font-semibold text-[#060606]">Biển số xe vào</label>
+            <input type="text" value={plateIn} readOnly
+              className="w-full h-9 text-[18px] text-center font-mono px-3 border border-[#e8e9e8] bg-[#ECFCCB] rounded-[6px] uppercase font-bold outline-none text-[#1A202C] cursor-not-allowed"
+              placeholder="XXX-XX-XXXXX" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-[10px] font-semibold text-[#060606]">Biển số xe ra</label>
+            <input
+              type="text"
+              value={isNoPlateVehicle ? "KBS-AUTO" : plate}
+              onChange={(e) => onChangePlate(e.target.value.toUpperCase())}
+              onKeyDown={handleKeyDown}
+              disabled={step === 'SEARCH' || isSubmitting || isNoPlateVehicle}
+              className={`w-full h-9 text-[18px] text-center font-mono px-3 border rounded-[6px] uppercase font-bold outline-none transition-all duration-200
+                ${(!plate && !isNoPlateVehicle)
+                  ? 'bg-[#fdfdfd] border-[#e8e9e8] text-[#9b9b9b] focus:border-[#A3E635]'
+                  : step === 'CONFIRM'
+                    ? (isNoPlateVehicle || isException
+                      ? 'bg-[#fff7ed] border-[#ea580c] text-[#ea580c] focus:border-[#c2410c]'
+                      : isMismatch
+                        ? 'bg-[#FEE2E2] border-[#EF4444] text-[#EF4444] focus:border-[#DC2626]'
+                        : 'bg-[#ECFCCB] border-[#A3E635] text-[#1A202C] focus:border-[#84CC16]')
+                    : 'bg-[#fdfdfd] border-[#e8e9e8] text-[#9b9b9b]'
+                }`}
+              placeholder="XXX-XX-XXXXX"
+            />
+          </div>
+        </div>
+
+        {/* Row 3: Mã thẻ từ/vé | Loại xe | Nhập lại biển ra */}
+        <div className="grid grid-cols-3 gap-2 mt-1 items-end">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-baseline gap-1.5 w-full overflow-hidden">
+              <label className="text-[10px] font-semibold text-[#060606] whitespace-nowrap shrink-0">
+                Mã thẻ từ/vé
               </label>
               <button
                 onClick={() => {
                   setSearchMode((m) => (m === 'code' ? 'plate' : 'code'));
                   setSearchInput('');
                 }}
-                className="text-[9px] text-[#1a1a1a] underline whitespace-nowrap hover:no-underline font-medium"
+                className="text-[9px] text-[#2c4015] underline whitespace-nowrap hover:no-underline font-medium truncate"
               >
                 {searchMode === 'code' ? 'Khách mất thẻ? Tìm theo biển số' : 'Quay lại tìm mã thẻ'}
               </button>
@@ -551,110 +610,125 @@ export default function CheckOutPanel({
               onKeyDown={handleKeyDown}
               placeholder={searchMode === 'code' ? 'VD: CARD-1A2B-3C4D' : 'VD: 29A-12345'}
               disabled={isSubmitting || step !== 'SEARCH'}
-              className="w-full h-8 px-3 border border-[#e8e9e8] rounded-[6px] text-[12px] font-medium outline-none focus:border-[#060606] disabled:opacity-50"
+              className="w-full h-7 px-3 border border-[#e8e9e8] bg-[#fdfdfd] rounded-[6px] text-[10px] font-medium outline-none focus:border-[#A3E635] disabled:opacity-50"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-semibold text-[#060606]">Loại xe</label>
-              <input
-                type="text"
-                value={vehicleTypeName}
-                readOnly
-                className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-semibold text-[#060606]">Trạng thái OCR</label>
-              <div className={`w-full h-8 rounded-[6px] text-[12px] font-bold flex items-center justify-center border transition-colors ${ocrSuccess
-                ? (isMismatch ? 'bg-[#fef2f2] text-[#ef4444] border-[#fca5a5]' : 'bg-[#9FE870]/20 text-[#2d6a1f] border-[#9FE870]')
-                : 'bg-[#f5f5f4] text-[#a8a29e] border-[#e8e9e8]'
-                }`}>
-                {ocrSuccess ? (isMismatch ? '✕ Không khớp biển số' : '✓ Quét thành công') : 'Chưa quét'}
-              </div>
-            </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-[10px] font-semibold text-[#060606]">Loại xe</label>
+            <input
+              type="text"
+              value={vehicleTypeName}
+              readOnly
+              className="w-full h-7 px-3 bg-[#fdfdfd] border border-[#e8e9e8] rounded-[6px] text-[#333] text-[10px] font-medium cursor-not-allowed outline-none"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-[10px] font-semibold text-[#060606]">Nhập lại biển ra</label>
+            <input type="text" placeholder="F5 để nhập lại" value={plate} onChange={e => onChangePlate(e.target.value.toUpperCase())}
+              className="w-full h-7 px-3 bg-white border border-[#e8e9e8] rounded-[6px] text-[#333] text-[10px] font-medium outline-none focus:border-[#A3E635]" />
           </div>
         </div>
 
-        {/* Row 4: Biển số xe ra (Input for plate) */}
-        <div className="flex flex-col gap-1 shrink-0">
-          <label className="block text-[11px] font-semibold text-[#060606]">Biển số xe ra</label>
-          <input
-            type="text"
-            value={isNoPlateVehicle ? "KBS-AUTO" : plate}
-            onChange={(e) => onChangePlate(e.target.value.toUpperCase())}
-            onKeyDown={handleKeyDown}
-            disabled={step === 'SEARCH' || isSubmitting || isNoPlateVehicle}
-            className={`w-full h-12 text-[20px] font-mono px-3 border rounded-[6px] uppercase font-bold outline-none transition-all duration-200
-              ${step === 'CONFIRM'
-                ? (isNoPlateVehicle || isException
-                    ? 'bg-[#fff7ed] border-[#ea580c] text-[#ea580c] focus:border-[#c2410c]'
-                    : isMismatch
-                      ? 'bg-[#fef2f2] border-[#ef4444] text-[#ef4444] focus:border-[#dc2626]'
-                      : 'bg-[#9FE870]/30 border-[#9FE870] text-[#062F28] focus:ring-2 focus:ring-[#9FE870]/40')
-                : 'bg-[#f5f5f4] border-[#e8e9e8] text-[#9b9b9b]'
-              }`}
-            placeholder="XXX-XX-XXXXX"
-          />
-          {step === 'CONFIRM' && isMismatch && (
-            <label className="flex items-center gap-2 mt-1 cursor-pointer bg-red-50 p-2 rounded-md border border-red-200">
-              <input
-                type="checkbox"
-                className="w-4 h-4 text-red-600 rounded border-gray-300"
-                checked={manualConfirmed}
-                onChange={(e) => setManualConfirmed(e.target.checked)}
-              />
-              <span className="text-sm font-semibold text-red-700">
-                Xác nhận khớp xe thủ công (Bắt buộc)
-              </span>
+        {/* Row 4: Payment Actions / Status - Always visible */}
+        {!paymentSuccess && (
+          <div className="flex flex-col gap-1 mt-1">
+            <label className="block text-[10px] font-semibold text-[#060606]">
+              {panelMsg ? 'Trạng thái' : step === 'CONFIRM' && !isMismatch && !isNoPlateVehicle ? 'Phương thức thanh toán' : 'Trạng thái'}
             </label>
-          )}
-
-          {/* Payment Actions */}
-          {step === 'CONFIRM' && (
-            <div className="mt-3">
-              <div className="flex gap-3">
+            {panelMsg ? (
+              <button
+                onClick={() => setPanelMsg(null)}
+                className={`w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all ${
+                  panelMsg.type === 'error' ? 'bg-[#FEE2E2] text-[#EF4444] border border-[#EF4444]' : 
+                  panelMsg.type === 'warning' ? 'bg-[#fff8e1] text-[#f57f17] border border-[#fbc02d]' :
+                  'bg-[#ECFCCB] text-[#1A202C] border border-[#A3E635]'
+                }`}
+              >
+                {panelMsg.text}
+              </button>
+            ) : step === 'CONFIRM' && isMismatch ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (onFlagException) onFlagException();
+                }}
+                className="w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all bg-[#EF4444] text-white border border-[#DC2626] hover:bg-[#DC2626]"
+              >
+                Cảnh báo không khớp (F9)
+              </button>
+            ) : step === 'CONFIRM' && isNoPlateVehicle ? (
+              <button
+                onClick={handleCashCheckOut}
+                disabled={isSubmitting}
+                className="w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all bg-[#A3E635] text-[#1A202C] hover:bg-[#84CC16] border border-[#A3E635]"
+              >
+                {isSubmitting ? 'Đang xử lý...' : 'Xác nhận xe ra'}
+              </button>
+            ) : step === 'CONFIRM' ? (
+              <div className="flex gap-2">
                 <button
                   onClick={handleCashCheckOut}
                   disabled={isSubmitting}
-                  className="flex-1 h-12 bg-[#9FE870] hover:bg-[#8bc34a] text-[#062F28] font-bold rounded-[8px] transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                  className="flex-1 h-7 font-bold rounded-[6px] transition-colors text-[11px] bg-[#dcdcdc] hover:bg-[#c9c9c9] text-[#333]"
                 >
-                  [F2 / Enter] Thu Tiền Mặt
+                  Tiền Mặt
                 </button>
                 <button
                   onClick={handleMomoCheckOut}
                   disabled={isSubmitting}
-                  className="flex-1 h-12 bg-[#A50064] hover:bg-[#8a0053] text-white font-bold rounded-[8px] transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                  className="flex-1 h-7 font-bold rounded-[6px] transition-colors text-[11px] bg-[#A3E635] hover:bg-[#84CC16] text-[#1A202C]"
                 >
-                  [F3] Quét QR Momo
+                  QR MoMo
                 </button>
               </div>
-            </div>
-          )}
-        </div>
+            ) : (
+              <div className="w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all bg-[#fcfcfc] border border-[#e8e9e8] text-[#9b9b9b]">
+                —
+              </div>
+            )}
+          </div>
+        )}
+
+        {paymentSuccess && (
+          <div className="flex flex-col gap-1.5 mt-2">
+            <label className="block text-[10px] font-semibold text-[#060606]">Trạng thái</label>
+            <button
+               onClick={() => {
+                 setPaymentSuccess(false);
+                 handleReset();
+                 if (onCheckOut) onCheckOut(null);
+               }}
+               className="w-full h-9 bg-[#A3E635] text-[#1A202C] font-bold text-[14px] flex items-center justify-center rounded-[6px] hover:bg-[#84CC16] transition-colors cursor-pointer"
+            >
+              Mời xe ra (Bấm Enter mở chắn)
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Momo QR Modal Overlay */}
       {momoQR && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-[16px] p-6 w-[400px] max-w-[90%] shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
-            <h3 className="text-xl font-bold text-[#A50064] mb-1">Thanh toán Momo</h3>
-            <p className="text-sm text-gray-500 mb-4 text-center">Tài xế sử dụng ứng dụng Momo hoặc ứng dụng ngân hàng để quét mã QR dưới đây</p>
-            
-            <div className="bg-white p-3 rounded-xl border-2 border-pink-100 shadow-inner mb-4">
-              <img src={momoQR} alt="Momo QR Code" className="w-56 h-56 object-contain" />
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-sm rounded-[8px]">
+          <div className="bg-white rounded-[16px] p-6 w-[90%] max-w-[360px] shadow-2xl border border-pink-100 flex flex-col items-center animate-in fade-in zoom-in duration-200">
+            <h3 className="text-[16px] font-bold text-[#A50064] mb-1">Thanh toán Momo</h3>
+            <p className="text-[11px] text-gray-500 mb-4 text-center">Tài xế sử dụng ứng dụng Momo hoặc ngân hàng để quét mã QR</p>
+
+            <div className="bg-white p-2 rounded-xl border-2 border-pink-100 shadow-inner mb-4">
+              <img src={momoQR} alt="Momo QR Code" className="w-40 h-40 object-contain" />
             </div>
-            
-            <div className="flex items-center gap-2 text-sm text-[#A50064] font-medium mb-6 bg-pink-50 px-4 py-2 rounded-full">
-              <RefreshCw className="w-4 h-4 animate-spin" /> Đang chờ khách thanh toán...
+
+            <div className="flex items-center gap-2 text-[11px] text-[#A50064] font-medium mb-4 bg-pink-50 px-4 py-2 rounded-full">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Đang chờ khách thanh toán...
             </div>
-            
-            <button 
+
+            <button
               onClick={() => {
                 setMomoQR(null);
                 if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-              }} 
-              className="w-full h-11 border-2 border-gray-200 text-gray-600 font-bold rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+              }}
+              className="w-full h-9 border border-gray-200 text-gray-600 font-bold text-[12px] rounded-[6px] hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
             >
               <X className="w-4 h-4" /> Hủy giao dịch Momo
             </button>

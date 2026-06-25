@@ -15,7 +15,7 @@ interface CheckOutConfirmPanelProps {
   isMismatch?: boolean;
 }
 
-export default function CheckOutConfirmPanel({ data, isMismatch = false }: CheckOutConfirmPanelProps) {
+export function CheckOutConfirmPanel({ data, isMismatch = false }: CheckOutConfirmPanelProps) {
   if (!data) {
     return (
       <div className="w-full h-[170px] border-2 border-[#A3E635] rounded-[8px] flex items-center justify-center bg-white mt-2 shrink-0">
@@ -24,19 +24,8 @@ export default function CheckOutConfirmPanel({ data, isMismatch = false }: Check
     );
   }
 
-  const {
-    owner = "—",
-    checkInTime = "—",
-    checkOutTime = "—",
-    checkInDate = "—",
-    checkOutDate = "—",
-    gateIn = "—",
-    fee = 0,
-    rawCheckInTime,
-    zone = "—",
-  } = data || {};
+  const { owner = "—", checkInTime = "—", checkOutTime = "—", checkInDate = "—", checkOutDate = "—", gateIn = "—", fee = 0, rawCheckInTime, zone = "—" } = data || {};
 
-  // Calculate parked duration
   let durationStr = "";
   if (rawCheckInTime) {
     const checkIn = new Date(rawCheckInTime);
@@ -46,31 +35,22 @@ export default function CheckOutConfirmPanel({ data, isMismatch = false }: Check
       const totalMinutes = Math.floor(diffMs / 60000);
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
-      if (hours > 0) {
-        durationStr = `${hours} giờ ${minutes} phút`;
-      } else {
-        durationStr = `${minutes} phút`;
-      }
+      if (hours > 0) durationStr = `${hours} giờ ${minutes} phút`;
+      else durationStr = `${minutes} phút`;
     }
   }
 
   return (
     <div className="flex h-[170px] border-2 border-[#A3E635] rounded-[8px] mt-2 bg-white overflow-hidden shrink-0">
-      {/* Left Content (Details) */}
       <div className="flex-1 px-5 flex flex-col justify-center">
-        {/* Header */}
         <div className="flex items-center gap-1.5 shrink-0 mb-3">
           <CheckCircle2 className="text-[#65A30D] w-[18px] h-[18px]" />
           <h3 className="text-[13px] font-bold text-[#65A30D] uppercase">Xác Nhận Xe Ra</h3>
         </div>
-
-        {/* Row 1: Chủ xe */}
         <div className="flex items-center gap-2 mt-1">
           <span className="text-[10px] font-semibold text-[#6b6b6b]">Chủ xe:</span>
           <span className="text-[11px] font-bold text-[#333]">{owner}</span>
         </div>
-
-        {/* Row 2: Giờ vào | Ngày vào | Cổng vào */}
         <div className="grid grid-cols-3 gap-2 mt-1">
           <div className="flex flex-col gap-0.5">
             <span className="text-[9px] font-semibold text-[#6b6b6b]">Giờ vào:</span>
@@ -85,8 +65,6 @@ export default function CheckOutConfirmPanel({ data, isMismatch = false }: Check
             <span className="text-[11px] font-bold text-[#333]">{gateIn}</span>
           </div>
         </div>
-
-        {/* Row 3: Giờ ra | Ngày ra */}
         <div className="grid grid-cols-3 gap-2 mt-1">
           <div className="flex flex-col gap-0.5">
             <span className="text-[9px] font-semibold text-[#6b6b6b]">Giờ ra:</span>
@@ -98,11 +76,7 @@ export default function CheckOutConfirmPanel({ data, isMismatch = false }: Check
           </div>
         </div>
       </div>
-
-      {/* Vertical Divider */}
       <div className="w-[1px] bg-[#e8e9e8] my-4 shrink-0"></div>
-
-      {/* Right Content (Fee) */}
       <div className="w-[150px] p-4 flex flex-col items-end justify-center shrink-0">
         <span className="text-[10px] font-semibold text-[#888] mb-1">Tổng tiền (VNĐ):</span>
         <span className={`text-[22px] font-bold leading-none mb-1 text-right ${isMismatch ? 'text-[#bbb]' : 'text-[#060606]'}`}>
@@ -112,9 +86,7 @@ export default function CheckOutConfirmPanel({ data, isMismatch = false }: Check
         {durationStr && (
           <div className="flex flex-col items-end mt-1">
             <span className="text-[9px] font-medium text-[#888]">Thời gian gửi:</span>
-            <span className="text-[11px] font-bold text-[#333] text-right">
-              {durationStr}
-            </span>
+            <span className="text-[11px] font-bold text-[#333] text-right">{durationStr}</span>
           </div>
         )}
       </div>

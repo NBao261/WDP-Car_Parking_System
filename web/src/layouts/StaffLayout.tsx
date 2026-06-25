@@ -1,12 +1,44 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store';
 import { ConfirmModal } from '../components/ConfirmModal';
 import TerminalToolbar from '../pages/staff/vehicleCheck/components/TerminalToolbar';
+import GlobalExceptionPanel from '../pages/staff/vehicleCheck/components/GlobalExceptionPanel';
 
 export default function StaffLayout() {
   const { logout } = useAuthStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showGlobalException, setShowGlobalException] = useState(false);
+  const [exceptionContext, setExceptionContext] = useState<any>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleF9 = (e?: Event) => {
+      // Bỏ qua nếu đang ở trang Xử lý ngoại lệ riêng
+      if (location.pathname.includes('/exceptions')) return;
+
+      if (e && e.type === 'keydown') {
+        const keyboardEvent = e as KeyboardEvent;
+        if (keyboardEvent.key !== 'F9') return;
+        keyboardEvent.preventDefault();
+      }
+
+      const customEvent = e as CustomEvent;
+      if (customEvent?.detail) {
+        setExceptionContext(customEvent.detail);
+      } else {
+        setExceptionContext(null);
+      }
+      setShowGlobalException(true);
+    };
+
+    window.addEventListener('keydown', handleF9);
+    window.addEventListener('HOTKEY_F9', handleF9);
+    return () => {
+      window.removeEventListener('keydown', handleF9);
+      window.removeEventListener('HOTKEY_F9', handleF9);
+    };
+  }, [location.pathname]);
 
   // We could expose a way for children to trigger logout, 
   // but for now they can dispatch a custom event or use the store directly.
@@ -29,6 +61,17 @@ export default function StaffLayout() {
         cancelText="Hủy"
         variant="danger"
       />
+
+      {showGlobalException && (
+        <GlobalExceptionPanel
+          coPlateCam={exceptionContext?.coPlateCam || ''}
+          currentSession={exceptionContext?.currentSession || null}
+          onClose={() => setShowGlobalException(false)}
+          onExceptionCreated={() => {
+            window.dispatchEvent(new CustomEvent("RESET_CHECKOUT"));
+          }}
+        />
+      )}
     </div>
   );
 }

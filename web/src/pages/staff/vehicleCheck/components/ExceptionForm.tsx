@@ -5,7 +5,7 @@ import {
   EXCEPTION_TYPE_LABELS,
 } from "../../../../services/exception.service";
 
-// ─── ExceptionForm: dùng khi tạo ngoại lệ KHÔNG từ context check-out ─────────
+// ─── ExceptionForm: dùng khi tạo sự cố KHÔNG từ context check-out ─────────
 // (vd: báo cáo sự cố từ luồng check-in, hoặc từ màn hình riêng)
 export default function ExceptionForm({ onClose }: { onClose: () => void }) {
   const [exceptionType, setExceptionType] = useState<ExceptionType>(
@@ -30,7 +30,7 @@ export default function ExceptionForm({ onClose }: { onClose: () => void }) {
     // Flow đúng: Staff cần tìm session trước (qua CheckOutPanel) để có _id.
     // Form này chỉ dùng như fallback — thực tế nên dùng GlobalExceptionPanel.
     toast.warning(
-      "Vui lòng báo ngoại lệ trực tiếp từ màn hình Kiểm Tra Xe để gắn đúng phiên gửi xe!"
+      "Vui lòng báo sự cố trực tiếp từ màn hình Kiểm Tra Xe để gắn đúng phiên gửi xe!"
     );
     onClose();
   };

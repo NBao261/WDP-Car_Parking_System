@@ -109,7 +109,7 @@ export default function ExceptionsStaffPage() {
         setExceptionsList(listData.map((exc: any) => mapApiException(exc, pricingMap)));
       }
     } catch (error: any) {
-      toast.error(error.message || "Không thể tải danh sách ngoại lệ!");
+      toast.error(error.message || "Không thể tải danh sách sự cố!");
       setExceptionsList([]);
     } finally {
       setIsLoading(false);
@@ -137,12 +137,12 @@ export default function ExceptionsStaffPage() {
   };
 
   return (
-    <div className="h-full max-w-[1400px] mx-auto pb-10 p-6">
-      <div className="flex justify-between items-start mb-6">
+    <div className="h-full max-w-[1400px] mx-auto pb-10 p-6 flex flex-col">
+      <div className="flex justify-between items-start mb-6 shrink-0">
         <div>
-          <h2 className="text-[22px] font-bold text-[#060606]">Xử lí ngoại lệ</h2>
+          <h2 className="text-[22px] font-bold text-[#060606]">Xử lý sự cố</h2>
           <p className="text-sm text-[#6b6b6b] mt-1">
-            Các ngoại lệ bạn đã báo cáo và trạng thái giải quyết.
+            Các sự cố bạn đã báo cáo và trạng thái giải quyết.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -150,7 +150,7 @@ export default function ExceptionsStaffPage() {
             onClick={() => setIsCreateModalOpen(true)}
             className="px-4 py-2 text-[13px] font-bold bg-[#1a1a1a] text-[#9FE870] rounded-[8px] hover:bg-black transition-colors"
           >
-            + Tạo Ngoại Lệ
+            + Tạo Sự Cố
           </button>
           <button
             onClick={fetchExceptions}
