@@ -10,6 +10,7 @@ import { AppError } from '../middlewares/error.middleware';
 /** Bộ lọc cho báo cáo lượt xe vào/ra (FR-6.1) */
 interface DateRangeFilter {
   facilityId?: string;     // ID bãi xe (lọc theo bãi)
+  facilityIds?: string[];  // Danh sách facility IDs (scope manager)
   floorId?: string;        // ID tầng (lọc theo tầng)
   vehicleTypeId?: string;  // ID loại phương tiện
   startDate?: string;      // Ngày bắt đầu (ISO date string)
@@ -20,6 +21,7 @@ interface DateRangeFilter {
 /** Bộ lọc cho báo cáo doanh thu (FR-6.2) */
 interface RevenueFilter {
   facilityId?: string;     // ID bãi xe
+  facilityIds?: string[];  // Danh sách facility IDs (scope manager)
   vehicleTypeId?: string;  // ID loại phương tiện
   paymentMethod?: string;  // Phương thức thanh toán (cash, qr_pay, e_wallet, bank_card)
   startDate?: string;      // Ngày bắt đầu
@@ -30,12 +32,14 @@ interface RevenueFilter {
 /** Bộ lọc cho báo cáo tỷ lệ lấp đầy (FR-6.3) */
 interface OccupancyFilter {
   facilityId?: string;     // ID bãi xe
+  facilityIds?: string[];  // Danh sách facility IDs (scope manager)
   vehicleTypeId?: string;  // ID loại phương tiện
 }
 
 /** Bộ lọc cho báo cáo khung giờ cao điểm (FR-6.4) */
 interface PeakHoursFilter {
   facilityId?: string;     // ID bãi xe
+  facilityIds?: string[];  // Danh sách facility IDs (scope manager)
   vehicleTypeId?: string;  // ID loại phương tiện
   startDate?: string;      // Ngày bắt đầu
   endDate?: string;        // Ngày kết thúc
@@ -126,11 +130,12 @@ export class ReportService {
    * 4. Tính tổng và trả về summary + data chi tiết
    */
   static async getTrafficReport(filters: DateRangeFilter) {
-    const { facilityId, floorId, vehicleTypeId, startDate, endDate, groupBy = 'day' } = filters;
+    const { facilityId, facilityIds, floorId, vehicleTypeId, startDate, endDate, groupBy = 'day' } = filters;
 
     // ── Bước 1: Xây dựng điều kiện lọc (match stage) ──
     const matchStage: any = {};
     if (facilityId) matchStage.facilityId = new mongoose.Types.ObjectId(facilityId);
+    else if (facilityIds && facilityIds.length > 0) matchStage.facilityId = { $in: facilityIds.map(id => new mongoose.Types.ObjectId(id)) };
     if (floorId) matchStage.floorId = new mongoose.Types.ObjectId(floorId);
     if (vehicleTypeId) matchStage.vehicleTypeId = new mongoose.Types.ObjectId(vehicleTypeId);
 
@@ -231,7 +236,7 @@ export class ReportService {
    * 3. Aggregate theo 3 chiều phân tích
    */
   static async getRevenueReport(filters: RevenueFilter) {
-    const { facilityId, vehicleTypeId, paymentMethod, startDate, endDate, groupBy = 'day' } = filters;
+    const { facilityId, facilityIds, vehicleTypeId, paymentMethod, startDate, endDate, groupBy = 'day' } = filters;
 
     // ── Pipeline chính: Doanh thu theo mốc thời gian ──
     const pipeline: any[] = [];
@@ -257,9 +262,10 @@ export class ReportService {
     pipeline.push({ $unwind: '$session' }); // Giải nén mảng thành object
 
     // Lọc theo bãi xe hoặc loại phương tiện (từ session)
-    if (facilityId || vehicleTypeId) {
+    if (facilityId || facilityIds || vehicleTypeId) {
       const sessionMatch: any = {};
       if (facilityId) sessionMatch['session.facilityId'] = new mongoose.Types.ObjectId(facilityId);
+      else if (facilityIds && facilityIds.length > 0) sessionMatch['session.facilityId'] = { $in: facilityIds.map(id => new mongoose.Types.ObjectId(id)) };
       if (vehicleTypeId) sessionMatch['session.vehicleTypeId'] = new mongoose.Types.ObjectId(vehicleTypeId);
       pipeline.push({ $match: sessionMatch });
     }
@@ -303,9 +309,10 @@ export class ReportService {
     ];
 
     // Áp dụng lọc bãi xe / loại xe nếu có
-    if (facilityId || vehicleTypeId) {
+    if (facilityId || facilityIds || vehicleTypeId) {
       const sessionMatch: any = {};
       if (facilityId) sessionMatch['session.facilityId'] = new mongoose.Types.ObjectId(facilityId);
+      else if (facilityIds && facilityIds.length > 0) sessionMatch['session.facilityId'] = { $in: facilityIds.map(id => new mongoose.Types.ObjectId(id)) };
       if (vehicleTypeId) sessionMatch['session.vehicleTypeId'] = new mongoose.Types.ObjectId(vehicleTypeId);
       methodPipeline.push({ $match: sessionMatch });
     }
@@ -339,6 +346,10 @@ export class ReportService {
     if (facilityId) {
       vehicleTypePipeline.push({
         $match: { 'session.facilityId': new mongoose.Types.ObjectId(facilityId) },
+      });
+    } else if (facilityIds && facilityIds.length > 0) {
+      vehicleTypePipeline.push({
+        $match: { 'session.facilityId': { $in: facilityIds.map(id => new mongoose.Types.ObjectId(id)) } },
       });
     }
 
@@ -405,11 +416,12 @@ export class ReportService {
    * 4. Tính occupancyRate và effectiveOccupancy
    */
   static async getOccupancyReport(filters: OccupancyFilter) {
-    const { facilityId, vehicleTypeId } = filters;
+    const { facilityId, facilityIds, vehicleTypeId } = filters;
 
     // Điều kiện lọc slot (chỉ lấy slot chưa bị xóa mềm)
     const slotMatch: any = { isDeleted: false };
     if (facilityId) slotMatch.facilityId = new mongoose.Types.ObjectId(facilityId);
+    else if (facilityIds && facilityIds.length > 0) slotMatch.facilityId = { $in: facilityIds.map(id => new mongoose.Types.ObjectId(id)) };
     if (vehicleTypeId) slotMatch.vehicleTypeId = new mongoose.Types.ObjectId(vehicleTypeId);
 
     // Pipeline: Aggregate slot theo tầng
@@ -540,11 +552,12 @@ export class ReportService {
    * 4. Xếp hạng và lấy top 3 giờ có tổng hoạt động cao nhất
    */
   static async getPeakHoursReport(filters: PeakHoursFilter) {
-    const { facilityId, vehicleTypeId, startDate, endDate } = filters;
+    const { facilityId, facilityIds, vehicleTypeId, startDate, endDate } = filters;
 
     // ── Xây dựng điều kiện lọc ──
     const matchStage: any = {};
     if (facilityId) matchStage.facilityId = new mongoose.Types.ObjectId(facilityId);
+    else if (facilityIds && facilityIds.length > 0) matchStage.facilityId = { $in: facilityIds.map(id => new mongoose.Types.ObjectId(id)) };
     if (vehicleTypeId) matchStage.vehicleTypeId = new mongoose.Types.ObjectId(vehicleTypeId);
 
     // Lọc theo khoảng thời gian
@@ -690,11 +703,12 @@ export class ReportService {
    * @param filters.facilityId - ID bãi xe (bắt buộc cho heatmap có ý nghĩa)
    */
   static async getOccupancyHeatmap(filters: OccupancyFilter) {
-    const { facilityId, vehicleTypeId } = filters;
+    const { facilityId, facilityIds, vehicleTypeId } = filters;
 
     // ── Bước 1: Aggregate slot theo (floorId, vehicleTypeId) ──
     const slotMatch: any = { isDeleted: false };
     if (facilityId) slotMatch.facilityId = new mongoose.Types.ObjectId(facilityId);
+    else if (facilityIds && facilityIds.length > 0) slotMatch.facilityId = { $in: facilityIds.map(id => new mongoose.Types.ObjectId(id)) };
     if (vehicleTypeId) slotMatch.vehicleTypeId = new mongoose.Types.ObjectId(vehicleTypeId);
 
     const pipeline: any[] = [

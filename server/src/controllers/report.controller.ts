@@ -2,14 +2,59 @@ import { Request, Response, NextFunction } from 'express';
 import { ReportService } from '../services/report.service';
 import { ExportService } from '../services/export.service';
 import { AppError } from '../middlewares/error.middleware';
+import { UserRole } from '../models/user.model';
+import { ParkingFacility } from '../models/parkingFacility.model';
 
 /**
  * Controller xử lý các API Báo cáo & Thống kê (FR-6)
  *
  * Quyền truy cập (SRS 3.6): Chỉ Admin và Manager được xem báo cáo.
+ * Manager chỉ xem được báo cáo của các toà nhà mình được gán quản lý.
  * Middleware phân quyền được áp dụng tại routes (verifyToken + checkPermission).
  */
 export class ReportController {
+
+  /**
+   * Helper: Lấy danh sách facilityIds mà manager được gán quản lý.
+   * - Admin: không giới hạn (return undefined)
+   * - Manager: return danh sách facilityId mà user nằm trong assignedUsers
+   * - Nếu manager truyền facilityId cụ thể, validate nó thuộc danh sách được gán
+   */
+  private static async resolveManagerFacilityScope(
+    req: Request,
+    requestedFacilityId?: string
+  ): Promise<{ facilityId?: string; facilityIds?: string[] }> {
+    const user = req.user!;
+
+    // Admin: không giới hạn
+    if (user.role === UserRole.ADMIN) {
+      return { facilityId: requestedFacilityId };
+    }
+
+    // Manager: chỉ xem facility mình quản lý
+    const assignedFacilities = await ParkingFacility.find(
+      { assignedUsers: user.userId, isDeleted: false },
+      { _id: 1 }
+    ).lean();
+
+    const allowedIds = assignedFacilities.map((f) => f._id.toString());
+
+    if (allowedIds.length === 0) {
+      throw new AppError('Bạn chưa được gán quản lý toà nhà nào', 403);
+    }
+
+    // Nếu manager truyền facilityId cụ thể → validate
+    if (requestedFacilityId) {
+      if (!allowedIds.includes(requestedFacilityId)) {
+        throw new AppError('Bạn không có quyền xem báo cáo của toà nhà này', 403);
+      }
+      return { facilityId: requestedFacilityId };
+    }
+
+    // Không truyền facilityId → scope xuống tất cả facility được gán
+    return { facilityIds: allowedIds };
+  }
+
   /**
    * GET /reports/traffic
    * FR-6.1: Báo cáo lượt xe vào/ra
@@ -26,8 +71,10 @@ export class ReportController {
     try {
       const { facilityId, floorId, vehicleTypeId, startDate, endDate, groupBy } = req.query;
 
+      const scope = await ReportController.resolveManagerFacilityScope(req, facilityId as string);
+
       const result = await ReportService.getTrafficReport({
-        facilityId: facilityId as string,
+        ...scope,
         floorId: floorId as string,
         vehicleTypeId: vehicleTypeId as string,
         startDate: startDate as string,
@@ -57,8 +104,10 @@ export class ReportController {
     try {
       const { facilityId, vehicleTypeId, paymentMethod, startDate, endDate, groupBy } = req.query;
 
+      const scope = await ReportController.resolveManagerFacilityScope(req, facilityId as string);
+
       const result = await ReportService.getRevenueReport({
-        facilityId: facilityId as string,
+        ...scope,
         vehicleTypeId: vehicleTypeId as string,
         paymentMethod: paymentMethod as string,
         startDate: startDate as string,
@@ -86,8 +135,10 @@ export class ReportController {
     try {
       const { facilityId, vehicleTypeId } = req.query;
 
+      const scope = await ReportController.resolveManagerFacilityScope(req, facilityId as string);
+
       const result = await ReportService.getOccupancyReport({
-        facilityId: facilityId as string,
+        ...scope,
         vehicleTypeId: vehicleTypeId as string,
       });
 
@@ -113,8 +164,10 @@ export class ReportController {
     try {
       const { facilityId, vehicleTypeId, startDate, endDate } = req.query;
 
+      const scope = await ReportController.resolveManagerFacilityScope(req, facilityId as string);
+
       const result = await ReportService.getPeakHoursReport({
-        facilityId: facilityId as string,
+        ...scope,
         vehicleTypeId: vehicleTypeId as string,
         startDate: startDate as string,
         endDate: endDate as string,
@@ -129,25 +182,15 @@ export class ReportController {
   /**
    * GET /reports/occupancy/heatmap
    * FR-6.3 mở rộng: Occupancy heatmap theo tầng + loại xe
-   *
-   * Trả về ma trận heatmap 2 chiều (tầng × loại xe) với chỉ số MFD:
-   * - occupancyRate, effectiveOccupancy, optimalOccupancy (O*)
-   * - operatingRegime: free-flow | capacity | congested
-   * - flowProxy: lượt checkout 24h gần nhất
-   * - gap: khoảng cách đến O* (dương = quá tải)
-   *
-   * Thuật toán: Macroscopic Fundamental Diagram (MFD) [P2]
-   *
-   * Query params:
-   * - facilityId: ID bãi xe (khuyến nghị, cần cho heatmap có ý nghĩa)
-   * - vehicleTypeId: ID loại phương tiện (tùy chọn, lọc 1 loại xe cụ thể)
    */
   static async getOccupancyHeatmap(req: Request, res: Response, next: NextFunction) {
     try {
       const { facilityId, vehicleTypeId } = req.query;
 
+      const scope = await ReportController.resolveManagerFacilityScope(req, facilityId as string);
+
       const result = await ReportService.getOccupancyHeatmap({
-        facilityId: facilityId as string,
+        ...scope,
         vehicleTypeId: vehicleTypeId as string,
       });
 
@@ -168,7 +211,7 @@ export class ReportController {
    */
   static async exportReport(req: Request, res: Response, next: NextFunction) {
     try {
-      const { reportType, format, ...filters } = req.query;
+      const { reportType, format, facilityId, ...otherFilters } = req.query;
       
       if (!reportType || !['traffic', 'revenue', 'occupancy', 'peak-hours'].includes(reportType as string)) {
         throw new AppError('Loại báo cáo không hợp lệ (traffic, revenue, occupancy, peak-hours)', 400);
@@ -176,6 +219,10 @@ export class ReportController {
       if (!format || !['excel', 'pdf'].includes(format as string)) {
         throw new AppError('Định dạng xuất không hợp lệ (excel, pdf)', 400);
       }
+
+      // Enforce manager scope cho export
+      const scope = await ReportController.resolveManagerFacilityScope(req, facilityId as string);
+      const filters = { ...otherFilters, ...scope };
 
       let data;
       switch (reportType) {
