@@ -697,7 +697,9 @@ export function PricingFormModal({
                         className={getInputCls(!!errors.overnightFee)}
                         placeholder="0"
                       />
-                      {errors.overnightFee && <p className={errCls}>{errors.overnightFee.message}</p>}
+                      {errors.overnightFee && (
+                        <p className={errCls}>{errors.overnightFee.message}</p>
+                      )}
                     </div>
                   )}
 
@@ -716,7 +718,9 @@ export function PricingFormModal({
                         placeholder="0"
                       />
                       <p className="text-[10px] text-gray-400 mt-1">
-                        {currentUiFeeType === 'hourly' ? 'Tính thêm khi đỗ quá 24h' : 'Ngoài khung giờ hoạt động'}
+                        {currentUiFeeType === 'hourly'
+                          ? 'Tính thêm khi đỗ quá 24h'
+                          : 'Ngoài khung giờ hoạt động'}
                       </p>
                       {errors.overtimeFeePerHour && (
                         <p className={errCls}>{errors.overtimeFeePerHour.message}</p>

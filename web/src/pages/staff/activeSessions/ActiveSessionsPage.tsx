@@ -10,13 +10,16 @@ export default function ActiveSessionsPage() {
   const [trafficOut, setTrafficOut] = useState(0);
 
   useEffect(() => {
-    const facilityId = sessionStorage.getItem("staff_facility_id") || undefined;
-    sessionService.getTodayTraffic(facilityId).then((res: any) => {
-      if (res.success && res.data) {
-        setTrafficIn(res.data.trafficIn);
-        setTrafficOut(res.data.trafficOut);
-      }
-    }).catch(console.error);
+    const facilityId = sessionStorage.getItem('staff_facility_id') || undefined;
+    sessionService
+      .getTodayTraffic(facilityId)
+      .then((res: any) => {
+        if (res.success && res.data) {
+          setTrafficIn(res.data.trafficIn);
+          setTrafficOut(res.data.trafficOut);
+        }
+      })
+      .catch(console.error);
   }, []);
 
   return (
@@ -24,7 +27,9 @@ export default function ActiveSessionsPage() {
       {/* Page Title — compact */}
       <div className="shrink-0 px-1 pt-1">
         <h1 className="text-xl font-bold text-[#060606]">Danh Sách Xe Trong Bãi</h1>
-        <p className="text-[12px] text-gray-400 mt-0.5">Theo dõi danh sách xe đang trong bãi và hỗ trợ tìm kiếm.</p>
+        <p className="text-[12px] text-gray-400 mt-0.5">
+          Theo dõi danh sách xe đang trong bãi và hỗ trợ tìm kiếm.
+        </p>
       </div>
 
       {/* Stats Row — 1 hàng ngang compact, ~60px */}
@@ -39,9 +44,7 @@ export default function ActiveSessionsPage() {
 
       {/* Main Table — chiếm toàn bộ phần còn lại */}
       <div className="flex-1 min-h-0">
-        <TableSessionsPage
-          onTotalChange={setTotalActiveSessions}
-        />
+        <TableSessionsPage onTotalChange={setTotalActiveSessions} />
       </div>
     </div>
   );

@@ -30,7 +30,7 @@ export const AuthRedirect = ({ children }: { children: JSX.Element }) => {
     if (user.role === UserRole.ADMIN) dashboardPath = '/admin';
     else if (user.role === UserRole.MANAGER) dashboardPath = '/manager';
     else if (user.role === UserRole.DRIVER) dashboardPath = '/driver';
-    
+
     return <Navigate to={dashboardPath} replace />;
   }
 

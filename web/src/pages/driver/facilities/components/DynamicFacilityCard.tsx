@@ -14,7 +14,7 @@ export const DynamicFacilityCard: React.FC<DynamicFacilityCardProps> = ({
   facility,
   index,
   onPricingClick,
-  onBookClick
+  onBookClick,
 }) => {
   return (
     <motion.div
@@ -61,7 +61,9 @@ export const DynamicFacilityCard: React.FC<DynamicFacilityCardProps> = ({
       {/* Content Section */}
       <div className="p-5 flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="text-xl font-bold text-slate-900 mb-1 group-hover:text-brand transition-colors line-clamp-1">{facility.name}</h3>
+          <h3 className="text-xl font-bold text-slate-900 mb-1 group-hover:text-brand transition-colors line-clamp-1">
+            {facility.name}
+          </h3>
           <p className="text-slate-500 text-sm mb-4 line-clamp-2">{facility.address}</p>
         </div>
 

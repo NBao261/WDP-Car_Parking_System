@@ -1,15 +1,28 @@
-import { AlertTriangle, ArrowRight, RefreshCw, CheckCircle, ChevronDown, Camera, X, ImagePlus, ScanLine } from "lucide-react";
-import { useRef, useState } from "react";
-import axios from "axios";
-import SuggestionPanel from "./components/SuggestionPanel";
-import FacilitySelectorStep from "./components/FacilitySelectorStep";
-import { useCheckinFlow } from "./hooks/useCheckinFlow";
+import {
+  AlertTriangle,
+  ArrowRight,
+  RefreshCw,
+  CheckCircle,
+  ChevronDown,
+  Camera,
+  X,
+  ImagePlus,
+  ScanLine,
+} from 'lucide-react';
+import { useRef, useState } from 'react';
+import axios from 'axios';
+import SuggestionPanel from './components/SuggestionPanel';
+import FacilitySelectorStep from './components/FacilitySelectorStep';
+import { useCheckinFlow } from './hooks/useCheckinFlow';
 
 export default function CheckinStaffPage({ onFlagException }: { onFlagException?: () => void }) {
   const {
-    gate: _gate, setGate: _setGate,
-    vehicleTypeId, setVehicleTypeId,
-    plate, setPlate,
+    gate: _gate,
+    setGate: _setGate,
+    vehicleTypeId,
+    setVehicleTypeId,
+    plate,
+    setPlate,
     setCheckInImage,
     loading,
     assignedFacilities,
@@ -42,12 +55,12 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
 
     setIsUploading(true);
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append('image', file);
 
     try {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
       const response = await axios.post(`${API_BASE_URL}/alpr/scan`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       if (response.data.success && response.data.data.normalizedPlate) {
@@ -57,14 +70,14 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
         }
         setOcrSuccess(true);
       } else {
-        alert(response.data.message || "Không nhận dạng được biển số. Vui lòng nhập tay.");
+        alert(response.data.message || 'Không nhận dạng được biển số. Vui lòng nhập tay.');
       }
     } catch (error: any) {
-      console.error("ALPR Error:", error);
-      alert(error.response?.data?.message || "Lỗi xử lý ảnh. Vui lòng thử lại.");
+      console.error('ALPR Error:', error);
+      alert(error.response?.data?.message || 'Lỗi xử lý ảnh. Vui lòng thử lại.');
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -80,11 +93,13 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-bold text-[#060606]">Check-in (Entry)</h2>
-          <span className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-lg">Scan / Manual</span>
+          <span className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-lg">
+            Scan / Manual
+          </span>
         </div>
 
         {/* Facility Badge */}
-        {selectedFacility && step !== "facility" && (
+        {selectedFacility && step !== 'facility' && (
           <div className="mb-4">
             <button
               onClick={handleChangeFacility}
@@ -107,7 +122,7 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
         )}
 
         {/* Loading spinner */}
-        {loading && step === "input" && !selectedFacility && !error && (
+        {loading && step === 'input' && !selectedFacility && !error && (
           <div className="flex flex-col items-center justify-center py-10 text-gray-400">
             <RefreshCw className="w-6 h-6 animate-spin mb-2" />
             <p className="text-xs">Đang tải dữ liệu...</p>
@@ -115,26 +130,37 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
         )}
 
         {/* Step: Chọn bãi xe */}
-        {step === "facility" && (
-          <FacilitySelectorStep
-            facilities={assignedFacilities}
-            onSelect={handleSelectFacility}
-          />
+        {step === 'facility' && (
+          <FacilitySelectorStep facilities={assignedFacilities} onSelect={handleSelectFacility} />
         )}
 
         {/* Step: Success */}
-        {step === "success" && result ? (
+        {step === 'success' && result ? (
           <div className="space-y-4">
             <div className="p-4 bg-green-50 border border-green-200 rounded-xl space-y-3">
               <div className="flex items-center gap-2 text-green-800 font-bold text-sm">
                 <CheckCircle className="w-5 h-5" /> Barrier Opened!
               </div>
               <div className="text-xs space-y-1.5 text-green-700 font-medium">
-                <div>Session: <strong>{result.code}</strong></div>
-                <div>Card: <strong className="font-mono">{result.cardCode}</strong></div>
-                <div>License Plate: <strong className="font-mono">{result.licensePlate}</strong></div>
-                {result.slotId && <div>Assigned Slot: <strong>{result.slotId.code}</strong></div>}
-                {result.floorId && <div>Floor: <strong>{result.floorId.name}</strong></div>}
+                <div>
+                  Session: <strong>{result.code}</strong>
+                </div>
+                <div>
+                  Card: <strong className="font-mono">{result.cardCode}</strong>
+                </div>
+                <div>
+                  License Plate: <strong className="font-mono">{result.licensePlate}</strong>
+                </div>
+                {result.slotId && (
+                  <div>
+                    Assigned Slot: <strong>{result.slotId.code}</strong>
+                  </div>
+                )}
+                {result.floorId && (
+                  <div>
+                    Floor: <strong>{result.floorId.name}</strong>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -151,15 +177,17 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
             )}
 
             <button
-              onClick={() => { resetFlow(); clearPreview(); }}
+              onClick={() => {
+                resetFlow();
+                clearPreview();
+              }}
               className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold transition"
             >
               Ready for Next
             </button>
           </div>
-        ) : step === "input" || step === "suggest" ? (
+        ) : step === 'input' || step === 'suggest' ? (
           <form onSubmit={handleCheckAvailability} className="space-y-5">
-
             {/* Vehicle Type */}
             <div>
               <label className="block text-xs font-bold text-[#060606] mb-2">Vehicle Type</label>
@@ -167,13 +195,17 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
                 value={vehicleTypeId}
                 onChange={(e) => setVehicleTypeId(e.target.value)}
                 className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-gray-400 cursor-pointer appearance-none"
-                disabled={step === "suggest"}
+                disabled={step === 'suggest'}
               >
                 {vehicleTypes.map((vt) => (
-                  <option key={vt._id} value={vt._id}>{vt.name}</option>
+                  <option key={vt._id} value={vt._id}>
+                    {vt.name}
+                  </option>
                 ))}
                 {vehicleTypes.length === 0 && (
-                  <option value="" disabled>Loading...</option>
+                  <option value="" disabled>
+                    Loading...
+                  </option>
                 )}
               </select>
             </div>
@@ -192,13 +224,15 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={step === "suggest" || isUploading}
+                  disabled={step === 'suggest' || isUploading}
                   className="w-full border-2 border-dashed border-gray-200 rounded-xl py-4 flex flex-col items-center gap-2 text-gray-400 hover:border-[#d7ee46] hover:text-[#060606] hover:bg-[#f9ffe0] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUploading ? (
                     <>
                       <RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" />
-                      <span className="text-xs font-semibold text-[#8bc34a]">Đang nhận dạng biển số...</span>
+                      <span className="text-xs font-semibold text-[#8bc34a]">
+                        Đang nhận dạng biển số...
+                      </span>
                     </>
                   ) : (
                     <>
@@ -227,7 +261,7 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
                   <button
                     type="button"
                     onClick={clearPreview}
-                    disabled={step === "suggest"}
+                    disabled={step === 'suggest'}
                     className="absolute top-2 right-2 w-6 h-6 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition disabled:opacity-0"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -250,14 +284,14 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
                   NOPLATE-AUTO — Xe không cần biển số
                 </div>
               ) : (
-              <input
-                type="text"
-                value={plate}
-                onChange={(e) => setPlate(e.target.value.toUpperCase())}
-                placeholder="VD: 29A-123.45"
-                disabled={step === "suggest"}
-                className="w-full text-center font-mono text-2xl font-bold uppercase tracking-widest text-[#060606] bg-gray-50 border border-gray-200 rounded-2xl py-4 focus:outline-none focus:border-[#d7ee46] focus:bg-white transition-all shadow-sm placeholder:text-gray-300 disabled:opacity-60"
-              />
+                <input
+                  type="text"
+                  value={plate}
+                  onChange={(e) => setPlate(e.target.value.toUpperCase())}
+                  placeholder="VD: 29A-123.45"
+                  disabled={step === 'suggest'}
+                  className="w-full text-center font-mono text-2xl font-bold uppercase tracking-widest text-[#060606] bg-gray-50 border border-gray-200 rounded-2xl py-4 focus:outline-none focus:border-[#d7ee46] focus:bg-white transition-all shadow-sm placeholder:text-gray-300 disabled:opacity-60"
+                />
               )}
               {ocrSuccess && (
                 <p className="text-center text-[10px] text-green-600 font-semibold">
@@ -267,23 +301,32 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
             </div>
 
             {/* Check button */}
-            {step === "input" && (
+            {step === 'input' && (
               <button
                 type="submit"
-                disabled={loading || (!plate.trim() && vehicleTypes.find((v) => v._id === vehicleTypeId)?.requiresPlate !== false) || !selectedFacility || !vehicleTypeId}
+                disabled={
+                  loading ||
+                  (!plate.trim() &&
+                    vehicleTypes.find((v) => v._id === vehicleTypeId)?.requiresPlate !== false) ||
+                  !selectedFacility ||
+                  !vehicleTypeId
+                }
                 className="w-full py-4 bg-[#e6f4a8] hover:bg-[#d7ee46] text-[#060606] font-bold rounded-2xl transition-all text-sm disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading
-                  ? <RefreshCw className="w-4 h-4 animate-spin" />
-                  : <>Check Availability <ArrowRight className="w-4 h-4" /></>
-                }
+                {loading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    Check Availability <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             )}
           </form>
         ) : null}
 
         {/* Suggestion Panel */}
-        {step === "suggest" && (
+        {step === 'suggest' && (
           <SuggestionPanel
             suggestedFloors={suggestedFloors}
             loading={loading}
@@ -294,11 +337,11 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
       </div>
 
       {/* Flag Exception button */}
-      {step !== "success" && step !== "facility" && (
+      {step !== 'success' && step !== 'facility' && (
         <div className="flex justify-center mt-6">
           <button
             type="button"
-            onClick={onFlagException || (() => alert("Exception flagged"))}
+            onClick={onFlagException || (() => alert('Exception flagged'))}
             className="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1.5 transition-colors"
           >
             <AlertTriangle className="w-4 h-4" /> Flag Exception

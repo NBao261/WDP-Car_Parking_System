@@ -33,7 +33,7 @@ function SlotCell({ slot, onStatusChange, readOnly }: SlotCellProps) {
       className={cn(
         'relative aspect-square rounded-xl border flex flex-col items-center justify-center gap-0.5 cursor-pointer select-none transition-colors',
         bg,
-        readOnly && 'cursor-default',
+        readOnly && 'cursor-default'
       )}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -63,10 +63,16 @@ function Legend() {
       {(Object.entries(STATUS_CONFIG) as [SlotStatus, (typeof STATUS_CONFIG)[SlotStatus]][]).map(
         ([status, cfg]) => (
           <div key={status} className="flex items-center gap-1.5 text-xs text-gray-600">
-            <span className={cn('w-3 h-3 rounded border', CELL_BG[status].split(' ')[0], CELL_BG[status].split(' ')[1])} />
+            <span
+              className={cn(
+                'w-3 h-3 rounded border',
+                CELL_BG[status].split(' ')[0],
+                CELL_BG[status].split(' ')[1]
+              )}
+            />
             {cfg.label}
           </div>
-        ),
+        )
       )}
     </div>
   );
@@ -132,10 +138,10 @@ export function SlotGrid({
       acc[s.status] = (acc[s.status] ?? 0) + 1;
       return acc;
     },
-    {} as Record<SlotStatus, number>,
+    {} as Record<SlotStatus, number>
   );
 
-  const sortedSlots = [...slots].sort((a, b) => 
+  const sortedSlots = [...slots].sort((a, b) =>
     a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
   );
 
@@ -149,19 +155,15 @@ export function SlotGrid({
               key={status}
               className={cn(
                 'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border',
-                CELL_BG[status],
+                CELL_BG[status]
               )}
             >
-              <span
-                className={cn('w-1.5 h-1.5 rounded-full', STATUS_CONFIG[status].dot)}
-              />
+              <span className={cn('w-1.5 h-1.5 rounded-full', STATUS_CONFIG[status].dot)} />
               {STATUS_CONFIG[status].label}: {counts[status]}
             </span>
-          ) : null,
+          ) : null
         )}
-        <span className="ml-auto text-xs text-gray-400 self-center">
-          Tổng: {slots.length} slot
-        </span>
+        <span className="ml-auto text-xs text-gray-400 self-center">Tổng: {slots.length} slot</span>
       </div>
 
       {/* Legend */}
@@ -177,9 +179,11 @@ export function SlotGrid({
             key={slot._id}
             slot={slot}
             vehicleTypeName={
-              (slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object')
+              slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object'
                 ? slot.vehicleTypeId.name
-                : (slot.vehicleTypeId ? vehicleTypeMap[slot.vehicleTypeId] : '')
+                : slot.vehicleTypeId
+                  ? vehicleTypeMap[slot.vehicleTypeId]
+                  : ''
             }
             onStatusChange={onSlotClick}
             readOnly={readOnly}

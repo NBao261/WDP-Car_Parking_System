@@ -26,9 +26,9 @@ function formatPlate(raw: string): string {
 }
 
 export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
-  const [plate, setPlate] = useState("");
+  const [plate, setPlate] = useState('');
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
-  const [selectedVehicleTypeId, setSelectedVehicleTypeId] = useState("");
+  const [selectedVehicleTypeId, setSelectedVehicleTypeId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkInImage, setCheckInImage] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -44,7 +44,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   const gateIn = sessionStorage.getItem("staff_gate_name") || `Cổng - ${facilityName}`;
 
   // ── Reservation (thêm vào khung bên phải) ────────────────────────────────
-  const [reservationCode, setReservationCode] = useState("");
+  const [reservationCode, setReservationCode] = useState('');
   const [reservationInfo, setReservationInfo] = useState<any>(null);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [plateMatchStatus, setPlateMatchStatus] = useState<'idle' | 'match' | 'mismatch'>('idle');
@@ -68,7 +68,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     setCheckInError(null);
     setIsUploading(true);
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append('image', file);
 
     const selectedType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
     const isNoPlate = selectedType?.requiresPlate === false;
@@ -76,7 +76,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     try {
       if (isNoPlate) {
         const response: any = await apiClient.post('/upload/image', formData, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { 'Content-Type': 'multipart/form-data' },
         });
         if (response.success && response.data?.imageUrl) {
           setCheckInImage(response.data.imageUrl);
@@ -85,7 +85,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         }
       } else {
         const response: any = await apiClient.post('/alpr/scan', formData, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { 'Content-Type': 'multipart/form-data' },
           timeout: 35000,
         } as any);
         if (response.success && response.data?.normalizedPlate) {
@@ -99,7 +99,10 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
             const clean = (s: string) => s.replace(/[^A-Z0-9]/g, '').toUpperCase();
             const matched = clean(recognized) === clean(reservationInfo.licensePlate);
             setPlateMatchStatus(matched ? 'match' : 'mismatch');
-            if (!matched) toast.warning(`⚠ Biển OCR (${recognized}) ≠ Đặt chỗ (${reservationInfo.licensePlate})`);
+            if (!matched)
+              toast.warning(
+                `⚠ Biển OCR (${recognized}) ≠ Đặt chỗ (${reservationInfo.licensePlate})`
+              );
           }
         } else {
           if (response.data?.imageUrl) {
@@ -113,7 +116,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
       setCheckInImage(localUrl);
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -129,8 +132,14 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   // Lắng nghe Hotkeys
   useEffect(() => {
     const onF1 = () => {
-      setPlate(""); setCheckInImage(null); setPreviewUrl(null); setOcrSuccess(false);
-      setReservationCode(""); setReservationInfo(null); setPlateMatchStatus('idle'); setManualPlateConfirmed(false);
+      setPlate('');
+      setCheckInImage(null);
+      setPreviewUrl(null);
+      setOcrSuccess(false);
+      setReservationCode('');
+      setReservationInfo(null);
+      setPlateMatchStatus('idle');
+      setManualPlateConfirmed(false);
     };
 
     const onSpace = (e: KeyboardEvent) => {
@@ -159,11 +168,11 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
       }
     };
 
-    window.addEventListener("keydown", onSpace);
-    window.addEventListener("HOTKEY_F1", onF1);
+    window.addEventListener('keydown', onSpace);
+    window.addEventListener('HOTKEY_F1', onF1);
     return () => {
-      window.removeEventListener("keydown", onSpace);
-      window.removeEventListener("HOTKEY_F1", onF1);
+      window.removeEventListener('keydown', onSpace);
+      window.removeEventListener('HOTKEY_F1', onF1);
     };
   }, [plate, isSubmitting, vehicleTypes, selectedVehicleTypeId, checkInImage, reservationCode, reservationInfo, plateMatchStatus, manualPlateConfirmed, pendingClear]);
 
@@ -171,16 +180,19 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
 
   useEffect(() => {
     if (!facilityId) return;
-    facilityService.getOperationsConfig(facilityId).then((res) => {
-      if (res.success && res.data.allowedVehicleTypes.length > 0) {
-        setVehicleTypes(res.data.allowedVehicleTypes);
-        setSelectedVehicleTypeId(res.data.allowedVehicleTypes[0]._id);
-      } else {
-        setVehicleTypes([]);
-        setSelectedVehicleTypeId("");
-        toast.warning("Toà nhà này chưa được cấu hình loại xe. Liên hệ Admin.");
-      }
-    }).catch(() => toast.error("Không thể tải cấu hình loại xe"));
+    facilityService
+      .getOperationsConfig(facilityId)
+      .then((res) => {
+        if (res.success && res.data.allowedVehicleTypes.length > 0) {
+          setVehicleTypes(res.data.allowedVehicleTypes);
+          setSelectedVehicleTypeId(res.data.allowedVehicleTypes[0]._id);
+        } else {
+          setVehicleTypes([]);
+          setSelectedVehicleTypeId('');
+          toast.warning('Toà nhà này chưa được cấu hình loại xe. Liên hệ Admin.');
+        }
+      })
+      .catch(() => toast.error('Không thể tải cấu hình loại xe'));
   }, [facilityId]);
 
   // ── Fetch capacity khi facility thay đổi ──────────────────────────────────
@@ -223,19 +235,32 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     const category = guessVehicleCategory(plate);
     if (!category) return;
 
-    let targetType = vehicleTypes.find(v => {
+    let targetType = vehicleTypes.find((v) => {
       const lowerName = v.name.toLowerCase();
       if (category === 'Truck') return lowerName.includes('tải') || lowerName.includes('truck');
-      if (category === 'ElectricMotorbike') return lowerName.includes('máy điện') || lowerName.includes('xe điện');
-      if (category === 'Car') return lowerName === 'ô tô' || lowerName === 'car' || (lowerName.includes('ô tô') && !lowerName.includes('điện'));
-      if (category === 'Motorbike') return lowerName === 'xe máy' || lowerName === 'motorbike' || (lowerName.includes('máy') && !lowerName.includes('điện'));
+      if (category === 'ElectricMotorbike')
+        return lowerName.includes('máy điện') || lowerName.includes('xe điện');
+      if (category === 'Car')
+        return (
+          lowerName === 'ô tô' ||
+          lowerName === 'car' ||
+          (lowerName.includes('ô tô') && !lowerName.includes('điện'))
+        );
+      if (category === 'Motorbike')
+        return (
+          lowerName === 'xe máy' ||
+          lowerName === 'motorbike' ||
+          (lowerName.includes('máy') && !lowerName.includes('điện'))
+        );
       return false;
     });
     if (!targetType) {
-      if (category === 'Truck' || category === 'Car') targetType = vehicleTypes.find(v => v.name.toLowerCase().includes('ô tô'));
-      else targetType = vehicleTypes.find(v => v.name.toLowerCase().includes('máy'));
+      if (category === 'Truck' || category === 'Car')
+        targetType = vehicleTypes.find((v) => v.name.toLowerCase().includes('ô tô'));
+      else targetType = vehicleTypes.find((v) => v.name.toLowerCase().includes('máy'));
     }
-    if (targetType && targetType._id !== selectedVehicleTypeId) setSelectedVehicleTypeId(targetType._id);
+    if (targetType && targetType._id !== selectedVehicleTypeId)
+      setSelectedVehicleTypeId(targetType._id);
   }, [plate, vehicleTypes]);
 
   // ── QR Scanner ────────────────────────────────────────────────────────────
@@ -263,7 +288,10 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
           },
           undefined
         );
-      } catch { toast.error("Không mở được camera QR"); setShowQrScanner(false); }
+      } catch {
+        toast.error('Không mở được camera QR');
+        setShowQrScanner(false);
+      }
     }, 200);
   };
   useEffect(() => () => { qrScannerRef.current?.stop().catch(() => { }); }, []);
@@ -292,7 +320,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         }
       }
     } catch (err: any) {
-      toast.error(err.message || "Không tìm thấy mã đặt chỗ");
+      toast.error(err.message || 'Không tìm thấy mã đặt chỗ');
     } finally {
       setIsLookingUp(false);
     }
@@ -302,41 +330,63 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     const selectedVehicleType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
     const isNoPlate = selectedVehicleType?.requiresPlate === false;
 
-    if (!isNoPlate && !plate.trim()) { toast.error("Vui lòng nhập biển số xe!"); return; }
-    if (isNoPlate && !checkInImage) { toast.error("Xe không biển số: BẮT BUỘC phải chụp ảnh xe lúc vào!"); return; }
-    if (!facilityId || !selectedVehicleTypeId) { toast.error("Thiếu thông tin vị trí trực hoặc loại xe. Vui lòng đăng nhập lại!"); return; }
+    if (!isNoPlate && !plate.trim()) {
+      toast.error('Vui lòng nhập biển số xe!');
+      return;
+    }
+    if (isNoPlate && !checkInImage) {
+      toast.error('Xe không biển số: BẮT BUỘC phải chụp ảnh xe lúc vào!');
+      return;
+    }
+    if (!facilityId || !selectedVehicleTypeId) {
+      toast.error('Thiếu thông tin vị trí trực hoặc loại xe. Vui lòng đăng nhập lại!');
+      return;
+    }
     if (reservationInfo && plateMatchStatus === 'mismatch' && !manualPlateConfirmed) {
-      toast.error("Biển số không khớp đặt chỗ — tick xác nhận thủ công trước!"); return;
+      toast.error('Biển số không khớp đặt chỗ — tick xác nhận thủ công trước!');
+      return;
     }
 
     setIsSubmitting(true);
     try {
       const actualPlate = isNoPlate ? `KBS-${Math.floor(100000 + Math.random() * 900000)}` : plate;
       const res = await sessionService.checkIn({
-        facilityId, vehicleTypeId: selectedVehicleTypeId,
-        licensePlate: actualPlate, gateIn,
+        facilityId,
+        vehicleTypeId: selectedVehicleTypeId,
+        licensePlate: actualPlate,
+        gateIn,
         ...(reservationCode ? { reservationCode } : {}),
         ...(checkInImage ? { checkInImage } : {}),
       });
 
       if (res.success) {
-        const floorName = (res.data.floorId as any)?.name || "Tầng Auto";
-        const slotCode = (res.data.slotId as any)?.code || "Slot Auto";
+        const floorName = (res.data.floorId as any)?.name || 'Tầng Auto';
+        const slotCode = (res.data.slotId as any)?.code || 'Slot Auto';
         const now = new Date();
         const actualCheckInTime = res.data.checkInTime ? new Date(res.data.checkInTime) : now;
         onCheckIn({
-          cardCode: res.data.cardCode, plate: res.data.licensePlate,
-          vehicleType: vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name || "",
-          checkInTime: actualCheckInTime.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-          checkInDate: actualCheckInTime.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }),
-          gate: gateIn, zone: `${floorName} - Slot: ${slotCode}`,
+          cardCode: res.data.cardCode,
+          plate: res.data.licensePlate,
+          vehicleType: vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.name || '',
+          checkInTime: actualCheckInTime.toLocaleTimeString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          checkInDate: actualCheckInTime.toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          }),
+          gate: gateIn,
+          zone: `${floorName} - Slot: ${slotCode}`,
           ...(reservationCode ? { fromReservation: true, reservationCode } : {}),
         });
         toast.success(`Đã cấp phát: ${floorName} - Slot: ${slotCode}. Bấm Enter để mở chắn!`);
         setPendingClear(true);
 
         if (isNoPlate) {
-          const defaultType = vehicleTypes.find(v => v.requiresPlate !== false) || vehicleTypes[0];
+          const defaultType =
+            vehicleTypes.find((v) => v.requiresPlate !== false) || vehicleTypes[0];
           if (defaultType) setSelectedVehicleTypeId(defaultType._id);
         }
       }
@@ -347,8 +397,9 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     }
   };
 
-  const isNoPlateVt = vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.requiresPlate === false;
-  const displayPlate = isNoPlateVt ? "KBS-AUTO" : plate;
+  const isNoPlateVt =
+    vehicleTypes.find((v) => v._id === selectedVehicleTypeId)?.requiresPlate === false;
+  const displayPlate = isNoPlateVt ? 'KBS-AUTO' : plate;
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
@@ -406,13 +457,23 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
             ) : (
               <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden h-[210px] bg-[#f5f5f4]">
                 <img src={previewUrl} alt="preview" className="w-full h-full object-contain" />
-                <button type="button" onClick={clearPreview}
-                  className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={clearPreview}
+                  className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center"
+                >
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
-            <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleImageUpload}
+            />
           </div>
 
           {/* Right: Đặt chỗ trước */}
@@ -445,8 +506,15 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
                       plateMatchStatus === 'mismatch' ? <><AlertTriangle className="w-3 h-3" /> Không khớp</> :
                         <>✓ Tìm thấy</>}
                   </div>
-                  <button onClick={() => { setReservationInfo(null); setReservationCode(""); setPlateMatchStatus('idle'); setManualPlateConfirmed(false); }}
-                    className="w-5 h-5 flex items-center justify-center text-[#aaa] hover:text-[#333]">
+                  <button
+                    onClick={() => {
+                      setReservationInfo(null);
+                      setReservationCode('');
+                      setPlateMatchStatus('idle');
+                      setManualPlateConfirmed(false);
+                    }}
+                    className="w-5 h-5 flex items-center justify-center text-[#aaa] hover:text-[#333]"
+                  >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -455,18 +523,30 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
                 <div className="flex flex-col gap-1 text-[10px] text-[#444] flex-1">
                   <div className="flex justify-between">
                     <span className="text-[#888]">Biển đặt</span>
-                    <span className="font-mono font-bold text-[#062F28]">{reservationInfo.licensePlate}</span>
+                    <span className="font-mono font-bold text-[#062F28]">
+                      {reservationInfo.licensePlate}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#888]">Slot giữ</span>
-                    <span className="font-bold">{(reservationInfo.slotId as any)?.code || '?'}
-                      {(reservationInfo.slotId as any)?.floorId?.name &&
-                        <span className="font-normal text-[#888]"> · {(reservationInfo.slotId as any).floorId.name}</span>}
+                    <span className="font-bold">
+                      {(reservationInfo.slotId as any)?.code || '?'}
+                      {(reservationInfo.slotId as any)?.floorId?.name && (
+                        <span className="font-normal text-[#888]">
+                          {' '}
+                          · {(reservationInfo.slotId as any).floorId.name}
+                        </span>
+                      )}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#888]">Giờ hẹn</span>
-                    <span className="font-bold">{new Date(reservationInfo.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="font-bold">
+                      {new Date(reservationInfo.startTime).toLocaleTimeString('vi-VN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#888]">Mã</span>
@@ -477,8 +557,15 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
                 {/* Checkbox khi mismatch */}
                 {plateMatchStatus === 'mismatch' && (
                   <label className="flex items-start gap-1.5 cursor-pointer border-t border-red-200 pt-2 mt-1">
-                    <input type="checkbox" checked={manualPlateConfirmed} onChange={e => setManualPlateConfirmed(e.target.checked)} className="mt-0.5 w-3 h-3 accent-red-500" />
-                    <span className="text-[9px] font-semibold text-red-600 leading-tight">Xác nhận biển không khớp — vẫn cho vào</span>
+                    <input
+                      type="checkbox"
+                      checked={manualPlateConfirmed}
+                      onChange={(e) => setManualPlateConfirmed(e.target.checked)}
+                      className="mt-0.5 w-3 h-3 accent-red-500"
+                    />
+                    <span className="text-[9px] font-semibold text-red-600 leading-tight">
+                      Xác nhận biển không khớp — vẫn cho vào
+                    </span>
                   </label>
                 )}
               </div>
@@ -504,9 +591,20 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
                   </div>
                 ) : showQrScanner ? (
                   <div className="w-full flex flex-col gap-1">
-                    <div id="ci-qr-reader" className="w-full rounded-[4px] overflow-hidden" style={{ maxHeight: 100 }} />
-                    <p className="text-[9px] text-center text-[#9FE870] font-medium">Hướng vào mã QR trên điện thoại khách</p>
-                    <button onClick={toggleQrScanner} className="text-[9px] text-[#888] underline text-center">Đóng camera</button>
+                    <div
+                      id="ci-qr-reader"
+                      className="w-full rounded-[4px] overflow-hidden"
+                      style={{ maxHeight: 100 }}
+                    />
+                    <p className="text-[9px] text-center text-[#9FE870] font-medium">
+                      Hướng vào mã QR trên điện thoại khách
+                    </p>
+                    <button
+                      onClick={toggleQrScanner}
+                      className="text-[9px] text-[#888] underline text-center"
+                    >
+                      Đóng camera
+                    </button>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center mb-1" onClick={toggleQrScanner} style={{ cursor: 'pointer' }}>
@@ -564,7 +662,11 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
             <select value={selectedVehicleTypeId} onChange={(e) => setSelectedVehicleTypeId(e.target.value)}
               className="w-full h-7 px-3 border border-[#e8e9e8] bg-white rounded-[6px] text-[10px] font-medium outline-none focus:border-[#060606]">
               {vehicleTypes.length === 0 && <option value="">Đang tải...</option>}
-              {vehicleTypes.map((vt) => (<option key={vt._id} value={vt._id}>{vt.name}</option>))}
+              {vehicleTypes.map((vt) => (
+                <option key={vt._id} value={vt._id}>
+                  {vt.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="flex flex-col gap-1">

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -9,29 +9,36 @@ interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   className?: string;
 }
 
-export function AuthInput({ label, icon, hasError, errorMessage, type, className, ...props }: AuthInputProps) {
+export function AuthInput({
+  label,
+  icon,
+  hasError,
+  errorMessage,
+  type,
+  className,
+  ...props
+}: AuthInputProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
-  const isPassword = type === "password";
-  const inputType = isPassword && isPasswordVisible ? "text" : type;
+  const isPassword = type === 'password';
+  const inputType = isPassword && isPasswordVisible ? 'text' : type;
 
   // Determine border and shadow based on state
-  let containerClasses = "flex items-center h-[46px] rounded-lg border-[1.5px] bg-white px-3 transition-all duration-200";
-  
+  let containerClasses =
+    'flex items-center h-[46px] rounded-lg border-[1.5px] bg-white px-3 transition-all duration-200';
+
   if (hasError) {
-    containerClasses += " border-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.18)]";
+    containerClasses += ' border-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.18)]';
   } else if (isFocused) {
-    containerClasses += " border-[#9FE870] shadow-[0_0_0_3px_rgba(159,232,112,0.18)]";
+    containerClasses += ' border-[#9FE870] shadow-[0_0_0_3px_rgba(159,232,112,0.18)]';
   } else {
-    containerClasses += " border-[#E7E7F1]";
+    containerClasses += ' border-[#E7E7F1]';
   }
 
   return (
-    <div className={`flex flex-col w-full ${className || ""}`}>
-      <label className="text-[12px] font-semibold text-[#062F28] mb-[6px]">
-        {label}
-      </label>
+    <div className={`flex flex-col w-full ${className || ''}`}>
+      <label className="text-[12px] font-semibold text-[#062F28] mb-[6px]">{label}</label>
       <div className={containerClasses}>
         <div className="text-[#7B7B7B] mr-2 flex-shrink-0 flex items-center justify-center">
           {icon}

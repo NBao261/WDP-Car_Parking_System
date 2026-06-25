@@ -1,22 +1,25 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import ExceptionsList, { ExceptionData } from "./components/ExceptionsList";
-import ExceptionDetailDrawer from "./components/ExceptionDetailDrawer";
-import CreateExceptionModal from "./components/CreateExceptionModal";
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import ExceptionsList, { ExceptionData } from './components/ExceptionsList';
+import ExceptionDetailDrawer from './components/ExceptionDetailDrawer';
+import CreateExceptionModal from './components/CreateExceptionModal';
 import {
   exceptionService,
   ExceptionType,
   EXCEPTION_TYPE_LABELS,
-} from "../../../services/exception.service";
-import { pricingService } from "../../../services/pricing.service";
+} from '../../../services/exception.service';
+import { pricingService } from '../../../services/pricing.service';
 
 // ─── Map API Response → ExceptionData (UI) ───────────────────────────
 function mapApiException(exc: any, pricingMap?: Map<string, number>): ExceptionData {
-  const session = typeof exc.sessionId === "object" ? exc.sessionId : null;
-  const staff = typeof exc.staffId === "object" ? exc.staffId : null;
-  const manager = typeof exc.managerId === "object" && exc.managerId ? exc.managerId : null;
-  const resolvedBy = typeof exc.resolvedByStaffId === "object" && exc.resolvedByStaffId ? exc.resolvedByStaffId : null;
+  const session = typeof exc.sessionId === 'object' ? exc.sessionId : null;
+  const staff = typeof exc.staffId === 'object' ? exc.staffId : null;
+  const manager = typeof exc.managerId === 'object' && exc.managerId ? exc.managerId : null;
+  const resolvedBy =
+    typeof exc.resolvedByStaffId === 'object' && exc.resolvedByStaffId
+      ? exc.resolvedByStaffId
+      : null;
 
   let finalSurcharge = exc.surcharge || 0;
   // Nếu là mất vé và surcharge = 0, thử lấy lostCardFee từ PricingPlan
@@ -28,41 +31,49 @@ function mapApiException(exc: any, pricingMap?: Map<string, number>): ExceptionD
   return {
     id: exc._id,
     code: session?.code || exc._id,
-    cardCode: session?.cardCode || "—",
-    plate: session?.licensePlate || "—",
+    cardCode: session?.cardCode || '—',
+    plate: session?.licensePlate || '—',
     type: EXCEPTION_TYPE_LABELS[exc.type as ExceptionType] || exc.type,
     typeEnum: exc.type,
-    time: new Date(exc.createdAt).toLocaleString("vi-VN", {
-      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+    time: new Date(exc.createdAt).toLocaleString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     }),
-    status: exc.status.toUpperCase() as ExceptionData["status"],
-    staffName: staff?.name || "—",
+    status: exc.status.toUpperCase() as ExceptionData['status'],
+    staffName: staff?.name || '—',
     resolvedByStaffName: resolvedBy?.name || null,
-    staffNote: exc.staffNote || "",
+    staffNote: exc.staffNote || '',
     managerName: manager?.name || null,
     managerNote: exc.managerNote || null,
     surcharge: finalSurcharge,
-    description: exc.description || "",
+    description: exc.description || '',
     // Session details
-    vehicleType: (session?.vehicleTypeId as any)?.name || "—",
+    vehicleType: (session?.vehicleTypeId as any)?.name || '—',
     checkInTime: session?.checkInTime
-      ? new Date(session.checkInTime).toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-      : "—",
-    slotCode: (session?.slotId as any)?.code || "—",
-    floorName: (session?.floorId as any)?.name || "—",
-    facilityName: (session?.facilityId as any)?.name || "—",
-    facilityId: (session?.facilityId as any)?._id || "",
-    vehicleTypeIdStr: (session?.vehicleTypeId as any)?._id || "",
-    gateIn: session?.gateIn || "—",
-    sessionId: session?._id || (typeof exc.sessionId === "string" ? exc.sessionId : ""),
-    updatedAt: new Date(exc.updatedAt).toLocaleString("vi-VN", {
-      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+      ? new Date(session.checkInTime).toLocaleString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : '—',
+    slotCode: (session?.slotId as any)?.code || '—',
+    floorName: (session?.floorId as any)?.name || '—',
+    facilityName: (session?.facilityId as any)?.name || '—',
+    facilityId: (session?.facilityId as any)?._id || '',
+    vehicleTypeIdStr: (session?.vehicleTypeId as any)?._id || '',
+    gateIn: session?.gateIn || '—',
+    sessionId: session?._id || (typeof exc.sessionId === 'string' ? exc.sessionId : ''),
+    updatedAt: new Date(exc.updatedAt).toLocaleString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     }),
   };
 }
@@ -72,20 +83,20 @@ export default function ExceptionsStaffPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [exceptionsList, setExceptionsList] = useState<ExceptionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<string>("ALL");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const navigate = useNavigate();
 
   const fetchExceptions = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params: any = { sortBy: "createdAt", sortOrder: "desc", limit: 50 };
-      if (filterStatus !== "ALL") params.status = filterStatus.toLowerCase();
+      const params: any = { sortBy: 'createdAt', sortOrder: 'desc', limit: 50 };
+      if (filterStatus !== 'ALL') params.status = filterStatus.toLowerCase();
 
       // Sử dụng API thực tế thay vì mock data để có thể thấy ngoại lệ mới tạo
       const [res, pricingRes]: [any, any] = await Promise.all([
         exceptionService.getExceptions(params),
-        pricingService.getAll({ limit: 100 })
+        pricingService.getAll({ limit: 100 }),
       ]);
 
       const pricingMap = new Map<string, number>();
@@ -133,7 +144,7 @@ export default function ExceptionsStaffPage() {
   });
 
   const handleContinueCheckout = (plate: string) => {
-    navigate("/staff", { state: { plate } });
+    navigate('/staff', { state: { plate } });
   };
 
   return (
@@ -157,7 +168,7 @@ export default function ExceptionsStaffPage() {
             disabled={isLoading}
             className="px-4 py-2 text-[13px] font-medium border border-[#e8e9e8] rounded-[8px] hover:bg-[#f5ffe8] hover:border-[#9FE870] transition-colors disabled:opacity-50"
           >
-            {isLoading ? "Đang tải..." : "↻ Làm mới"}
+            {isLoading ? 'Đang tải...' : '↻ Làm mới'}
           </button>
         </div>
       </div>

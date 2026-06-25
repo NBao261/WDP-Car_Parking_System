@@ -1,5 +1,5 @@
-import { MapPin, Clock, CheckCircle2 } from "lucide-react";
-import { AssignedFacility } from "../../../../../types/user.types";
+import { MapPin, Clock, CheckCircle2 } from 'lucide-react';
+import { AssignedFacility } from '../../../../../types/user.types';
 
 interface FacilitySelectorStepProps {
   facilities: AssignedFacility[];
@@ -15,7 +15,9 @@ export default function FacilitySelectorStep({ facilities, onSelect }: FacilityS
     <div className="space-y-4">
       <div className="text-center mb-5">
         <h3 className="text-sm font-bold text-[#060606]">Chọn tòa nhà đang trực</h3>
-        <p className="text-xs text-gray-400 mt-1">Bạn đang được phân công tại {facilities.length} tòa nhà</p>
+        <p className="text-xs text-gray-400 mt-1">
+          Bạn đang được phân công tại {facilities.length} tòa nhà
+        </p>
       </div>
 
       <div className="space-y-3">
@@ -42,7 +44,7 @@ export default function FacilitySelectorStep({ facilities, onSelect }: FacilityS
                 </div>
               </div>
               <div className="shrink-0 mt-0.5">
-                {facility.status === "active" ? (
+                {facility.status === 'active' ? (
                   <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
                     <CheckCircle2 className="w-2.5 h-2.5" />
                     Active

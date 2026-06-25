@@ -1,7 +1,11 @@
 import { apiClient } from './api';
 
 export const paymentService = {
-  cashCheckout: async (payload: { sessionId: string; gateOut: string; checkOutImage?: string }): Promise<any> => {
+  cashCheckout: async (payload: {
+    sessionId: string;
+    gateOut: string;
+    checkOutImage?: string;
+  }): Promise<any> => {
     return apiClient.post('/payments/cash-checkout', payload);
   },
 
@@ -11,5 +15,5 @@ export const paymentService = {
 
   checkStatus: async (transactionCode: string): Promise<any> => {
     return apiClient.get(`/payments/status/${transactionCode}`);
-  }
+  },
 };

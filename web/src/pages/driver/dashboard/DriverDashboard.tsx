@@ -7,12 +7,8 @@ import { EmptyActiveState } from './components/EmptyActiveState';
 import { ActiveParkingCard } from './components/ActiveParkingCard';
 
 const DriverDashboard: React.FC = () => {
-  const { 
-    loading, 
-    activeSession, 
-    qrUrl 
-  } = useDashboard();
-  
+  const { loading, activeSession, qrUrl } = useDashboard();
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   if (loading) {
@@ -38,7 +34,7 @@ const DriverDashboard: React.FC = () => {
             <EmptyActiveState />
           </motion.div>
         ) : (
-          <motion.div 
+          <motion.div
             key="active-state"
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -50,7 +46,7 @@ const DriverDashboard: React.FC = () => {
               <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Bảng Điều Khiển</h1>
             </div>
 
-            <ActiveParkingCard 
+            <ActiveParkingCard
               activeSession={activeSession}
               qrUrl={qrUrl}
               onShowPayment={() => setShowPaymentModal(true)}
@@ -59,7 +55,7 @@ const DriverDashboard: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <PaymentModal 
+      <PaymentModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
         sessionId={activeSession?._id || ''}

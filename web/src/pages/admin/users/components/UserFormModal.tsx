@@ -1,6 +1,17 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { X, User, Shield, Key, ChevronRight, ChevronLeft, Check, RefreshCw, AlertCircle, Building2 } from 'lucide-react';
+import {
+  X,
+  User,
+  Shield,
+  Key,
+  ChevronRight,
+  ChevronLeft,
+  Check,
+  RefreshCw,
+  AlertCircle,
+  Building2,
+} from 'lucide-react';
 import { User as UserType } from '../../../../types/user.types';
 import { useUserForm } from '../hooks/useUserForm';
 import { UserBasicInfoStep } from './steps/UserBasicInfoStep';
@@ -133,7 +144,11 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <UserBasicInfoStep isEdit={isEdit} basicData={basicData} onChange={setBasicData} />
+                  <UserBasicInfoStep
+                    isEdit={isEdit}
+                    basicData={basicData}
+                    onChange={setBasicData}
+                  />
                 </motion.div>
               )}
               {currentStep === 2 && (
@@ -230,8 +245,8 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                 className={`px-5 py-2.5 text-sm font-bold rounded-xl transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed
                   ${
                     !isEdit && isOnFacilityStep && selectedFacilityIds.length === 0
-                      ? "bg-amber-200 hover:bg-amber-300 text-amber-900" // Cảnh báo nhẹ khi không gán
-                      : "bg-[#d7ee46] hover:bg-[#c4dc32] text-[#060606]"
+                      ? 'bg-amber-200 hover:bg-amber-300 text-amber-900' // Cảnh báo nhẹ khi không gán
+                      : 'bg-[#d7ee46] hover:bg-[#c4dc32] text-[#060606]'
                   }
                 `}
               >

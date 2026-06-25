@@ -2,7 +2,10 @@ import { apiClient } from './api';
 import { AuthResponse } from '../../../shared/types';
 
 export const authService = {
-  login: async (email: string, password: string): Promise<{ success: boolean; data: AuthResponse }> => {
+  login: async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; data: AuthResponse }> => {
     return apiClient.post('/auth/login', { email, password });
   },
 

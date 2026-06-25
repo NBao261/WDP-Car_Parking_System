@@ -9,7 +9,7 @@ export default function VehicleCheckPage() {
   const location = useLocation();
 
   // State from exceptions routing if any
-  const initialPlate = location.state?.plate || "";
+  const initialPlate = location.state?.plate || '';
   const [coPlateCam, setCoPlateCam] = useState(initialPlate);
 
   const [checkInResult, setCheckInResult] = useState<any>(null);

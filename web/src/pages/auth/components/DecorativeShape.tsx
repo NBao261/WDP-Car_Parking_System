@@ -1,5 +1,3 @@
-
-
 export function DecorativeShape() {
   return (
     <div className="absolute top-0 right-0 h-screen w-full md:w-[50%] overflow-hidden pointer-events-none z-0">
@@ -25,11 +23,7 @@ export function DecorativeShape() {
             fillOpacity="0.4"
           />
           {/* Angular accent notch */}
-          <path
-            d="M450 450L350 550V520L420 450H450Z"
-            fill="#9FE870"
-            fillOpacity="0.4"
-          />
+          <path d="M450 450L350 550V520L420 450H450Z" fill="#9FE870" fillOpacity="0.4" />
         </svg>
       </div>
     </div>

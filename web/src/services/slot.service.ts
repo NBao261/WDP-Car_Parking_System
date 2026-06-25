@@ -80,20 +80,22 @@ export const slotService = {
     return apiClient.post('/slots', payload);
   },
 
-  createBulk: async (payload: CreateBulkSlotsPayload): Promise<{ success: boolean; data: ParkingSlot[]; count: number }> => {
+  createBulk: async (
+    payload: CreateBulkSlotsPayload
+  ): Promise<{ success: boolean; data: ParkingSlot[]; count: number }> => {
     return apiClient.post('/slots/bulk', payload);
   },
 
   updateStatus: async (
     id: string,
-    payload: UpdateSlotStatusPayload,
+    payload: UpdateSlotStatusPayload
   ): Promise<{ success: boolean; data: ParkingSlot }> => {
     return apiClient.patch(`/slots/${id}/status`, payload);
   },
 
   update: async (
     id: string,
-    payload: UpdateSlotPayload,
+    payload: UpdateSlotPayload
   ): Promise<{ success: boolean; data: ParkingSlot }> => {
     return apiClient.patch(`/slots/${id}`, payload);
   },

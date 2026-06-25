@@ -16,7 +16,12 @@ interface PermissionMatrixModalProps {
 
 const totalPermCount = PERMISSION_GROUPS.reduce((sum, g) => sum + g.permissions.length, 0);
 
-export function PermissionMatrixModal({ isOpen, onClose, role, onSuccess }: PermissionMatrixModalProps) {
+export function PermissionMatrixModal({
+  isOpen,
+  onClose,
+  role,
+  onSuccess,
+}: PermissionMatrixModalProps) {
   const [selectedPerms, setSelectedPerms] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -149,7 +154,8 @@ export function PermissionMatrixModal({ isOpen, onClose, role, onSuccess }: Perm
               <div className="bg-amber-50 px-6 py-3 border-b border-amber-100 flex items-start gap-2">
                 <span className="text-amber-500 mt-0.5 shrink-0">⚠️</span>
                 <p className="text-xs text-amber-800 font-medium leading-relaxed">
-                  Đây là <strong>vai trò hệ thống mặc định</strong>. Thay đổi sẽ áp dụng ngay cho toàn bộ người dùng đang giữ chức vụ này.
+                  Đây là <strong>vai trò hệ thống mặc định</strong>. Thay đổi sẽ áp dụng ngay cho
+                  toàn bộ người dùng đang giữ chức vụ này.
                 </p>
               </div>
             )}
@@ -163,8 +169,8 @@ export function PermissionMatrixModal({ isOpen, onClose, role, onSuccess }: Perm
             {/* Summary bar */}
             <div className="px-6 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
               <span className="text-xs text-gray-500">
-                Đã chọn:{' '}
-                <span className="font-bold text-[#060606]">{selectedPerms.size}</span> / {totalPermCount} quyền
+                Đã chọn: <span className="font-bold text-[#060606]">{selectedPerms.size}</span> /{' '}
+                {totalPermCount} quyền
               </span>
               {role.isDefault && (
                 <button

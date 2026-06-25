@@ -40,7 +40,7 @@ export default function StaffLayout() {
     };
   }, [location.pathname]);
 
-  // We could expose a way for children to trigger logout, 
+  // We could expose a way for children to trigger logout,
   // but for now they can dispatch a custom event or use the store directly.
   return (
     <div className="flex flex-col h-screen bg-[#eff0ef] text-brand font-sans overflow-hidden">

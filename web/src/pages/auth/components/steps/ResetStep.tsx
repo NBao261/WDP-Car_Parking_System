@@ -1,35 +1,35 @@
-import React, { useState } from "react";
-import { Lock } from "lucide-react";
-import { toast } from "sonner";
-import { AuthInput } from "../AuthInput";
-import { SubmitButton, RequestStatus } from "../SubmitButton";
-import { ViewState } from "../LoginForm";
+import React, { useState } from 'react';
+import { Lock } from 'lucide-react';
+import { toast } from 'sonner';
+import { AuthInput } from '../AuthInput';
+import { SubmitButton, RequestStatus } from '../SubmitButton';
+import { ViewState } from '../LoginForm';
 
 interface ResetStepProps {
   changeView: (view: ViewState) => void;
 }
 
 export function ResetStep({ changeView }: ResetStepProps) {
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [status, setStatus] = useState<RequestStatus>("idle");
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [status, setStatus] = useState<RequestStatus>('idle');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPassword || newPassword !== confirmPassword) return setStatus("error");
+    if (!newPassword || newPassword !== confirmPassword) return setStatus('error');
 
-    setStatus("loading");
+    setStatus('loading');
     setTimeout(() => {
-      setStatus("success");
-      toast.success("Đặt lại mật khẩu thành công", {
+      setStatus('success');
+      toast.success('Đặt lại mật khẩu thành công', {
         style: {
-          background: "#062F28",
-          color: "#9FE870",
-          border: "none"
-        }
+          background: '#062F28',
+          color: '#9FE870',
+          border: 'none',
+        },
       });
       setTimeout(() => {
-        changeView("login");
+        changeView('login');
       }, 1000);
     }, 1000);
   };
@@ -44,9 +44,9 @@ export function ResetStep({ changeView }: ResetStepProps) {
         value={newPassword}
         onChange={(e) => {
           setNewPassword(e.target.value);
-          if (status === "error") setStatus("idle");
+          if (status === 'error') setStatus('idle');
         }}
-        hasError={status === "error"}
+        hasError={status === 'error'}
         className="mb-[16px]"
       />
 
@@ -58,13 +58,13 @@ export function ResetStep({ changeView }: ResetStepProps) {
         value={confirmPassword}
         onChange={(e) => {
           setConfirmPassword(e.target.value);
-          if (status === "error") setStatus("idle");
+          if (status === 'error') setStatus('idle');
         }}
-        hasError={status === "error"}
+        hasError={status === 'error'}
         className="mb-[10px]"
       />
 
-      {status === "error" && (
+      {status === 'error' && (
         <p className="text-red-500 text-[11px] mb-[10px] text-center">
           Mật khẩu không khớp hoặc để trống.
         </p>

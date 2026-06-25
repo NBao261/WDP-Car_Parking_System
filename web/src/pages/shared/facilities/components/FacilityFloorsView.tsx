@@ -25,13 +25,20 @@ interface FacilityFloorsViewProps {
 }
 
 export function FacilityFloorsView({
-  viewFacility, setViewFacility,
-  filteredFloors, vehicleTypes,
-  facilityStats, slotStatsByFloor,
+  viewFacility,
+  setViewFacility,
+  filteredFloors,
+  vehicleTypes,
+  facilityStats,
+  slotStatsByFloor,
   isLoading,
-  setEditingFloor, setIsFloorModalOpen,
-  handleEditMapping, updateFloorLocal, removeFloorLocal,
-  fetchAll, handleViewMap
+  setEditingFloor,
+  setIsFloorModalOpen,
+  handleEditMapping,
+  updateFloorLocal,
+  removeFloorLocal,
+  fetchAll,
+  handleViewMap,
 }: FacilityFloorsViewProps) {
   const [detailFloor, setDetailFloor] = useState<Floor | null>(null);
 
@@ -65,7 +72,10 @@ export function FacilityFloorsView({
         </div>
         {viewFacility.status !== 'inactive' && (
           <button
-            onClick={() => { setEditingFloor(undefined); setIsFloorModalOpen(true); }}
+            onClick={() => {
+              setEditingFloor(undefined);
+              setIsFloorModalOpen(true);
+            }}
             className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
           >
             <Plus size={20} /> Thêm Tầng
@@ -78,23 +88,52 @@ export function FacilityFloorsView({
         <div className="flex items-center gap-1.5 text-[14px] font-medium text-gray-500">
           <Clock size={16} /> {viewFacility.openTime} – {viewFacility.closeTime}
         </div>
-        <div className="flex items-center gap-1.5 text-[14px] font-medium text-gray-500" title={`Cơ sở này giới hạn tối đa ${viewFacility.totalFloors} tầng`}>
+        <div
+          className="flex items-center gap-1.5 text-[14px] font-medium text-gray-500"
+          title={`Cơ sở này giới hạn tối đa ${viewFacility.totalFloors} tầng`}
+        >
           <Layers size={16} /> {filteredFloors.length}/{viewFacility.totalFloors} tầng
         </div>
         <div className="flex items-center gap-3 ml-auto">
           <span className="text-[14px] font-medium tabular-nums text-gray-500">
-            {facilityStats[viewFacility._id]?.occupied || 0}/{facilityStats[viewFacility._id]?.totalSlots || 0} đang dùng
+            {facilityStats[viewFacility._id]?.occupied || 0}/
+            {facilityStats[viewFacility._id]?.totalSlots || 0} đang dùng
           </span>
           <div className="flex items-center gap-2">
-            <div style={{ width: 100, background: '#eff0ef', height: 8, borderRadius: 999, overflow: 'hidden' }}>
-              <div style={{
-                width: `${facilityStats[viewFacility._id]?.fillRate || 0}%`,
-                height: '100%',
-                background: (facilityStats[viewFacility._id]?.fillRate || 0) > 85 ? '#E24B4A' : (facilityStats[viewFacility._id]?.fillRate || 0) >= 60 ? '#BA7517' : '#3B6D11',
-                borderRadius: 999
-              }} />
+            <div
+              style={{
+                width: 100,
+                background: '#eff0ef',
+                height: 8,
+                borderRadius: 999,
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  width: `${facilityStats[viewFacility._id]?.fillRate || 0}%`,
+                  height: '100%',
+                  background:
+                    (facilityStats[viewFacility._id]?.fillRate || 0) > 85
+                      ? '#E24B4A'
+                      : (facilityStats[viewFacility._id]?.fillRate || 0) >= 60
+                        ? '#BA7517'
+                        : '#3B6D11',
+                  borderRadius: 999,
+                }}
+              />
             </div>
-            <span className="text-sm tabular-nums font-bold" style={{ color: (facilityStats[viewFacility._id]?.fillRate || 0) > 85 ? '#E24B4A' : (facilityStats[viewFacility._id]?.fillRate || 0) >= 60 ? '#BA7517' : '#3B6D11' }}>
+            <span
+              className="text-sm tabular-nums font-bold"
+              style={{
+                color:
+                  (facilityStats[viewFacility._id]?.fillRate || 0) > 85
+                    ? '#E24B4A'
+                    : (facilityStats[viewFacility._id]?.fillRate || 0) >= 60
+                      ? '#BA7517'
+                      : '#3B6D11',
+              }}
+            >
               {facilityStats[viewFacility._id]?.fillRate || 0}%
             </span>
           </div>
@@ -107,7 +146,10 @@ export function FacilityFloorsView({
         floors={filteredFloors}
         vehicleTypes={vehicleTypes}
         slotStats={slotStatsByFloor}
-        onAddFloor={() => { setEditingFloor(undefined); setIsFloorModalOpen(true); }}
+        onAddFloor={() => {
+          setEditingFloor(undefined);
+          setIsFloorModalOpen(true);
+        }}
         onEditFloor={handleEditMapping}
         onViewFloor={setDetailFloor}
         onUpdate={updateFloorLocal}
@@ -122,11 +164,15 @@ export function FacilityFloorsView({
         onClose={() => setDetailFloor(null)}
         floor={detailFloor || undefined}
         stats={detailFloor ? slotStatsByFloor[detailFloor._id] : undefined}
-        vehicleTypes={detailFloor ? vehicleTypes.filter(vt =>
-          (detailFloor.allowedVehicleTypes || []).some((item: any) =>
-            (typeof item === 'string' ? item : item._id) === vt._id
-          )
-        ) : []}
+        vehicleTypes={
+          detailFloor
+            ? vehicleTypes.filter((vt) =>
+                (detailFloor.allowedVehicleTypes || []).some(
+                  (item: any) => (typeof item === 'string' ? item : item._id) === vt._id
+                )
+              )
+            : []
+        }
       />
     </motion.div>
   );

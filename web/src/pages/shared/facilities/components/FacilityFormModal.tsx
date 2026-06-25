@@ -3,7 +3,11 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Building2, MapPin, Clock, Layers, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { facilityService, Facility, CreateFacilityPayload } from '../../../../services/facility.service';
+import {
+  facilityService,
+  Facility,
+  CreateFacilityPayload,
+} from '../../../../services/facility.service';
 
 interface FacilityFormModalProps {
   isOpen: boolean;
@@ -45,8 +49,9 @@ function FormField({
       <div className="relative">
         <Icon
           size={16}
-          className={`absolute left-3 text-gray-400 ${iconAlign === 'top' ? 'top-3' : 'top-1/2 -translate-y-1/2'
-            }`}
+          className={`absolute left-3 text-gray-400 ${
+            iconAlign === 'top' ? 'top-3' : 'top-1/2 -translate-y-1/2'
+          }`}
         />
         {children}
       </div>
@@ -55,7 +60,12 @@ function FormField({
   );
 }
 
-export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: FacilityFormModalProps) {
+export function FacilityFormModal({
+  isOpen,
+  onClose,
+  facility,
+  onSuccess,
+}: FacilityFormModalProps) {
   const isEdit = !!facility;
   const [form, setForm] = useState(DEFAULT_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -108,9 +118,13 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
       // Fetch all facilities to check for duplicates
       const allRes = await facilityService.getAll({ limit: 1000 });
       if (allRes.success) {
-        const existing = allRes.data.filter(f => !isEdit || f._id !== facility?._id);
-        const duplicateName = existing.find(f => f.name.toLowerCase() === form.name.trim().toLowerCase());
-        const duplicateAddress = existing.find(f => f.address.toLowerCase() === form.address.trim().toLowerCase());
+        const existing = allRes.data.filter((f) => !isEdit || f._id !== facility?._id);
+        const duplicateName = existing.find(
+          (f) => f.name.toLowerCase() === form.name.trim().toLowerCase()
+        );
+        const duplicateAddress = existing.find(
+          (f) => f.address.toLowerCase() === form.address.trim().toLowerCase()
+        );
 
         if (duplicateName || duplicateAddress) {
           const checkErrors: Record<string, string> = {};
@@ -192,7 +206,13 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
             </FormField>
 
             {/* Address */}
-            <FormField label="Địa chỉ" required icon={MapPin} iconAlign="top" error={errors.address}>
+            <FormField
+              label="Địa chỉ"
+              required
+              icon={MapPin}
+              iconAlign="top"
+              error={errors.address}
+            >
               <textarea
                 rows={2}
                 value={form.address}
@@ -214,7 +234,10 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                 placeholder="5"
                 value={form.totalFloors}
                 onChange={(e) => {
-                  setForm({ ...form, totalFloors: e.target.value === '' ? ('' as any) : parseInt(e.target.value, 10) });
+                  setForm({
+                    ...form,
+                    totalFloors: e.target.value === '' ? ('' as any) : parseInt(e.target.value, 10),
+                  });
                   if (errors.totalFloors) setErrors({ ...errors, totalFloors: '' });
                 }}
                 className={getInputClass('totalFloors')}
@@ -229,7 +252,10 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
               <div className="flex gap-3 items-start">
                 <div className="flex-1">
                   <div className="relative">
-                    <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Clock
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    />
                     <input
                       type="time"
                       value={form.openTime}
@@ -240,12 +266,17 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                       className={getInputClass('openTime')}
                     />
                   </div>
-                  {errors.openTime && <p className="text-xs text-red-500 mt-1">{errors.openTime}</p>}
+                  {errors.openTime && (
+                    <p className="text-xs text-red-500 mt-1">{errors.openTime}</p>
+                  )}
                 </div>
                 <span className="text-gray-400 font-medium text-sm mt-2.5">đến</span>
                 <div className="flex-1">
                   <div className="relative">
-                    <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Clock
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    />
                     <input
                       type="time"
                       value={form.closeTime}
@@ -256,7 +287,9 @@ export function FacilityFormModal({ isOpen, onClose, facility, onSuccess }: Faci
                       className={getInputClass('closeTime')}
                     />
                   </div>
-                  {errors.closeTime && <p className="text-xs text-red-500 mt-1">{errors.closeTime}</p>}
+                  {errors.closeTime && (
+                    <p className="text-xs text-red-500 mt-1">{errors.closeTime}</p>
+                  )}
                 </div>
               </div>
             </div>

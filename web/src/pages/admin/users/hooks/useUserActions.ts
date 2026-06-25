@@ -83,10 +83,13 @@ export function useUserActions(onRefresh: () => void) {
 
   // Derived confirm modal props
   const confirmTitle =
-    confirmState.type === 'lock' ? 'Khóa tài khoản' :
-    confirmState.type === 'unlock' ? 'Mở khóa tài khoản' :
-    confirmState.type === 'delete' ? 'Xóa tài khoản' :
-    'Đặt lại mật khẩu';
+    confirmState.type === 'lock'
+      ? 'Khóa tài khoản'
+      : confirmState.type === 'unlock'
+        ? 'Mở khóa tài khoản'
+        : confirmState.type === 'delete'
+          ? 'Xóa tài khoản'
+          : 'Đặt lại mật khẩu';
 
   const confirmMessage =
     confirmState.type === 'lock'
@@ -98,15 +101,20 @@ export function useUserActions(onRefresh: () => void) {
           : `Bạn có chắc chắn muốn đặt lại mật khẩu cho tài khoản "${confirmState.user?.name}"? Người dùng sẽ bắt buộc đổi mật khẩu ở lần đăng nhập tiếp theo.`;
 
   const confirmText =
-    confirmState.type === 'lock' ? 'Khóa tài khoản' :
-    confirmState.type === 'unlock' ? 'Mở khóa' :
-    confirmState.type === 'delete' ? 'Xóa' :
-    'Đặt lại mật khẩu';
+    confirmState.type === 'lock'
+      ? 'Khóa tài khoản'
+      : confirmState.type === 'unlock'
+        ? 'Mở khóa'
+        : confirmState.type === 'delete'
+          ? 'Xóa'
+          : 'Đặt lại mật khẩu';
 
   const confirmVariant: 'primary' | 'danger' | 'warning' =
-    confirmState.type === 'delete' ? 'danger' :
-    confirmState.type === 'lock' || confirmState.type === 'reset' ? 'warning' :
-    'primary';
+    confirmState.type === 'delete'
+      ? 'danger'
+      : confirmState.type === 'lock' || confirmState.type === 'reset'
+        ? 'warning'
+        : 'primary';
 
   return {
     confirmState,

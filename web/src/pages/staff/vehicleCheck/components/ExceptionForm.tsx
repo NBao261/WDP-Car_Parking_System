@@ -1,28 +1,23 @@
-import { useState } from "react";
-import { toast } from "sonner";
-import {
-  ExceptionType,
-  EXCEPTION_TYPE_LABELS,
-} from "../../../../services/exception.service";
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { ExceptionType, EXCEPTION_TYPE_LABELS } from '../../../../services/exception.service';
 
 // ─── ExceptionForm: dùng khi tạo sự cố KHÔNG từ context check-out ─────────
 // (vd: báo cáo sự cố từ luồng check-in, hoặc từ màn hình riêng)
 export default function ExceptionForm({ onClose }: { onClose: () => void }) {
-  const [exceptionType, setExceptionType] = useState<ExceptionType>(
-    ExceptionType.OTHER
-  );
-  const [sessionCode, setSessionCode] = useState("");
-  const [note, setNote] = useState("");
+  const [exceptionType, setExceptionType] = useState<ExceptionType>(ExceptionType.OTHER);
+  const [sessionCode, setSessionCode] = useState('');
+  const [note, setNote] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!sessionCode.trim()) {
-      toast.error("Vui lòng nhập mã vé / biển số liên quan!");
+      toast.error('Vui lòng nhập mã vé / biển số liên quan!');
       return;
     }
     if (!note.trim()) {
-      toast.error("Vui lòng mô tả chi tiết tình huống!");
+      toast.error('Vui lòng mô tả chi tiết tình huống!');
       return;
     }
 

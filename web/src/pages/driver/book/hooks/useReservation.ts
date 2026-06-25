@@ -8,7 +8,10 @@ export const formatLicensePlate = (value: string) => {
   // UX Architect Fix: Không tự động chèn dấu '-' vì format xe máy và ô tô khác nhau (vd: 59E1 vs 51H).
   // Tự động chèn sẽ làm kẹt phím Backspace khi người dùng muốn xoá.
   // Chỉ chuyển in hoa và cho phép nhập chữ, số, dấu gạch ngang, dấu chấm và khoảng trắng.
-  return value.toUpperCase().replace(/[^A-Z0-9\-\.\s]/g, '').slice(0, 15);
+  return value
+    .toUpperCase()
+    .replace(/[^A-Z0-9\-\.\s]/g, '')
+    .slice(0, 15);
 };
 
 export const getFutureISO = (minutes: number, baseDate: Date = new Date()) => {
@@ -21,7 +24,7 @@ export const getLocalISOTime = (minutes: number, baseDate: Date = new Date()) =>
   const now = new Date(baseDate);
   now.setMinutes(now.getMinutes() + minutes);
   const tzOffset = now.getTimezoneOffset() * 60000;
-  return (new Date(now.getTime() - tzOffset)).toISOString().slice(0, 16);
+  return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
 };
 
 export function useReservation(facilityId?: string) {
@@ -32,10 +35,10 @@ export function useReservation(facilityId?: string) {
 
   const [licensePlate, setLicensePlate] = useState('');
   const [vehicleTypeId, setVehicleTypeId] = useState('');
-  
+
   const [timeMode, setTimeMode] = useState<'30m' | '1h' | '2h' | 'custom'>('30m');
   const [customTime, setCustomTime] = useState('');
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reservationResult, setReservationResult] = useState<any>(null);
   const [serverTimeOffset, setServerTimeOffset] = useState<number>(0);
@@ -62,21 +65,23 @@ export function useReservation(facilityId?: string) {
         }
 
         const [facRes, pricingRes, slotsRes] = await Promise.all([
-          publicService.getFacilities(), 
+          publicService.getFacilities(),
           publicService.getPricing(facilityId),
-          publicService.getAvailableSlots(facilityId)
+          publicService.getAvailableSlots(facilityId),
         ]);
-        
-        const f = facRes.data.find(x => x._id === facilityId);
+
+        const f = facRes.data.find((x) => x._id === facilityId);
         setFacility(f);
         setPlans(pricingRes.data || []);
         setAvailableSlots(slotsRes.data || []);
-        
+
         if (pricingRes.data && pricingRes.data.length > 0) {
           const firstPlan = pricingRes.data[0];
-          setVehicleTypeId((firstPlan.vehicleTypeId as any)?._id || (firstPlan.vehicleTypeId as any)?.id || '');
+          setVehicleTypeId(
+            (firstPlan.vehicleTypeId as any)?._id || (firstPlan.vehicleTypeId as any)?.id || ''
+          );
         }
-        
+
         const baseDate = new Date(Date.now() + offset);
         setCustomTime(getLocalISOTime(35, baseDate));
       } catch (error) {
@@ -97,10 +102,10 @@ export function useReservation(facilityId?: string) {
   };
 
   const isTimeValid = () => {
-    if (timeMode !== 'custom') return true; 
+    if (timeMode !== 'custom') return true;
     if (!customTime) return false;
     const selectedDate = new Date(customTime).getTime();
-    const minValidDate = getServerTime().getTime() + (34 * 60 * 1000); // 34 mins tolerance from server time
+    const minValidDate = getServerTime().getTime() + 34 * 60 * 1000; // 34 mins tolerance from server time
     return selectedDate >= minValidDate;
   };
 
@@ -122,7 +127,7 @@ export function useReservation(facilityId?: string) {
         facilityId,
         vehicleTypeId,
         licensePlate: licensePlate.trim(),
-        startTime: getSelectedTime()
+        startTime: getSelectedTime(),
       });
       toast.success('Đặt chỗ thành công!');
       setReservationResult(response.data);
@@ -133,12 +138,14 @@ export function useReservation(facilityId?: string) {
     }
   };
 
-  const uniqueVehicleTypes = Array.from(new Map(plans.map(p => [(p.vehicleTypeId as any)?._id, p.vehicleTypeId as any])).values()).filter(Boolean);
-  const activePlan = plans.find(p => (p.vehicleTypeId as any)?._id === vehicleTypeId);
+  const uniqueVehicleTypes = Array.from(
+    new Map(plans.map((p) => [(p.vehicleTypeId as any)?._id, p.vehicleTypeId as any])).values()
+  ).filter(Boolean);
+  const activePlan = plans.find((p) => (p.vehicleTypeId as any)?._id === vehicleTypeId);
 
   const currentAvailableCount = useMemo(() => {
     if (!vehicleTypeId) return null;
-    const slotData = availableSlots.find(s => s.vehicleTypeId === vehicleTypeId);
+    const slotData = availableSlots.find((s) => s.vehicleTypeId === vehicleTypeId);
     return slotData ? slotData.availableCount : 0;
   }, [availableSlots, vehicleTypeId]);
 

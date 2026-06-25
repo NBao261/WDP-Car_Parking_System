@@ -288,21 +288,21 @@ export default function CheckOutPanel({
   const finishCheckOutProcess = (checkOutResData: any, methodStr: string) => {
     const actualCheckOutTime = checkOutResData.checkOutTime
       ? new Date(checkOutResData.checkOutTime).toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+          hour: '2-digit',
+          minute: '2-digit',
+        })
       : new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     const actualCheckOutDate = checkOutResData.checkOutTime
       ? new Date(checkOutResData.checkOutTime).toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      })
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        })
       : new Date().toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      });
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        });
 
     onCheckOut((prev: any) => ({
       ...prev,
@@ -356,7 +356,7 @@ export default function CheckOutPanel({
       try {
         const res = await paymentService.createIntent({
           sessionId: currentSession._id,
-          method: 'e_wallet'
+          method: 'e_wallet',
         });
 
         if (res.success && (res.data?.qrCodeUrl || res.data?.paymentUrl)) {
@@ -383,12 +383,12 @@ export default function CheckOutPanel({
                 // We just need to update UI. We mock the checkout time for UI since it's already closed.
                 const mockSessionForUI = {
                   ...currentSession,
-                  checkOutTime: new Date().toISOString()
+                  checkOutTime: new Date().toISOString(),
                 };
                 finishCheckOutProcess(mockSessionForUI, 'Momo');
               }
             } catch (err) {
-              console.error("Polling error", err);
+              console.error('Polling error', err);
             }
           }, 3000);
         } else {
@@ -510,7 +510,9 @@ export default function CheckOutPanel({
                     const cleanPath = imgSrc.startsWith('/') ? imgSrc : `/${imgSrc}`;
                     imgSrc = `${SERVER_URL}${cleanPath}`;
                   }
-                  return <img src={imgSrc} alt="check-in" className="w-full h-full object-contain" />;
+                  return (
+                    <img src={imgSrc} alt="check-in" className="w-full h-full object-contain" />
+                  );
                 })()
               ) : (
                 <div className="flex flex-col items-center">
@@ -546,10 +548,23 @@ export default function CheckOutPanel({
             ) : (
               <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden h-[200px] bg-[#f5f5f4]">
                 <img src={ocrPreviewUrl} alt="preview" className="w-full h-full object-contain" />
-                <button type="button" onClick={clearOcrPreview} className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
+                <button
+                  type="button"
+                  onClick={clearOcrPreview}
+                  className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
-            <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleImageUpload}
+            />
           </div>
         </div>
 

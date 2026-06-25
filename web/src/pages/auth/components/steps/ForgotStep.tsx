@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { Mail } from "lucide-react";
-import { AuthInput } from "../AuthInput";
-import { SubmitButton, RequestStatus } from "../SubmitButton";
-import { ViewState } from "../LoginForm";
+import React, { useState } from 'react';
+import { Mail } from 'lucide-react';
+import { AuthInput } from '../AuthInput';
+import { SubmitButton, RequestStatus } from '../SubmitButton';
+import { ViewState } from '../LoginForm';
 
 interface ForgotStepProps {
   changeView: (view: ViewState) => void;
@@ -11,16 +11,16 @@ interface ForgotStepProps {
 }
 
 export function ForgotStep({ changeView, email, setEmail }: ForgotStepProps) {
-  const [status, setStatus] = useState<RequestStatus>("idle");
+  const [status, setStatus] = useState<RequestStatus>('idle');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return setStatus("error");
+    if (!email) return setStatus('error');
 
-    setStatus("loading");
+    setStatus('loading');
     setTimeout(() => {
-      setStatus("success");
-      setTimeout(() => changeView("otp"), 600);
+      setStatus('success');
+      setTimeout(() => changeView('otp'), 600);
     }, 1000);
   };
 
@@ -34,9 +34,9 @@ export function ForgotStep({ changeView, email, setEmail }: ForgotStepProps) {
         value={email}
         onChange={(e) => {
           setEmail(e.target.value);
-          if (status === "error") setStatus("idle");
+          if (status === 'error') setStatus('idle');
         }}
-        hasError={status === "error"}
+        hasError={status === 'error'}
         className="mb-[24px]"
       />
 
@@ -44,7 +44,7 @@ export function ForgotStep({ changeView, email, setEmail }: ForgotStepProps) {
 
       <button
         type="button"
-        onClick={() => changeView("login")}
+        onClick={() => changeView('login')}
         className="mt-[24px] text-[#7B7B7B] text-[12px] font-medium hover:text-[#062F28] hover:underline transition-colors text-center"
       >
         Quay lại đăng nhập

@@ -10,7 +10,6 @@ import {
   Settings,
   ScrollText,
   LogOut,
-  ClipboardList,
   ScanLine,
   Shield,
   type LucideIcon,
@@ -40,17 +39,31 @@ const NAV_ITEMS: NavItem[] = [
 
   // ── Manager ──
   { path: '/manager', label: 'Trang Chủ', icon: LayoutDashboard, roles: [UserRole.MANAGER] },
-  { path: '/manager/assignments', label: 'Phân công tòa nhà', icon: Users, roles: [UserRole.MANAGER] },
+  {
+    path: '/manager/assignments',
+    label: 'Phân công tòa nhà',
+    icon: Users,
+    roles: [UserRole.MANAGER],
+  },
   { path: '/manager/facilities', label: 'Tòa nhà & Bãi đỗ', icon: Map, roles: [UserRole.MANAGER] },
   { path: '/manager/pricing', label: 'Bảng Giá', icon: Wallet, roles: [UserRole.MANAGER] },
   { path: '/manager/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.MANAGER] },
-  { path: '/manager/reports', label: 'Báo Cáo', icon: ClipboardList, roles: [UserRole.MANAGER] },
-  { path: '/manager/exceptions', label: 'Quản Lý Ngoại Lệ', icon: AlertTriangle, roles: [UserRole.MANAGER] },
+  {
+    path: '/manager/exceptions',
+    label: 'Quản Lý Ngoại Lệ',
+    icon: AlertTriangle,
+    roles: [UserRole.MANAGER],
+  },
 
   // ── Staff ──
   { path: '/staff', label: 'Xe Ra Vào', icon: ScanLine, roles: [UserRole.STAFF] },
   { path: '/staff/active-sessions', label: 'Xe Đang Gửi', icon: Car, roles: [UserRole.STAFF] },
-  { path: '/staff/exceptions', label: 'Xử Lý Ngoại Lệ', icon: AlertTriangle, roles: [UserRole.STAFF] },
+  {
+    path: '/staff/exceptions',
+    label: 'Xử Lý Ngoại Lệ',
+    icon: AlertTriangle,
+    roles: [UserRole.STAFF],
+  },
 ];
 
 function getInitials(name: string): string {

@@ -80,7 +80,7 @@ const ReservationPage: React.FC = () => {
     handleSubmit,
     uniqueVehicleTypes,
     activePlan,
-    currentAvailableCount
+    currentAvailableCount,
   } = useReservation(facilityId);
 
   if (loading) {
@@ -91,9 +91,8 @@ const ReservationPage: React.FC = () => {
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-6 pb-20">
-      
       {/* ─── MODAL TICKET ────────────────────────────────────────────── */}
-      <SuccessTicketModal 
+      <SuccessTicketModal
         reservationResult={reservationResult}
         facility={facility}
         activePlan={activePlan}
@@ -102,7 +101,7 @@ const ReservationPage: React.FC = () => {
 
       {/* ─── HEADER ────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 mb-2">
-        <button 
+        <button
           onClick={() => navigate('/driver/facilities')}
           className="p-2 hover:bg-black/5 rounded-full transition-colors text-muted-foreground hover:text-brand"
         >
@@ -110,15 +109,16 @@ const ReservationPage: React.FC = () => {
         </button>
         <div>
           <h2 className="text-2xl font-bold text-brand font-outfit">Đăng ký Đặt Chỗ</h2>
-          <p className="text-muted-foreground text-sm">Hệ thống sẽ tự động tìm vị trí tốt nhất cho xe của bạn.</p>
+          <p className="text-muted-foreground text-sm">
+            Hệ thống sẽ tự động tìm vị trí tốt nhất cho xe của bạn.
+          </p>
         </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 relative">
-        
         {/* Left Column: Booking Form */}
         <div className="flex-1">
-          <BookingForm 
+          <BookingForm
             uniqueVehicleTypes={uniqueVehicleTypes}
             vehicleTypeId={vehicleTypeId}
             setVehicleTypeId={setVehicleTypeId}
@@ -136,7 +136,7 @@ const ReservationPage: React.FC = () => {
 
         {/* Right Column: Facility Info & Pricing Summary */}
         <div className="w-full lg:w-[400px]">
-          <FacilitySummary 
+          <FacilitySummary
             facility={facility}
             activePlan={activePlan}
             currentAvailableCount={currentAvailableCount}
@@ -146,7 +146,6 @@ const ReservationPage: React.FC = () => {
             handleSubmit={handleSubmit}
           />
         </div>
-        
       </div>
     </div>
   );

@@ -18,9 +18,10 @@ export const NoSessionCard: React.FC = () => {
         </div>
         <h2 className="text-2xl font-bold text-brand mb-3 font-outfit">Bạn chưa có xe trong bãi</h2>
         <p className="text-muted-foreground mb-8 text-sm">
-          Hiện tại hệ thống không ghi nhận chiếc xe nào của bạn đang được gửi tại các bãi xe. Hãy đặt chỗ trước để có trải nghiệm tốt nhất.
+          Hiện tại hệ thống không ghi nhận chiếc xe nào của bạn đang được gửi tại các bãi xe. Hãy
+          đặt chỗ trước để có trải nghiệm tốt nhất.
         </p>
-        <button 
+        <button
           onClick={() => navigate('/driver/facilities')}
           className="px-8 py-3 bg-brand text-white font-semibold rounded-xl hover:-translate-y-1 hover:shadow-md transition-all"
         >

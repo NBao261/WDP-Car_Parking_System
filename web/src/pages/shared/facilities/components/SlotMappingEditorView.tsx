@@ -21,31 +21,37 @@ interface SlotMappingEditorViewProps {
 }
 
 export function SlotMappingEditorView({
-  floor, slots, vtMap, vehicleTypes, loading, onRefreshSlots, onClose, isFacilityActive = true
+  floor,
+  slots,
+  vtMap,
+  vehicleTypes,
+  loading,
+  onRefreshSlots,
+  onClose,
+  isFacilityActive = true,
 }: SlotMappingEditorViewProps) {
   const [filterStatus, setFilterStatus] = useState<SlotStatus | 'all'>('all');
-  const [statusSlot, setStatusSlot]     = useState<ParkingSlot | null>(null);
-  const [bulkOpen, setBulkOpen]         = useState(false);
+  const [statusSlot, setStatusSlot] = useState<ParkingSlot | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   if (!floor) return null;
 
-  const filteredSlots = filterStatus === 'all'
-    ? slots
-    : slots.filter(s => s.status === filterStatus);
+  const filteredSlots =
+    filterStatus === 'all' ? slots : slots.filter((s) => s.status === filterStatus);
 
   const filterButtons: { label: string; value: SlotStatus | 'all' }[] = [
-    { label: 'Tất cả',      value: 'all' },
-    { label: 'Trống',       value: 'available' },
-    { label: 'Đang dùng',   value: 'occupied' },
-    { label: 'Đã đặt',      value: 'reserved' },
-    { label: 'Bảo trì',     value: 'maintenance' },
-    { label: 'Khóa',        value: 'locked' },
+    { label: 'Tất cả', value: 'all' },
+    { label: 'Trống', value: 'available' },
+    { label: 'Đang dùng', value: 'occupied' },
+    { label: 'Đã đặt', value: 'reserved' },
+    { label: 'Bảo trì', value: 'maintenance' },
+    { label: 'Khóa', value: 'locked' },
   ];
 
   // Allowed vehicle types for this floor
-  const floorVehicleTypes = vehicleTypes.filter(vt =>
-    (floor.allowedVehicleTypes || []).some((allowed: any) =>
-      (typeof allowed === 'string' ? allowed : allowed._id) === vt._id
+  const floorVehicleTypes = vehicleTypes.filter((vt) =>
+    (floor.allowedVehicleTypes || []).some(
+      (allowed: any) => (typeof allowed === 'string' ? allowed : allowed._id) === vt._id
     )
   );
 
@@ -79,7 +85,7 @@ export function SlotMappingEditorView({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           {/* Status filter pills */}
           <div className="flex gap-1.5 flex-wrap">
-            {filterButtons.map(btn => (
+            {filterButtons.map((btn) => (
               <button
                 key={btn.value}
                 onClick={() => setFilterStatus(btn.value)}
@@ -93,7 +99,7 @@ export function SlotMappingEditorView({
               </button>
             ))}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={() => onRefreshSlots()}
@@ -118,7 +124,9 @@ export function SlotMappingEditorView({
           {/* Vehicle types palette */}
           <div className="w-full lg:w-44 bg-gray-50 rounded-xl border border-gray-200 shrink-0 relative min-h-[260px]">
             <div className="absolute inset-0 p-4 flex flex-col">
-              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 shrink-0">Loại xe</h4>
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 shrink-0">
+                Loại xe
+              </h4>
               <div className="overflow-y-auto space-y-2.5 pr-1 vehicle-scrollbar h-full">
                 <style>{`
                   .vehicle-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -128,19 +136,21 @@ export function SlotMappingEditorView({
                 `}</style>
                 {floorVehicleTypes.length === 0 ? (
                   <p className="text-xs text-gray-400 italic">Chưa gán loại xe</p>
-                ) : floorVehicleTypes.map(vt => {
-                  const Icon = (vt.icon && ICON_MAP[vt.icon]) ? ICON_MAP[vt.icon] : Car;
-                  return (
-                    <div
-                      key={vt._id}
-                      className="bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm flex items-center gap-2 text-gray-700 hover:shadow-sm transition-shadow cursor-grab shrink-0"
-                    >
-                      <GripHorizontal size={13} className="opacity-40 shrink-0" />
-                      <Icon size={16} className="text-gray-500 shrink-0" />
-                      <span className="truncate">{vt.name}</span>
-                    </div>
-                  );
-                })}
+                ) : (
+                  floorVehicleTypes.map((vt) => {
+                    const Icon = vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : Car;
+                    return (
+                      <div
+                        key={vt._id}
+                        className="bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm flex items-center gap-2 text-gray-700 hover:shadow-sm transition-shadow cursor-grab shrink-0"
+                      >
+                        <GripHorizontal size={13} className="opacity-40 shrink-0" />
+                        <Icon size={16} className="text-gray-500 shrink-0" />
+                        <span className="truncate">{vt.name}</span>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
@@ -156,34 +166,56 @@ export function SlotMappingEditorView({
             ) : filteredSlots.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 text-gray-400 text-sm gap-2">
                 <Map size={28} className="opacity-30" />
-                {slots.length === 0 ? `Tầng này chưa có slot nào (0/${floor.totalSlots}).` : 'Không có slot phù hợp bộ lọc.'}
+                {slots.length === 0
+                  ? `Tầng này chưa có slot nào (0/${floor.totalSlots}).`
+                  : 'Không có slot phù hợp bộ lọc.'}
               </div>
             ) : (
               <div className="min-w-[500px]">
                 {/* Legend */}
                 <div className="flex gap-4 mb-4 text-xs text-gray-500">
-                  <div className="flex items-center gap-1.5"><div className="w-3.5 h-3.5 rounded bg-green-100 border border-green-300" /> Đang dùng</div>
-                  <div className="flex items-center gap-1.5"><div className="w-3.5 h-3.5 rounded bg-blue-100 border border-blue-200" /> Đã đặt</div>
-                  <div className="flex items-center gap-1.5"><div className="w-3.5 h-3.5 rounded bg-red-50 border border-red-200" /> Bảo trì / Khóa</div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3.5 h-3.5 rounded bg-green-100 border border-green-300" />{' '}
+                    Đang dùng
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3.5 h-3.5 rounded bg-blue-100 border border-blue-200" /> Đã
+                    đặt
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3.5 h-3.5 rounded bg-red-50 border border-red-200" /> Bảo trì
+                    / Khóa
+                  </div>
                 </div>
                 {/* Slot grid */}
                 <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
-                  {filteredSlots.map(slot => {
+                  {filteredSlots.map((slot) => {
                     let bgClass = 'bg-white border-gray-200 text-gray-500';
-                    if (slot.status === 'occupied')                            bgClass = 'bg-green-100 border-green-300 text-green-700';
-                    else if (slot.status === 'reserved')                       bgClass = 'bg-blue-100 border-blue-200 text-blue-700';
-                    else if (slot.status === 'maintenance' || slot.status === 'locked') bgClass = 'bg-red-50 border-red-200 text-red-600';
-                    const vtName = (slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object')
-                      ? slot.vehicleTypeId.name
-                      : (slot.vehicleTypeId ? (vtMap[slot.vehicleTypeId] ?? '') : '');
+                    if (slot.status === 'occupied')
+                      bgClass = 'bg-green-100 border-green-300 text-green-700';
+                    else if (slot.status === 'reserved')
+                      bgClass = 'bg-blue-100 border-blue-200 text-blue-700';
+                    else if (slot.status === 'maintenance' || slot.status === 'locked')
+                      bgClass = 'bg-red-50 border-red-200 text-red-600';
+                    const vtName =
+                      slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object'
+                        ? slot.vehicleTypeId.name
+                        : slot.vehicleTypeId
+                          ? (vtMap[slot.vehicleTypeId] ?? '')
+                          : '';
                     return (
                       <div
                         key={slot._id}
                         onClick={() => {
                           if (floor.status === 'active' && isFacilityActive) setStatusSlot(slot);
-                          else toast.error(!isFacilityActive ? 'Không thể chỉnh sửa slot của tòa nhà đang bị vô hiệu hóa.' : 'Không thể chỉnh sửa slot của tầng đang bị vô hiệu hóa.');
+                          else
+                            toast.error(
+                              !isFacilityActive
+                                ? 'Không thể chỉnh sửa slot của tòa nhà đang bị vô hiệu hóa.'
+                                : 'Không thể chỉnh sửa slot của tầng đang bị vô hiệu hóa.'
+                            );
                         }}
-                        className={`aspect-square rounded-lg flex items-center justify-center text-xs font-semibold ${(floor.status === 'active' && isFacilityActive) ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
+                        className={`aspect-square rounded-lg flex items-center justify-center text-xs font-semibold ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
                         title={`${slot.code} – ${vtName} (${slot.status})`}
                       >
                         {slot.code}
@@ -203,7 +235,10 @@ export function SlotMappingEditorView({
           <SlotStatusModal
             slot={statusSlot}
             onClose={() => setStatusSlot(null)}
-            onSuccess={() => { setStatusSlot(null); onRefreshSlots(true); }}
+            onSuccess={() => {
+              setStatusSlot(null);
+              onRefreshSlots(true);
+            }}
           />
         )}
         {bulkOpen && floor && (
@@ -214,7 +249,10 @@ export function SlotMappingEditorView({
             totalSlots={floor.totalSlots}
             currentSlotCount={slots.length}
             onClose={() => setBulkOpen(false)}
-            onSuccess={() => { setBulkOpen(false); onRefreshSlots(true); }}
+            onSuccess={() => {
+              setBulkOpen(false);
+              onRefreshSlots(true);
+            }}
           />
         )}
       </AnimatePresence>

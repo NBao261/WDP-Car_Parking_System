@@ -25,7 +25,7 @@ export function useUserForm(
   isOpen: boolean,
   user: UserType | undefined,
   onSuccess: () => void,
-  onClose: () => void,
+  onClose: () => void
 ) {
   const isEdit = !!user;
   const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -59,7 +59,10 @@ export function useUserForm(
 
   // Fetch all roles to dynamically compute base permissions
   useEffect(() => {
-    roleService.getAllRoles().then((res) => setRoles(res.data || [])).catch(() => {});
+    roleService
+      .getAllRoles()
+      .then((res) => setRoles(res.data || []))
+      .catch(() => {});
   }, []);
 
   // Dynamically compute base permissions based on the currently selected role in the form
@@ -130,7 +133,12 @@ export function useUserForm(
 
       // Phân công tòa nhà (chỉ áp dụng khi TẠO MỚI và admin có chọn tòa nhà).
       // Khi CHỈNH SỬA: dùng Quick-Action "Phân công Tòa nhà" trực tiếp từ bảng User.
-      if (!isEdit && ASSIGNABLE_ROLES.includes(selectedRole) && savedUserId && selectedFacilityIds.length > 0) {
+      if (
+        !isEdit &&
+        ASSIGNABLE_ROLES.includes(selectedRole) &&
+        savedUserId &&
+        selectedFacilityIds.length > 0
+      ) {
         await userService.assignFacilities(savedUserId, selectedFacilityIds);
       }
 
@@ -146,7 +154,8 @@ export function useUserForm(
   const canGoNext = (): boolean => {
     if (currentStep === 1) {
       const hasBase = !!basicData.name.trim() && !!basicData.phone.trim();
-      if (!isEdit) return hasBase && !!basicData.email.trim() && basicData.password.trim().length >= 6;
+      if (!isEdit)
+        return hasBase && !!basicData.email.trim() && basicData.password.trim().length >= 6;
       return hasBase;
     }
     return true;

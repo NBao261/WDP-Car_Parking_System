@@ -1,8 +1,8 @@
-import { AlertTriangle, Clock, ScanLine, Car, AlertCircle, LogOut } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuthStore } from "../../../../store";
-import { ConfirmModal } from "../../../../components/ConfirmModal";
+import { AlertTriangle, Clock, ScanLine, Car, AlertCircle, LogOut } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../../../../store';
+import { ConfirmModal } from '../../../../components/ConfirmModal';
 
 export default function TerminalToolbar() {
   const [currentTime, setCurrentTime] = useState(new Date());

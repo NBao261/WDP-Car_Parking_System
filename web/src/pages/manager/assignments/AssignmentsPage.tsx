@@ -30,12 +30,14 @@ export default function AssignmentsPage() {
     try {
       const [res, facRes] = await Promise.all([
         userService.getAllUsers({ role: UserRole.STAFF, limit: 100 }),
-        facilityService.getAll({ limit: 1000 })
+        facilityService.getAll({ limit: 1000 }),
       ]);
       setStaffList(res.data ?? []);
-      
+
       const map: Record<string, string> = {};
-      facRes.data.forEach((f: any) => { map[f._id] = f.name; });
+      facRes.data.forEach((f: any) => {
+        map[f._id] = f.name;
+      });
       setFacilityMap(map);
     } catch (err: any) {
       setStaffError(err.message || 'Không thể tải danh sách nhân viên.');
@@ -44,7 +46,9 @@ export default function AssignmentsPage() {
     }
   }, []);
 
-  useEffect(() => { fetchStaff(); }, [fetchStaff]);
+  useEffect(() => {
+    fetchStaff();
+  }, [fetchStaff]);
 
   return (
     <div>

@@ -22,11 +22,15 @@ export interface Reservation {
 }
 
 export const reservationService = {
-  create: async (payload: CreateReservationPayload): Promise<{ success: boolean; data: Reservation }> => {
+  create: async (
+    payload: CreateReservationPayload
+  ): Promise<{ success: boolean; data: Reservation }> => {
     return apiClient.post('/reservations', payload);
   },
 
-  getMyReservations: async (params?: any): Promise<{ success: boolean; data: Reservation[]; pagination: any }> => {
+  getMyReservations: async (
+    params?: any
+  ): Promise<{ success: boolean; data: Reservation[]; pagination: any }> => {
     return apiClient.get('/reservations', { params });
   },
 
@@ -36,5 +40,5 @@ export const reservationService = {
 
   getById: async (id: string): Promise<{ success: boolean; data: Reservation }> => {
     return apiClient.get(`/reservations/${id}`);
-  }
+  },
 };

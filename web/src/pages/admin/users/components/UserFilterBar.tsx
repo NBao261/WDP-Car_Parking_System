@@ -8,7 +8,12 @@ interface UserFilterBarProps {
   onRoleFilterChange: (value: string) => void;
 }
 
-export function UserFilterBar({ searchTerm, onSearchChange, roleFilter, onRoleFilterChange }: UserFilterBarProps) {
+export function UserFilterBar({
+  searchTerm,
+  onSearchChange,
+  roleFilter,
+  onRoleFilterChange,
+}: UserFilterBarProps) {
   return (
     <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4">
       <div className="relative flex-1">

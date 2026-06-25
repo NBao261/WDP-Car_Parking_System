@@ -13,10 +13,30 @@ interface ExceptionDetailDrawerProps {
 }
 
 const STATUS_BADGE: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  RESOLVED:   { bg: "bg-[#9FE870]/10",  text: "text-[#2d6a1f]",  border: "border-[#9FE870]/50",  label: "ĐÃ XỬ LÝ" },
-  REJECTED:   { bg: "bg-[#fee2e2]",     text: "text-[#991b1b]",  border: "border-[#fca5a5]/60",  label: "TỪ CHỐI" },
-  NEW:        { bg: "bg-[#fef3c7]",     text: "text-[#92400e]",  border: "border-[#fcd34d]/60",  label: "CHỜ XỬ LÝ" },
-  PROCESSING: { bg: "bg-[#dbeafe]",     text: "text-[#1e40af]",  border: "border-[#93c5fd]/60",  label: "ĐANG XỬ LÝ" },
+  RESOLVED: {
+    bg: 'bg-[#9FE870]/10',
+    text: 'text-[#2d6a1f]',
+    border: 'border-[#9FE870]/50',
+    label: 'ĐÃ XỬ LÝ',
+  },
+  REJECTED: {
+    bg: 'bg-[#fee2e2]',
+    text: 'text-[#991b1b]',
+    border: 'border-[#fca5a5]/60',
+    label: 'TỪ CHỐI',
+  },
+  NEW: {
+    bg: 'bg-[#fef3c7]',
+    text: 'text-[#92400e]',
+    border: 'border-[#fcd34d]/60',
+    label: 'CHỜ XỬ LÝ',
+  },
+  PROCESSING: {
+    bg: 'bg-[#dbeafe]',
+    text: 'text-[#1e40af]',
+    border: 'border-[#93c5fd]/60',
+    label: 'ĐANG XỬ LÝ',
+  },
 };
 
 export default function ExceptionDetailDrawer({ selectedException, onClose, onContinueCheckout: _onContinueCheckout, onResolved }: ExceptionDetailDrawerProps) {

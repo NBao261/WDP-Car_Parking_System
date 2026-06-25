@@ -1,8 +1,4 @@
-import {
-  Car, Bike, Truck, Bus,
-  CarTaxiFront, BusFront,
-  type LucideIcon,
-} from 'lucide-react';
+import { Car, Bike, Truck, Bus, CarTaxiFront, BusFront, type LucideIcon } from 'lucide-react';
 import { SlotSize } from '../../../../services/vehicleType.service';
 
 /** Danh sách icon xe đường bộ — name lưu vào DB dưới dạng string */

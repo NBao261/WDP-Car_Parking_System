@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldAlert, AlertCircle, FileText, SearchX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import {
+  ShieldAlert,
+  AlertCircle,
+  FileText,
+  SearchX,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import {
   exceptionService,
@@ -94,28 +103,37 @@ export default function ExceptionsManagerPage() {
 
   const getStatusColor = (status: ExceptionStatus) => {
     switch (status) {
-      case ExceptionStatus.NEW: return 'bg-blue-50 text-blue-700 border-blue-200';
-      case ExceptionStatus.PROCESSING: return 'bg-amber-50 text-amber-700 border-amber-200';
-      case ExceptionStatus.RESOLVED: return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case ExceptionStatus.REJECTED: return 'bg-red-50 text-red-700 border-red-200';
-      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+      case ExceptionStatus.NEW:
+        return 'bg-blue-50 text-blue-700 border-blue-200';
+      case ExceptionStatus.PROCESSING:
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      case ExceptionStatus.RESOLVED:
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case ExceptionStatus.REJECTED:
+        return 'bg-red-50 text-red-700 border-red-200';
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0 }
+    visible: { opacity: 1, y: 0 },
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      >
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
             <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl">
@@ -155,7 +173,10 @@ export default function ExceptionsManagerPage() {
             <div className="p-16 flex flex-col items-center justify-center gap-3 text-rose-500">
               <AlertCircle size={40} className="mb-2 opacity-50" />
               <p className="font-medium text-sm">{error}</p>
-              <button onClick={fetchExceptions} className="mt-2 px-4 py-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors text-sm font-bold">
+              <button
+                onClick={fetchExceptions}
+                className="mt-2 px-4 py-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors text-sm font-bold"
+              >
                 Thử lại
               </button>
             </div>
@@ -183,31 +204,36 @@ export default function ExceptionsManagerPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {exceptions.map((ex) => {
-                    const sessionCode = typeof ex.sessionId === 'object' && ex.sessionId ? ex.sessionId.code : ex.sessionId || 'N/A';
-                    const licensePlate = typeof ex.sessionId === 'object' && ex.sessionId ? ex.sessionId.licensePlate : '';
-                    const staffName = typeof ex.staffId === 'object' && ex.staffId ? ex.staffId.name : ex.staffId || 'Hệ thống';
-                    
+                    const sessionCode =
+                      typeof ex.sessionId === 'object' && ex.sessionId
+                        ? ex.sessionId.code
+                        : ex.sessionId || 'N/A';
+                    const licensePlate =
+                      typeof ex.sessionId === 'object' && ex.sessionId
+                        ? ex.sessionId.licensePlate
+                        : '';
+                    const staffName =
+                      typeof ex.staffId === 'object' && ex.staffId
+                        ? ex.staffId.name
+                        : ex.staffId || 'Hệ thống';
+
                     return (
                       <tr key={ex._id} className="hover:bg-gray-50/50 transition-colors group">
-                        <td className="px-6 py-4 font-medium text-gray-800">
-                          {sessionCode}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700">
-                          {licensePlate || '-'}
-                        </td>
+                        <td className="px-6 py-4 font-medium text-gray-800">{sessionCode}</td>
+                        <td className="px-6 py-4 text-gray-700">{licensePlate || '-'}</td>
                         <td className="px-6 py-4">
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 font-medium">
                             {EXCEPTION_TYPE_LABELS[ex.type]}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-gray-700">
-                          {staffName}
-                        </td>
+                        <td className="px-6 py-4 text-gray-700">{staffName}</td>
                         <td className="px-6 py-4 text-gray-600">
                           {new Date(ex.createdAt).toLocaleString('vi-VN')}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(ex.status)}`}>
+                          <span
+                            className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(ex.status)}`}
+                          >
                             {EXCEPTION_STATUS_LABELS[ex.status]}
                           </span>
                         </td>
@@ -233,7 +259,13 @@ export default function ExceptionsManagerPage() {
               {!loading && !error && totalPages > 1 && (
                 <div className="px-6 py-4 border-t border-rose-100/50 flex items-center justify-between bg-rose-50/50 rounded-b-2xl">
                   <p className="text-sm text-gray-500">
-                    Hiển thị <span className="font-medium text-gray-900">{(page - 1) * LIMIT + 1}</span> đến <span className="font-medium text-gray-900">{Math.min(page * LIMIT, totalItems)}</span> trong tổng số <span className="font-medium text-gray-900">{totalItems}</span> kết quả
+                    Hiển thị{' '}
+                    <span className="font-medium text-gray-900">{(page - 1) * LIMIT + 1}</span> đến{' '}
+                    <span className="font-medium text-gray-900">
+                      {Math.min(page * LIMIT, totalItems)}
+                    </span>{' '}
+                    trong tổng số <span className="font-medium text-gray-900">{totalItems}</span>{' '}
+                    kết quả
                   </p>
                   <div className="flex gap-1.5">
                     {totalPages >= 5 && (
@@ -265,17 +297,17 @@ export default function ExceptionsManagerPage() {
                       } else {
                         pages = [1, '...', page - 1, page, page + 1, '...', totalPages];
                       }
-                      
+
                       return pages.map((p, i) => (
                         <button
                           key={i}
                           onClick={() => typeof p === 'number' && setPage(p)}
                           disabled={p === '...'}
                           className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                            p === '...' 
-                              ? 'text-gray-400 bg-transparent cursor-default' 
-                              : page === p 
-                                ? 'bg-rose-500 text-white border border-rose-600 font-bold shadow-sm' 
+                            p === '...'
+                              ? 'text-gray-400 bg-transparent cursor-default'
+                              : page === p
+                                ? 'bg-rose-500 text-white border border-rose-600 font-bold shadow-sm'
                                 : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                           }`}
                         >
