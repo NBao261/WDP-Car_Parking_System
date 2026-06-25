@@ -17,14 +17,21 @@ const SEGMENTS = [
   { key: 'available', name: 'Chỗ trống', color: '#22c55e' },
   { key: 'reserved', name: 'Đã đặt', color: '#3b82f6' },
   { key: 'occupied', name: 'Đang dùng', color: '#f97316' },
+  { key: 'maintenance', name: 'Bảo trì', color: '#9ca3af' },
 ];
 
 export function OccupancyDonutWidget({ occupancyData }: OccupancyDonutWidgetProps) {
+  // Tính tổng maintenance + locked từ floors (summary không có sẵn)
+  const totalMaintenance = occupancyData?.floors?.reduce(
+    (sum, f) => sum + (f.maintenance || 0) + (f.locked || 0), 0
+  ) || 0;
+
   const pieData = occupancyData?.summary
     ? [
         { name: 'Chỗ trống', value: occupancyData.summary.totalAvailable },
         { name: 'Đã đặt', value: occupancyData.summary.totalReserved },
         { name: 'Đang dùng', value: occupancyData.summary.totalOccupied },
+        { name: 'Bảo trì', value: totalMaintenance },
       ].filter((item) => item.value > 0)
     : [];
 
