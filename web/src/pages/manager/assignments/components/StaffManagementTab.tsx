@@ -1,5 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Users, Search, RefreshCw, AlertCircle, Settings2, MoreVertical, User as UserIcon, ChevronDown, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, ArrowUpDown } from 'lucide-react';
+import {
+  Users,
+  Search,
+  RefreshCw,
+  AlertCircle,
+  Settings2,
+  MoreVertical,
+  User as UserIcon,
+  ChevronDown,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Eye,
+  ArrowUpDown,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, AssignedFacility } from '../../../../types/user.types';
 import { StaffDetailModal } from './StaffDetailModal';
@@ -19,7 +35,7 @@ interface StaffManagementTabProps {
 const getStaffFacilityNames = (staff: User, facilityMap: Record<string, string>): string => {
   const facilities = staff.assignedFacilities ?? [];
   if (facilities.length === 0) return 'Chưa phân công';
-  
+
   const names = facilities
     .map((f: any) => {
       const id = typeof f === 'string' ? f : (f as AssignedFacility)._id;
@@ -43,13 +59,24 @@ const containerVariants = {
 };
 
 const inputBase: React.CSSProperties = {
-  height: 40, background: '#ffffff',
-  border: '1.5px solid #e2e3e2', borderRadius: 10,
-  fontSize: 14, outline: 'none', cursor: 'pointer',
+  height: 40,
+  background: '#ffffff',
+  border: '1.5px solid #e2e3e2',
+  borderRadius: 10,
+  fontSize: 14,
+  outline: 'none',
+  cursor: 'pointer',
 };
 
-function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
-  value: string; onChange: (v: string) => void;
+function DropFilter({
+  value,
+  onChange,
+  options,
+  width = 180,
+  icon: Icon,
+}: {
+  value: string;
+  onChange: (v: string) => void;
   options: { value: string; label: string }[];
   width?: number | string;
   icon?: React.ElementType;
@@ -68,7 +95,7 @@ function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const selectedOption = options.find(o => o.value === value) || options[0];
+  const selectedOption = options.find((o) => o.value === value) || options[0];
 
   return (
     <div className="relative" style={{ width, flexShrink: 0 }} ref={dropdownRef}>
@@ -87,9 +114,7 @@ function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
           userSelect: 'none',
         }}
       >
-        {Icon && (
-          <Icon size={14} style={{ position: 'absolute', left: 12, color: '#9ca3af' }} />
-        )}
+        {Icon && <Icon size={14} style={{ position: 'absolute', left: 12, color: '#9ca3af' }} />}
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {selectedOption?.label}
         </span>
@@ -98,9 +123,13 @@ function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
       <ChevronDown
         size={15}
         style={{
-          position: 'absolute', right: 12, top: '50%', transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`,
-          color: '#6b6e6b', pointerEvents: 'none',
-          transition: 'transform 0.2s ease'
+          position: 'absolute',
+          right: 12,
+          top: '50%',
+          transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`,
+          color: '#6b6e6b',
+          pointerEvents: 'none',
+          transition: 'transform 0.2s ease',
         }}
       />
 
@@ -120,7 +149,7 @@ function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
             overflowY: 'auto',
             overflowX: 'hidden',
             maxHeight: 280,
-            animation: 'fadeIn 0.15s ease-out'
+            animation: 'fadeIn 0.15s ease-out',
           }}
         >
           {options.map((o) => (
@@ -139,7 +168,7 @@ function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
                 fontWeight: value === o.value ? 500 : 400,
                 display: 'flex',
                 alignItems: 'center',
-                transition: 'background 0.15s ease, color 0.15s ease'
+                transition: 'background 0.15s ease, color 0.15s ease',
               }}
               onMouseEnter={(e) => {
                 if (value !== o.value) {
@@ -163,7 +192,11 @@ function DropFilter({ value, onChange, options, width = 180, icon: Icon }: {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 14 },
-  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring' as const, stiffness: 300, damping: 24 },
+  },
 };
 
 interface StaffRowProps {
@@ -175,7 +208,14 @@ interface StaffRowProps {
   isLast?: boolean;
 }
 
-function StaffRow({ staff, managerFacilities, facilityMap, onAssignClick, onViewClick, isLast }: StaffRowProps) {
+function StaffRow({
+  staff,
+  managerFacilities,
+  facilityMap,
+  onAssignClick,
+  onViewClick,
+  isLast,
+}: StaffRowProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const noFacilities = managerFacilities.length === 0;
 
@@ -201,59 +241,74 @@ function StaffRow({ staff, managerFacilities, facilityMap, onAssignClick, onView
       </td>
       <td className="px-6 py-4">
         <div className="max-w-[200px] sm:max-w-[350px] xl:max-w-[500px] overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <span className={`text-sm ${staff.assignedFacilities?.length === 0 ? 'text-amber-500 font-semibold' : 'text-gray-600'}`}>
+          <span
+            className={`text-sm ${staff.assignedFacilities?.length === 0 ? 'text-amber-500 font-semibold' : 'text-gray-600'}`}
+          >
             {getStaffFacilityNames(staff, facilityMap)}
           </span>
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className={`px-2.5 py-1 rounded-md text-sm font-semibold border ${
-          staff.status === 'active'
-            ? 'bg-green-50 text-green-700 border-green-100'
+        <span
+          className={`px-2.5 py-1 rounded-md text-sm font-semibold border ${
+            staff.status === 'active'
+              ? 'bg-green-50 text-green-700 border-green-100'
+              : staff.status === 'locked'
+                ? 'bg-red-50 text-red-600 border-red-100'
+                : 'bg-gray-50 text-gray-600 border-gray-200'
+          }`}
+        >
+          {staff.status === 'active'
+            ? 'Hoạt động'
             : staff.status === 'locked'
-            ? 'bg-red-50 text-red-600 border-red-100'
-            : 'bg-gray-50 text-gray-600 border-gray-200'
-        }`}>
-          {staff.status === 'active' ? 'Hoạt động' : staff.status === 'locked' ? 'Bị khóa' : 'Không hoạt động'}
+              ? 'Bị khóa'
+              : 'Không hoạt động'}
         </span>
       </td>
       <td className="px-6 py-4 text-right relative">
-        <button 
-          onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen((v) => !v);
+          }}
           className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
         >
           <MoreVertical size={18} />
         </button>
         <AnimatePresence>
           {menuOpen && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: isLast ? 8 : -8 }} 
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: isLast ? 8 : -8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: isLast ? 8 : -8 }} 
+              exit={{ opacity: 0, scale: 0.95, y: isLast ? 8 : -8 }}
               transition={{ duration: 0.12 }}
               className={`absolute right-8 w-48 bg-white rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-gray-100 py-1.5 z-50 ${isLast ? 'bottom-10' : 'top-12'}`}
             >
               <div className="fixed inset-0 z-[-1]" onClick={() => setMenuOpen(false)} />
-              <button 
-                onClick={(e) => { 
-                  e.stopPropagation(); 
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
                   onViewClick(staff);
-                  setMenuOpen(false); 
+                  setMenuOpen(false);
                 }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
                 <Eye size={14} /> Xem chi tiết
               </button>
-              <button 
-                onClick={(e) => { 
-                  e.stopPropagation(); 
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
                   if (!noFacilities) {
-                    onAssignClick(staff); 
-                    setMenuOpen(false); 
+                    onAssignClick(staff);
+                    setMenuOpen(false);
                   }
                 }}
                 disabled={noFacilities}
-                title={noFacilities ? "Vui lòng liên hệ Admin để được cấp quyền quản lý tòa nhà trước" : ""}
+                title={
+                  noFacilities
+                    ? 'Vui lòng liên hệ Admin để được cấp quyền quản lý tòa nhà trước'
+                    : ''
+                }
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Settings2 size={14} /> Phân công tòa nhà
@@ -280,7 +335,7 @@ export function StaffManagementTab({
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterFacility, setFilterFacility] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<string>('none');
-  
+
   const [detailStaff, setDetailStaff] = useState<User | undefined>();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
@@ -291,38 +346,55 @@ export function StaffManagementTab({
     setCurrentPage(1);
   }, [searchTerm, filterStatus, filterFacility, sortOrder]);
 
-  const filteredStaff = staffList.filter((s) => {
-    const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          s.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || s.status === filterStatus;
-    
-    let matchesFacility = true;
-    if (filterFacility === 'unassigned') {
-      matchesFacility = !s.assignedFacilities || s.assignedFacilities.length === 0;
-    } else if (filterFacility !== 'all') {
-      const ids = (s.assignedFacilities ?? []).map((f: any) => typeof f === 'string' ? f : (f as AssignedFacility)._id);
-      matchesFacility = ids.includes(filterFacility);
-    }
+  const filteredStaff = staffList
+    .filter((s) => {
+      const matchesSearch =
+        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = filterStatus === 'all' || s.status === filterStatus;
 
-    return matchesSearch && matchesStatus && matchesFacility;
-  }).sort((a, b) => {
-    if (sortOrder === 'name_asc') return a.name.localeCompare(b.name);
-    if (sortOrder === 'name_desc') return b.name.localeCompare(a.name);
-    if (sortOrder === 'email_asc') return a.email.localeCompare(b.email);
-    if (sortOrder === 'email_desc') return b.email.localeCompare(a.email);
-    return 0;
-  });
+      let matchesFacility = true;
+      if (filterFacility === 'unassigned') {
+        matchesFacility = !s.assignedFacilities || s.assignedFacilities.length === 0;
+      } else if (filterFacility !== 'all') {
+        const ids = (s.assignedFacilities ?? []).map((f: any) =>
+          typeof f === 'string' ? f : (f as AssignedFacility)._id
+        );
+        matchesFacility = ids.includes(filterFacility);
+      }
+
+      return matchesSearch && matchesStatus && matchesFacility;
+    })
+    .sort((a, b) => {
+      if (sortOrder === 'name_asc') return a.name.localeCompare(b.name);
+      if (sortOrder === 'name_desc') return b.name.localeCompare(a.name);
+      if (sortOrder === 'email_asc') return a.email.localeCompare(b.email);
+      if (sortOrder === 'email_desc') return b.email.localeCompare(a.email);
+      return 0;
+    });
 
   const totalFiltered = filteredStaff.length;
   const totalPages = Math.ceil(totalFiltered / ITEMS_PER_PAGE);
-  const paginatedStaff = filteredStaff.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const paginatedStaff = filteredStaff.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
-  const hasActiveFilter = searchTerm !== '' || filterStatus !== 'all' || filterFacility !== 'all' || sortOrder !== 'none';
+  const hasActiveFilter =
+    searchTerm !== '' || filterStatus !== 'all' || filterFacility !== 'all' || sortOrder !== 'none';
 
   return (
-    <motion.div className="space-y-6" initial="hidden" animate="visible" variants={containerVariants}>
+    <motion.div
+      className="space-y-6"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       {/* Search & Filter */}
-      <motion.div variants={itemVariants} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap items-center gap-3">
+      <motion.div
+        variants={itemVariants}
+        className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap items-center gap-3"
+      >
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -340,7 +412,7 @@ export function StaffManagementTab({
           options={[
             { value: 'all', label: 'Tất cả tòa nhà' },
             { value: 'unassigned', label: 'Chưa phân công' },
-            ...managerFacilities.map(f => ({ value: f._id, label: f.name }))
+            ...managerFacilities.map((f) => ({ value: f._id, label: f.name })),
           ]}
           width={200}
         />
@@ -352,7 +424,7 @@ export function StaffManagementTab({
             { value: 'all', label: 'Tất cả trạng thái' },
             { value: 'active', label: 'Hoạt động' },
             { value: 'locked', label: 'Bị khóa' },
-            { value: 'inactive', label: 'Không hoạt động' }
+            { value: 'inactive', label: 'Không hoạt động' },
           ]}
           width={180}
         />
@@ -368,7 +440,7 @@ export function StaffManagementTab({
             { value: 'name_asc', label: 'Tên (A-Z)' },
             { value: 'name_desc', label: 'Tên (Z-A)' },
             { value: 'email_asc', label: 'Email (A-Z)' },
-            { value: 'email_desc', label: 'Email (Z-A)' }
+            { value: 'email_desc', label: 'Email (Z-A)' },
           ]}
           width={160}
           icon={ArrowUpDown}
@@ -392,22 +464,35 @@ export function StaffManagementTab({
 
       {/* Cảnh báo khi Manager chưa được gán tòa nhà */}
       {managerFacilities.length === 0 && (
-        <motion.div variants={itemVariants} className="bg-amber-50 border border-amber-100 rounded-2xl px-6 py-4 flex items-start gap-3">
+        <motion.div
+          variants={itemVariants}
+          className="bg-amber-50 border border-amber-100 rounded-2xl px-6 py-4 flex items-start gap-3"
+        >
           <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-bold text-amber-800">Bạn chưa được phân công quản lý tòa nhà nào</p>
-            <p className="text-sm text-amber-700 mt-1">Vui lòng liên hệ Admin để được cấp quyền quản lý tòa nhà trước khi có thể phân công cho nhân viên.</p>
+            <p className="text-sm font-bold text-amber-800">
+              Bạn chưa được phân công quản lý tòa nhà nào
+            </p>
+            <p className="text-sm text-amber-700 mt-1">
+              Vui lòng liên hệ Admin để được cấp quyền quản lý tòa nhà trước khi có thể phân công
+              cho nhân viên.
+            </p>
           </div>
         </motion.div>
       )}
 
       {/* Staff table */}
-      <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+      <motion.div
+        variants={itemVariants}
+        className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col"
+      >
         {staffError ? (
           <div className="p-8 flex items-center justify-center gap-2 text-sm text-red-600 bg-red-50/50 rounded-2xl">
             <AlertCircle className="w-5 h-5 shrink-0" />
             {staffError}
-            <button onClick={fetchStaff} className="ml-2 underline font-bold hover:text-red-700">Thử lại</button>
+            <button onClick={fetchStaff} className="ml-2 underline font-bold hover:text-red-700">
+              Thử lại
+            </button>
           </div>
         ) : staffLoading ? (
           <div className="p-16 flex flex-col items-center justify-center gap-3 text-gray-400">
@@ -420,7 +505,11 @@ export function StaffManagementTab({
               <Users className="w-8 h-8 text-gray-300" />
             </div>
             <p className="text-base font-medium text-gray-900 mb-1">Không có dữ liệu</p>
-            <p className="text-sm">{searchTerm ? 'Không tìm thấy nhân viên nào khớp với từ khóa tìm kiếm.' : 'Chưa có nhân viên nào trong hệ thống.'}</p>
+            <p className="text-sm">
+              {searchTerm
+                ? 'Không tìm thấy nhân viên nào khớp với từ khóa tìm kiếm.'
+                : 'Chưa có nhân viên nào trong hệ thống.'}
+            </p>
           </div>
         ) : (
           <div className="w-full">
@@ -454,7 +543,16 @@ export function StaffManagementTab({
             {totalFiltered > 0 && totalPages > 1 && (
               <div className="px-6 py-4 border-t border-lime-100/50 flex items-center justify-between bg-lime-50/50 rounded-b-2xl">
                 <p className="text-sm text-gray-500">
-                  Hiển thị <span className="font-medium text-gray-900">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> đến <span className="font-medium text-gray-900">{Math.min(currentPage * ITEMS_PER_PAGE, totalFiltered)}</span> trong tổng số <span className="font-medium text-gray-900">{totalFiltered}</span> kết quả
+                  Hiển thị{' '}
+                  <span className="font-medium text-gray-900">
+                    {(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                  </span>{' '}
+                  đến{' '}
+                  <span className="font-medium text-gray-900">
+                    {Math.min(currentPage * ITEMS_PER_PAGE, totalFiltered)}
+                  </span>{' '}
+                  trong tổng số <span className="font-medium text-gray-900">{totalFiltered}</span>{' '}
+                  kết quả
                 </p>
                 <div className="flex gap-1.5">
                   {totalPages >= 5 && (
@@ -484,19 +582,27 @@ export function StaffManagementTab({
                     } else if (currentPage >= totalPages - 2) {
                       pages = [1, '...', totalPages - 2, totalPages - 1, totalPages];
                     } else {
-                      pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+                      pages = [
+                        1,
+                        '...',
+                        currentPage - 1,
+                        currentPage,
+                        currentPage + 1,
+                        '...',
+                        totalPages,
+                      ];
                     }
-                    
+
                     return pages.map((p, i) => (
                       <button
                         key={i}
                         onClick={() => typeof p === 'number' && setCurrentPage(p)}
                         disabled={p === '...'}
                         className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                          p === '...' 
-                            ? 'text-gray-400 bg-transparent cursor-default' 
-                            : currentPage === p 
-                              ? 'bg-[#d7ee46] text-[#060606] border border-[#c4dc32] font-bold shadow-sm' 
+                          p === '...'
+                            ? 'text-gray-400 bg-transparent cursor-default'
+                            : currentPage === p
+                              ? 'bg-[#d7ee46] text-[#060606] border border-[#c4dc32] font-bold shadow-sm'
                               : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                         }`}
                       >

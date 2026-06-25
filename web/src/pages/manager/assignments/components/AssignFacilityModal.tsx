@@ -11,7 +11,12 @@ interface AssignModalProps {
   onSuccess: () => void;
 }
 
-export function AssignFacilityModal({ staff, managerFacilities, onClose, onSuccess }: AssignModalProps) {
+export function AssignFacilityModal({
+  staff,
+  managerFacilities,
+  onClose,
+  onSuccess,
+}: AssignModalProps) {
   const currentIds = (staff.assignedFacilities ?? []).map((f: any) =>
     typeof f === 'string' ? f : (f as AssignedFacility)._id
   );
@@ -20,7 +25,7 @@ export function AssignFacilityModal({ staff, managerFacilities, onClose, onSucce
   const [error, setError] = useState('');
 
   const toggle = (id: string) => {
-    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
   const handleSave = async () => {
@@ -40,12 +45,17 @@ export function AssignFacilityModal({ staff, managerFacilities, onClose, onSucce
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col" style={{ maxHeight: '80vh' }}>
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col"
+        style={{ maxHeight: '80vh' }}
+      >
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
             <h3 className="font-bold text-[#060606]">Phân công Tòa nhà</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Nhân viên: <strong>{staff.name}</strong></p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Nhân viên: <strong>{staff.name}</strong>
+            </p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
             <X size={18} className="text-gray-400" />
@@ -67,11 +77,17 @@ export function AssignFacilityModal({ staff, managerFacilities, onClose, onSucce
                 type="button"
                 onClick={() => toggle(facility._id)}
                 className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-start gap-3 ${
-                  selected ? 'bg-[#f0f9dc] border-[#d7ee46]' : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                  selected
+                    ? 'bg-[#f0f9dc] border-[#d7ee46]'
+                    : 'bg-gray-50 border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <div className="mt-0.5 shrink-0">
-                  {selected ? <CheckSquare className="w-4 h-4 text-[#5a9e0f]" /> : <Square className="w-4 h-4 text-gray-300" />}
+                  {selected ? (
+                    <CheckSquare className="w-4 h-4 text-[#5a9e0f]" />
+                  ) : (
+                    <Square className="w-4 h-4 text-gray-300" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-xs text-[#060606] truncate">{facility.name}</p>
@@ -99,7 +115,15 @@ export function AssignFacilityModal({ staff, managerFacilities, onClose, onSucce
             disabled={saving}
             className="flex-1 py-2.5 text-sm font-bold bg-[#d7ee46] text-[#060606] rounded-xl hover:bg-[#c4dc32] transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
           >
-            {saving ? <><RefreshCw size={14} className="animate-spin" /> Đang lưu...</> : <><CheckCircle size={14} /> Lưu phân công</>}
+            {saving ? (
+              <>
+                <RefreshCw size={14} className="animate-spin" /> Đang lưu...
+              </>
+            ) : (
+              <>
+                <CheckCircle size={14} /> Lưu phân công
+              </>
+            )}
           </button>
         </div>
       </div>

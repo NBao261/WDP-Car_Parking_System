@@ -1,6 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, ChevronDown, Check, ArrowUpDown, X } from 'lucide-react';
-import { ExceptionStatus, ExceptionType, EXCEPTION_STATUS_LABELS, EXCEPTION_TYPE_LABELS } from '../../../../services/exception.service';
+import {
+  ExceptionStatus,
+  ExceptionType,
+  EXCEPTION_STATUS_LABELS,
+  EXCEPTION_TYPE_LABELS,
+} from '../../../../services/exception.service';
 
 const inputBase: React.CSSProperties = {
   height: 40,
@@ -19,7 +24,7 @@ function DropFilter({
   onChange,
   options,
   width = 200,
-  icon: Icon
+  icon: Icon,
 }: {
   label: string;
   value: string;
@@ -61,9 +66,7 @@ function DropFilter({
           userSelect: 'none',
         }}
       >
-        {Icon && (
-          <Icon size={14} style={{ position: 'absolute', left: 12, color: '#9ca3af' }} />
-        )}
+        {Icon && <Icon size={14} style={{ position: 'absolute', left: 12, color: '#9ca3af' }} />}
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {selectedOption?.label}
         </span>
@@ -189,21 +192,20 @@ export function ExceptionFilterBar({
   sortValue = 'createdAt_desc',
   setSortValue,
 }: ExceptionFilterBarProps) {
-  
   const statusOptions = [
     { value: 'all', label: 'Tất cả trạng thái' },
-    ...Object.values(ExceptionStatus).map(status => ({
+    ...Object.values(ExceptionStatus).map((status) => ({
       value: status,
-      label: EXCEPTION_STATUS_LABELS[status]
-    }))
+      label: EXCEPTION_STATUS_LABELS[status],
+    })),
   ];
 
   const typeOptions = [
     { value: 'all', label: 'Tất cả loại ngoại lệ' },
-    ...Object.values(ExceptionType).map(type => ({
+    ...Object.values(ExceptionType).map((type) => ({
       value: type,
-      label: EXCEPTION_TYPE_LABELS[type]
-    }))
+      label: EXCEPTION_TYPE_LABELS[type],
+    })),
   ];
 
   const sortOptions = [
@@ -220,18 +222,22 @@ export function ExceptionFilterBar({
   const [sortField, sortDir] = (sortValue || 'createdAt_desc').split('_');
 
   return (
-    <div style={{
-      marginBottom: 24,
-      background: '#ffffff',
-      padding: '16px',
-      borderRadius: 16,
-      border: '1px solid #f0f1f0',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 16,
-    }}>
+    <div
+      style={{
+        marginBottom: 24,
+        background: '#ffffff',
+        padding: '16px',
+        borderRadius: 16,
+        border: '1px solid #f0f1f0',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+      }}
+    >
       {/* Top Row: Search and Filters */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, width: '100%' }}>
+      <div
+        style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, width: '100%' }}
+      >
         {/* Search Input */}
         <div style={{ position: 'relative', flex: '1 1 300px', minWidth: 200 }}>
           <Search
@@ -256,7 +262,7 @@ export function ExceptionFilterBar({
               padding: '0 16px 0 38px',
               color: '#060606',
               transition: 'all 0.2s ease',
-              cursor: 'text'
+              cursor: 'text',
             }}
             onFocus={(e) => {
               e.target.style.borderColor = '#cce242';
@@ -296,7 +302,15 @@ export function ExceptionFilterBar({
 
       {/* Bottom Row: Sorting and Clear Filters */}
       {setSortValue && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, width: '100%' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 16,
+            width: '100%',
+          }}
+        >
           <span className="text-sm text-gray-500 font-medium shrink-0">Sắp xếp:</span>
 
           {/* Sort: Ngày tạo */}
@@ -376,7 +390,10 @@ export function ExceptionFilterBar({
           </div>
 
           {/* Clear Filters Button */}
-          {(searchTerm || filterType !== 'all' || filterStatus !== 'all' || sortValue !== 'createdAt_desc') && (
+          {(searchTerm ||
+            filterType !== 'all' ||
+            filterStatus !== 'all' ||
+            sortValue !== 'createdAt_desc') && (
             <button
               onClick={() => {
                 setSearchTerm('');
@@ -399,8 +416,8 @@ export function ExceptionFilterBar({
                 gap: 6,
                 transition: 'background 0.2s',
               }}
-              onMouseEnter={e => e.currentTarget.style.background = '#fce4e4'}
-              onMouseLeave={e => e.currentTarget.style.background = '#fff1f1'}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#fce4e4')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = '#fff1f1')}
               className="shrink-0"
             >
               <X size={15} />
