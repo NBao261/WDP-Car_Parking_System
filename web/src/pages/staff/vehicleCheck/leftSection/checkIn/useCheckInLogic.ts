@@ -69,13 +69,13 @@ export function useCheckInLogic(onCheckIn: (data: any) => void) {
 
   const lookupReservation = async (code: string) => {
     if (!code.trim()) return;
-    state.setIsLookingUp(true); state.setReservationInfo(null); state.setPlateMatchStatus('idle'); state.setManualPlateConfirmed(false);
+    state.setIsLookingUp(true); state.setReservationInfo(null); state.setPlateMatchStatus('idle');
     try {
       const res: any = await apiClient.get(`/reservations/by-code/${code.trim().toUpperCase()}`);
       if (res.success && res.data) {
         state.setReservationInfo(res.data);
         if (res.data.vehicleTypeId?._id) state.setSelectedVehicleTypeId(res.data.vehicleTypeId._id);
-        if (!state.plate && res.data.licensePlate) state.setPlate(res.data.licensePlate);
+        // if (!state.plate && res.data.licensePlate) state.setPlate(res.data.licensePlate);
         toast.success(`✓ Tìm thấy đặt chỗ — ${res.data.licensePlate}`);
         if (state.plate) {
           const clean = (s: string) => s.replace(/[^A-Z0-9]/g, '').toUpperCase();
@@ -97,10 +97,10 @@ export function useCheckInLogic(onCheckIn: (data: any) => void) {
     const isNoPlate = selectedVehicleType?.requiresPlate === false;
 
     if (!isNoPlate && !state.plate.trim()) { toast.error("Vui lòng nhập biển số xe!"); return; }
-    if (isNoPlate && !state.checkInImage) { toast.error("Xe không biển số: BẮT BUỘC phải chụp ảnh xe lúc vào!"); return; }
+    if (!state.checkInImage) { toast.error("BẮT BUỘC phải chụp ảnh xe lúc vào bãi!"); return; }
     if (!state.facilityId || !state.selectedVehicleTypeId) { toast.error("Thiếu thông tin vị trí trực hoặc loại xe. Vui lòng đăng nhập lại!"); return; }
-    if (state.reservationInfo && state.plateMatchStatus === 'mismatch' && !state.manualPlateConfirmed) {
-      toast.error("Biển số không khớp đặt chỗ — tick xác nhận thủ công trước!"); return;
+    if (state.reservationInfo && state.plateMatchStatus === 'mismatch') {
+      toast.error("Biển số xe thực tế không khớp với thông tin đặt chỗ!"); return;
     }
 
     state.setIsSubmitting(true);
@@ -146,7 +146,7 @@ export function useCheckInLogic(onCheckIn: (data: any) => void) {
       toast.success("Mở chắn thành công!");
       setTimeout(() => {
         state.setPlate(""); state.setCheckInImage(null); state.setPreviewUrl(null); state.setOcrSuccess(false);
-        state.setReservationCode(""); state.setReservationInfo(null); state.setPlateMatchStatus('idle'); state.setManualPlateConfirmed(false);
+        state.setReservationCode(""); state.setReservationInfo(null); state.setPlateMatchStatus('idle');
         state.setPendingClear(false); state.setCheckInError(null);
         onCheckIn(null);
       }, 2000);

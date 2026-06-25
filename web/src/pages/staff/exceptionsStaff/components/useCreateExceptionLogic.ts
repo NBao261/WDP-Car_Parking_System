@@ -49,7 +49,14 @@ export function useCreateExceptionLogic(onClose: () => void, onSuccess: () => vo
     if (!description.trim()) { toast.error("Vui lòng nhập mô tả sự cố!"); return; }
     setIsSubmitting(true);
     try {
-      const payload: any = { sessionId: foundSession._id, type: exceptionType, description: description.trim() };
+      const payload: any = { 
+        sessionId: foundSession._id, 
+        type: exceptionType, 
+        description: description.trim(),
+        expectedPlate: foundSession.licensePlate,
+        checkInImage: foundSession.checkInImage,
+        cardCode: foundSession.cardCode
+      };
       if (exceptionType === ExceptionType.LOST_CARD && lostCardFee === 0 && surcharge !== "") payload.surcharge = Number(surcharge);
       else if (exceptionType !== ExceptionType.LOST_CARD && surcharge !== "") payload.surcharge = Number(surcharge);
       await exceptionService.createException(payload);

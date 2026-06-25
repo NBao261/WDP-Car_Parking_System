@@ -22,7 +22,7 @@ import {
   Shadows,
 } from "../../../src/constants/theme";
 import { Loading } from "../../../src/components";
-import { reservationApi, vehicleTypeApi, vehicleApi, api } from "../../../src/services/api";
+import { reservationApi, vehicleTypeApi, vehicleApi, api, sessionApi } from "../../../src/services/api";
 import { AvailableSlot } from "../../../src/types/facility.types";
 
 const getVehicleIcon = (name: string): any => {
@@ -63,6 +63,7 @@ export default function BookingScreen() {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [selectedVehicleType, setSelectedVehicleType] = useState<string>("");
   const [licensePlate, setLicensePlate] = useState("");
+  const [activeSessions, setActiveSessions] = useState<any[]>([]);
 
   const [startTime, setStartTime] = useState(
     new Date(Date.now() + 35 * 60 * 1000),
@@ -77,11 +78,12 @@ export default function BookingScreen() {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const [vtRes, slotRes, facilities, vehiclesRes] = await Promise.all<any>([
+      const [vtRes, slotRes, facilities, vehiclesRes, sessionsRes] = await Promise.all<any>([
         vehicleTypeApi.getVehicleTypes(),
         api.getAvailableSlots(facilityId),
         api.getPublicFacilities(1, 100),
         vehicleApi.getMyVehicles(),
+        sessionApi.getMySessions('active'),
       ]);
 
       const slots: AvailableSlot[] = slotRes || [];
@@ -99,6 +101,11 @@ export default function BookingScreen() {
         setFacilityName(fac.name);
         setFacilityOpenTime(fac.openTime || "06:00");
         setFacilityCloseTime(fac.closeTime || "22:00");
+      }
+
+      // Load active sessions
+      if (sessionsRes.success && sessionsRes.data) {
+        setActiveSessions(sessionsRes.data);
       }
 
       // Load user's vehicles
@@ -181,6 +188,27 @@ export default function BookingScreen() {
       return;
     }
 
+    const isCurrentlyParked = activeSessions.some(
+      (s) =>
+        s.licensePlate === licensePlate &&
+        (s.facilityId?._id === facilityId || s.facilityId === facilityId)
+    );
+
+    if (isCurrentlyParked) {
+      Alert.alert(
+        "Lưu ý",
+        `Biển số ${licensePlate} hiện đang được gửi tại bãi này. Bạn có chắc chắn muốn đặt trước cho khung giờ sắp tới không?`,
+        [
+          { text: "Hủy", style: "cancel" },
+          { text: "Tiếp tục", onPress: () => performBooking() },
+        ]
+      );
+    } else {
+      performBooking();
+    }
+  };
+
+  const performBooking = async () => {
     try {
       setSubmitting(true);
       const res = (await reservationApi.createReservation({

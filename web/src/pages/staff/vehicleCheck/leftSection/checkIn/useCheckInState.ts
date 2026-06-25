@@ -30,7 +30,6 @@ export function useCheckInState() {
   const [reservationInfo, setReservationInfo] = useState<any>(null);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [plateMatchStatus, setPlateMatchStatus] = useState<'idle' | 'match' | 'mismatch'>('idle');
-  const [manualPlateConfirmed, setManualPlateConfirmed] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [inputReservationMode, setInputReservationMode] = useState<'qr' | 'code'>('qr');
   const [manualReservationCode, setManualReservationCode] = useState("");
@@ -57,7 +56,6 @@ export function useCheckInState() {
     reservationInfo, setReservationInfo,
     isLookingUp, setIsLookingUp,
     plateMatchStatus, setPlateMatchStatus,
-    manualPlateConfirmed, setManualPlateConfirmed,
     showQrScanner, setShowQrScanner,
     inputReservationMode, setInputReservationMode,
     manualReservationCode, setManualReservationCode,

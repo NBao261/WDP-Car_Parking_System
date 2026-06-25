@@ -4,13 +4,14 @@ import { EXCEPTION_TYPE_LABELS, ExceptionType } from "../../../../services/excep
 
 interface GlobalExceptionPanelProps {
   coPlateCam: string;
+  checkOutImage?: string | null;
   currentSession?: any;
   onClose: () => void;
   onExceptionCreated?: () => void;
 }
 
-export default function GlobalExceptionPanel({ coPlateCam, currentSession, onClose, onExceptionCreated }: GlobalExceptionPanelProps) {
-  const logic = useGlobalExceptionLogic(currentSession, onClose, onExceptionCreated);
+export default function GlobalExceptionPanel({ coPlateCam, checkOutImage, currentSession, onClose, onExceptionCreated }: GlobalExceptionPanelProps) {
+  const logic = useGlobalExceptionLogic(currentSession, coPlateCam, checkOutImage, onClose, onExceptionCreated);
 
   return (
     <div className="fixed inset-0 z-[100] overflow-hidden">

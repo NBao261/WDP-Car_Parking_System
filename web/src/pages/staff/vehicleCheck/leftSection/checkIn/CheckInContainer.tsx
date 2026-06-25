@@ -15,7 +15,7 @@ export function CheckInContainer({ onCheckIn }: { onCheckIn: (data: any) => void
   useEffect(() => {
     const onF1 = () => {
       logic.setPlate(""); logic.setCheckInImage(null); logic.setPreviewUrl(null); logic.setOcrSuccess(false);
-      logic.setReservationCode(""); logic.setReservationInfo(null); logic.setPlateMatchStatus('idle'); logic.setManualPlateConfirmed(false);
+      logic.setReservationCode(""); logic.setReservationInfo(null); logic.setPlateMatchStatus('idle');
     };
 
     const onSpace = (e: KeyboardEvent) => {
@@ -30,7 +30,7 @@ export function CheckInContainer({ onCheckIn }: { onCheckIn: (data: any) => void
     window.addEventListener("keydown", onSpace);
     window.addEventListener("HOTKEY_F1", onF1);
     return () => { window.removeEventListener("keydown", onSpace); window.removeEventListener("HOTKEY_F1", onF1); };
-  }, [logic.plate, logic.isSubmitting, logic.vehicleTypes, logic.selectedVehicleTypeId, logic.checkInImage, logic.reservationCode, logic.reservationInfo, logic.plateMatchStatus, logic.manualPlateConfirmed, logic.pendingClear]);
+  }, [logic.plate, logic.isSubmitting, logic.vehicleTypes, logic.selectedVehicleTypeId, logic.checkInImage, logic.reservationCode, logic.reservationInfo, logic.plateMatchStatus, logic.pendingClear]);
 
   useEffect(() => {
     if (!logic.facilityId) return;
@@ -58,6 +58,18 @@ export function CheckInContainer({ onCheckIn }: { onCheckIn: (data: any) => void
     const interval = setInterval(fetchCapacity, 30000);
     return () => clearInterval(interval);
   }, [logic.facilityId]);
+
+  useEffect(() => {
+    if (logic.reservationInfo && logic.reservationInfo.licensePlate) {
+      if (!logic.plate) {
+        logic.setPlateMatchStatus('idle');
+      } else {
+        const clean = (s: string) => s.replace(/[^A-Z0-9]/g, '').toUpperCase();
+        const matched = clean(logic.plate) === clean(logic.reservationInfo.licensePlate);
+        logic.setPlateMatchStatus(matched ? 'match' : 'mismatch');
+      }
+    }
+  }, [logic.plate, logic.reservationInfo]);
 
   useEffect(() => {
     if (!logic.plate || logic.vehicleTypes.length === 0) return;
@@ -168,7 +180,6 @@ export function CheckInContainer({ onCheckIn }: { onCheckIn: (data: any) => void
             inputReservationMode={logic.inputReservationMode} setInputReservationMode={logic.setInputReservationMode}
             reservationInfo={logic.reservationInfo} setReservationInfo={logic.setReservationInfo}
             plateMatchStatus={logic.plateMatchStatus} setPlateMatchStatus={logic.setPlateMatchStatus}
-            manualPlateConfirmed={logic.manualPlateConfirmed} setManualPlateConfirmed={logic.setManualPlateConfirmed}
             setReservationCode={logic.setReservationCode} manualReservationCode={logic.manualReservationCode} setManualReservationCode={logic.setManualReservationCode}
             lookupReservation={logic.lookupReservation} showQrScanner={logic.showQrScanner} toggleQrScanner={toggleQrScanner}
           />

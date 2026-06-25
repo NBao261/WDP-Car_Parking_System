@@ -75,6 +75,11 @@ function mapApiException(exc: any, pricingMap?: Map<string, number>): ExceptionD
       hour: '2-digit',
       minute: '2-digit',
     }),
+    actualPlate: exc.actualPlate,
+    expectedPlate: exc.expectedPlate,
+    checkInImage: exc.checkInImage,
+    checkOutImage: exc.checkOutImage,
+    excCardCode: exc.cardCode,
   };
 }
 
@@ -148,11 +153,11 @@ export default function ExceptionsStaffPage() {
   };
 
   return (
-    <div className="h-full max-w-[1400px] mx-auto pb-10 p-6 flex flex-col">
-      <div className="flex justify-between items-start mb-6 shrink-0">
+    <div className="h-full flex flex-col gap-3 overflow-hidden p-4 lg:p-6">
+      <div className="shrink-0 px-1 pt-1 flex justify-between items-start">
         <div>
-          <h2 className="text-[22px] font-bold text-[#060606]">Xử lý sự cố</h2>
-          <p className="text-sm text-[#6b6b6b] mt-1">
+          <h1 className="text-xl font-bold text-[#060606]">Xử lý sự cố</h1>
+          <p className="text-[12px] text-gray-400 mt-0.5">
             Các sự cố bạn đã báo cáo và trạng thái giải quyết.
           </p>
         </div>

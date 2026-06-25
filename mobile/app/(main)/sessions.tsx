@@ -57,11 +57,13 @@ function SessionCard({ item }: { item: ParkingSession }) {
       <View style={styles.cardDetails}>
         <View style={styles.cardDetail}>
           <Ionicons name="business-outline" size={13} color={Colors.textTertiary} />
-          <Text style={styles.cardDetailText} numberOfLines={1}>{item.facilityName}</Text>
+          <Text style={styles.cardDetailText} numberOfLines={1}>
+            {item.facilityName} {item.vehicleTypeName ? `• ${item.vehicleTypeName}` : ''}
+          </Text>
         </View>
         <View style={styles.cardDetail}>
           <Ionicons name="location-outline" size={13} color={Colors.textTertiary} />
-          <Text style={styles.cardDetailText}>{item.floorName} · {item.slotCode}</Text>
+          <Text style={styles.cardDetailText}>{item.floorName} • {item.slotCode}</Text>
         </View>
       </View>
       {item.status === 'active' && (
@@ -112,7 +114,9 @@ function ReservationCard2({ item, onCancel }: { item: Reservation; onCancel: (id
       <View style={styles.cardDetails}>
         <View style={styles.cardDetail}>
           <Ionicons name="business-outline" size={13} color={Colors.textTertiary} />
-          <Text style={styles.cardDetailText} numberOfLines={1}>{(item as any).facilityId?.name || '—'}</Text>
+          <Text style={styles.cardDetailText} numberOfLines={1}>
+            {(item as any).facilityId?.name || '—'} { (item as any).vehicleTypeId?.name ? `• ${(item as any).vehicleTypeId.name}` : '' }
+          </Text>
         </View>
         <View style={styles.cardDetail}>
           <Ionicons name="time-outline" size={13} color={Colors.textTertiary} />
@@ -182,31 +186,7 @@ function ReservationCard2({ item, onCancel }: { item: Reservation; onCancel: (id
                 {/* Mã text */}
                 <Text style={styles.qrModalCode}>{(item as any).code}</Text>
 
-                {/* Hướng dẫn thẻ ảo */}
-                <View style={{ backgroundColor: '#ecfdf5', borderRadius: 10, padding: 12, marginTop: 8, marginBottom: 4, borderWidth: 1, borderColor: '#a7f3d0' }}>
-                  <Text style={{ fontSize: 12, color: '#065f46', fontWeight: '600', textAlign: 'center', marginBottom: 4 }}>
-                    📱 Đây là thẻ gửi xe ảo của bạn
-                  </Text>
-                  <Text style={{ fontSize: 11, color: '#047857', textAlign: 'center', lineHeight: 16 }}>
-                    ✅ Gửi xe vào {'\u2022'} ✅ Lấy xe ra {'\u2022'} ⚠️ Không cần thẻ vật lý
-                  </Text>
-                </View>
 
-                {/* Thông tin bên dưới */}
-                <View style={styles.qrModalInfo}>
-                  <View style={styles.qrModalInfoRow}>
-                    <Ionicons name="business-outline" size={13} color={Colors.textTertiary} />
-                    <Text style={styles.qrModalInfoText} numberOfLines={1}>
-                      {(item as any).facilityId?.name || '—'}
-                    </Text>
-                  </View>
-                  <View style={styles.qrModalInfoRow}>
-                    <Ionicons name="time-outline" size={13} color={Colors.textTertiary} />
-                    <Text style={styles.qrModalInfoText}>
-                      {checkinAt.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                  </View>
-                </View>
 
                 <Text style={styles.qrModalDismiss}>Chạm ra ngoài để đóng</Text>
               </View>
