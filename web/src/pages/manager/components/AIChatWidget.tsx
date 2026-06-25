@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Sparkles, X, Send, Loader2 } from 'lucide-react';
 import { aiService, ChatMessage } from '../../../services/ai.service';
 import { toast } from 'sonner';
@@ -10,7 +10,9 @@ export function AIChatWidget() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | undefined>();
+  const [quickReplies, setQuickReplies] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -21,44 +23,79 @@ export function AIChatWidget() {
     scrollToBottom();
   }, [messages, isOpen]);
 
+  // Load quick replies từ backend
   useEffect(() => {
-    const fetchHistory = async () => {
+    const loadQuickReplies = async () => {
       try {
-        const res = await aiService.getChatHistory(1, 50);
-        if (res.data?.data) {
-          // Backend returns newest first, so reverse it for UI (oldest at top)
-          const sorted: any[] = [...res.data.data].reverse();
-          
-          const mappedMessages: ChatMessage[] = [];
-          for (const item of sorted) {
-            mappedMessages.push({
-              _id: item._id + '_user',
-              role: 'user',
-              content: item.message,
-              createdAt: item.createdAt,
-            });
-            mappedMessages.push({
-              _id: item._id + '_bot',
-              role: 'model',
-              content: item.response,
-              data: item.responseData,
-              createdAt: item.createdAt,
-            });
-          }
-          
-          setMessages(mappedMessages);
-          if (sorted.length > 0) {
-            setConversationId(sorted[sorted.length - 1].conversationId);
-          }
+        const res = await aiService.getQuickReplies();
+        if (res.data) {
+          // Flatten tất cả categories thành 1 mảng, lấy tối đa 4
+          const all = Object.values(res.data).flat();
+          setQuickReplies(all.slice(0, 4));
         }
-      } catch (err) {
-        console.error('Failed to fetch chat history', err);
+      } catch {
+        // Fallback nếu API lỗi
+        setQuickReplies([
+          "Lượt xe vào ra hôm nay thế nào?",
+          "Thống kê doanh thu tuần này",
+          "Có tòa nhà nào đang quá tải không?",
+          "Phân tích giờ cao điểm hôm qua"
+        ]);
       }
     };
-    if (isOpen && messages.length === 0) {
-      fetchHistory();
+    loadQuickReplies();
+  }, []);
+
+  // Fetch conversation mới nhất khi mở chat
+  const loadLatestConversation = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      // Lấy conversation gần nhất
+      const convRes = await aiService.getConversations(1, 1);
+      const latestConv = (convRes.data as any)?.data?.[0] ?? (convRes.data as any)?.conversations?.[0];
+
+      if (latestConv?.conversationId) {
+        setConversationId(latestConv.conversationId);
+
+        // Lấy messages của conversation đó
+        const msgRes = await aiService.getConversationMessages(latestConv.conversationId);
+        const rawMessages = msgRes.data as any;
+        const sorted = Array.isArray(rawMessages) ? rawMessages : (rawMessages?.messages || []);
+
+        const mappedMessages: ChatMessage[] = [];
+        for (const item of sorted) {
+          mappedMessages.push({
+            _id: item._id + '_user',
+            role: 'user',
+            content: item.message,
+            createdAt: item.createdAt,
+          });
+          mappedMessages.push({
+            _id: item._id + '_bot',
+            role: 'model',
+            content: item.response,
+            data: item.responseData,
+            createdAt: item.createdAt,
+          });
+        }
+
+        setMessages(mappedMessages);
+      } else {
+        setMessages([]);
+        setConversationId(undefined);
+      }
+    } catch (err) {
+      console.error('Failed to fetch conversation', err);
+    } finally {
+      setHistoryLoading(false);
     }
-  }, [isOpen]);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadLatestConversation();
+    }
+  }, [isOpen, loadLatestConversation]);
 
   const formatTime = (isoString: string) => {
     if (!isoString) return '';
@@ -111,6 +148,13 @@ export function AIChatWidget() {
     }
   };
 
+  const defaultSuggestions = quickReplies.length > 0 ? quickReplies : [
+    "Lượt xe vào ra hôm nay thế nào?",
+    "Thống kê doanh thu tuần này",
+    "Có tòa nhà nào đang quá tải không?",
+    "Phân tích giờ cao điểm hôm qua"
+  ];
+
   return (
     <>
       {/* ═══ Floating Button ═══ */}
@@ -155,7 +199,12 @@ export function AIChatWidget() {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f5f5f3]">
-          {messages.length === 0 ? (
+          {historyLoading ? (
+            <div className="flex flex-col items-center justify-center h-full gap-2">
+              <Loader2 size={24} className="animate-spin text-[#d7ee46]" />
+              <p className="text-[12px] text-[#6b7280]">Đang tải lịch sử...</p>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-10">
               <div className="w-12 h-12 rounded-full bg-[#060606] flex items-center justify-center mb-4">
                 <Sparkles size={20} className="text-[#d7ee46]" />
@@ -164,12 +213,7 @@ export function AIChatWidget() {
                 Hôm nay bạn muốn xem gì?
               </p>
               <div className="flex flex-col gap-2 w-full px-2">
-                {[
-                  "Lượt xe vào ra hôm nay thế nào?",
-                  "Thống kê doanh thu tuần này",
-                  "Có tòa nhà nào đang quá tải không?",
-                  "Phân tích giờ cao điểm hôm qua"
-                ].map((sug, idx) => (
+                {defaultSuggestions.map((sug, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSend(sug)}
@@ -198,19 +242,19 @@ export function AIChatWidget() {
                     remarkPlugins={[remarkGfm]}
                     components={{
                       // 1. Markdown GFM (Mở rộng)
-                      table: ({node, ...props}) => <table className="w-full border-collapse border border-[#e5e7eb] my-3" {...props} />,
-                      th: ({node, ...props}) => <th className="border border-[#e5e7eb] bg-[#f5f5f3] px-3 py-2 text-left font-bold text-[#1a1a1a]" {...props} />,
-                      td: ({node, ...props}) => <td className="border border-[#e5e7eb] px-3 py-2 text-left" {...props} />,
+                      table: (props: any) => <table className="w-full border-collapse border border-[#e5e7eb] my-3" {...props} />,
+                      th: (props: any) => <th className="border border-[#e5e7eb] bg-[#f5f5f3] px-3 py-2 text-left font-bold text-[#1a1a1a]" {...props} />,
+                      td: (props: any) => <td className="border border-[#e5e7eb] px-3 py-2 text-left" {...props} />,
                       
                       // 2. Markdown Nguyên Thủy (Gốc)
-                      p: ({node, ...props}) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
-                      ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
-                      ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
-                      li: ({node, ...props}) => <li className="leading-relaxed" {...props} />,
-                      a: ({node, ...props}) => <a className="text-[#889b1c] hover:text-[#d7ee46] underline decoration-[#e5e7eb] hover:decoration-[#d7ee46] underline-offset-2 transition-colors font-medium" {...props} />,
-                      strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
-                      blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-[#d7ee46] pl-3 italic opacity-80 my-3" {...props} />,
-                      code: ({node, inline, ...props}: any) => 
+                      p: (props: any) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
+                      ul: (props: any) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
+                      ol: (props: any) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
+                      li: (props: any) => <li className="leading-relaxed" {...props} />,
+                      a: (props: any) => <a className="text-[#889b1c] hover:text-[#d7ee46] underline decoration-[#e5e7eb] hover:decoration-[#d7ee46] underline-offset-2 transition-colors font-medium" {...props} />,
+                      strong: (props: any) => <strong className="font-semibold" {...props} />,
+                      blockquote: (props: any) => <blockquote className="border-l-4 border-[#d7ee46] pl-3 italic opacity-80 my-3" {...props} />,
+                      code: ({inline, ...props}: any) => 
                         inline 
                           ? <code className="bg-black/5 dark:bg-white/10 rounded-[4px] px-1.5 py-0.5 text-[12px] font-mono text-[#ea580c]" {...props} />
                           : <code className="block bg-[#1a1a1a] text-[#f8f8f8] rounded-lg p-3 text-[12px] overflow-x-auto my-3 font-mono shadow-sm" {...props} />,
@@ -244,12 +288,7 @@ export function AIChatWidget() {
         <div className="bg-white border-t border-[#e5e7eb] flex flex-col">
           {/* Quick Suggestions (Horizontal Scroll) */}
           <div className="px-3 pt-3 pb-1 overflow-x-auto flex gap-2 scrollbar-hide" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-            {[
-              "Lượt xe hôm nay?",
-              "Doanh thu tuần này",
-              "Bãi đỗ nào quá tải?",
-              "Giờ cao điểm hôm qua"
-            ].map((sug, idx) => (
+            {defaultSuggestions.slice(0, 4).map((sug, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSend(sug)}
