@@ -6,8 +6,8 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
-  TextInput,
   Platform,
+  Image,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -22,7 +22,7 @@ import {
   Shadows,
 } from "../../../src/constants/theme";
 import { Loading } from "../../../src/components";
-import { reservationApi, vehicleTypeApi, api } from "../../../src/services/api";
+import { reservationApi, vehicleTypeApi, vehicleApi, api } from "../../../src/services/api";
 import { AvailableSlot } from "../../../src/types/facility.types";
 
 const getVehicleIcon = (name: string): any => {
@@ -31,6 +31,19 @@ const getVehicleIcon = (name: string): any => {
   if (n.includes("xe tải") || n.includes("truck")) return "car-outline";
   return "bicycle-outline";
 };
+
+interface UserVehicle {
+  _id: string;
+  licensePlate: string;
+  nickname?: string;
+  image?: string;
+  isDefault: boolean;
+  vehicleTypeId: {
+    _id: string;
+    name: string;
+    code: string;
+  } | string;
+}
 
 export default function BookingScreen() {
   const router = useRouter();
@@ -45,78 +58,17 @@ export default function BookingScreen() {
   const [facilityOpenTime, setFacilityOpenTime] = useState<string>("06:00");
   const [facilityCloseTime, setFacilityCloseTime] = useState<string>("22:00");
 
+  // Vehicle selection
+  const [userVehicles, setUserVehicles] = useState<UserVehicle[]>([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [selectedVehicleType, setSelectedVehicleType] = useState<string>("");
   const [licensePlate, setLicensePlate] = useState("");
+
   const [startTime, setStartTime] = useState(
     new Date(Date.now() + 35 * 60 * 1000),
   );
   const [showPicker, setShowPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState<"date" | "time">("date");
-  const [plateError, setPlateError] = useState<string>('');
-
-  // Tự động chuẩn hoá biển số cực thông minh khi người dùng đang gõ
-  // Định dạng chuẩn: XX-XX-123.45 (dùng '-' thay khoảng trắng để khớp OCR)
-  const autoFormatPlate = (text: string): string => {
-    let s = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (!s) return '';
-
-    let prefix = '';
-    let tail = '';
-
-    const typeName = vehicleTypes.find(v => v._id === selectedVehicleType)?.name?.toLowerCase() || '';
-    const isCar = typeName.includes('ô tô') || typeName.includes('car');
-
-    if (isCar) {
-      // Ô tô: 2 số + 1-2 chữ cái + phần số đuôi
-      const match = s.match(/^(\d{2}[A-Z]{1,2})(\d*)$/);
-      if (match) {
-        prefix = match[1];
-        tail = match[2];
-      } else {
-        prefix = s;
-      }
-    } else {
-      // Xe máy: 4 ký tự đầu (VD: 29A1) làm prefix
-      if (s.length >= 4) {
-        prefix = s.substring(0, 4);
-        tail = s.substring(4);
-      } else {
-        prefix = s;
-      }
-    }
-
-    // Thêm dấu '-' sau 2 số đầu (mã vùng)
-    prefix = prefix.replace(/^(\d{2})([A-Z])/, '$1-$2');
-
-    if (tail) {
-      tail = tail.substring(0, 5); // Tối đa 5 số đuôi
-      if (tail.length === 5) {
-        tail = tail.substring(0, 3) + '.' + tail.substring(3);
-      }
-      // Dùng '-' thay khoảng trắng để khớp chuẩn OCR
-      return prefix + '-' + tail;
-    }
-
-    return prefix;
-  };
-
-  /**
-   * Kiểm tra biển số xe Việt Nam hợp lệ (chuẩn OCR với '-').
-   *   Xe máy:  29-A1-123.45
-   *   Ô tô:    30-A-123.45
-   *   Biển đôi: 51-AA-123.45
-   *   Biển ngắn (4-5 số): 29-A1-1234 / 30-A-12345
-   */
-  const isValidPlate = (plate: string): boolean => {
-    const p = plate.trim();
-    // Xe máy: 29-A1-123.45 hoặc 29-A1-1234
-    const moto = /^\d{2}-[A-Z]\d-(\d{3}\.\d{2}|\d{4,5})$/.test(p);
-    // Ô tô 1 chữ: 30-A-123.45 hoặc 30-A-1234
-    const car1 = /^\d{2}-[A-Z]-(\d{3}\.\d{2}|\d{4,5})$/.test(p);
-    // Ô tô 2 chữ (biển đôi): 51-AA-123.45 hoặc 51-AA-1234
-    const car2 = /^\d{2}-[A-Z]{2}-(\d{3}\.\d{2}|\d{4,5})$/.test(p);
-    return moto || car1 || car2;
-  };
 
   useEffect(() => {
     fetchInitialData();
@@ -125,18 +77,17 @@ export default function BookingScreen() {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const [vtRes, slotRes, facilities] = await Promise.all<any>([
+      const [vtRes, slotRes, facilities, vehiclesRes] = await Promise.all<any>([
         vehicleTypeApi.getVehicleTypes(),
         api.getAvailableSlots(facilityId),
         api.getPublicFacilities(1, 100),
+        vehicleApi.getMyVehicles(),
       ]);
 
       const slots: AvailableSlot[] = slotRes || [];
       setAvailableSlots(slots);
 
       if (vtRes.success) {
-        // Only show vehicle types that this facility actually supports
-        // (i.e. they appear in the availableSlots response for this facility)
         const supportedIds = new Set(slots.map((s) => s.vehicleTypeId));
         const supported = (vtRes.data as any[]).filter((vt) => supportedIds.has(vt._id));
         setVehicleTypes(supported);
@@ -149,6 +100,20 @@ export default function BookingScreen() {
         setFacilityOpenTime(fac.openTime || "06:00");
         setFacilityCloseTime(fac.closeTime || "22:00");
       }
+
+      // Load user's vehicles
+      if (vehiclesRes.success && vehiclesRes.data) {
+        const vehicles: UserVehicle[] = vehiclesRes.data;
+        setUserVehicles(vehicles);
+
+        // Auto-select default vehicle
+        const defaultV = vehicles.find((v) => v.isDefault);
+        if (defaultV) {
+          selectVehicle(defaultV, slots);
+        } else if (vehicles.length > 0) {
+          selectVehicle(vehicles[0], slots);
+        }
+      }
     } catch {
       Alert.alert("Lỗi", "Không thể tải dữ liệu, vui lòng thử lại.");
     } finally {
@@ -156,18 +121,35 @@ export default function BookingScreen() {
     }
   };
 
+  const selectVehicle = (vehicle: UserVehicle, slots?: AvailableSlot[]) => {
+    setSelectedVehicleId(vehicle._id);
+    setLicensePlate(vehicle.licensePlate);
+    const typeId = typeof vehicle.vehicleTypeId === 'string'
+      ? vehicle.vehicleTypeId
+      : vehicle.vehicleTypeId._id;
+    setSelectedVehicleType(typeId);
+  };
+
+  const getVehicleTypeId = (vehicle: UserVehicle): string => {
+    return typeof vehicle.vehicleTypeId === 'string'
+      ? vehicle.vehicleTypeId
+      : vehicle.vehicleTypeId._id;
+  };
+
+  const getVehicleTypeName = (vehicle: UserVehicle): string => {
+    return typeof vehicle.vehicleTypeId === 'string'
+      ? ''
+      : vehicle.vehicleTypeId.name;
+  };
+
+  // Filter vehicles by selected vehicle type
+  const filteredVehicles = userVehicles.filter((v) => {
+    return getVehicleTypeId(v) === selectedVehicleType;
+  });
+
   const handleBook = async () => {
-    // Format một lần cuối cùng trước khi submit
-    const finalPlate = autoFormatPlate(licensePlate);
-    if (!finalPlate.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập biển số xe.");
-      return;
-    }
-    if (!isValidPlate(finalPlate)) {
-      Alert.alert(
-        "Biển số không hợp lệ",
-        `"${finalPlate}" không đúng định dạng biển số Việt Nam.\n\nVí dụ hợp lệ:\n• Xe máy: 29-A1-123.45\n• Ô tô: 30-A-123.45`
-      );
+    if (!selectedVehicleId) {
+      Alert.alert("Thiếu thông tin", "Vui lòng chọn xe để đặt chỗ.");
       return;
     }
     if (startTime.getTime() - Date.now() < 30 * 60 * 1000) {
@@ -175,7 +157,6 @@ export default function BookingScreen() {
       return;
     }
 
-    // Validate operation hours
     const startH = startTime.getHours();
     const startM = startTime.getMinutes();
     const startMins = startH * 60 + startM;
@@ -205,7 +186,7 @@ export default function BookingScreen() {
       const res = (await reservationApi.createReservation({
         facilityId,
         vehicleTypeId: selectedVehicleType,
-        licensePlate: finalPlate,
+        licensePlate,
         startTime: startTime.toISOString(),
       })) as any;
       if (res.success) {
@@ -288,14 +269,14 @@ export default function BookingScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
+          {/* ── Step 1: Loại xe ── */}
           <View style={styles.stepHeader}>
             <View style={styles.stepBadge}>
               <Text style={styles.stepNum}>1</Text>
             </View>
-            <Text style={styles.stepTitle}>Phương tiện</Text>
+            <Text style={styles.stepTitle}>Loại xe</Text>
           </View>
           <View style={styles.card}>
-            <Text style={styles.fieldLabel}>Loại xe</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -310,7 +291,21 @@ export default function BookingScreen() {
                   <TouchableOpacity
                     key={vt._id}
                     style={[styles.vtChip, active && styles.vtChipActive, noSlot && styles.vtChipFull]}
-                    onPress={() => setSelectedVehicleType(vt._id)}
+                    onPress={() => {
+                      setSelectedVehicleType(vt._id);
+                      // Auto-select first vehicle of this type
+                      const matchingVehicles = userVehicles.filter(
+                        (v) => getVehicleTypeId(v) === vt._id
+                      );
+                      if (matchingVehicles.length > 0) {
+                        const defV = matchingVehicles.find((v) => v.isDefault) || matchingVehicles[0];
+                        setSelectedVehicleId(defV._id);
+                        setLicensePlate(defV.licensePlate);
+                      } else {
+                        setSelectedVehicleId("");
+                        setLicensePlate("");
+                      }
+                    }}
                   >
                     <Ionicons
                       name={getVehicleIcon(vt.name)}
@@ -334,59 +329,103 @@ export default function BookingScreen() {
                 );
               })}
             </ScrollView>
-
-            <Text style={styles.fieldLabel}>Biển số xe</Text>
-            <View style={[styles.plateInput, plateError ? { borderColor: Colors.danger } : {}]}>
-              <Ionicons
-                name="newspaper-outline"
-                size={18}
-                color={plateError ? Colors.danger : Colors.textSecondary}
-              />
-              <TextInput
-                style={styles.plateField}
-                placeholder={
-                  (() => {
-                    const typeName = vehicleTypes.find(v => v._id === selectedVehicleType)?.name?.toLowerCase() || '';
-                    if (typeName.includes('ô tô') || typeName.includes('car')) return "Ví dụ: 30-A-123.45";
-                    return "Ví dụ: 29-A1-123.45";
-                  })()
-                }
-                placeholderTextColor={Colors.placeholder}
-                value={licensePlate}
-                onChangeText={(text) => {
-                  const formatted = autoFormatPlate(text);
-                  setLicensePlate(formatted);
-                  // Chỉ validate khi đã gõ đủ chiều dài tối thiểu (tránh lỗi khi đang gõ)
-                  if (formatted.length >= 8) {
-                    setPlateError(isValidPlate(formatted) ? '' : 'Biển số không đúng định dạng');
-                  } else {
-                    setPlateError('');
-                  }
-                }}
-                autoCapitalize="characters"
-                maxLength={15}
-              />
-            </View>
-            {plateError ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                <Ionicons name="alert-circle" size={13} color={Colors.danger} />
-                <Text style={{ fontSize: 12, color: Colors.danger, fontFamily: Typography.fontFamily.medium }}>
-                  {plateError}
-                </Text>
-              </View>
-            ) : licensePlate.length >= 8 && isValidPlate(licensePlate) ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                <Ionicons name="checkmark-circle" size={13} color={Colors.success} />
-                <Text style={{ fontSize: 12, color: Colors.success, fontFamily: Typography.fontFamily.medium }}>
-                  Biển số hợp lệ
-                </Text>
-              </View>
-            ) : null}
           </View>
 
+          {/* ── Step 2: Chọn xe ── */}
           <View style={styles.stepHeader}>
             <View style={styles.stepBadge}>
               <Text style={styles.stepNum}>2</Text>
+            </View>
+            <Text style={styles.stepTitle}>Chọn xe của bạn</Text>
+          </View>
+
+          {filteredVehicles.length === 0 ? (
+            <View style={styles.noVehicleCard}>
+              <View style={styles.noVehicleIconWrap}>
+                <Ionicons name="car-outline" size={32} color={Colors.textTertiary} />
+              </View>
+              <Text style={styles.noVehicleTitle}>Chưa có xe {selectedVehicleTypeName}</Text>
+              <Text style={styles.noVehicleSub}>
+                Bạn chưa đăng ký xe loại này. Hãy thêm xe để đặt chỗ nhanh hơn.
+              </Text>
+              <TouchableOpacity
+                style={styles.addVehicleBtn}
+                onPress={() => router.push('/profile/add-vehicle' as any)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="add-circle-outline" size={18} color={Colors.white} />
+                <Text style={styles.addVehicleBtnText}>Thêm xe mới</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.vehicleList}>
+              {filteredVehicles.map((vehicle) => {
+                const isSelected = selectedVehicleId === vehicle._id;
+                const typeName = getVehicleTypeName(vehicle);
+                return (
+                  <TouchableOpacity
+                    key={vehicle._id}
+                    style={[styles.vehicleCard, isSelected && styles.vehicleCardActive]}
+                    onPress={() => selectVehicle(vehicle)}
+                    activeOpacity={0.8}
+                  >
+                    {/* Radio indicator */}
+                    <View style={[styles.radioOuter, isSelected && styles.radioOuterActive]}>
+                      {isSelected && <View style={styles.radioInner} />}
+                    </View>
+
+                    {/* Vehicle image or icon */}
+                    {vehicle.image ? (
+                      <Image source={{ uri: vehicle.image }} style={styles.vehicleImg} />
+                    ) : (
+                      <View style={[styles.vehicleIconFallback, isSelected && { backgroundColor: Colors.primaryBg }]}>
+                        <Ionicons
+                          name={getVehicleIcon(typeName)}
+                          size={22}
+                          color={isSelected ? Colors.primary : Colors.textTertiary}
+                        />
+                      </View>
+                    )}
+
+                    {/* Vehicle info */}
+                    <View style={styles.vehicleInfo}>
+                      <Text style={[styles.vehiclePlate, isSelected && { color: Colors.primary }]}>
+                        {vehicle.licensePlate}
+                      </Text>
+                      <View style={styles.vehicleMeta}>
+                        {vehicle.nickname ? (
+                          <Text style={styles.vehicleNickname}>{vehicle.nickname}</Text>
+                        ) : (
+                          <Text style={styles.vehicleTypeName}>{typeName}</Text>
+                        )}
+                        {vehicle.isDefault && (
+                          <View style={styles.defaultPill}>
+                            <Ionicons name="star" size={8} color={Colors.warning} />
+                            <Text style={styles.defaultPillText}>Mặc định</Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+
+              {/* Add vehicle shortcut */}
+              <TouchableOpacity
+                style={styles.addVehicleLink}
+                onPress={() => router.push('/profile/add-vehicle' as any)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="add-circle-outline" size={16} color={Colors.primary} />
+                <Text style={styles.addVehicleLinkText}>Thêm xe mới</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* ── Step 3: Thời gian ── */}
+          <View style={styles.stepHeader}>
+            <View style={styles.stepBadge}>
+              <Text style={styles.stepNum}>3</Text>
             </View>
             <Text style={styles.stepTitle}>Thời gian vào bãi</Text>
           </View>
@@ -455,7 +494,6 @@ export default function BookingScreen() {
               />
             )}
 
-            {/* Reminder */}
             <View style={styles.reminderBox}>
               <Ionicons
                 name="information-circle-outline"
@@ -523,9 +561,12 @@ export default function BookingScreen() {
 
           {/* ── Confirm button ── */}
           <TouchableOpacity
-            style={[styles.confirmBtn, submitting && styles.confirmBtnLoading]}
+            style={[
+              styles.confirmBtn,
+              (submitting || !selectedVehicleId) && styles.confirmBtnLoading,
+            ]}
             onPress={handleBook}
-            disabled={submitting}
+            disabled={submitting || !selectedVehicleId}
             activeOpacity={0.85}
           >
             <Ionicons
@@ -630,11 +671,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 10,
   },
-  fieldDivider: {
-    height: 1,
-    backgroundColor: Colors.borderLight,
-    marginVertical: 14,
-  },
 
   // Vehicle type chips
   vtRow: { flexDirection: "row", gap: 10, paddingBottom: 4 },
@@ -690,24 +726,154 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.bold,
   },
 
-  // Plate input
-  plateInput: {
+  // ── Vehicle selector ──
+  vehicleList: { marginBottom: 20 },
+  vehicleCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
     borderWidth: 1.5,
-    borderColor: Colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    backgroundColor: Colors.white,
+    borderColor: Colors.borderLight,
+    ...Shadows.sm,
   },
-  plateField: {
-    flex: 1,
+  vehicleCardActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryBg + "30",
+  },
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioOuterActive: {
+    borderColor: Colors.primary,
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: Colors.primary,
+  },
+  vehicleImg: {
+    width: 48,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: Colors.borderLight,
+  },
+  vehicleIconFallback: {
+    width: 48,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: Colors.surfaceElevated,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  vehicleInfo: { flex: 1 },
+  vehiclePlate: {
     fontSize: 16,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textPrimary,
+    letterSpacing: 0.5,
+  },
+  vehicleMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2,
+  },
+  vehicleNickname: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textSecondary,
+    fontStyle: "italic",
+  },
+  vehicleTypeName: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.textTertiary,
+  },
+  defaultPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: Colors.warningLight || "#FFF8E1",
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  defaultPillText: {
+    fontSize: 10,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.warning,
+  },
+  addVehicleLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+  },
+  addVehicleLinkText: {
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.primary,
+  },
+
+  // No vehicle card
+  noVehicleCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    ...Shadows.sm,
+  },
+  noVehicleIconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Colors.surfaceElevated,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  noVehicleTitle: {
+    fontSize: 15,
     fontFamily: Typography.fontFamily.semiBold,
     color: Colors.textPrimary,
-    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  noVehicleSub: {
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textTertiary,
+    textAlign: "center",
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  addVehicleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  addVehicleBtnText: {
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.white,
   },
 
   // Date row
