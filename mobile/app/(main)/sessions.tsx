@@ -133,9 +133,9 @@ function ReservationCard2({ item, onCancel }: { item: Reservation; onCancel: (id
             )}
           </View>
           <View style={styles.qrRight}>
-            <Text style={styles.qrLabel}>Mã đặt chỗ — xuất trình tại cổng</Text>
+            <Text style={styles.qrLabel}>Thẻ gửi xe ảo — không cần nhận thẻ</Text>
             <Text style={styles.qrCode}>{(item as any).code}</Text>
-            <Text style={styles.qrHint}>Chạm để phóng to</Text>
+            <Text style={styles.qrHint}>Chạm để phóng to • Dùng khi vào và ra</Text>
           </View>
           <Ionicons name="expand-outline" size={18} color={Colors.primary} style={{ opacity: 0.7 }} />
         </TouchableOpacity>
@@ -172,7 +172,7 @@ function ReservationCard2({ item, onCancel }: { item: Reservation; onCancel: (id
                 </TouchableOpacity>
 
                 <Text style={styles.qrModalTitle}>Xuất trình cho nhân viên</Text>
-                <Text style={styles.qrModalSub}>Tại cổng bãi xe</Text>
+                <Text style={styles.qrModalSub}>Đưa mã này khi gửi xe vào và lấy xe ra</Text>
 
                 {/* QR Code lớn */}
                 <View style={styles.qrModalQrWrap}>
@@ -181,6 +181,16 @@ function ReservationCard2({ item, onCancel }: { item: Reservation; onCancel: (id
 
                 {/* Mã text */}
                 <Text style={styles.qrModalCode}>{(item as any).code}</Text>
+
+                {/* Hướng dẫn thẻ ảo */}
+                <View style={{ backgroundColor: '#ecfdf5', borderRadius: 10, padding: 12, marginTop: 8, marginBottom: 4, borderWidth: 1, borderColor: '#a7f3d0' }}>
+                  <Text style={{ fontSize: 12, color: '#065f46', fontWeight: '600', textAlign: 'center', marginBottom: 4 }}>
+                    📱 Đây là thẻ gửi xe ảo của bạn
+                  </Text>
+                  <Text style={{ fontSize: 11, color: '#047857', textAlign: 'center', lineHeight: 16 }}>
+                    ✅ Gửi xe vào {'\u2022'} ✅ Lấy xe ra {'\u2022'} ⚠️ Không cần thẻ vật lý
+                  </Text>
+                </View>
 
                 {/* Thông tin bên dưới */}
                 <View style={styles.qrModalInfo}>

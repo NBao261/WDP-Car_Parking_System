@@ -286,7 +286,10 @@ export class SessionService {
 
     // 5. Sinh mã session + mã thẻ xe (đảm bảo unique)
     let sessionCode = generateSessionCode();
-    let cardCode = generateCardCode();
+    // Nếu có reservation → dùng reservation code làm cardCode (thẻ ảo, không cần thẻ vật lý)
+    let cardCode = matchedReservation
+      ? matchedReservation.code   // VD: RSV-20260623-AB12
+      : generateCardCode();       // Walk-in: sinh thẻ vật lý bình thường
 
     // Retry nếu trùng (unlikely nhưng phòng)
     let retries = 5;
@@ -294,7 +297,8 @@ export class SessionService {
       const codeExists = await ParkingSession.findOne({ $or: [{ code: sessionCode }, { cardCode }] });
       if (!codeExists) break;
       sessionCode = generateSessionCode();
-      cardCode = generateCardCode();
+      // Chỉ re-gen cardCode cho walk-in; reservation code là cố định
+      if (!matchedReservation) cardCode = generateCardCode();
       retries--;
     }
 
@@ -317,6 +321,7 @@ export class SessionService {
       cardCode,
       status: SessionStatus.ACTIVE,
       driverId: matchedReservation ? matchedReservation.userId : null,
+      reservationId: matchedReservation ? matchedReservation._id : null,
       checkInImage: data.checkInImage || null,
     });
 

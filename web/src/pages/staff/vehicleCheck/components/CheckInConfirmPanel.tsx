@@ -9,6 +9,8 @@ interface CheckInConfirmPanelProps {
     checkInDate?: string;
     gate?: string;
     zone?: string;
+    fromReservation?: boolean;
+    reservationCode?: string;
   };
 }
 
@@ -20,7 +22,8 @@ export default function CheckInConfirmPanel({ data }: CheckInConfirmPanelProps) 
     checkInTime = "—",
     checkInDate = "—",
     gate = "—",
-    zone = "—"
+    zone = "—",
+    fromReservation = false,
   } = data || {};
 
   return (
@@ -36,8 +39,17 @@ export default function CheckInConfirmPanel({ data }: CheckInConfirmPanelProps) 
         <div className="grid grid-cols-3 gap-x-6 gap-y-2 text-[12px] h-full content-center">
           {/* Row 1 */}
           <div className="flex flex-col">
-            <span className="text-[#6b6b6b] mb-0.5">Mã thẻ:</span>
-            <span className="font-semibold text-[#060606] truncate">{cardCode}</span>
+            <span className="text-[#6b6b6b] mb-0.5">
+              {fromReservation ? 'Mã QR (thẻ ảo):' : 'Mã thẻ:'}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-[#060606] truncate">{cardCode}</span>
+              {fromReservation && (
+                <span className="shrink-0 px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold rounded border border-emerald-200">
+                  📱 Không cần thẻ
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Biển số xe:</span>

@@ -531,7 +531,7 @@ export default function CheckOutPanel({
           <div className="flex flex-col gap-1 relative">
             <div className="flex justify-between w-full">
               <label className="text-[11px] font-semibold text-[#060606]">
-                {searchMode === 'code' ? 'Mã thẻ từ/vé' : 'Biển số xe (tìm kiếm)'}
+                {searchMode === 'code' ? 'Mã thẻ / mã QR đặt chỗ' : 'Biển số xe (tìm kiếm)'}
               </label>
               <button
                 onClick={() => {
@@ -549,10 +549,16 @@ export default function CheckOutPanel({
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value.toUpperCase())}
               onKeyDown={handleKeyDown}
-              placeholder={searchMode === 'code' ? 'VD: CARD-1A2B-3C4D' : 'VD: 29A-12345'}
+              placeholder={searchMode === 'code' ? 'VD: CARD-1A2B-3C4D hoặc RSV-...' : 'VD: 29A-12345'}
               disabled={isSubmitting || step !== 'SEARCH'}
               className="w-full h-8 px-3 border border-[#e8e9e8] rounded-[6px] text-[12px] font-medium outline-none focus:border-[#060606] disabled:opacity-50"
             />
+            {/* Badge khi đã tìm thấy session từ đặt chỗ */}
+            {currentSession?.cardCode?.startsWith('RSV-') && (
+              <span className="absolute right-2 top-[26px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold rounded border border-emerald-200">
+                📅 Đặt chỗ trước
+              </span>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">

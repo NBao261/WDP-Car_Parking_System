@@ -197,7 +197,10 @@ export default function TableSessionsPage({
               return (
                 <tr key={session._id} className="hover:bg-[#f9fafb] transition-colors border-b border-gray-50 last:border-0">
                   <td className="px-4 py-2.5 text-[#060606]/50 text-sm truncate">{globalIndex}</td>
-                  <td className="px-4 py-2.5 text-[#060606] font-medium text-sm truncate">{session.cardCode || session.code}</td>
+                  <td className="px-4 py-2.5 text-[#060606] font-medium text-sm truncate">
+                    {session.cardCode?.startsWith('RSV-') && <span title="Thẻ ảo (đặt chỗ)">📱 </span>}
+                    {session.cardCode || session.code}
+                  </td>
                   <td className="px-4 py-2.5 font-mono text-[15px] text-[#060606] font-bold truncate">{session.licensePlate}</td>
                   <td className="px-4 py-2.5 text-[#060606] text-sm truncate">{session.vehicleTypeId?.name || 'N/A'}</td>
                   <td className="px-4 py-2.5 text-[#060606] text-sm truncate">
