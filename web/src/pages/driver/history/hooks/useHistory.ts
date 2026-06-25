@@ -59,6 +59,6 @@ export function useHistory() {
     confirmCancel,
     cancelModalOpen,
     closeCancelModal,
-    isCancelling
+    isCancelling,
   };
 }

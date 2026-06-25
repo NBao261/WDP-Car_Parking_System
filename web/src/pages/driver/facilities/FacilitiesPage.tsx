@@ -10,7 +10,9 @@ import { DynamicFacilityCard } from './components/DynamicFacilityCard';
 const FacilitiesPage: React.FC = () => {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedFacility, setSelectedFacility] = useState<{ id: string, name: string } | null>(null);
+  const [selectedFacility, setSelectedFacility] = useState<{ id: string; name: string } | null>(
+    null
+  );
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,12 +41,14 @@ const FacilitiesPage: React.FC = () => {
     <div className="w-full h-full flex flex-col gap-6">
       <div className="mb-4">
         <h1 className="text-3xl font-bold text-brand mb-2 font-outfit">Khám phá Bãi đỗ xe</h1>
-        <p className="text-muted-foreground">Chọn bãi đỗ xe gần bạn để xem chi tiết và đặt chỗ trước.</p>
+        <p className="text-muted-foreground">
+          Chọn bãi đỗ xe gần bạn để xem chi tiết và đặt chỗ trước.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {facilities.map((facility, index) => (
-          <DynamicFacilityCard 
+          <DynamicFacilityCard
             key={facility._id}
             facility={facility}
             index={index}
@@ -60,9 +64,9 @@ const FacilitiesPage: React.FC = () => {
         )}
       </div>
 
-      <PricingModal 
-        isOpen={!!selectedFacility} 
-        onClose={() => setSelectedFacility(null)} 
+      <PricingModal
+        isOpen={!!selectedFacility}
+        onClose={() => setSelectedFacility(null)}
         facilityId={selectedFacility?.id || null}
         facilityName={selectedFacility?.name || ''}
       />

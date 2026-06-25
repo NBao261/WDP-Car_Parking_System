@@ -15,21 +15,31 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ reservation, index, on
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'CONFIRMED': return 'text-blue-700 bg-blue-100 border-blue-200';
-      case 'USED': return 'text-emerald-700 bg-emerald-100 border-emerald-200';
-      case 'CANCELLED': return 'text-red-700 bg-red-100 border-red-200';
-      case 'EXPIRED': return 'text-amber-700 bg-amber-100 border-amber-200';
-      default: return 'text-muted-foreground bg-muted border-border';
+      case 'CONFIRMED':
+        return 'text-blue-700 bg-blue-100 border-blue-200';
+      case 'USED':
+        return 'text-emerald-700 bg-emerald-100 border-emerald-200';
+      case 'CANCELLED':
+        return 'text-red-700 bg-red-100 border-red-200';
+      case 'EXPIRED':
+        return 'text-amber-700 bg-amber-100 border-amber-200';
+      default:
+        return 'text-muted-foreground bg-muted border-border';
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'CONFIRMED': return 'Sắp tới';
-      case 'USED': return 'Đã sử dụng';
-      case 'CANCELLED': return 'Đã hủy';
-      case 'EXPIRED': return 'Quá hạn';
-      default: return status;
+      case 'CONFIRMED':
+        return 'Sắp tới';
+      case 'USED':
+        return 'Đã sử dụng';
+      case 'CANCELLED':
+        return 'Đã hủy';
+      case 'EXPIRED':
+        return 'Quá hạn';
+      default:
+        return status;
     }
   };
 
@@ -43,14 +53,21 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ reservation, index, on
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1 pr-3">
           <span className="text-xs text-muted-foreground">Mã: #{reservation.code}</span>
-          <h3 className="text-lg font-bold text-brand font-outfit mt-1">{reservation.facilityId?.name || 'Bãi xe'}</h3>
+          <h3 className="text-lg font-bold text-brand font-outfit mt-1">
+            {reservation.facilityId?.name || 'Bãi xe'}
+          </h3>
           {reservation.facilityId?.address && (
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1" title={reservation.facilityId.address}>
+            <p
+              className="text-xs text-muted-foreground mt-0.5 line-clamp-1"
+              title={reservation.facilityId.address}
+            >
               {reservation.facilityId.address}
             </p>
           )}
         </div>
-        <span className={`px-2.5 py-1 rounded-md text-xs font-bold border uppercase tracking-wide ${getStatusColor(reservation.status)}`}>
+        <span
+          className={`px-2.5 py-1 rounded-md text-xs font-bold border uppercase tracking-wide ${getStatusColor(reservation.status)}`}
+        >
           {getStatusLabel(reservation.status)}
         </span>
       </div>
@@ -68,19 +85,39 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ reservation, index, on
 
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <Car size={16} className="text-accent-dark shrink-0" />
-          <span>Phương tiện: <span className="text-brand font-semibold">{reservation.vehicleTypeId?.name || 'Xe'} - {reservation.licensePlate}</span></span>
+          <span>
+            Phương tiện:{' '}
+            <span className="text-brand font-semibold">
+              {reservation.vehicleTypeId?.name || 'Xe'} - {reservation.licensePlate}
+            </span>
+          </span>
         </div>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <Calendar size={16} className="text-accent-dark" />
-          <span>Ngày: <span className="text-brand font-semibold">{startDate.toLocaleDateString('vi-VN')}</span></span>
+          <span>
+            Ngày:{' '}
+            <span className="text-brand font-semibold">
+              {startDate.toLocaleDateString('vi-VN')}
+            </span>
+          </span>
         </div>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <Clock size={16} className="text-accent-dark" />
-          <span>Giờ vào dự kiến: <span className="text-brand font-semibold">{startDate.toLocaleTimeString('vi-VN')}</span></span>
+          <span>
+            Giờ vào dự kiến:{' '}
+            <span className="text-brand font-semibold">
+              {startDate.toLocaleTimeString('vi-VN')}
+            </span>
+          </span>
         </div>
         {reservation.cancellationFee > 0 && (
           <div className="flex items-center gap-3 text-sm text-red-600 mt-2 p-2 bg-red-50 rounded-lg">
-            <span>Phí hủy: <span className="font-bold">{reservation.cancellationFee.toLocaleString('vi-VN')}₫</span></span>
+            <span>
+              Phí hủy:{' '}
+              <span className="font-bold">
+                {reservation.cancellationFee.toLocaleString('vi-VN')}₫
+              </span>
+            </span>
           </div>
         )}
       </div>

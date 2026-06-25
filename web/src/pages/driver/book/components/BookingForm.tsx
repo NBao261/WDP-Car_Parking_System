@@ -6,10 +6,12 @@ import { formatLicensePlate } from '../hooks/useReservation';
 const getVehicleIcon = (name: string, isSelected: boolean) => {
   const lowerName = name.toLowerCase();
   const className = isSelected ? 'text-brand' : 'text-slate-400';
-  
-  if (lowerName.includes('máy') || lowerName.includes('moto')) return <Bike size={32} className={className} />;
+
+  if (lowerName.includes('máy') || lowerName.includes('moto'))
+    return <Bike size={32} className={className} />;
   if (lowerName.includes('đạp')) return <Bike size={32} className={className} />;
-  if (lowerName.includes('tải') || lowerName.includes('truck')) return <Truck size={32} className={className} />;
+  if (lowerName.includes('tải') || lowerName.includes('truck'))
+    return <Truck size={32} className={className} />;
   if (lowerName.includes('7')) return <CarFront size={32} className={className} />;
   return <Car size={32} className={className} />;
 };
@@ -41,7 +43,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   setCustomTime,
   isTimeValid,
   handleSubmit,
-  isSubmitting
+  isSubmitting,
 }) => {
   return (
     <div className="bg-white border-2 border-slate-100/50 rounded-3xl p-6 md:p-8 shadow-sm">
@@ -49,31 +51,42 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         <div className="w-1.5 h-6 bg-accent rounded-full"></div>
         <h3 className="text-xl md:text-2xl font-extrabold text-slate-900">Thông tin đăng ký</h3>
       </div>
-      
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(e); }} className="flex flex-col gap-8">
-        
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit(e);
+        }}
+        className="flex flex-col gap-8"
+      >
         {/* LOẠI XE */}
         <div>
           <label className="text-slate-800 text-sm font-bold mb-4 flex items-center gap-2">
             <Car size={18} className="text-accent-dark" /> Chọn loại xe của bạn
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
-            {uniqueVehicleTypes.map(vt => {
+            {uniqueVehicleTypes.map((vt) => {
               const isSelected = vehicleTypeId === vt._id;
               return (
-                <div 
+                <div
                   key={vt._id}
                   onClick={() => !isSubmitting && setVehicleTypeId(vt._id)}
                   className={`border-2 rounded-2xl p-4 transition-all duration-300 flex flex-col items-center justify-center gap-2 ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-1'
+                    isSubmitting
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'cursor-pointer hover:-translate-y-1'
                   } ${
-                    isSelected 
-                      ? 'border-accent bg-accent/10 shadow-lg shadow-accent/10 text-brand ring-4 ring-accent/20' 
+                    isSelected
+                      ? 'border-accent bg-accent/10 shadow-lg shadow-accent/10 text-brand ring-4 ring-accent/20'
                       : 'border-slate-100 bg-slate-50/50 hover:border-accent/40 hover:bg-white hover:shadow-md'
                   }`}
                 >
                   {getVehicleIcon(vt.name, isSelected)}
-                  <span className={`text-sm md:text-base font-bold tracking-tight ${isSelected ? 'text-brand' : 'text-slate-500'}`}>{vt.name}</span>
+                  <span
+                    className={`text-sm md:text-base font-bold tracking-tight ${isSelected ? 'text-brand' : 'text-slate-500'}`}
+                  >
+                    {vt.name}
+                  </span>
                 </div>
               );
             })}
@@ -85,7 +98,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           <label className="text-slate-800 text-sm font-bold mb-4 flex items-center gap-2">
             <Hash size={18} className="text-accent-dark" /> Biển số xe
           </label>
-          <input 
+          <input
             data-testid="license-plate-input"
             type="text"
             value={licensePlate}
@@ -98,7 +111,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         </div>
 
         {/* THỜI GIAN */}
-        <QuickTimeSelector 
+        <QuickTimeSelector
           timeMode={timeMode}
           setTimeMode={setTimeMode}
           customTime={customTime}
@@ -106,7 +119,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           isTimeValid={isTimeValid}
           isSubmitting={isSubmitting}
         />
-
       </form>
     </div>
   );
