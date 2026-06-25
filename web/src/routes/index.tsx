@@ -13,7 +13,6 @@ import UnauthorizedPage from '../pages/error/UnauthorizedPage';
 // ── Admin Pages ──
 import DashboardPage from '../pages/admin/dashboard/DashboardPage';
 
-
 const BillingPage = lazy(() => import('../pages/admin/billing/BillingPage'));
 const ConfigPage = lazy(() => import('../pages/admin/config/ConfigPage'));
 const UsersPage = lazy(() => import('../pages/admin/users/UsersPage'));
@@ -26,12 +25,16 @@ const AssignmentsPage = lazy(() => import('../pages/manager/assignments/Assignme
 const VehiclesPage = lazy(() => import('../pages/shared/vehicles/VehiclesPage'));
 const SharedFacilitiesPage = lazy(() => import('../pages/shared/facilities/FacilitiesPage'));
 const SharedPricingPage = lazy(() => import('../pages/shared/pricing/PricingPage'));
-const SharedReportsPage = lazy(() => import('../pages/shared/reports/ReportsPage'));
-const ExceptionsManagerPage = lazy(() => import('../pages/manager/exceptionsManager/ExceptionsManagerPage'));
+
+const ExceptionsManagerPage = lazy(
+  () => import('../pages/manager/exceptionsManager/ExceptionsManagerPage')
+);
 // Staff Pages ──
 const VehicleCheckPage = lazy(() => import('../pages/staff/vehicleCheck/VehicleCheckPage'));
 const ActiveSessionsPage = lazy(() => import('../pages/staff/activeSessions/ActiveSessionsPage'));
-const ExceptionsStaffPage = lazy(() => import('../pages/staff/exceptionsStaff/ExceptionsStaffPage'));
+const ExceptionsStaffPage = lazy(
+  () => import('../pages/staff/exceptionsStaff/ExceptionsStaffPage')
+);
 const ShiftSelectionPage = lazy(() => import('../pages/staff/shiftSelection/ShiftSelectionPage'));
 // Driver Pages ──
 const DriverDashboard = lazy(() => import('../pages/driver/dashboard/DriverDashboard'));
@@ -75,7 +78,16 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={[UserRole.STAFF, UserRole.MANAGER, UserRole.ADMIN]} />
         ),
-        children: [{ index: true, element: <S><ShiftSelectionPage /></S> }],
+        children: [
+          {
+            index: true,
+            element: (
+              <S>
+                <ShiftSelectionPage />
+              </S>
+            ),
+          },
+        ],
       },
       {
         element: <MainLayout />,
@@ -86,18 +98,74 @@ export const router = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
             children: [
               { index: true, element: <DashboardPage /> },
-              { path: 'facilities', element: <S><SharedFacilitiesPage /></S> },
+              {
+                path: 'facilities',
+                element: (
+                  <S>
+                    <SharedFacilitiesPage />
+                  </S>
+                ),
+              },
               // FR-5: Quản lý Bảng giá
-              { path: 'pricing', element: <S><SharedPricingPage /></S> },
-              { path: 'billing', element: <S><BillingPage /></S> },
-              { path: 'config', element: <S><ConfigPage /></S> },
+              {
+                path: 'pricing',
+                element: (
+                  <S>
+                    <SharedPricingPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'billing',
+                element: (
+                  <S>
+                    <BillingPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'config',
+                element: (
+                  <S>
+                    <ConfigPage />
+                  </S>
+                ),
+              },
               // { path: 'logs', element: <S><LogsPage /></S> },
               // FR-18: User Management
-              { path: 'users', element: <S><UsersPage /></S> },
-              { path: 'users/:id', element: <S><UserDetailPage /></S> },
+              {
+                path: 'users',
+                element: (
+                  <S>
+                    <UsersPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'users/:id',
+                element: (
+                  <S>
+                    <UserDetailPage />
+                  </S>
+                ),
+              },
               // FR-19: Role & Permission Management
-              { path: 'roles', element: <S><RolesPage /></S> },
-              { path: 'vehicles', element: <S><VehiclesPage /></S> },
+              {
+                path: 'roles',
+                element: (
+                  <S>
+                    <RolesPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'vehicles',
+                element: (
+                  <S>
+                    <VehiclesPage />
+                  </S>
+                ),
+              },
             ],
           },
 
@@ -107,16 +175,50 @@ export const router = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]} />,
             children: [
               { index: true, element: <ManagerDashboard /> },
-              { path: 'assignments', element: <S><AssignmentsPage /></S> },
-              { path: 'vehicles', element: <S><VehiclesPage /></S> },
+              {
+                path: 'assignments',
+                element: (
+                  <S>
+                    <AssignmentsPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'vehicles',
+                element: (
+                  <S>
+                    <VehiclesPage />
+                  </S>
+                ),
+              },
               // FR-1,2,3: Quản lý Tòa nhà & Phân tầng
-              { path: 'facilities', element: <S><SharedFacilitiesPage /></S> },
+              {
+                path: 'facilities',
+                element: (
+                  <S>
+                    <SharedFacilitiesPage />
+                  </S>
+                ),
+              },
               // FR-5: Quản lý Bảng giá
-              { path: 'pricing', element: <S><SharedPricingPage /></S> },
-              // FR-6: Báo cáo
-              { path: 'reports', element: <S><SharedReportsPage /></S> },
+              {
+                path: 'pricing',
+                element: (
+                  <S>
+                    <SharedPricingPage />
+                  </S>
+                ),
+              },
+
               // FR-7: Ngoại lệ (Manager)
-              { path: 'exceptions', element: <S><ExceptionsManagerPage /></S> },
+              {
+                path: 'exceptions',
+                element: (
+                  <S>
+                    <ExceptionsManagerPage />
+                  </S>
+                ),
+              },
             ],
           },
         ],
@@ -130,9 +232,30 @@ export const router = createBrowserRouter([
           {
             element: <StaffLayout />,
             children: [
-              { index: true, element: <S><VehicleCheckPage /></S> },
-              { path: 'active-sessions', element: <S><ActiveSessionsPage /></S> },
-              { path: 'exceptions', element: <S><ExceptionsStaffPage /></S> },
+              {
+                index: true,
+                element: (
+                  <S>
+                    <VehicleCheckPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'active-sessions',
+                element: (
+                  <S>
+                    <ActiveSessionsPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'exceptions',
+                element: (
+                  <S>
+                    <ExceptionsStaffPage />
+                  </S>
+                ),
+              },
             ],
           },
         ],
@@ -140,18 +263,51 @@ export const router = createBrowserRouter([
       // ── Driver Routes ────────────────────────────────
       {
         path: 'driver',
-        element: (
-          <ProtectedRoute allowedRoles={[UserRole.DRIVER]} />
-        ),
+        element: <ProtectedRoute allowedRoles={[UserRole.DRIVER]} />,
         children: [
           {
             element: <DriverLayout />,
             children: [
-              { index: true, element: <S><DriverDashboard /></S> },
-              { path: 'facilities', element: <S><DriverFacilitiesPage /></S> },
-              { path: 'book/:facilityId', element: <S><ReservationPage /></S> },
-              { path: 'active-session', element: <S><DriverDashboard /></S> },
-              { path: 'history', element: <S><HistoryPage /></S> },
+              {
+                index: true,
+                element: (
+                  <S>
+                    <DriverDashboard />
+                  </S>
+                ),
+              },
+              {
+                path: 'facilities',
+                element: (
+                  <S>
+                    <DriverFacilitiesPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'book/:facilityId',
+                element: (
+                  <S>
+                    <ReservationPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'active-session',
+                element: (
+                  <S>
+                    <DriverDashboard />
+                  </S>
+                ),
+              },
+              {
+                path: 'history',
+                element: (
+                  <S>
+                    <HistoryPage />
+                  </S>
+                ),
+              },
             ],
           },
         ],
