@@ -25,9 +25,14 @@ const DriverLayout: React.FC = () => {
       {/* Top Navbar */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border px-4 md:px-8 h-[64px] flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/driver')}>
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => navigate('/driver')}
+          >
             <img src="/Logo.png" alt="LYNC Park Logo" className="h-[32px] w-auto rounded-md" />
-            <span className="font-bold text-lg text-brand tracking-tight hidden sm:block">LYNC Park</span>
+            <span className="font-bold text-lg text-brand tracking-tight hidden sm:block">
+              LYNC Park
+            </span>
           </div>
 
           {/* Desktop Nav */}
