@@ -1,8 +1,23 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+import { Facility, PricingPlan, AvailableSlot } from '../types/facility.types';
 
-// Use standard local IP for Android Emulator, or localhost for iOS simulator
-const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5000/api/v1' : 'http://localhost:5000/api/v1';
+// ─── API Configuration ───────────────────────────────
+// Ưu tiên EXPO_PUBLIC_API_URL từ .env
+// Fallback: Android Emulator dùng 10.0.2.2, iOS Simulator dùng localhost
+const DEFAULT_API_URL =
+  Platform.OS === 'android'
+    ? 'http://10.0.2.2:5000/api/v1'
+    : 'http://localhost:5000/api/v1';
+
+let API_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
+if (Platform.OS === 'android' && API_URL.includes('localhost')) {
+  API_URL = API_URL.replace('localhost', '10.0.2.2');
+}
+
+export const TOKEN_KEY = 'sp_access_token';
+export const REFRESH_TOKEN_KEY = 'sp_refresh_token';
 
 export const apiClient = axios.create({
   baseURL: API_URL,
@@ -12,22 +27,163 @@ export const apiClient = axios.create({
   },
 });
 
-// Request Interceptor to attach token
+export const api = {
+  // Public Routes
+  getPublicFacilities: async (page = 1, limit = 10, search?: string, status?: string, vehicleTypeId?: string) => {
+    let url = `/public/facilities?page=${page}&limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (status && status !== 'all') url += `&status=${status}`;
+    if (vehicleTypeId && vehicleTypeId !== 'all') url += `&vehicleTypeId=${vehicleTypeId}`;
+    const response = await apiClient.get<any, { success: boolean, data: Facility[], pagination: any }>(url);
+    return response.data;
+  },
+  getPublicPricing: async (facilityId: string) => {
+    const response = await apiClient.get<any, { success: boolean, data: PricingPlan[] }>(`/public/facilities/${facilityId}/pricing`);
+    return response.data;
+  },
+  getAvailableSlots: async (facilityId: string) => {
+    const response = await apiClient.get<any, { success: boolean, data: AvailableSlot[] }>(`/public/facilities/${facilityId}/available-slots`);
+    return response.data;
+  },
+};
+
+export const sessionApi = {
+  getMySessions: (status?: 'active' | 'completed') => {
+    return apiClient.get('/sessions/my-sessions', { params: { status } });
+  },
+};
+
+// Reservation API
+export const reservationApi = {
+  createReservation: (data: { facilityId: string; vehicleTypeId: string; licensePlate: string; startTime: string; }) => {
+    return apiClient.post('/reservations', data);
+  },
+  getReservations: (status?: 'pending' | 'confirmed' | 'used' | 'cancelled' | 'expired') => {
+    return apiClient.get('/reservations', { params: { status } });
+  },
+  cancelReservation: (id: string) => {
+    return apiClient.post(`/reservations/${id}/cancel`);
+  }
+};
+
+// Vehicle Type API
+export const vehicleTypeApi = {
+  getVehicleTypes: async (): Promise<any> => {
+    return apiClient.get('/vehicle-types');
+  }
+};
+
+// Feedback API
+export const feedbackApi = {
+  createFeedback: (data: { type: string; description: string; images?: string[]; sessionId?: string; facilityId?: string; }) => {
+    return apiClient.post('/feedbacks', data);
+  },
+  getFeedbacks: (params?: { page?: number; limit?: number; status?: string; type?: string }) => {
+    return apiClient.get('/feedbacks', { params });
+  }
+};
+
+export const locationApi = {
+  getNearbyFacilities: (params: { lat: number; lng: number; radius: number }) => {
+    return apiClient.get('/search/nearby', { params });
+  }
+};
+
+export const facilityApi = {
+  getFacilities: () => {
+    return apiClient.get('/facilities');
+  }
+};
+
+export const authApi = {
+  changePassword: (data: any) => {
+    return apiClient.put('/auth/change-password', data);
+  }
+};
+
+export const vehicleApi = {
+  addVehicle: (data: { vehicleTypeId: string; licensePlate: string; nickname?: string; image?: string }) => {
+    return apiClient.post('/vehicles', data);
+  },
+  getMyVehicles: () => {
+    return apiClient.get('/vehicles/my');
+  },
+  getVehicleById: (id: string) => {
+    return apiClient.get(`/vehicles/${id}`);
+  },
+  updateVehicle: (id: string, data: { vehicleTypeId?: string; licensePlate?: string; nickname?: string; image?: string; isDefault?: boolean }) => {
+    return apiClient.patch(`/vehicles/${id}`, data);
+  },
+  deleteVehicle: (id: string) => {
+    return apiClient.delete(`/vehicles/${id}`);
+  },
+};
+
+export const userApi = {
+  updateDeviceToken: (deviceToken: string) => {
+    return apiClient.put('/users/device-token', { deviceToken });
+  }
+};
+
+// ─── Request Interceptor: Attach token ────────────────
 apiClient.interceptors.request.use(
   async (config) => {
-    // TODO: Fetch token from secure storage and append here
-    // const token = await SecureStore.getItemAsync('userToken');
-    // if (token) config.headers.Authorization = `Bearer ${token}`;
+    const token = await SecureStore.getItemAsync(TOKEN_KEY);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
-// Response Interceptor for global error handling
+// ─── Response Interceptor: Global error handling ──────
 apiClient.interceptors.response.use(
   (response) => response.data,
-  (error) => {
-    // Handle global errors (e.g., 401 Unauthorized -> logout)
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Auto refresh token on 401 (one retry)
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+        if (refreshToken) {
+          const { data } = await axios.post(`${API_URL}/auth/refresh-token`, {
+            refreshToken,
+          });
+
+          // Save new tokens
+          await SecureStore.setItemAsync(TOKEN_KEY, data.data.tokens.accessToken);
+          await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.data.tokens.refreshToken);
+
+          // Retry original request
+          originalRequest.headers.Authorization = `Bearer ${data.data.tokens.accessToken}`;
+          return apiClient(originalRequest);
+        }
+      } catch (refreshError) {
+        // Refresh failed — clear tokens (force re-login)
+        await SecureStore.deleteItemAsync(TOKEN_KEY);
+        await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      }
+    }
+
     return Promise.reject(error.response?.data || error.message);
-  }
+  },
 );
+
+// ─── Token Helpers ────────────────────────────────────
+export const saveTokens = async (accessToken: string, refreshToken: string) => {
+  await SecureStore.setItemAsync(TOKEN_KEY, accessToken);
+  await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
+};
+
+export const clearTokens = async () => {
+  await SecureStore.deleteItemAsync(TOKEN_KEY);
+  await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+};
+
+export const getAccessToken = async (): Promise<string | null> => {
+  return SecureStore.getItemAsync(TOKEN_KEY);
+};

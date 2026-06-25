@@ -1,0 +1,221 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - Facilities
+  version: 1.0.0
+paths:
+  /facilities:
+    get:
+      summary: Get all parking facilities
+      tags: [Facilities]
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "60b9b0b9e6b3f3b3b4f3b3b4"
+                    name: "Central Hub Parking"
+                    address: "123 Main Street, District 1, HCMC"
+                    openTime: "00:00"
+                    closeTime: "23:59"
+                    status: "active"
+                    assignedUsers:
+                      - "60b9b0b9e6b3f3b3b4f3b3b5"
+                      - "60b9b0b9e6b3f3b3b4f3b3b7"
+                pagination:
+                  page: 1
+                  limit: 10
+                  total: 1
+    post:
+      summary: Create a parking facility
+      tags: [Facilities]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Central Hub Parking"
+                address:
+                  type: string
+                  example: "123 Main Street, District 1, HCMC"
+                totalFloors:
+                  type: integer
+                  example: 5
+                openTime:
+                  type: string
+                  example: "00:00"
+                closeTime:
+                  type: string
+                  example: "23:59"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  name: "Central Hub Parking"
+                  address: "123 Main Street, District 1, HCMC"
+                  totalFloors: 5
+                  openTime: "00:00"
+                  closeTime: "23:59"
+                  status: "active"
+                  assignedUsers: []
+
+  /facilities/{id}:
+    get:
+      summary: Get facility by ID
+      tags: [Facilities]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b4"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  name: "Central Hub Parking"
+                  address: "123 Main Street, District 1, HCMC"
+                  totalFloors: 5
+                  openTime: "00:00"
+                  closeTime: "23:59"
+                  status: "active"
+                  assignedUsers:
+                    - "60b9b0b9e6b3f3b3b4f3b3b5"
+    patch:
+      summary: Update facility
+      tags: [Facilities]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b4"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Sunrise Tower Parking"
+                address:
+                  type: string
+                  example: "456 Sunrise Avenue, District 2, HCMC"
+                openTime:
+                  type: string
+                  example: "06:00"
+                closeTime:
+                  type: string
+                  example: "22:00"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  name: "Sunrise Tower Parking"
+                  address: "456 Sunrise Avenue, District 2, HCMC"
+                  openTime: "06:00"
+                  closeTime: "22:00"
+                  status: "active"
+                  assignedUsers:
+                    - "60b9b0b9e6b3f3b3b4f3b3b5"
+    delete:
+      summary: Deactivate facility
+      description: |
+        Deactivate facility. Cascade: tất cả tầng và slot chuyển sang inactive/maintenance.
+        Two-way sync: tự động xóa facility._id khỏi `User.assignedFacilities[]` của tất cả user
+        liên quan và xóa `assignedUsers[]` trên facility.
+      tags: [Facilities]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  name: "Central Hub Parking"
+                  status: "inactive"
+                  assignedUsers: []
+
+components:
+  schemas:
+    ParkingFacility:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: MongoDB ObjectId
+        name:
+          type: string
+          description: Tên bãi xe
+        address:
+          type: string
+          description: Địa chỉ
+        totalFloors:
+          type: integer
+          description: Tổng số tầng
+        openTime:
+          type: string
+          description: Giờ mở cửa (HH:mm)
+        closeTime:
+          type: string
+          description: Giờ đóng cửa (HH:mm)
+        description:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        assignedUsers:
+          type: array
+          items:
+            type: string
+          description: "Two-way ref: danh sách User ObjectId được phân công (↔ User.assignedFacilities)"
+        status:
+          type: string
+          enum: [active, inactive]
+        isDeleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

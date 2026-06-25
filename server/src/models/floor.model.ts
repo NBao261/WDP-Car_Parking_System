@@ -5,6 +5,7 @@ export interface IFloor extends Document {
   name: string;
   allowedVehicleTypes: mongoose.Types.ObjectId[];
   totalSlots: number;
+  distanceToGate: number | null; 
   status: 'active' | 'inactive';
   isDeleted: boolean;
   createdAt: Date;
@@ -17,6 +18,7 @@ const floorSchema = new Schema<IFloor>(
     name: { type: String, required: true, trim: true },
     allowedVehicleTypes: [{ type: Schema.Types.ObjectId, ref: 'VehicleType' }],
     totalSlots: { type: Number, default: 0 },
+    distanceToGate: { type: Number, default: null, min: 0 }, 
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     isDeleted: { type: Boolean, default: false },
   },

@@ -4,7 +4,8 @@
     "slug": "smart-parking-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "newArchEnabled": true,
+    "icon": "../web/public/Logo_chu.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -29,7 +30,11 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-secure-store",
+      "expo-asset",
+      "expo-font",
+      "@react-native-community/datetimepicker"
     ],
     "scheme": "smartparking"
   }

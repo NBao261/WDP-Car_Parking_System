@@ -1,0 +1,105 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - Auth
+  version: 1.0.0
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, phone, password, role]
+              properties:
+                name:
+                  type: string
+                  example: "Nguyen Van A"
+                email:
+                  type: string
+                  example: "nguyenvana@example.com"
+                phone:
+                  type: string
+                  example: "0901234567"
+                password:
+                  type: string
+                  example: "smartparking123"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              example:
+                success: true
+                message: "User registered successfully"
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b5"
+                  name: "Nguyen Van A"
+                  email: "nguyenvana@example.com"
+                  role: "driver"
+
+  /auth/login:
+    post:
+      summary: Login
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  example: "admin@smartparking.com"
+                password:
+                  type: string
+                  example: "smartparking123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  user:
+                    _id: "60b9b0b9e6b3f3b3b4f3b3b5"
+                    name: "System Admin"
+                    email: "admin@smartparking.com"
+                    role: "admin"
+                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refreshToken: "def456..."
+
+  /auth/refresh-token:
+    post:
+      summary: Refresh JWT Token
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR..."
+      responses:
+        '200':
+          description: Tokens refreshed
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.new..."
+                  refreshToken: "ghi789..."

@@ -24,8 +24,11 @@ export interface IParkingSession extends Document {
   driverId: mongoose.Types.ObjectId | null;
   reservationId: mongoose.Types.ObjectId | null;
   totalFee: number;
+  assignmentMode: 'auto' | 'manual'; // RQ-ready: ghi nhận cách phân bổ slot
   status: SessionStatus;
   cardCode: string;
+  checkInImage?: string;
+  checkOutImage?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,15 +51,20 @@ const parkingSessionSchema = new Schema<IParkingSession>(
     driverId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     reservationId: { type: Schema.Types.ObjectId, ref: 'Reservation', default: null },
     totalFee: { type: Number, default: 0, min: 0 },
+    assignmentMode: { type: String, enum: ['auto', 'manual'], default: 'manual' }, // RQ-ready
     status: { type: String, enum: Object.values(SessionStatus), default: SessionStatus.ACTIVE },
     cardCode: { type: String, required: true, unique: true },
+    checkInImage: { type: String, default: null },
+    checkOutImage: { type: String, default: null },
   },
   { timestamps: true }
 );
 
 parkingSessionSchema.index({ licensePlate: 1, status: 1 });
-parkingSessionSchema.index({ cardCode: 1 });
 parkingSessionSchema.index({ facilityId: 1, status: 1 });
 parkingSessionSchema.index({ checkInTime: -1 });
 
-export const ParkingSession = mongoose.model<IParkingSession>('ParkingSession', parkingSessionSchema);
+export const ParkingSession = mongoose.model<IParkingSession>(
+  'ParkingSession',
+  parkingSessionSchema
+);

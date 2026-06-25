@@ -1,0 +1,404 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking System API
+  version: 1.0.0
+  description: API documentation cho hệ thống bãi xe thông minh
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Exception:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "683560a1e4b0f1a2b3c4d5e6"
+        sessionId:
+          type: string
+          example: "683560a1e4b0f1a2b3c4d5e7"
+        type:
+          type: string
+          enum: [lost_card, wrong_plate, overtime, wrong_zone, unpaid, other]
+        description:
+          type: string
+          example: "Khách mất thẻ xe, đã xác minh CCCD"
+        staffId:
+          type: object
+          properties:
+            _id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+        resolvedByStaffId:
+          type: object
+          nullable: true
+          properties:
+            _id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+        staffNote:
+          type: string
+          example: "Đã xác minh CCCD số 012345678901"
+        managerId:
+          type: object
+          nullable: true
+          properties:
+            _id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+        managerNote:
+          type: string
+        surcharge:
+          type: number
+          example: 50000
+        status:
+          type: string
+          enum: [new, resolved]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+paths:
+  # ══════════════════════════════════════════════════════════
+  # EXCEPTIONS
+  # ══════════════════════════════════════════════════════════
+
+  /exceptions:
+    get:
+      summary: Lấy danh sách ngoại lệ
+      description: Staff và Manager đều xem được. Hỗ trợ lọc theo status, type, sessionId và phân trang.
+      tags:
+        - Exceptions
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [new, resolved]
+          description: Lọc theo trạng thái
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [lost_card, wrong_plate, overtime, wrong_zone, unpaid, other]
+          description: Lọc theo loại ngoại lệ
+        - in: query
+          name: sessionId
+          schema:
+            type: string
+          description: Lọc theo ID lượt gửi xe
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            default: createdAt
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Danh sách ngoại lệ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Exception'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      totalPages:
+                        type: integer
+
+    post:
+      summary: Tạo ngoại lệ mới (Staff)
+      description: |
+        Staff tạo ngoại lệ → session bị khóa (status EXCEPTION) cho các loại: lost_card, wrong_plate, wrong_zone.
+        Sau khi tạo, Staff cần gọi PATCH /:id/resolve để xử lý và mở khóa session.
+      tags:
+        - Exceptions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sessionId
+                - type
+                - description
+              properties:
+                sessionId:
+                  type: string
+                  description: ID lượt gửi xe
+                  example: "683560a1e4b0f1a2b3c4d5e7"
+                type:
+                  type: string
+                  enum: [lost_card, wrong_plate, overtime, wrong_zone, unpaid, other]
+                  description: Loại ngoại lệ
+                  example: "lost_card"
+                description:
+                  type: string
+                  description: Mô tả chi tiết
+                  example: "Khách mất thẻ xe, cần xác minh danh tính"
+                surcharge:
+                  type: number
+                  minimum: 0
+                  description: Phụ thu (VND)
+                  example: 50000
+      responses:
+        '201':
+          description: Tạo ngoại lệ thành công. Session đã bị khóa.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Exception'
+        '400':
+          description: Session đã kết thúc hoặc dữ liệu không hợp lệ
+        '404':
+          description: Session không tồn tại
+
+  /exceptions/{id}/resolve:
+    patch:
+      summary: Staff xử lý ngoại lệ
+      description: |
+        Staff tự xử lý ngoại lệ (không cần Manager duyệt).
+
+        **Flow theo loại:**
+        - `wrong_plate`: Cung cấp `newLicensePlate` → cập nhật biển số + mở khóa session
+        - `wrong_zone`: Cung cấp `newSlotId` → chuyển slot + mở khóa session
+        - `lost_card`: Mở khóa session cho phép checkout
+        - `overtime/unpaid/other`: Chỉ ghi nhận, không khóa session
+
+        **Kết quả:** Exception status → `resolved`, Session status → `active` (nếu đang bị khóa)
+      tags:
+        - Exceptions
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID ngoại lệ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                staffNote:
+                  type: string
+                  description: Ghi chú xử lý của staff
+                  example: "Đã xác minh CCCD số 012345678901, cho phép checkout"
+                newLicensePlate:
+                  type: string
+                  description: Biển số mới (bắt buộc khi type = wrong_plate)
+                  example: "29A-12345"
+                newSlotId:
+                  type: string
+                  description: ID slot mới (bắt buộc khi type = wrong_zone)
+                  example: "683560a1e4b0f1a2b3c4d5e8"
+      responses:
+        '200':
+          description: Xử lý thành công. Session đã mở khóa.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Exception'
+        '400':
+          description: |
+            - Ngoại lệ đã được xử lý trước đó
+            - Thiếu newLicensePlate (khi type = wrong_plate)
+            - Thiếu newSlotId (khi type = wrong_zone)
+            - Slot mới không khả dụng
+        '404':
+          description: Ngoại lệ hoặc session không tồn tại
+
+  /exceptions/{id}/review:
+    patch:
+      summary: Manager review + thêm ghi chú
+      description: |
+        Manager xem lại ngoại lệ đã xử lý và thêm ghi chú.
+        **Không thay đổi** status hay session — chỉ ghi nhận review.
+      tags:
+        - Exceptions
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID ngoại lệ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - managerNote
+              properties:
+                managerNote:
+                  type: string
+                  description: Ghi chú review của manager
+                  example: "Đã xác nhận quy trình xử lý đúng. Nhắc nhở khách giữ thẻ cẩn thận."
+      responses:
+        '200':
+          description: Review thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Exception'
+        '404':
+          description: Ngoại lệ không tồn tại
+
+  /exceptions/detect-overdue:
+    post:
+      summary: Quét tự động xe quá hạn (Admin/System)
+      description: Phát hiện các session active quá 24h và tự động tạo exception OVERTIME.
+      tags:
+        - Exceptions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Kết quả quét
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                    example: "Đã quét và phát hiện 3 lượt gửi xe quá hạn."
+                  data:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                        example: 3
+
+  # ══════════════════════════════════════════════════════════
+  # REPORTS / EXPORT
+  # ══════════════════════════════════════════════════════════
+
+  /reports/export:
+    get:
+      summary: Xuất báo cáo (Excel hoặc PDF)
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: reportType
+          schema:
+            type: string
+            enum: [traffic, revenue, occupancy, peak-hours]
+          required: true
+          description: Loại báo cáo cần xuất
+        - in: query
+          name: format
+          schema:
+            type: string
+            enum: [excel, pdf]
+          required: true
+          description: Định dạng xuất (excel hoặc pdf)
+        - in: query
+          name: facilityId
+          schema:
+            type: string
+          required: false
+          description: ID bãi xe
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date-time
+          required: false
+          description: Thời gian bắt đầu (vd 2026-05-01)
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date-time
+          required: false
+          description: Thời gian kết thúc (vd 2026-05-31)
+      responses:
+        '200':
+          description: File báo cáo (Excel hoặc PDF)
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Bad request (Thiếu param hoặc loại báo cáo không hợp lệ)
