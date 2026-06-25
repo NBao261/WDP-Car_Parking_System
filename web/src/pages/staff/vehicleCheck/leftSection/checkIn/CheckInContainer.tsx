@@ -63,10 +63,31 @@ export function CheckInContainer({ onCheckIn }: { onCheckIn: (data: any) => void
     if (!logic.plate || logic.vehicleTypes.length === 0) return;
     const guessVehicleCategory = (plateStr: string) => {
       if (plateStr.startsWith('KBS-')) return null;
-      const cleanPlate = plateStr.replace(/[-.s]/g, '').toUpperCase();
-      const match = cleanPlate.match(/^(\d{2})([A-Z0-9]{1,2})(\d{4,5})$/);
-      if (!match) return 'Motorbike';
-      const series = match[2];
+      
+      const upper = plateStr.toUpperCase().replace(/\./g, '');
+      const parts = upper.split(/[-\s]+/);
+      
+      let series = "";
+      if (parts.length >= 3) {
+         series = parts[1];
+      } else {
+         const clean = upper.replace(/[-\s]/g, '');
+         // Try to match standard formats.
+         // If 8 chars, could be Car (29 A 12345) or Motorbike (29 A1 1234).
+         // Default to extracting the letter(s) and optional digit.
+         const m = clean.match(/^(\d{2})([A-ZĐ]+[0-9]?)(\d{4,5})$/);
+         if (m) {
+            series = m[2];
+            // If it's 8 chars long (e.g. 30K55555) and series extracted as K5 (leaving 4 digits)
+            // It's more likely a Car (K + 55555) since 5-digit car plates are standard.
+            if (clean.length === 8 && series.length === 2 && /\d/.test(series)) {
+                series = series.charAt(0);
+            }
+         }
+      }
+      
+      if (!series) return 'Motorbike';
+      
       if (series === 'C' || series === 'H' || series === 'D') return 'Truck';
       if (series.length === 1) return 'Car';
       const carSpecialSeries = ['LD', 'KT', 'NN', 'NG', 'CV', 'DA', 'HC', 'MK', 'TĐ'];
@@ -77,17 +98,27 @@ export function CheckInContainer({ onCheckIn }: { onCheckIn: (data: any) => void
     const category = guessVehicleCategory(logic.plate);
     if (!category) return;
     let targetType = logic.vehicleTypes.find(v => {
-      const lowerName = v.name.toLowerCase();
-      if (category === 'Truck') return lowerName.includes('tải') || lowerName.includes('truck');
-      if (category === 'ElectricMotorbike') return lowerName.includes('máy điện') || lowerName.includes('xe điện');
-      if (category === 'Car') return lowerName === 'ô tô' || lowerName === 'car' || (lowerName.includes('ô tô') && !lowerName.includes('điện'));
-      if (category === 'Motorbike') return lowerName === 'xe máy' || lowerName === 'motorbike' || (lowerName.includes('máy') && !lowerName.includes('điện'));
+      const norm = v.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]/g, '');
+      if (category === 'Truck') return norm.includes('tai') || norm.includes('truck');
+      if (category === 'ElectricMotorbike') return norm.includes('maydien') || norm.includes('xedien');
+      if (category === 'Car') return (norm.includes('oto') && !norm.includes('moto')) || norm.includes('car');
+      if (category === 'Motorbike') return norm.includes('may') || norm.includes('motorbike') || norm.includes('moto');
       return false;
     });
     if (!targetType) {
-      if (category === 'Truck' || category === 'Car') targetType = logic.vehicleTypes.find(v => v.name.toLowerCase().includes('ô tô'));
-      else targetType = logic.vehicleTypes.find(v => v.name.toLowerCase().includes('máy'));
+      if (category === 'Truck' || category === 'Car') {
+          targetType = logic.vehicleTypes.find(v => {
+              const norm = v.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+              return (norm.includes('oto') && !norm.includes('moto')) || norm.includes('car');
+          });
+      } else {
+          targetType = logic.vehicleTypes.find(v => {
+              const norm = v.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+              return norm.includes('may') || norm.includes('motorbike') || norm.includes('moto');
+          });
+      }
     }
+    console.log("CheckIn OCR Debug:", { plate: logic.plate, category, targetType: targetType?.name, allTypes: logic.vehicleTypes.map(v => v.name) });
     if (targetType && targetType._id !== logic.selectedVehicleTypeId) logic.setSelectedVehicleTypeId(targetType._id);
   }, [logic.plate, logic.vehicleTypes]);
 
