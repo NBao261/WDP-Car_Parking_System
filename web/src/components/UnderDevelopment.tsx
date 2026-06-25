@@ -24,8 +24,7 @@ export function UnderDevelopment({ featureName, description }: UnderDevelopmentP
 
       {/* Description */}
       <p className="text-gray-500 text-sm max-w-md leading-relaxed">
-        {description ??
-          'Chức năng này đang được đội ngũ phát triển. Vui lòng quay lại sau.'}
+        {description ?? 'Chức năng này đang được đội ngũ phát triển. Vui lòng quay lại sau.'}
       </p>
 
       {/* Decorative divider */}
