@@ -151,7 +151,7 @@ export function useFacilitiesData() {
     }
     for (const floor of floors) {
       const floorSlots = byFloor[floor._id] ?? [];
-      const total = floor.totalSlots ?? floorSlots.length;
+      const total = floorSlots.length;
       const occupied = floorSlots.filter((s) => s.status === 'occupied').length;
       const reserved = floorSlots.filter((s) => s.status === 'reserved').length;
       const fillRate = total > 0 ? Math.round((occupied / total) * 100) : 0;
@@ -170,7 +170,7 @@ export function useFacilitiesData() {
     for (const facility of facilities) {
       const facilityFloors = floors.filter((f) => f.facilityId === facility._id);
       const totalSlots = facilityFloors.reduce(
-        (sum, f) => sum + (slotStatsByFloor[f._id]?.total ?? f.totalSlots ?? 0),
+        (sum, f) => sum + (slotStatsByFloor[f._id]?.total ?? 0),
         0
       );
       const occupied = facilityFloors.reduce(
