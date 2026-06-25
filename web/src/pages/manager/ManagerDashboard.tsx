@@ -7,6 +7,7 @@ import {
   Download,
   Loader2,
   ChevronDown,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { userService } from '../../services/user.service';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -160,15 +161,15 @@ export default function ManagerDashboard() {
   }, [fetchDashboardData]);
 
   /* ── Export ── */
-  const handleExport = async () => {
+  const handleExport = async (format: 'excel' | 'pdf') => {
     try {
       setExporting(true);
-      toast.info('Đang xuất báo cáo tổng hợp ra PDF...');
+      toast.info(`Đang xuất báo cáo tổng hợp ra ${format === 'pdf' ? 'PDF' : 'Excel'}...`);
       const { startDate, endDate } = getDateRange(timeFilter);
       const facilityId = facilityFilter !== 'all' ? facilityFilter : undefined;
       const blob = await reportService.exportReport({
         reportType: 'revenue',
-        format: 'pdf',
+        format,
         startDate,
         endDate,
         facilityId,
@@ -176,7 +177,7 @@ export default function ManagerDashboard() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `manager_report_${Date.now()}.pdf`;
+      link.download = `manager_report_${Date.now()}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -234,15 +235,25 @@ export default function ManagerDashboard() {
             options={Object.entries(TIME_LABELS).map(([value, label]) => ({ label, value }))}
           />
 
-          {/* Export Button */}
-          <button
-            onClick={handleExport}
-            disabled={exporting || loading}
-            className="flex items-center gap-2 px-4 h-10 bg-[#d7ee46] text-[#060606] rounded-[10px] text-[13px] font-bold hover:opacity-90 active:scale-[0.98] shadow-sm transition-all border border-transparent hover:border-[#060606] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            Xuất báo cáo
-          </button>
+          {/* Export Buttons */}
+          <div className="flex gap-[12px]">
+            <button
+              onClick={() => handleExport('excel')}
+              disabled={exporting || loading}
+              className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-white border-[1.5px] border-gray-200 text-[#1a1a1a] text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exporting ? <Loader2 size={17} className="animate-spin" /> : <FileSpreadsheet size={17} />}
+              Excel
+            </button>
+            <button
+              onClick={() => handleExport('pdf')}
+              disabled={exporting || loading}
+              className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[#d7ee46] text-[#060606] border-none text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exporting ? <Loader2 size={17} className="animate-spin" /> : <Download size={17} />}
+              PDF
+            </button>
+          </div>
         </div>
       </header>
 
@@ -288,6 +299,7 @@ export default function ManagerDashboard() {
               trafficData={trafficData}
               revenueData={revenueData}
               peakHoursData={peakHoursData}
+              occupancyData={occupancyData}
               loading={loading}
             />
           </div>
