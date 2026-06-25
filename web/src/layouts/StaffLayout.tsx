@@ -17,12 +17,6 @@ export default function StaffLayout() {
       // Bỏ qua nếu đang ở trang Xử lý ngoại lệ riêng
       if (location.pathname.includes('/exceptions')) return;
 
-      if (e && e.type === 'keydown') {
-        const keyboardEvent = e as KeyboardEvent;
-        if (keyboardEvent.key !== 'F9') return;
-        keyboardEvent.preventDefault();
-      }
-
       const customEvent = e as CustomEvent;
       if (customEvent?.detail) {
         setExceptionContext(customEvent.detail);
@@ -32,10 +26,8 @@ export default function StaffLayout() {
       setShowGlobalException(true);
     };
 
-    window.addEventListener('keydown', handleF9);
     window.addEventListener('HOTKEY_F9', handleF9);
     return () => {
-      window.removeEventListener('keydown', handleF9);
       window.removeEventListener('HOTKEY_F9', handleF9);
     };
   }, [location.pathname]);
@@ -65,6 +57,7 @@ export default function StaffLayout() {
       {showGlobalException && (
         <GlobalExceptionPanel
           coPlateCam={exceptionContext?.coPlateCam || ''}
+          checkOutImage={exceptionContext?.checkOutImage || ''}
           currentSession={exceptionContext?.currentSession || null}
           onClose={() => setShowGlobalException(false)}
           onExceptionCreated={() => {

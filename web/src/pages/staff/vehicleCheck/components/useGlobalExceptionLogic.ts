@@ -4,7 +4,7 @@ import { exceptionService, ExceptionType } from "../../../../services/exception.
 import { sessionService } from "../../../../services/session.service";
 import { pricingService } from "../../../../services/pricing.service";
 
-export function useGlobalExceptionLogic(currentSession: any, onClose: () => void, onExceptionCreated?: () => void) {
+export function useGlobalExceptionLogic(currentSession: any, coPlateCam: string, checkOutImage: string | null | undefined, onClose: () => void, onExceptionCreated?: () => void) {
   const [exceptionType, setExceptionType] = useState<ExceptionType>(ExceptionType.WRONG_PLATE);
   const [note, setNote] = useState("");
   const [surcharge, setSurcharge] = useState<number | "">("");
@@ -52,7 +52,16 @@ export function useGlobalExceptionLogic(currentSession: any, onClose: () => void
     if (!note.trim()) { toast.error("Vui lòng mô tả chi tiết tình huống sự cố!"); return; }
     setIsSubmitting(true);
     try {
-      const payload: any = { sessionId, type: exceptionType, description: note.trim() };
+      const payload: any = { 
+        sessionId, 
+        type: exceptionType, 
+        description: note.trim(),
+        expectedPlate: activeSession.licensePlate,
+        actualPlate: coPlateCam || activeSession.licensePlate,
+        checkInImage: activeSession.checkInImage,
+        checkOutImage: checkOutImage || activeSession.checkOutImage,
+        cardCode: activeSession.cardCode
+      };
       if (exceptionType === ExceptionType.LOST_CARD && lostCardFee === 0 && surcharge !== "") payload.surcharge = Number(surcharge);
       else if (exceptionType !== ExceptionType.LOST_CARD && surcharge !== "") payload.surcharge = Number(surcharge);
       await exceptionService.createException(payload);

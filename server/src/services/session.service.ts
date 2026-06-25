@@ -127,28 +127,46 @@ export class SessionService {
         throw new AppError('Mã đặt chỗ không tồn tại hoặc đã được sử dụng/hủy', 404);
       }
 
-      // Validate thời gian check-in: chỉ cho phép trong khoảng 30 phút trước startTime → endTime
+      // Validate thời gian check-in: chỉ cho phép trong khoảng 15 phút trước startTime → endTime
       const now = new Date();
-      const earlyWindow = 30 * 60 * 1000; // 30 phút
+      const earlyWindow = 15 * 60 * 1000; // 15 phút
       const earliestCheckIn = new Date(matchedReservation.startTime.getTime() - earlyWindow);
 
       if (now < earliestCheckIn) {
         const startTimeStr = matchedReservation.startTime.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
         const minutesEarly = Math.ceil((earliestCheckIn.getTime() - now.getTime()) / 60000);
         throw new AppError(
-          `Chưa đến giờ check-in. Đặt chỗ bắt đầu lúc ${startTimeStr}. Bạn có thể check-in sớm nhất trước 30 phút (còn ${minutesEarly} phút nữa).`,
+          `Chưa đến giờ check-in. Giờ đặt chỗ là ${startTimeStr}. Bạn chỉ được vào sớm tối đa 15 phút (vui lòng chờ thêm ${minutesEarly} phút).`,
           400
         );
       }
 
-      const expirationTime = new Date(matchedReservation.startTime.getTime() + earlyWindow); // Hết hạn sau 30 phút (earlyWindow = 30 phút)
+      const expirationTime = new Date(matchedReservation.startTime.getTime() + earlyWindow); // Hết hạn sau 15 phút
 
       if (now > expirationTime) {
         throw new AppError('Đặt chỗ đã hết hạn. Vui lòng tạo đặt chỗ mới hoặc check-in walk-in.', 400);
       }
 
-      // Auto-fill các trường từ reservation
+      // Validate checkInImage
+      if (!data.checkInImage) {
+        throw new AppError('Bắt buộc phải có ảnh chụp xe lúc vào bãi khi sử dụng đặt chỗ.', 400);
+      }
+
+      // Validate loại xe khớp với đặt chỗ
+      if (data.vehicleTypeId && data.vehicleTypeId.toString() !== matchedReservation.vehicleTypeId.toString()) {
+        throw new AppError('Loại xe không khớp với thông tin đã đặt chỗ.', 400);
+      }
+
+      // Validate biển số khớp với đặt chỗ
+      const normalizedReqPlate = (data.licensePlate || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const normalizedResPlate = matchedReservation.licensePlate.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (normalizedReqPlate && normalizedReqPlate !== normalizedResPlate) {
+        throw new AppError(`Biển số xe vào (${data.licensePlate}) không khớp với biển số đã đặt (${matchedReservation.licensePlate}).`, 400);
+      }
+
+      // Gắn facilityId từ reservation (cho chắc chắn đúng bãi)
       data.facilityId = matchedReservation.facilityId.toString();
+      // Gắn lại đúng biển số và loại xe của reservation
       data.vehicleTypeId = matchedReservation.vehicleTypeId.toString();
       data.licensePlate = matchedReservation.licensePlate;
     }
@@ -236,11 +254,16 @@ export class SessionService {
 
     // Nếu không có reservationCode → kiểm tra xem có reservation nào match theo biển số không
     if (!matchedReservation) {
+      const earlyWindow = 15 * 60 * 1000;
       const autoMatchReservation = await Reservation.findOne({
         licensePlate: data.licensePlate!.toUpperCase(),
         facilityId: data.facilityId,
+        vehicleTypeId: data.vehicleTypeId, // Phải khớp đúng loại xe
         status: ReservationStatus.CONFIRMED,
-        startTime: { $lte: new Date(Date.now() + 30 * 60 * 1000) },
+        startTime: { 
+          $gte: new Date(Date.now() - earlyWindow), // Không lấy các reservation đã quá hạn 15p
+          $lte: new Date(Date.now() + earlyWindow), // Không lấy các reservation chưa tới giờ (quá 15p)
+        },
       });
 
       if (autoMatchReservation && autoMatchReservation.slotId) {
@@ -286,7 +309,10 @@ export class SessionService {
 
     // 5. Sinh mã session + mã thẻ xe (đảm bảo unique)
     let sessionCode = generateSessionCode();
-    let cardCode = generateCardCode();
+    // Nếu có reservation → dùng reservation code làm cardCode (thẻ ảo, không cần thẻ vật lý)
+    let cardCode = matchedReservation
+      ? matchedReservation.code   // VD: RSV-20260623-AB12
+      : generateCardCode();       // Walk-in: sinh thẻ vật lý bình thường
 
     // Retry nếu trùng (unlikely nhưng phòng)
     let retries = 5;
@@ -294,7 +320,8 @@ export class SessionService {
       const codeExists = await ParkingSession.findOne({ $or: [{ code: sessionCode }, { cardCode }] });
       if (!codeExists) break;
       sessionCode = generateSessionCode();
-      cardCode = generateCardCode();
+      // Chỉ re-gen cardCode cho walk-in; reservation code là cố định
+      if (!matchedReservation) cardCode = generateCardCode();
       retries--;
     }
 
@@ -317,6 +344,7 @@ export class SessionService {
       cardCode,
       status: SessionStatus.ACTIVE,
       driverId: matchedReservation ? matchedReservation.userId : null,
+      reservationId: matchedReservation ? matchedReservation._id : null,
       checkInImage: data.checkInImage || null,
     });
 

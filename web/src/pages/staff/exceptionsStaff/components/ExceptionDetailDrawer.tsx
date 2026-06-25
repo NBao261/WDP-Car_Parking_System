@@ -52,7 +52,7 @@ export default function ExceptionDetailDrawer({ selectedException, onClose, onCo
   return (
     <div className="fixed inset-0 z-[60] overflow-hidden">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-      <div className="absolute inset-y-0 right-0 max-w-[450px] w-full bg-white shadow-[-8px_0_32px_rgba(0,0,0,0.12)] border-l border-[#e8e9e8] flex flex-col animate-in slide-in-from-right duration-300 ease-out">
+      <div className="absolute inset-y-0 right-0 max-w-[800px] w-[90vw] bg-white shadow-[-8px_0_32px_rgba(0,0,0,0.12)] border-l border-[#e8e9e8] flex flex-col animate-in slide-in-from-right duration-300 ease-out">
         <div className="px-6 py-6 border-b border-[#e8e9e8] flex justify-between items-start">
           <div>
             <h3 className="text-[18px] font-bold text-[#060606]">Chi tiết Sự cố</h3>

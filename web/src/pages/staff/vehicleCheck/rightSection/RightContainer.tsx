@@ -22,9 +22,9 @@ export function RightContainer({
           onChangePlate={setCoPlateCam}
           onCheckOut={setCheckOutResult}
           onSearch={setCurrentCheckOutSession}
-          onFlagException={() => {
+          onFlagException={(checkOutImage) => {
             window.dispatchEvent(new CustomEvent("HOTKEY_F9", {
-              detail: { coPlateCam, currentSession: currentCheckOutSession }
+              detail: { coPlateCam, currentSession: currentCheckOutSession, checkOutImage }
             }));
           }}
         />

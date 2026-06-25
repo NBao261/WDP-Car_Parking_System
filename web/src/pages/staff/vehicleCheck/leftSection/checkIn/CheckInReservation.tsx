@@ -7,8 +7,6 @@ interface CheckInReservationProps {
   setReservationInfo: (info: any) => void;
   plateMatchStatus: 'idle' | 'match' | 'mismatch';
   setPlateMatchStatus: (status: 'idle' | 'match' | 'mismatch') => void;
-  manualPlateConfirmed: boolean;
-  setManualPlateConfirmed: (val: boolean) => void;
   setReservationCode: (val: string) => void;
   manualReservationCode: string;
   setManualReservationCode: (val: string) => void;
@@ -21,7 +19,6 @@ export function CheckInReservation({
   inputReservationMode, setInputReservationMode,
   reservationInfo, setReservationInfo,
   plateMatchStatus, setPlateMatchStatus,
-  manualPlateConfirmed, setManualPlateConfirmed,
   setReservationCode,
   manualReservationCode, setManualReservationCode,
   lookupReservation,
@@ -55,7 +52,7 @@ export function CheckInReservation({
                 plateMatchStatus === 'mismatch' ? <><AlertTriangle className="w-3 h-3" /> Không khớp</> :
                   <>✓ Tìm thấy</>}
             </div>
-            <button onClick={() => { setReservationInfo(null); setReservationCode(""); setPlateMatchStatus('idle'); setManualPlateConfirmed(false); }}
+            <button onClick={() => { setReservationInfo(null); setReservationCode(""); setPlateMatchStatus('idle'); }}
               className="w-5 h-5 flex items-center justify-center text-[#aaa] hover:text-[#333]">
               <X className="w-3.5 h-3.5" />
             </button>
@@ -83,12 +80,6 @@ export function CheckInReservation({
             </div>
           </div>
 
-          {plateMatchStatus === 'mismatch' && (
-            <label className="flex items-start gap-1.5 cursor-pointer border-t border-red-200 pt-2 mt-1">
-              <input type="checkbox" checked={manualPlateConfirmed} onChange={e => setManualPlateConfirmed(e.target.checked)} className="mt-0.5 w-3 h-3 accent-red-500" />
-              <span className="text-[9px] font-semibold text-red-600 leading-tight">Xác nhận biển không khớp — vẫn cho vào</span>
-            </label>
-          )}
         </div>
       ) : (
         <div className="h-[210px] w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 bg-[#fcfcfc] px-3 relative">

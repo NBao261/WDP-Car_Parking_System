@@ -77,6 +77,15 @@ export class ReservationService {
       throw new AppError('Bạn chỉ có thể có tối đa 2 đặt chỗ đang hoạt động', 400);
     }
 
+    // Chặn tạo nhiều đặt chỗ cho cùng một biển số (chống trùng lặp thời gian chờ)
+    const existingPlateReservation = await Reservation.findOne({
+      licensePlate: normalizedPlate,
+      status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
+    });
+    if (existingPlateReservation) {
+      throw new AppError(`Biển số ${normalizedPlate} đang có một đặt chỗ chưa sử dụng. Vui lòng sử dụng hoặc hủy đặt chỗ hiện tại trước khi tạo mới.`, 400);
+    }
+
     // BR-6.1: Tìm slot trống cho loại xe tại facility
     const availableSlot = await ParkingSlot.findOne({
       facilityId,

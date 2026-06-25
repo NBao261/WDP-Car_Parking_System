@@ -57,11 +57,13 @@ function SessionCard({ item }: { item: ParkingSession }) {
       <View style={styles.cardDetails}>
         <View style={styles.cardDetail}>
           <Ionicons name="business-outline" size={13} color={Colors.textTertiary} />
-          <Text style={styles.cardDetailText} numberOfLines={1}>{item.facilityName}</Text>
+          <Text style={styles.cardDetailText} numberOfLines={1}>
+            {item.facilityName} {item.vehicleTypeName ? `• ${item.vehicleTypeName}` : ''}
+          </Text>
         </View>
         <View style={styles.cardDetail}>
           <Ionicons name="location-outline" size={13} color={Colors.textTertiary} />
-          <Text style={styles.cardDetailText}>{item.floorName} · {item.slotCode}</Text>
+          <Text style={styles.cardDetailText}>{item.floorName} • {item.slotCode}</Text>
         </View>
       </View>
       {item.status === 'active' && (
@@ -112,7 +114,9 @@ function ReservationCard2({ item, onCancel }: { item: Reservation; onCancel: (id
       <View style={styles.cardDetails}>
         <View style={styles.cardDetail}>
           <Ionicons name="business-outline" size={13} color={Colors.textTertiary} />
-          <Text style={styles.cardDetailText} numberOfLines={1}>{(item as any).facilityId?.name || '—'}</Text>
+          <Text style={styles.cardDetailText} numberOfLines={1}>
+            {(item as any).facilityId?.name || '—'} { (item as any).vehicleTypeId?.name ? `• ${(item as any).vehicleTypeId.name}` : '' }
+          </Text>
         </View>
         <View style={styles.cardDetail}>
           <Ionicons name="time-outline" size={13} color={Colors.textTertiary} />
@@ -133,9 +137,9 @@ function ReservationCard2({ item, onCancel }: { item: Reservation; onCancel: (id
             )}
           </View>
           <View style={styles.qrRight}>
-            <Text style={styles.qrLabel}>Mã đặt chỗ — xuất trình tại cổng</Text>
+            <Text style={styles.qrLabel}>Thẻ gửi xe ảo — không cần nhận thẻ</Text>
             <Text style={styles.qrCode}>{(item as any).code}</Text>
-            <Text style={styles.qrHint}>Chạm để phóng to</Text>
+            <Text style={styles.qrHint}>Chạm để phóng to • Dùng khi vào và ra</Text>
           </View>
           <Ionicons name="expand-outline" size={18} color={Colors.primary} style={{ opacity: 0.7 }} />
         </TouchableOpacity>
@@ -172,7 +176,7 @@ function ReservationCard2({ item, onCancel }: { item: Reservation; onCancel: (id
                 </TouchableOpacity>
 
                 <Text style={styles.qrModalTitle}>Xuất trình cho nhân viên</Text>
-                <Text style={styles.qrModalSub}>Tại cổng bãi xe</Text>
+                <Text style={styles.qrModalSub}>Đưa mã này khi gửi xe vào và lấy xe ra</Text>
 
                 {/* QR Code lớn */}
                 <View style={styles.qrModalQrWrap}>
@@ -182,21 +186,7 @@ function ReservationCard2({ item, onCancel }: { item: Reservation; onCancel: (id
                 {/* Mã text */}
                 <Text style={styles.qrModalCode}>{(item as any).code}</Text>
 
-                {/* Thông tin bên dưới */}
-                <View style={styles.qrModalInfo}>
-                  <View style={styles.qrModalInfoRow}>
-                    <Ionicons name="business-outline" size={13} color={Colors.textTertiary} />
-                    <Text style={styles.qrModalInfoText} numberOfLines={1}>
-                      {(item as any).facilityId?.name || '—'}
-                    </Text>
-                  </View>
-                  <View style={styles.qrModalInfoRow}>
-                    <Ionicons name="time-outline" size={13} color={Colors.textTertiary} />
-                    <Text style={styles.qrModalInfoText}>
-                      {checkinAt.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                  </View>
-                </View>
+
 
                 <Text style={styles.qrModalDismiss}>Chạm ra ngoài để đóng</Text>
               </View>
