@@ -1,7 +1,16 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { MoreVertical, Search, Edit, Lock, Unlock, KeyRound, Trash2, Building2 } from 'lucide-react';
+import {
+  MoreVertical,
+  Search,
+  Edit,
+  Lock,
+  Unlock,
+  KeyRound,
+  Trash2,
+  Building2,
+} from 'lucide-react';
 import { User as UserType } from '../../../../types/user.types';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
 import { RoleIcon } from '../../../../components/ui/RoleIcon';
@@ -16,7 +25,13 @@ interface UserTableProps {
   onAssignFacility: (user: UserType) => void;
 }
 
-export function UserTable({ users, isLoading, onEdit, onRefresh, onAssignFacility }: UserTableProps) {
+export function UserTable({
+  users,
+  isLoading,
+  onEdit,
+  onRefresh,
+  onAssignFacility,
+}: UserTableProps) {
   const {
     confirmState,
     isActionLoading,
@@ -94,7 +109,9 @@ export function UserTable({ users, isLoading, onEdit, onRefresh, onAssignFacilit
                       {user.role === 'manager' || user.role === 'staff' ? (
                         user.assignedFacilities && user.assignedFacilities.length > 0 ? (
                           <span className="inline-flex items-center gap-1 bg-[#f0f9dc] text-[#5e6b18] font-bold text-xs px-3 py-1 rounded-full border border-[#d7ee46]/60">
-                            <span className="text-sm leading-none">{user.assignedFacilities.length}</span>
+                            <span className="text-sm leading-none">
+                              {user.assignedFacilities.length}
+                            </span>
                             <span className="font-normal text-[10px] text-[#7a8a1e]">Tòa Nhà</span>
                           </span>
                         ) : (

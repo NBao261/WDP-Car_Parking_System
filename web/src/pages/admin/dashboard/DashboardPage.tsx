@@ -1,11 +1,29 @@
-import { LayoutDashboard, Users, Map, Wallet, Settings, ScrollText, ArrowRight } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Users,
+  Map,
+  Wallet,
+  Settings,
+  ScrollText,
+  ArrowRight,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../../store';
 
 const quickLinks = [
-  { path: '/admin/users', label: 'Users & Roles', icon: Users, desc: 'Quản lý tài khoản Manager & Staff' },
+  {
+    path: '/admin/users',
+    label: 'Users & Roles',
+    icon: Users,
+    desc: 'Quản lý tài khoản Manager & Staff',
+  },
   { path: '/admin/facilities', label: 'Facilities', icon: Map, desc: 'Quản lý bãi xe, tầng, slot' },
-  { path: '/admin/billing', label: 'Pricing & Revenue', icon: Wallet, desc: 'Bảng giá & doanh thu' },
+  {
+    path: '/admin/billing',
+    label: 'Pricing & Revenue',
+    icon: Wallet,
+    desc: 'Bảng giá & doanh thu',
+  },
   { path: '/admin/config', label: 'System Config', icon: Settings, desc: 'Cấu hình hệ thống' },
   { path: '/admin/logs', label: 'Audit Logs', icon: ScrollText, desc: 'Nhật ký hoạt động' },
 ];
@@ -21,14 +39,21 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-[#060606]">System Overview</h1>
           <p className="text-gray-500 text-sm">
             Xin chào, <span className="font-semibold text-[#060606]">{user?.name}</span> —{' '}
-            {new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            {new Date().toLocaleDateString('vi-VN', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
           </p>
         </div>
       </div>
 
       {/* Quick nav cards */}
       <div>
-        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Chức năng quản trị</h2>
+        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">
+          Chức năng quản trị
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {quickLinks.map((item) => (
             <Link
@@ -37,13 +62,19 @@ export default function DashboardPage() {
               className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-start gap-4 hover:shadow-md hover:border-[#d7ee46] transition-all duration-200 group"
             >
               <div className="w-12 h-12 rounded-xl bg-gray-50 group-hover:bg-[#d7ee46]/20 flex items-center justify-center shrink-0 transition-colors">
-                <item.icon size={22} className="text-[#060606] group-hover:text-[#96a827] transition-colors" />
+                <item.icon
+                  size={22}
+                  className="text-[#060606] group-hover:text-[#96a827] transition-colors"
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-[#060606] mb-0.5">{item.label}</p>
                 <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
               </div>
-              <ArrowRight size={16} className="text-gray-300 group-hover:text-[#96a827] shrink-0 mt-1 transition-colors" />
+              <ArrowRight
+                size={16}
+                className="text-gray-300 group-hover:text-[#96a827] shrink-0 mt-1 transition-colors"
+              />
             </Link>
           ))}
         </div>

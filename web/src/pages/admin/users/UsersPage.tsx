@@ -64,10 +64,15 @@ export default function UserListPage() {
       variants={containerVariants}
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <motion.div
+        variants={itemVariants}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      >
         <div>
           <h1 className="text-2xl font-bold text-[#060606]">Users &amp; Roles</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage accounts and role-based access control (RBAC)</p>
+          <p className="text-gray-500 text-sm mt-1">
+            Manage accounts and role-based access control (RBAC)
+          </p>
         </div>
         <button
           onClick={handleCreateUser}
@@ -123,7 +128,8 @@ export default function UserListPage() {
                 <ShieldAlert size={18} className="text-red-500" /> System Admin
               </div>
               <p className="text-gray-500 text-sm leading-relaxed">
-                Toàn quyền hệ thống. Quản lý tài khoản, cấu hình bãi xe, và nhật ký kiểm toán (Audit Logs).
+                Toàn quyền hệ thống. Quản lý tài khoản, cấu hình bãi xe, và nhật ký kiểm toán (Audit
+                Logs).
               </p>
             </div>
             <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-[#d7ee46]/50 transition-colors">
@@ -139,7 +145,8 @@ export default function UserListPage() {
                 <User size={18} className="text-green-500" /> Parking Staff
               </div>
               <p className="text-gray-500 text-sm leading-relaxed">
-                Vận hành trực tiếp: Quét biển số, check-in/out, thu phí tiền mặt và xử lý ngoại lệ tại cổng.
+                Vận hành trực tiếp: Quét biển số, check-in/out, thu phí tiền mặt và xử lý ngoại lệ
+                tại cổng.
               </p>
             </div>
           </div>
@@ -158,7 +165,9 @@ export default function UserListPage() {
           <div className="mt-6">
             <div className="bg-[#d7ee46]/10 border border-[#d7ee46]/20 rounded-xl p-5 flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-xs font-medium mb-1 uppercase tracking-wider">Tổng số tài khoản</p>
+                <p className="text-gray-400 text-xs font-medium mb-1 uppercase tracking-wider">
+                  Tổng số tài khoản
+                </p>
                 <div className="text-3xl font-bold text-white">{pagination.total}</div>
               </div>
               <div className="h-12 w-12 rounded-full bg-[#d7ee46]/20 flex items-center justify-center border border-[#d7ee46]/30">

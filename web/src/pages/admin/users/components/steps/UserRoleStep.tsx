@@ -50,7 +50,12 @@ interface UserRoleStepProps {
  * Step 2 of UserFormModal: radio-card role selection.
  * Animation handled by parent UserFormModal motion.div wrapper.
  */
-export function UserRoleStep({ isEdit, selectedRole, currentRoleLabel, onChange }: UserRoleStepProps) {
+export function UserRoleStep({
+  isEdit,
+  selectedRole,
+  currentRoleLabel,
+  onChange,
+}: UserRoleStepProps) {
   return (
     <div className="space-y-3">
       <p className="text-sm text-gray-500 mb-4">

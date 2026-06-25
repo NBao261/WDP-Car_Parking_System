@@ -2,8 +2,18 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  Settings, Save, RefreshCw, Loader2, Eye, EyeOff,
-  Shield, Bell, Globe, Database, Clock, Lock
+  Settings,
+  Save,
+  RefreshCw,
+  Loader2,
+  Eye,
+  EyeOff,
+  Shield,
+  Bell,
+  Globe,
+  Database,
+  Clock,
+  Lock,
 } from 'lucide-react';
 import { configService, SystemConfig } from '../../../services/config.service';
 
@@ -13,11 +23,21 @@ const containerVariants = {
 };
 const itemVariants = {
   hidden: { opacity: 0, y: 14 },
-  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring' as const, stiffness: 300, damping: 24 },
+  },
 };
 
 // ── Key → group mapping ──────────────────────────────
-const CONFIG_GROUPS: { key: string; icon: React.ReactNode; label: string; description: string; keys: string[] }[] = [
+const CONFIG_GROUPS: {
+  key: string;
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  keys: string[];
+}[] = [
   {
     key: 'general',
     icon: <Globe size={18} />,
@@ -30,14 +50,25 @@ const CONFIG_GROUPS: { key: string; icon: React.ReactNode; label: string; descri
     icon: <Shield size={18} />,
     label: 'Bảo mật tài khoản',
     description: 'Chính sách mật khẩu, khóa tài khoản, session',
-    keys: ['min_password_length', 'max_login_attempts', 'lockout_duration_minutes', 'session_timeout_minutes', 'require_special_char'],
+    keys: [
+      'min_password_length',
+      'max_login_attempts',
+      'lockout_duration_minutes',
+      'session_timeout_minutes',
+      'require_special_char',
+    ],
   },
   {
     key: 'notification',
     icon: <Bell size={18} />,
     label: 'Cấu hình thông báo',
     description: 'Email/SMS, bật tắt từng loại thông báo',
-    keys: ['email_notifications', 'sms_notifications', 'notify_on_create_account', 'notify_on_reset_password'],
+    keys: [
+      'email_notifications',
+      'sms_notifications',
+      'notify_on_create_account',
+      'notify_on_reset_password',
+    ],
   },
   {
     key: 'business',
@@ -62,7 +93,8 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
 
   const isBool = typeof config.value === 'boolean';
   const isNumber = typeof config.value === 'number';
-  const isSecret = config.key.toLowerCase().includes('secret') || config.key.toLowerCase().includes('password');
+  const isSecret =
+    config.key.toLowerCase().includes('secret') || config.key.toLowerCase().includes('password');
 
   const handleChange = (val: string) => {
     setEditValue(val);
@@ -111,10 +143,14 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
               config.value ? 'bg-[#d7ee46]' : 'bg-gray-200'
             } disabled:opacity-60`}
           >
-            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-              config.value ? 'translate-x-5' : 'translate-x-0'
-            }`} />
-            {isSaving && <Loader2 size={12} className="absolute right-1 top-1.5 animate-spin text-gray-400" />}
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                config.value ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+            {isSaving && (
+              <Loader2 size={12} className="absolute right-1 top-1.5 animate-spin text-gray-400" />
+            )}
           </button>
         ) : (
           /* Text / Number input */
@@ -129,15 +165,21 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
                 }`}
               />
               {isSecret && (
-                <button type="button" onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
                   {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
                 </button>
               )}
             </div>
             {isDirty && (
-              <button onClick={handleSave} disabled={isSaving}
-                className="flex items-center gap-1 px-3 py-1.5 bg-[#d7ee46] text-[#060606] text-xs font-bold rounded-lg hover:bg-[#c4dc32] transition-colors disabled:opacity-60">
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex items-center gap-1 px-3 py-1.5 bg-[#d7ee46] text-[#060606] text-xs font-bold rounded-lg hover:bg-[#c4dc32] transition-colors disabled:opacity-60"
+              >
                 {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                 Lưu
               </button>
@@ -166,7 +208,9 @@ export default function ConfigPage() {
     }
   }, []);
 
-  useEffect(() => { fetchConfigs(); }, [fetchConfigs]);
+  useEffect(() => {
+    fetchConfigs();
+  }, [fetchConfigs]);
 
   const handleSave = async (key: string, value: any) => {
     try {
@@ -181,22 +225,33 @@ export default function ConfigPage() {
 
   // Group configs by predefined groups
   const getConfigsForGroup = (keys: string[]) =>
-    keys
-      .map((k) => configs.find((c) => c.key === k))
-      .filter(Boolean) as SystemConfig[];
+    keys.map((k) => configs.find((c) => c.key === k)).filter(Boolean) as SystemConfig[];
 
   const ungroupedKeys = CONFIG_GROUPS.flatMap((g) => g.keys);
   const ungroupedConfigs = configs.filter((c) => !ungroupedKeys.includes(c.key));
 
   return (
-    <motion.div className="space-y-6 max-w-4xl mx-auto pb-12" initial="hidden" animate="visible" variants={containerVariants}>
+    <motion.div
+      className="space-y-6 max-w-4xl mx-auto pb-12"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <motion.div
+        variants={itemVariants}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      >
         <div>
           <h1 className="text-2xl font-bold text-[#060606]">Cấu hình Hệ thống</h1>
-          <p className="text-gray-500 text-sm mt-1">Quản lý các thông số hoạt động của Smart Parking</p>
+          <p className="text-gray-500 text-sm mt-1">
+            Quản lý các thông số hoạt động của Smart Parking
+          </p>
         </div>
-        <button onClick={fetchConfigs} className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors self-start">
+        <button
+          onClick={fetchConfigs}
+          className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors self-start"
+        >
           <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
         </button>
       </motion.div>
@@ -205,7 +260,10 @@ export default function ConfigPage() {
       {isLoading ? (
         <motion.div variants={itemVariants} className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 animate-pulse">
+            <div
+              key={i}
+              className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 animate-pulse"
+            >
               <div className="h-4 bg-gray-100 rounded w-1/4" />
               <div className="space-y-3">
                 {[1, 2, 3].map((j) => (
@@ -222,12 +280,17 @@ export default function ConfigPage() {
           ))}
         </motion.div>
       ) : configs.length === 0 ? (
-        <motion.div variants={itemVariants} className="bg-white rounded-2xl border border-gray-100 py-20 text-center">
+        <motion.div
+          variants={itemVariants}
+          className="bg-white rounded-2xl border border-gray-100 py-20 text-center"
+        >
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <Database size={28} className="text-gray-300" />
           </div>
           <p className="text-gray-500 font-medium">Chưa có cấu hình nào</p>
-          <p className="text-gray-400 text-sm mt-1">Cấu hình sẽ được seed tự động khi server khởi động lần đầu</p>
+          <p className="text-gray-400 text-sm mt-1">
+            Cấu hình sẽ được seed tự động khi server khởi động lần đầu
+          </p>
         </motion.div>
       ) : (
         <>
@@ -235,7 +298,11 @@ export default function ConfigPage() {
             const groupConfigs = getConfigsForGroup(group.keys);
             if (groupConfigs.length === 0) return null;
             return (
-              <motion.div key={group.key} variants={itemVariants} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <motion.div
+                key={group.key}
+                variants={itemVariants}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+              >
                 {/* Group header */}
                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-[#d7ee46]/20 text-[#6a7a0a] flex items-center justify-center">
@@ -259,7 +326,10 @@ export default function ConfigPage() {
 
           {/* Ungrouped configs */}
           {ungroupedConfigs.length > 0 && (
-            <motion.div variants={itemVariants} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <motion.div
+              variants={itemVariants}
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+            >
               <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center">
                   <Settings size={18} />
@@ -280,14 +350,18 @@ export default function ConfigPage() {
       )}
 
       {/* Info box */}
-      <motion.div variants={itemVariants} className="bg-[#060606] rounded-2xl p-6 flex items-start gap-4">
+      <motion.div
+        variants={itemVariants}
+        className="bg-[#060606] rounded-2xl p-6 flex items-start gap-4"
+      >
         <div className="w-10 h-10 rounded-xl bg-[#d7ee46]/20 flex items-center justify-center flex-shrink-0">
           <Lock size={20} className="text-[#d7ee46]" />
         </div>
         <div>
           <h3 className="font-bold text-white mb-1">Audit Log</h3>
           <p className="text-gray-400 text-sm leading-relaxed">
-            Mọi thay đổi cấu hình đều được ghi lại trong Audit Log kèm người thực hiện và thời gian. Chỉ Admin mới có quyền thay đổi cấu hình hệ thống.
+            Mọi thay đổi cấu hình đều được ghi lại trong Audit Log kèm người thực hiện và thời gian.
+            Chỉ Admin mới có quyền thay đổi cấu hình hệ thống.
           </p>
         </div>
       </motion.div>
