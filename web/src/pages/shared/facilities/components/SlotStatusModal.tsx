@@ -77,7 +77,7 @@ const SESSION_STATUS_CFG: Record<
   active: { label: 'HOẠT ĐỘNG', color: '#059669', bg: '#f0fdf4', border: '#86efac' },
   pending_payment: { label: 'CHỜ THANH TOÁN', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
   completed: { label: 'HOÀN THÀNH', color: '#374151', bg: '#f9fafb', border: '#e5e7eb' },
-  exception: { label: 'NGOẠI LỆ', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
+  exception: { label: 'SỰ CỐ', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
 };
 
 function CustomSelect({
@@ -572,7 +572,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
               </p>
             </div>
             <div className="flex items-center gap-1 -mt-1 -mr-2">
-              {!isEditing && (
+              {!isEditing && displaySlot.status !== 'occupied' && (
                 <button
                   onClick={() => setIsEditing(true)}
                   className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-[#4a7c20] hover:bg-[#f4f7ed] transition-colors"
@@ -624,20 +624,6 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                     options={vehicleTypes
                       .filter((vt) => allowedVtIds.length === 0 || allowedVtIds.includes(vt._id))
                       .map((vt) => ({ value: vt._id, label: vt.name }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2">
-                    Trạng thái
-                  </label>
-                  <CustomSelect
-                    value={editStatus}
-                    onChange={(v) => setEditStatus(v as SlotStatus)}
-                    options={[displaySlot.status, ...nexts].map((s) => ({
-                      value: s,
-                      label: STATUS_CFG[s].label,
-                    }))}
-                    placement="top"
                   />
                 </div>
               </div>
