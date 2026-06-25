@@ -10,7 +10,6 @@ import {
   Settings,
   ScrollText,
   LogOut,
-  ClipboardList,
   ScanLine,
   Shield,
   type LucideIcon,
@@ -28,7 +27,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   // ── Admin ──
-  { path: '/admin', label: 'Tổng Quan', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
+  { path: '/admin', label: 'Trang Chủ', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
   { path: '/admin/facilities', label: 'Tòa nhà & Bãi đỗ', icon: Map, roles: [UserRole.ADMIN] },
 
   { path: '/admin/pricing', label: 'Bảng Giá', icon: Wallet, roles: [UserRole.ADMIN] },
@@ -37,18 +36,34 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/admin/roles', label: 'Phân Quyền', icon: Shield, roles: [UserRole.ADMIN] },
   { path: '/admin/config', label: 'Cấu Hình Hệ Thống', icon: Settings, roles: [UserRole.ADMIN] },
   { path: '/admin/logs', label: 'Lịch Sử Hoạt Động', icon: ScrollText, roles: [UserRole.ADMIN] },
-  { path: '/admin/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.ADMIN] },
 
   // ── Manager ──
-  { path: '/manager', label: 'Tổng Quan', icon: LayoutDashboard, roles: [UserRole.MANAGER] },
-  { path: '/manager/zones', label: 'Khu Vực', icon: Map, roles: [UserRole.MANAGER] },
+  { path: '/manager', label: 'Trang Chủ', icon: LayoutDashboard, roles: [UserRole.MANAGER] },
+  {
+    path: '/manager/assignments',
+    label: 'Phân công tòa nhà',
+    icon: Users,
+    roles: [UserRole.MANAGER],
+  },
+  { path: '/manager/facilities', label: 'Tòa nhà & Bãi đỗ', icon: Map, roles: [UserRole.MANAGER] },
+  { path: '/manager/pricing', label: 'Bảng Giá', icon: Wallet, roles: [UserRole.MANAGER] },
   { path: '/manager/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.MANAGER] },
-  { path: '/manager/reports', label: 'Báo Cáo', icon: ClipboardList, roles: [UserRole.MANAGER] },
+  {
+    path: '/manager/exceptions',
+    label: 'Quản Lý Ngoại Lệ',
+    icon: AlertTriangle,
+    roles: [UserRole.MANAGER],
+  },
 
   // ── Staff ──
   { path: '/staff', label: 'Xe Ra Vào', icon: ScanLine, roles: [UserRole.STAFF] },
   { path: '/staff/active-sessions', label: 'Xe Đang Gửi', icon: Car, roles: [UserRole.STAFF] },
-  { path: '/staff/exceptions', label: 'Xử Lý Ngoại Lệ', icon: AlertTriangle, roles: [UserRole.STAFF] },
+  {
+    path: '/staff/exceptions',
+    label: 'Xử Lý Ngoại Lệ',
+    icon: AlertTriangle,
+    roles: [UserRole.STAFF],
+  },
 ];
 
 function getInitials(name: string): string {

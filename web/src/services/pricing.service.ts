@@ -86,14 +86,14 @@ export const pricingService = {
   },
 
   create: async (
-    payload: CreatePricingPlanPayload,
+    payload: CreatePricingPlanPayload
   ): Promise<{ success: boolean; data: PricingPlan }> => {
     return apiClient.post('/pricing', payload);
   },
 
   update: async (
     id: string,
-    payload: UpdatePricingPlanPayload,
+    payload: UpdatePricingPlanPayload
   ): Promise<{ success: boolean; data: PricingPlan }> => {
     return apiClient.patch(`/pricing/${id}`, payload);
   },

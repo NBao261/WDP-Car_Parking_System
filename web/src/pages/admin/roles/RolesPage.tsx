@@ -28,7 +28,6 @@ export default function RoleListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-
   // Permission Matrix modal
   const [isPermModalOpen, setIsPermModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
@@ -62,7 +61,7 @@ export default function RoleListPage() {
   const filteredRoles = roles.filter(
     (role) =>
       role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      role.code.toLowerCase().includes(searchTerm.toLowerCase()),
+      role.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const defaultRoles = filteredRoles.filter((r) => r.isDefault);
@@ -76,7 +75,10 @@ export default function RoleListPage() {
       variants={containerVariants}
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <motion.div
+        variants={itemVariants}
+        className="flex flex-col sm:flex-row sm:items-end justify-between gap-4"
+      >
         <div>
           <h1 className="text-2xl font-bold text-[#060606]">Phân quyền hệ thống</h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -88,7 +90,10 @@ export default function RoleListPage() {
       </motion.div>
 
       {/* Search */}
-      <motion.div variants={itemVariants} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <motion.div
+        variants={itemVariants}
+        className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100"
+      >
         <div className="relative">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -156,7 +161,6 @@ export default function RoleListPage() {
           )}
         </motion.div>
       )}
-
 
       {/* Permission Matrix Modal */}
       <PermissionMatrixModal

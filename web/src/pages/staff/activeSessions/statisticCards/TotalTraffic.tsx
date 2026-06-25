@@ -1,15 +1,11 @@
-import { ArrowRightLeft } from "lucide-react";
+import { ArrowRightLeft } from 'lucide-react';
 
 interface TotalTrafficProps {
   trafficIn?: number;
   trafficOut?: number;
 }
 
-export default function TotalTraffic({
-  trafficIn = 0,
-  trafficOut = 0,
-}: TotalTrafficProps) {
-
+export default function TotalTraffic({ trafficIn = 0, trafficOut = 0 }: TotalTrafficProps) {
   return (
     <div className="bg-white rounded-xl px-5 py-3 shadow-sm border border-gray-100 flex items-center justify-between h-full">
       <div className="flex items-center gap-3">
@@ -21,12 +17,16 @@ export default function TotalTraffic({
 
       <div className="flex items-center gap-6">
         <div className="text-center">
-          <div className="text-[10px] text-[#060606]/40 font-semibold uppercase tracking-wider mb-0.5">Xe vào</div>
+          <div className="text-[10px] text-[#060606]/40 font-semibold uppercase tracking-wider mb-0.5">
+            Xe vào
+          </div>
           <div className="text-[22px] font-bold text-[#060606] leading-none">{trafficIn}</div>
         </div>
         <div className="w-px h-8 bg-gray-200" />
         <div className="text-center">
-          <div className="text-[10px] text-[#060606]/40 font-semibold uppercase tracking-wider mb-0.5">Xe ra</div>
+          <div className="text-[10px] text-[#060606]/40 font-semibold uppercase tracking-wider mb-0.5">
+            Xe ra
+          </div>
           <div className="text-[22px] font-bold text-[#060606] leading-none">{trafficOut}</div>
         </div>
       </div>

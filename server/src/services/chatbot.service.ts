@@ -117,9 +117,43 @@ QUY TẮC BẢO MẬT & PHẠM VI:
 
 // ─── Time Range Resolver ──────────────────────────────────
 
-function resolveTimeRange(timeRangeStr: string | null | undefined): TimeRange {
+/**
+ * Resolve khoảng thời gian từ preset string hoặc custom dates.
+ * Hỗ trợ: preset cố định, last_N_days (dynamic), all_time, và custom start/end dates.
+ */
+function resolveTimeRange(
+  timeRangeStr: string | null | undefined,
+  customStartDate?: string,
+  customEndDate?: string
+): TimeRange {
+  // Ưu tiên custom dates nếu có
+  if (customStartDate || customEndDate) {
+    const now = new Date();
+    const start = customStartDate ? new Date(customStartDate) : new Date(0); // epoch nếu không có start
+    const end = customEndDate ? new Date(customEndDate) : new Date(now);
+    // Đảm bảo end date bao gồm hết ngày
+    if (customEndDate && !customEndDate.includes('T')) {
+      end.setHours(23, 59, 59, 999);
+    }
+    if (customStartDate && !customStartDate.includes('T')) {
+      start.setHours(0, 0, 0, 0);
+    }
+    return { startDate: start.toISOString(), endDate: end.toISOString() };
+  }
+
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  // Dynamic last_N_days pattern (ví dụ: last_2_days, last_5_days, last_14_days)
+  const lastNDaysMatch = timeRangeStr?.match(/^last_(\d+)_days$/);
+  if (lastNDaysMatch) {
+    const n = parseInt(lastNDaysMatch[1], 10);
+    const start = new Date(today);
+    start.setDate(start.getDate() - n);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+    return { startDate: start.toISOString(), endDate: endOfDay.toISOString() };
+  }
 
   switch (timeRangeStr) {
     case 'today': {
@@ -161,19 +195,23 @@ function resolveTimeRange(timeRangeStr: string | null | undefined): TimeRange {
       endOfLastMonth.setHours(23, 59, 59, 999);
       return { startDate: startOfLastMonth.toISOString(), endDate: endOfLastMonth.toISOString() };
     }
-    case 'last_7_days': {
-      const start = new Date(today);
-      start.setDate(start.getDate() - 7);
+    case 'this_year': {
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
       const endOfDay = new Date(now);
       endOfDay.setHours(23, 59, 59, 999);
-      return { startDate: start.toISOString(), endDate: endOfDay.toISOString() };
+      return { startDate: startOfYear.toISOString(), endDate: endOfDay.toISOString() };
     }
-    case 'last_30_days': {
-      const start = new Date(today);
-      start.setDate(start.getDate() - 30);
+    case 'last_year': {
+      const startOfLastYear = new Date(now.getFullYear() - 1, 0, 1);
+      const endOfLastYear = new Date(now.getFullYear() - 1, 11, 31);
+      endOfLastYear.setHours(23, 59, 59, 999);
+      return { startDate: startOfLastYear.toISOString(), endDate: endOfLastYear.toISOString() };
+    }
+    case 'all_time': {
+      // Lấy từ đầu hệ thống (epoch) đến hiện tại
       const endOfDay = new Date(now);
       endOfDay.setHours(23, 59, 59, 999);
-      return { startDate: start.toISOString(), endDate: endOfDay.toISOString() };
+      return { startDate: new Date(0).toISOString(), endDate: endOfDay.toISOString() };
     }
     default: {
       const endOfDay = new Date(today);
@@ -183,6 +221,17 @@ function resolveTimeRange(timeRangeStr: string | null | undefined): TimeRange {
   }
 }
 
+// ─── Regex Escape Helper ──────────────────────────────────
+
+/**
+ * Escape ký tự đặc biệt trong regex để tránh lỗi khi tên toà nhà
+ * chứa ký tự như [ ] ( ) . * + ? ^ $ { } | \
+ * Ví dụ: "Vinhome - 1 [Test]" → "Vinhome \- 1 \[Test\]"
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // ─── Facility Name Resolver ───────────────────────────────
 
 async function resolveFacilityId(
@@ -190,13 +239,25 @@ async function resolveFacilityId(
   facilityScope?: string[]
 ): Promise<string | null | undefined> {
   if (!facilityName) return undefined;
-  const query: any = { name: { $regex: facilityName, $options: 'i' } };
+
+  // Escape ký tự đặc biệt regex trong tên toà nhà
+  const escapedName = escapeRegex(facilityName);
+  const query: any = { name: { $regex: escapedName, $options: 'i' } };
   if (facilityScope && facilityScope.length > 0) {
     query._id = { $in: facilityScope.map((id) => new mongoose.Types.ObjectId(id)) };
   }
-  const facility = await ParkingFacility.findOne(query).select('_id name');
-  if (!facility) return null;
-  return facility._id?.toString();
+
+  try {
+    const facility = await ParkingFacility.findOne(query).select('_id name');
+    if (!facility) {
+      logger.warn(`[Chatbot] Facility not found: "${facilityName}"`, { escapedName, scopeCount: facilityScope?.length });
+      return null;
+    }
+    return facility._id?.toString();
+  } catch (err: any) {
+    logger.error(`[Chatbot] Error resolving facility name: "${facilityName}"`, { error: err.message });
+    return null;
+  }
 }
 
 async function queryWithScope(
@@ -225,7 +286,10 @@ async function queryWithScope(
       ParkingFacility.find({
         _id: { $in: facilityScope.map((id) => new mongoose.Types.ObjectId(id)) },
       }).select('_id name').lean(),
-      ...facilityScope.map((fId) => handler(args, fId).catch(() => null)),
+      ...facilityScope.map((fId) => handler(args, fId).catch((err: any) => {
+        logger.warn(`[Chatbot] Handler failed for facility ${fId}`, { error: err.message });
+        return null;
+      })),
     ]);
     const nameMap = new Map<string, string>(facilities.map((f: any) => [f._id.toString(), f.name]));
     return mergeMultiFacilityData(results.filter(Boolean), facilityScope, nameMap);
@@ -238,7 +302,10 @@ async function queryWithScope(
     return { ...result, facilityName: allFacilities[0].name };
   }
   const allIds = allFacilities.map((f: any) => f._id.toString());
-  const results = await Promise.all(allIds.map((fId: string) => handler(args, fId).catch(() => null)));
+  const results = await Promise.all(allIds.map((fId: string) => handler(args, fId).catch((err: any) => {
+    logger.warn(`[Chatbot] Handler failed for facility ${fId}`, { error: err.message });
+    return null;
+  })));
   const nameMap = new Map(allFacilities.map((f: any) => [f._id.toString(), f.name]));
   return mergeMultiFacilityData(results.filter(Boolean), allIds, nameMap);
 }
@@ -273,18 +340,18 @@ function mergeMultiFacilityData(results: any[], facilityIds: string[], nameMap: 
 // ─── Data Handlers ─────────────────────────────────────────
 
 async function handleRevenueReport(args: any, facilityId?: string) {
-  const timeRange = resolveTimeRange(args.timeRange);
+  const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
   return ReportService.getRevenueReport({ facilityId, startDate: timeRange.startDate, endDate: timeRange.endDate, groupBy: 'day' });
 }
 async function handleTrafficReport(args: any, facilityId?: string) {
-  const timeRange = resolveTimeRange(args.timeRange);
+  const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
   return ReportService.getTrafficReport({ facilityId, startDate: timeRange.startDate, endDate: timeRange.endDate, groupBy: 'day' });
 }
 async function handleOccupancyReport(args: any, facilityId?: string) {
   return ReportService.getOccupancyReport({ facilityId });
 }
 async function handlePeakHours(args: any, facilityId?: string) {
-  const timeRange = resolveTimeRange(args.timeRange);
+  const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
   return ReportService.getPeakHoursReport({ facilityId, startDate: timeRange.startDate, endDate: timeRange.endDate });
 }
 async function handleFacilityInfo(args: any, facilityId?: string) {
@@ -296,7 +363,7 @@ async function handleFacilityInfo(args: any, facilityId?: string) {
   return { facilities, total: facilities.length };
 }
 async function handleExceptionSummary(args: any, facilityId?: string) {
-  const timeRange = resolveTimeRange(args.timeRange);
+  const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
   const matchStage: any = { createdAt: { $gte: new Date(timeRange.startDate), $lte: new Date(timeRange.endDate) } };
   if (facilityId) {
     const sessionIds = await ParkingSession.find({ facilityId }).select('_id').then((sessions) => sessions.map((s) => s._id));
@@ -331,7 +398,7 @@ async function handleActiveSessions(args: any, facilityId?: string) {
   };
 }
 async function handleFeedbackReport(args: any, facilityId?: string) {
-  const timeRange = resolveTimeRange(args.timeRange);
+  const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
   const filter: any = { createdAt: { $gte: new Date(timeRange.startDate), $lte: new Date(timeRange.endDate) } };
   if (facilityId) filter.facilityId = facilityId;
   const feedbacks = await Feedback.find(filter).sort({ createdAt: -1 }).limit(100).lean();
@@ -346,7 +413,8 @@ async function handleFeedbackReport(args: any, facilityId?: string) {
 
 // ─── Gemini Tools (Function Declarations) ─────────────────
 
-const timeRangeDesc = "Khoảng thời gian. Giá trị có thể là: today, yesterday, this_week, last_week, this_month, last_month, last_7_days, last_30_days";
+const timeRangeDesc = "Khoảng thời gian. Giá trị preset: today, yesterday, this_week, last_week, this_month, last_month, this_year, last_year, last_7_days, last_30_days, last_N_days (thay N bằng số ngày, ví dụ: last_2_days, last_3_days, last_14_days), all_time (tất cả). Nếu user yêu cầu khoảng thời gian cụ thể (ví dụ: từ ngày 1/6 đến 15/6) thì KHÔNG dùng timeRange, hãy dùng customStartDate và customEndDate thay thế.";
+const customDateDesc = "Ngày bắt đầu/kết thúc tùy chỉnh theo format YYYY-MM-DD (ví dụ: 2026-06-01). Chỉ dùng khi user yêu cầu khoảng thời gian cụ thể không nằm trong các preset.";
 
 const reportTools: Tool[] = [{
   functionDeclarations: [
@@ -357,6 +425,8 @@ const reportTools: Tool[] = [{
         type: SchemaType.OBJECT,
         properties: {
           timeRange: { type: SchemaType.STRING, description: timeRangeDesc },
+          customStartDate: { type: SchemaType.STRING, description: customDateDesc },
+          customEndDate: { type: SchemaType.STRING, description: customDateDesc },
           facilityName: { type: SchemaType.STRING, description: "Tên tòa nhà/bãi xe (optional)" },
         }
       }
@@ -368,6 +438,8 @@ const reportTools: Tool[] = [{
         type: SchemaType.OBJECT,
         properties: {
           timeRange: { type: SchemaType.STRING, description: timeRangeDesc },
+          customStartDate: { type: SchemaType.STRING, description: customDateDesc },
+          customEndDate: { type: SchemaType.STRING, description: customDateDesc },
           facilityName: { type: SchemaType.STRING },
         }
       }
@@ -389,6 +461,8 @@ const reportTools: Tool[] = [{
         type: SchemaType.OBJECT,
         properties: {
           timeRange: { type: SchemaType.STRING, description: timeRangeDesc },
+          customStartDate: { type: SchemaType.STRING, description: customDateDesc },
+          customEndDate: { type: SchemaType.STRING, description: customDateDesc },
           facilityName: { type: SchemaType.STRING },
         }
       }
@@ -400,6 +474,8 @@ const reportTools: Tool[] = [{
         type: SchemaType.OBJECT,
         properties: {
           timeRange: { type: SchemaType.STRING, description: timeRangeDesc },
+          customStartDate: { type: SchemaType.STRING, description: customDateDesc },
+          customEndDate: { type: SchemaType.STRING, description: customDateDesc },
           facilityName: { type: SchemaType.STRING },
         }
       }
@@ -421,6 +497,8 @@ const reportTools: Tool[] = [{
         type: SchemaType.OBJECT,
         properties: {
           timeRange: { type: SchemaType.STRING, description: timeRangeDesc },
+          customStartDate: { type: SchemaType.STRING, description: customDateDesc },
+          customEndDate: { type: SchemaType.STRING, description: customDateDesc },
           facilityName: { type: SchemaType.STRING },
         }
       }
@@ -489,8 +567,8 @@ async function generateConversationTitle(firstMessage: string): Promise<string> 
  */
 async function withRetry<T>(
   fn: () => Promise<T>,
-  maxRetries: number = 2,
-  baseDelayMs: number = 1000
+  maxRetries: number = 3,
+  baseDelayMs: number = 2000
 ): Promise<T> {
   let lastError: any;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -572,7 +650,7 @@ export class ChatbotService {
             try {
               const facilityId = await resolveFacilityId((call.args as any).facilityName, facilityScope);
               const data = await queryWithScope(handler, call.args, facilityId, facilityScope);
-              accumulatedData[call.name] = data.summary || data;
+              accumulatedData[call.name] = data;
               
               functionResponses.push({
                 functionResponse: {
@@ -661,6 +739,9 @@ export class ChatbotService {
       logger.error('[Chatbot] processQuery error', { error: error.message, stack: error.stack });
       if (error.message?.includes('429') || error.message?.includes('quota')) {
         throw new AppError('AI Chatbot đang quá tải. Vui lòng thử lại sau 30 giây.', 429);
+      }
+      if (error.message?.includes('503') || error.message?.includes('Service Unavailable') || error.message?.includes('high demand')) {
+        throw new AppError('Hệ thống AI (Google Gemini) đang quá tải do lượng truy cập cao. Vui lòng thử lại sau 1-2 phút.', 503);
       }
       if (error.message?.includes('API_KEY')) {
         throw new AppError('Chatbot AI chưa được cấu hình. Vui lòng liên hệ Admin.', 503);

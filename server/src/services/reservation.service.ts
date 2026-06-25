@@ -203,7 +203,7 @@ export class ReservationService {
     const [data, total] = await Promise.all([
       Reservation.find(filter)
         .populate('facilityId', 'name address')
-        .populate('vehicleTypeId', 'name')
+        .populate('vehicleTypeId', 'name code')
         .populate('slotId', 'code floorId')
         .populate('userId', 'fullName email phone')
         .sort({ [sortBy]: sortOrder })

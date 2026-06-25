@@ -10,7 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import {
   Colors, Typography, Spacing, BorderRadius, Shadows,
 } from "../../src/constants/theme";
-import { api } from "../../src/services/api";
+import { api, vehicleApi } from "../../src/services/api";
 import { Facility, PricingPlan, AvailableSlot } from "../../src/types/facility.types";
 
 const getVehicleIcon = (code?: string): keyof typeof Ionicons.glyphMap => {
@@ -45,6 +45,7 @@ export default function FacilityDetailScreen() {
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [defaultVehicleTypeId, setDefaultVehicleTypeId] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -57,6 +58,18 @@ export default function FacilityDetailScreen() {
       ]);
       setPricing(pricingData);
       setSlots(slotsData);
+
+      // Fetch user's default vehicle to sort pricing
+      try {
+        const vRes: any = await vehicleApi.getMyVehicles();
+        if (vRes.success && vRes.data) {
+          const defaultV = vRes.data.find((v: any) => v.isDefault);
+          if (defaultV) {
+            const typeId = defaultV.vehicleTypeId?._id || defaultV.vehicleTypeId;
+            setDefaultVehicleTypeId(typeId);
+          }
+        }
+      } catch {}
     } catch {
       Alert.alert("Lỗi", "Không thể tải thông tin bãi xe.");
     }
@@ -170,7 +183,12 @@ export default function FacilityDetailScreen() {
             </View>
           ) : (
             <View style={styles.slotsGrid}>
-              {slots.map((slot) => {
+              {[...slots].sort((a, b) => {
+                if (!defaultVehicleTypeId) return 0;
+                if (a.vehicleTypeId === defaultVehicleTypeId) return -1;
+                if (b.vehicleTypeId === defaultVehicleTypeId) return 1;
+                return 0;
+              }).map((slot) => {
                 const avail = slot.availableCount;
                 const dotColor = avail > 10 ? Colors.success : avail > 0 ? Colors.warning : Colors.danger;
                 return (
@@ -194,14 +212,32 @@ export default function FacilityDetailScreen() {
               <Text style={styles.emptyText}>Chưa có bảng giá</Text>
             </View>
           ) : (
-            pricing.map((plan) => (
-              <View key={plan._id} style={styles.pricingCard}>
+            [...pricing].sort((a, b) => {
+              if (!defaultVehicleTypeId) return 0;
+              const aId = a.vehicleTypeId?._id || '';
+              const bId = b.vehicleTypeId?._id || '';
+              if (aId === defaultVehicleTypeId) return -1;
+              if (bId === defaultVehicleTypeId) return 1;
+              return 0;
+            }).map((plan) => (
+              <View key={plan._id} style={[
+                styles.pricingCard,
+                plan.vehicleTypeId?._id === defaultVehicleTypeId && styles.pricingCardDefault,
+              ]}>
                 <View style={styles.pricingHeader}>
                   <View style={[styles.slotIconWrap, { backgroundColor: Colors.secondaryLight + "18" }]}>
                     <Ionicons name={getVehicleIcon(plan.vehicleTypeId?.code)} size={18} color={Colors.secondary} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.pricingName}>{plan.name}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={styles.pricingName}>{plan.name}</Text>
+                      {plan.vehicleTypeId?._id === defaultVehicleTypeId && (
+                        <View style={styles.defaultBadge}>
+                          <Ionicons name="star" size={9} color={Colors.warning} />
+                          <Text style={styles.defaultBadgeText}>Xe của bạn</Text>
+                        </View>
+                      )}
+                    </View>
                     {plan.vehicleTypeId?.name && (
                       <Text style={styles.pricingType}>{plan.vehicleTypeId.name}</Text>
                     )}
@@ -304,9 +340,16 @@ const styles = StyleSheet.create({
 
   // Pricing cards
   pricingCard: { backgroundColor: Colors.surface, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: Colors.borderLight, ...Shadows.sm },
+  pricingCardDefault: { borderColor: Colors.primary + '40', backgroundColor: Colors.primaryBg + '30' },
   pricingHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
   pricingName: { fontSize: 14, fontFamily: Typography.fontFamily.semiBold, color: Colors.textPrimary },
   pricingType: { fontSize: 12, color: Colors.textTertiary, fontFamily: Typography.fontFamily.medium, marginTop: 1 },
+  defaultBadge: {
+    flexDirection: "row", alignItems: "center", gap: 3,
+    backgroundColor: Colors.warningLight || "#FFF8E1",
+    borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2,
+  },
+  defaultBadgeText: { fontSize: 10, fontFamily: Typography.fontFamily.semiBold, color: Colors.warning },
   priceRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 3 },
   priceLabel: { fontSize: 13, color: Colors.textSecondary, fontFamily: Typography.fontFamily.regular },
   priceValue: { fontSize: 14, fontFamily: Typography.fontFamily.semiBold, color: Colors.primary },

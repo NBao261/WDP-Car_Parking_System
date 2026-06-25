@@ -56,13 +56,16 @@ export const floorService = {
     return apiClient.post('/floors', payload);
   },
 
-  update: async (id: string, payload: UpdateFloorPayload): Promise<{ success: boolean; data: Floor }> => {
+  update: async (
+    id: string,
+    payload: UpdateFloorPayload
+  ): Promise<{ success: boolean; data: Floor }> => {
     return apiClient.patch(`/floors/${id}`, payload);
   },
 
   assignVehicleTypes: async (
     id: string,
-    allowedVehicleTypes: string[],
+    allowedVehicleTypes: string[]
   ): Promise<{ success: boolean; data: Floor }> => {
     return apiClient.patch(`/floors/${id}/assign-vehicles`, { allowedVehicleTypes });
   },

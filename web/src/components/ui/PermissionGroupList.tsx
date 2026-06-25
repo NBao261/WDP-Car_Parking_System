@@ -49,7 +49,9 @@ export function PermissionGroupList({
     <div className="space-y-3">
       {PERMISSION_GROUPS.map((group) => {
         const groupIds = group.permissions.map((p) => p.id);
-        const checkedCount = groupIds.filter((id) => selectedPerms.has(id) || basePerms.has(id)).length;
+        const checkedCount = groupIds.filter(
+          (id) => selectedPerms.has(id) || basePerms.has(id)
+        ).length;
         const allChecked = checkedCount === groupIds.length;
         const someChecked = checkedCount > 0 && !allChecked;
 
@@ -77,8 +79,8 @@ export function PermissionGroupList({
                         allChecked
                           ? 'bg-[#d7ee46] border-[#c4dc32]'
                           : someChecked
-                          ? 'bg-[#d7ee46]/40 border-[#c4dc32]/60'
-                          : 'bg-white border-gray-300'
+                            ? 'bg-[#d7ee46]/40 border-[#c4dc32]/60'
+                            : 'bg-white border-gray-300'
                       }
                     `}
                   >
@@ -108,7 +110,7 @@ export function PermissionGroupList({
                 const isBase = basePerms.has(perm.id);
                 const isCustom = selectedPerms.has(perm.id);
                 const isChecked = isBase || isCustom;
-                
+
                 return (
                   <div
                     key={perm.id}
@@ -126,7 +128,9 @@ export function PermissionGroupList({
                       }
                     }}
                     className={`flex items-center justify-between px-4 py-3 transition-colors select-none ${
-                      isBase ? 'bg-gray-50/50 opacity-80 cursor-not-allowed' : 'hover:bg-gray-50/80 cursor-pointer group'
+                      isBase
+                        ? 'bg-gray-50/50 opacity-80 cursor-not-allowed'
+                        : 'hover:bg-gray-50/80 cursor-pointer group'
                     }`}
                   >
                     <div className="flex flex-col flex-1 min-w-0 pr-4">
@@ -144,14 +148,12 @@ export function PermissionGroupList({
                           isBase
                             ? 'bg-gray-200 border-gray-300 text-gray-500'
                             : isCustom
-                            ? 'bg-[#d7ee46] border-[#c4dc32] text-[#060606]'
-                            : 'bg-white border-gray-300 group-hover:border-gray-400 text-transparent'
+                              ? 'bg-[#d7ee46] border-[#c4dc32] text-[#060606]'
+                              : 'bg-white border-gray-300 group-hover:border-gray-400 text-transparent'
                         }
                       `}
                     >
-                      {isChecked && (
-                        <Check size={12} className="currentColor" strokeWidth={3} />
-                      )}
+                      {isChecked && <Check size={12} className="currentColor" strokeWidth={3} />}
                     </div>
                   </div>
                 );

@@ -1,4 +1,4 @@
-import { Car } from "lucide-react";
+import { Car } from 'lucide-react';
 
 export default function CurrentOccupancy({ count = 0 }: { count?: number }) {
   return (
@@ -9,9 +9,7 @@ export default function CurrentOccupancy({ count = 0 }: { count?: number }) {
         </div>
         <span className="text-[13px] text-[#060606]/60 font-semibold">Trong hầm hiện tại</span>
       </div>
-      <div className="text-[28px] font-bold text-[#060606] leading-none">
-        {count}
-      </div>
+      <div className="text-[28px] font-bold text-[#060606] leading-none">{count}</div>
     </div>
   );
 }

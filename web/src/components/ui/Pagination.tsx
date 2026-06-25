@@ -37,9 +37,7 @@ export function Pagination({
         <span className="font-semibold text-[#060606]">
           {from}–{to}
         </span>{' '}
-        /{' '}
-        <span className="font-semibold text-[#060606]">{totalItems}</span>{' '}
-        {itemLabel}
+        / <span className="font-semibold text-[#060606]">{totalItems}</span> {itemLabel}
       </p>
 
       <div className="flex items-center gap-2">

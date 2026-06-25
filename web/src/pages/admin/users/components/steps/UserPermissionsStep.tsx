@@ -13,7 +13,12 @@ interface UserPermissionsStepProps {
  * Animation is handled by the parent UserFormModal — no motion.div here
  * to avoid double-animation and layout conflicts.
  */
-export function UserPermissionsStep({ customPerms, basePerms, onToggle, isLoading }: UserPermissionsStepProps) {
+export function UserPermissionsStep({
+  customPerms,
+  basePerms,
+  onToggle,
+  isLoading,
+}: UserPermissionsStepProps) {
   return (
     <div>
       <div className="mb-4">

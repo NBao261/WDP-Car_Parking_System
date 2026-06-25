@@ -30,6 +30,7 @@ import roleRoutes from './routes/role.routes';
 import alprRoutes from './routes/alpr.routes';
 import aiRoutes from './routes/ai.routes';
 import uploadRoutes from './routes/upload.routes';
+import vehicleRoutes from './routes/vehicle.routes';
 
 
 const app = express();
@@ -89,6 +90,7 @@ app.use(`${API_PREFIX}/roles`, roleRoutes);
 app.use(`${API_PREFIX}/alpr`, alprRoutes);
 app.use(`${API_PREFIX}/ai`, aiRoutes);
 app.use(`${API_PREFIX}/upload`, uploadRoutes);
+app.use(`${API_PREFIX}/vehicles`, vehicleRoutes);
 
 
 // ─── Error Handling ───────────────────────────────────

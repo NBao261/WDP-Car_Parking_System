@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { PaymentService } from '../services/payment.service';
+import { SessionService } from '../services/session.service';
 import { PaymentMethod } from '../models/payment.model';
 import { AppError } from '../middlewares/error.middleware';
 
@@ -52,7 +53,7 @@ export class PaymentController {
   static async checkStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const { transactionCode } = req.params;
-      const isPaid = await PaymentService.checkMomoOrderStatus(transactionCode);
+      const isPaid = await PaymentService.checkMomoOrderStatus(transactionCode as string);
       res.status(200).json({ success: true, data: { isPaid } });
     } catch (error) {
       next(error);
@@ -62,6 +63,7 @@ export class PaymentController {
   /**
    * POST /api/v1/payments/cash-checkout
    * Checkout bằng tiền mặt tại cổng
+   * → Gọi chung SessionService.checkOut() để đảm bảo kiểm tra phân quyền staff
    */
   static async cashCheckout(req: Request, res: Response, next: NextFunction) {
     try {
@@ -72,7 +74,7 @@ export class PaymentController {
          return next(new AppError('Chưa xác thực nhân viên', 401));
       }
 
-      const result = await PaymentService.processCashCheckout({
+      const result = await SessionService.checkOut({
         sessionId,
         staffOutId,
         gateOut,

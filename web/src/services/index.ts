@@ -5,3 +5,5 @@ export * from './session.service';
 export * from './floor.service';
 export * from './vehicleType.service';
 export * from './exception.service';
+export * from './report.service';
+export * from './ai.service';

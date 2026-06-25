@@ -22,7 +22,6 @@ const itemVariants = {
   },
 };
 
-
 export function RoleCard({ role, onConfigPerms, onDeleted }: RoleCardProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

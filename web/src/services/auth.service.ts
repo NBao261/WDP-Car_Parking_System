@@ -2,8 +2,15 @@ import { apiClient } from './api';
 import { AuthResponse } from '../../../shared/types';
 
 export const authService = {
-  login: async (email: string, password: string): Promise<{ success: boolean; data: AuthResponse }> => {
+  login: async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; data: AuthResponse }> => {
     return apiClient.post('/auth/login', { email, password });
+  },
+
+  register: async (data: any): Promise<{ success: boolean }> => {
+    return apiClient.post('/auth/register', data);
   },
 
   // TODO: Verify with backend team if these endpoints exist

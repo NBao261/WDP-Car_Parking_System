@@ -37,19 +37,23 @@ export const EXCEPTION_STATUS_LABELS: Record<ExceptionStatus, string> = {
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface IException {
   _id: string;
-  sessionId: {
-    _id: string;
-    code: string;
-    licensePlate: string;
-    checkInTime: string;
-    gateIn: string;
-    vehicleTypeId?: { name: string; code: string };
-    slotId?: { code: string };
-    floorId?: { name: string };
-  } | string;
+  sessionId:
+    | {
+        _id: string;
+        code: string;
+        licensePlate: string;
+        checkInTime: string;
+        gateIn: string;
+        vehicleTypeId?: { name: string; code: string };
+        slotId?: { code: string };
+        floorId?: { name: string };
+      }
+    | string;
   type: ExceptionType;
   description: string;
   staffId: { _id: string; name: string; email: string } | string;
+  resolvedByStaffId?: { _id: string; name: string; email: string } | string;
+  staffNote?: string;
   managerId: { _id: string; name: string; email: string } | null | string;
   managerNote: string;
   surcharge: number;
@@ -59,7 +63,7 @@ export interface IException {
 }
 
 export interface CreateExceptionPayload {
-  sessionId: string;   // MongoDB ObjectId
+  sessionId: string; // MongoDB ObjectId
   type: ExceptionType;
   description: string;
   surcharge?: number;
@@ -123,5 +127,16 @@ export const exceptionService = {
     payload: { staffNote: string; newLicensePlate?: string; newSlotId?: string }
   ): Promise<{ success: boolean; data: IException; message?: string }> => {
     return apiClient.patch(`/exceptions/${exceptionId}/resolve`, payload);
+  },
+
+  /**
+   * Manager: Thêm ghi chú review ngoại lệ
+   * PATCH /api/v1/exceptions/:id/review
+   */
+  addManagerReview: async (
+    exceptionId: string,
+    payload: { managerNote: string }
+  ): Promise<{ success: boolean; data: IException; message?: string }> => {
+    return apiClient.patch(`/exceptions/${exceptionId}/review`, payload);
   },
 };

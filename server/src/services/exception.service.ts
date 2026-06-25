@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { Exception, ExceptionStatus, ExceptionType, IException } from '../models/exception.model';
 import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
 import { ParkingSlot, SlotStatus } from '../models/parkingSlot.model';
+import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 
 interface CreateExceptionDto {
@@ -10,6 +11,11 @@ interface CreateExceptionDto {
   description: string;
   staffId: string;
   surcharge?: number;
+  actualPlate?: string;
+  expectedPlate?: string;
+  checkInImage?: string;
+  checkOutImage?: string;
+  cardCode?: string;
 }
 
 interface ResolveExceptionDto {
@@ -38,12 +44,27 @@ export class ExceptionService {
       throw new AppError('Không thể tạo ngoại lệ cho lượt gửi đã kết thúc', 400);
     }
 
+    // Kiểm tra staff có được phân công tại bãi xe này không (chống IDOR)
+    const staffUser = await User.findById(data.staffId).select('assignedFacilities');
+    if (!staffUser) throw new AppError('Staff không tồn tại', 404);
+    const isAssigned = staffUser.assignedFacilities.some(
+      (fId) => fId.toString() === session.facilityId.toString()
+    );
+    if (!isAssigned) {
+      throw new AppError('Bạn không được phân công tại bãi xe này', 403);
+    }
+
     const exception = new Exception({
       sessionId: new mongoose.Types.ObjectId(data.sessionId),
       type: data.type,
       description: data.description,
       staffId: new mongoose.Types.ObjectId(data.staffId),
       surcharge: data.surcharge || 0,
+      actualPlate: data.actualPlate,
+      expectedPlate: data.expectedPlate,
+      checkInImage: data.checkInImage,
+      checkOutImage: data.checkOutImage,
+      cardCode: data.cardCode,
       status: ExceptionStatus.NEW,
     });
 
@@ -65,13 +86,39 @@ export class ExceptionService {
   /**
    * Lấy danh sách ngoại lệ
    */
-  static async getExceptions(query: any): Promise<{ data: IException[], total: number, page: number, totalPages: number }> {
+  static async getExceptions(query: any, user: any): Promise<{ data: IException[], total: number, page: number, totalPages: number }> {
     const { page = 1, limit = 10, status, type, sessionId, sortBy = 'createdAt', sortOrder = 'desc' } = query;
     const filter: any = {};
 
     if (status) filter.status = status;
     if (type) filter.type = type;
-    if (sessionId) filter.sessionId = sessionId;
+
+    // Filter by assigned facilities
+    if (user.role !== 'admin') {
+      const { User } = await import('../models/user.model');
+      const dbUser = await User.findById(user.userId).select('assignedFacilities');
+      if (dbUser && dbUser.assignedFacilities && dbUser.assignedFacilities.length > 0) {
+        if (sessionId) {
+          const session = await ParkingSession.findOne({
+            _id: sessionId,
+            facilityId: { $in: dbUser.assignedFacilities }
+          });
+          if (!session) {
+            return { data: [], total: 0, page: Number(page), totalPages: 0 };
+          }
+          filter.sessionId = sessionId;
+        } else {
+          const sessions = await ParkingSession.find({ facilityId: { $in: dbUser.assignedFacilities } }).select('_id').lean();
+          const sessionIds = sessions.map(s => s._id);
+          filter.sessionId = { $in: sessionIds };
+        }
+      } else {
+        // No facilities assigned => no data
+        return { data: [], total: 0, page: Number(page), totalPages: 0 };
+      }
+    } else {
+      if (sessionId) filter.sessionId = sessionId;
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
     const sort: any = { [sortBy as string]: sortOrder === 'asc' ? 1 : -1 };
@@ -124,6 +171,16 @@ export class ExceptionService {
     // Thực hiện các hành động tương ứng với loại ngoại lệ
     const session = await ParkingSession.findById(exception.sessionId);
     if (!session) throw new AppError('Lượt gửi xe liên quan không tồn tại', 404);
+
+    // Kiểm tra staff có được phân công tại bãi xe này không (chống IDOR)
+    const staffUser = await User.findById(data.staffId).select('assignedFacilities');
+    if (!staffUser) throw new AppError('Staff không tồn tại', 404);
+    const isAssigned = staffUser.assignedFacilities.some(
+      (fId) => fId.toString() === session.facilityId.toString()
+    );
+    if (!isAssigned) {
+      throw new AppError('Bạn không được phân công tại bãi xe này', 403);
+    }
 
     if (exception.type === ExceptionType.WRONG_PLATE) {
       if (!data.newLicensePlate) {

@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react';
-import { X, MapPin, Square, CheckSquare, AlertCircle, RefreshCw, CheckCircle, Building2 } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import {
+  X,
+  MapPin,
+  Square,
+  CheckSquare,
+  AlertCircle,
+  RefreshCw,
+  CheckCircle,
+  Building2,
+} from 'lucide-react';
 import { User, AssignedFacility } from '../../../../types/user.types';
 import { userService } from '../../../../services/user.service';
 import { facilityService, Facility } from '../../../../services/facility.service';
@@ -16,7 +26,11 @@ interface AdminAssignFacilityModalProps {
  * trực tiếp từ bảng danh sách User — không cần vào Edit wizard.
  * Hiển thị TẤT CẢ facilities đang active trong hệ thống.
  */
-export function AdminAssignFacilityModal({ user, onClose, onSuccess }: AdminAssignFacilityModalProps) {
+export function AdminAssignFacilityModal({
+  user,
+  onClose,
+  onSuccess,
+}: AdminAssignFacilityModalProps) {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loadingFacilities, setLoadingFacilities] = useState(true);
   const [fetchError, setFetchError] = useState('');
@@ -45,9 +59,7 @@ export function AdminAssignFacilityModal({ user, onClose, onSuccess }: AdminAssi
   }, []);
 
   const toggle = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
   const handleSave = async () => {
@@ -67,9 +79,12 @@ export function AdminAssignFacilityModal({ user, onClose, onSuccess }: AdminAssi
 
   const roleLabel = user.role === 'manager' ? 'Manager' : 'Staff';
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col" style={{ maxHeight: '82vh' }}>
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col"
+        style={{ maxHeight: '82vh' }}
+      >
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -177,13 +192,18 @@ export function AdminAssignFacilityModal({ user, onClose, onSuccess }: AdminAssi
             className="flex-1 py-2.5 text-sm font-bold bg-[#d7ee46] text-[#060606] rounded-xl hover:bg-[#c4dc32] transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
           >
             {saving ? (
-              <><RefreshCw size={14} className="animate-spin" /> Đang lưu...</>
+              <>
+                <RefreshCw size={14} className="animate-spin" /> Đang lưu...
+              </>
             ) : (
-              <><CheckCircle size={14} /> Lưu phân công</>
+              <>
+                <CheckCircle size={14} /> Lưu phân công
+              </>
             )}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

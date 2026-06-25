@@ -28,7 +28,10 @@ export const userService = {
     return apiClient.post('/users', payload);
   },
 
-  updateUser: async (id: string, payload: UpdateUserPayload): Promise<{ success: boolean; data: User }> => {
+  updateUser: async (
+    id: string,
+    payload: UpdateUserPayload
+  ): Promise<{ success: boolean; data: User }> => {
     return apiClient.patch(`/users/${id}`, payload);
   },
 
@@ -44,7 +47,10 @@ export const userService = {
     return apiClient.post(`/users/${id}/unlock`);
   },
 
-  resetPassword: async (id: string, newPassword: string): Promise<{ success: boolean; data: User }> => {
+  resetPassword: async (
+    id: string,
+    newPassword: string
+  ): Promise<{ success: boolean; data: User }> => {
     return apiClient.post(`/users/${id}/reset-password`, { newPassword });
   },
 
@@ -53,8 +59,10 @@ export const userService = {
    * Admin: assign facilities to Manager or Staff
    * Manager: assign facilities to Staff (limited to own facilities)
    */
-  assignFacilities: async (userId: string, facilityIds: string[]): Promise<{ success: boolean; data: User }> => {
+  assignFacilities: async (
+    userId: string,
+    facilityIds: string[]
+  ): Promise<{ success: boolean; data: User }> => {
     return apiClient.patch(`/users/${userId}/assign-facilities`, { facilityIds });
   },
 };
-

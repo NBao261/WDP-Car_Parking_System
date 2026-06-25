@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,9 +7,8 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
-  Image,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,6 +20,7 @@ import {
   Shadows,
 } from "../../src/constants/theme";
 import { useAuthStore } from "../../src/store/useAuthStore";
+import { vehicleApi } from "../../src/services/api";
 
 function getInitials(name?: string) {
   if (!name) return "U";
@@ -91,6 +91,19 @@ function MenuSection({
 export default function AccountScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const [vehicleCount, setVehicleCount] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadCount = async () => {
+        try {
+          const res: any = await vehicleApi.getMyVehicles();
+          if (res.success) setVehicleCount(res.data?.length || 0);
+        } catch {}
+      };
+      loadCount();
+    }, [])
+  );
 
   const handleLogout = () => {
     Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
@@ -122,19 +135,29 @@ export default function AccountScreen() {
           >
             <SafeAreaView edges={["top"]}>
               <View style={styles.heroContent}>
-                <Image source={require('../../assets/images/logo.png')} style={{ width: 120, height: 36, resizeMode: 'contain', marginBottom: 16 }} />
                 <View style={styles.avatarLarge}>
                   <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
                 </View>
                 <Text style={styles.heroName}>{user?.name || "Driver"}</Text>
                 <Text style={styles.heroEmail}>{user?.email}</Text>
-                <View style={styles.roleBadge}>
-                  <Ionicons
-                    name="car-sport"
-                    size={12}
-                    color={Colors.gradientAccent}
-                  />
-                  <Text style={styles.roleText}>Tài xế</Text>
+                <View style={styles.heroStatsRow}>
+                  <View style={styles.roleBadge}>
+                    <Ionicons
+                      name="car-sport"
+                      size={15}
+                      color={Colors.gradientAccent}
+                    />
+                    <Text style={styles.roleText}>Tài xế</Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <TouchableOpacity
+                    style={styles.statBadge}
+                    onPress={() => router.push("/profile/my-vehicles" as any)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="car-outline" size={15} color={Colors.gradientAccent} />
+                    <Text style={styles.statText}>{vehicleCount} xe đã đăng ký</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </SafeAreaView>
@@ -170,6 +193,14 @@ export default function AccountScreen() {
 
         {/* ── Hoạt động ── */}
         <MenuSection title="Hoạt động">
+          <MenuItem
+            icon="car-sport-outline"
+            label="Xe của tôi"
+            subtitle="Quản lý xe đã đăng ký"
+            onPress={() => router.push("/profile/my-vehicles" as any)}
+            color={Colors.primary}
+          />
+          <View style={styles.divider} />
           <MenuItem
             icon="receipt-outline"
             label="Lịch sử gửi xe"
@@ -265,16 +296,42 @@ const styles = StyleSheet.create({
   roleBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 6,
     backgroundColor: "rgba(255,255,255,0.12)",
     borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.2)",
   },
   roleText: {
-    fontSize: 12,
+    fontSize: 14,
+    color: Colors.gradientAccent,
+    fontFamily: Typography.fontFamily.semiBold,
+  },
+  heroStatsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  statDivider: {
+    width: 1,
+    height: 18,
+    backgroundColor: "rgba(255,255,255,0.25)",
+  },
+  statBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  statText: {
+    fontSize: 14,
     color: Colors.gradientAccent,
     fontFamily: Typography.fontFamily.semiBold,
   },
