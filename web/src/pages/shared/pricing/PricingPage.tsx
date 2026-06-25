@@ -1,20 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
-import {
-  Plus,
-  DollarSign,
-  Building2,
-  MapPin,
-  ArrowLeft,
-  FileText,
-  Clock,
-} from 'lucide-react';
+import { Plus, DollarSign, Building2, MapPin, ArrowLeft, FileText, Clock } from 'lucide-react';
 
 import { facilityService, type Facility } from '../../../services/facility.service';
 import { floorService, type Floor } from '../../../services/floor.service';
 import { vehicleTypeService, type VehicleType } from '../../../services/vehicleType.service';
 import { pricingService, type PricingPlan } from '../../../services/pricing.service';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { AssignedFacility } from '../../../types/user.types';
 
 import { PlanTableView } from './components/PlanTableView';
 import { PricingFormModal } from './components/PricingFormModal';
@@ -25,6 +19,15 @@ import { PricingFacilityFilterBar } from './components/PricingFacilityFilterBar'
 import { mapToUiType } from './components/constants';
 
 export default function PricingPage() {
+  const { user } = useAuthStore();
+  const isManager = user?.role === 'manager';
+  const assignedFacilityIds = useMemo(() => {
+    if (!isManager || !user?.assignedFacilities) return null;
+    return new Set(
+      (user.assignedFacilities as AssignedFacility[]).map((f) => f._id)
+    );
+  }, [isManager, user?.assignedFacilities]);
+
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
@@ -79,16 +82,32 @@ export default function PricingPage() {
         vehicleTypeService.getAll({ limit: 100 }),
         floorService.getAll({ limit: 100 }),
       ]);
-      setPlans(pRes.data);
-      setFacilities(fRes.data);
+
+      // Manager: chỉ hiển thị dữ liệu thuộc tòa nhà được phân công
+      const scopedFacilities = assignedFacilityIds
+        ? fRes.data.filter((f: Facility) => assignedFacilityIds.has(f._id))
+        : fRes.data;
+      const scopedFacilityIds = new Set(scopedFacilities.map((f: Facility) => f._id));
+      const scopedPlans = assignedFacilityIds
+        ? pRes.data.filter((p: PricingPlan) => {
+            const facId = typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
+            return scopedFacilityIds.has(facId);
+          })
+        : pRes.data;
+      const scopedFloors = assignedFacilityIds
+        ? flRes.data.filter((fl: Floor) => scopedFacilityIds.has(fl.facilityId))
+        : flRes.data;
+
+      setPlans(scopedPlans);
+      setFacilities(scopedFacilities);
       setVehicleTypes(vtRes.data);
-      setFloors(flRes.data);
+      setFloors(scopedFloors);
     } catch (e: any) {
       toast.error(e.message || 'Lỗi tải dữ liệu');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [assignedFacilityIds]);
 
   useEffect(() => {
     fetchAll();
