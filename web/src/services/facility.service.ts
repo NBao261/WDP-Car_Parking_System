@@ -70,7 +70,7 @@ export const facilityService = {
 
   update: async (
     id: string,
-    payload: UpdateFacilityPayload,
+    payload: UpdateFacilityPayload
   ): Promise<{ success: boolean; data: Facility }> => {
     return apiClient.patch(`/facilities/${id}`, payload);
   },
@@ -87,7 +87,9 @@ export const facilityService = {
    * BFF endpoint: Lấy cấu hình vận hành của Toà nhà dành cho Staff
    * Trả về danh sách loại xe được phép, đã được Backend tổng hợp từ cấu hình các Tầng.
    */
-  getOperationsConfig: async (id: string): Promise<{ success: boolean; data: OperationsConfig }> => {
+  getOperationsConfig: async (
+    id: string
+  ): Promise<{ success: boolean; data: OperationsConfig }> => {
     return apiClient.get(`/facilities/${id}/operations-config`);
   },
 };

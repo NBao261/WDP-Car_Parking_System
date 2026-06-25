@@ -18,7 +18,10 @@ export const roleService = {
     return apiClient.delete(`/roles/${id}`);
   },
 
-  updatePermissions: async (id: string, permissions: string[]): Promise<{ success: boolean; data: Role }> => {
+  updatePermissions: async (
+    id: string,
+    permissions: string[]
+  ): Promise<{ success: boolean; data: Role }> => {
     return apiClient.put(`/roles/${id}/permissions`, { permissions });
   },
 
@@ -30,7 +33,9 @@ export const roleService = {
     return apiClient.post('/roles/assign', payload);
   },
 
-  getUserPermissions: async (userId: string): Promise<{ success: boolean; data: UserPermissions }> => {
+  getUserPermissions: async (
+    userId: string
+  ): Promise<{ success: boolean; data: UserPermissions }> => {
     return apiClient.get(`/roles/user/${userId}/permissions`);
   },
 };

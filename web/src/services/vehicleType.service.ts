@@ -59,13 +59,15 @@ export const vehicleTypeService = {
     return apiClient.get(`/vehicle-types/${id}`);
   },
 
-  create: async (payload: CreateVehicleTypePayload): Promise<{ success: boolean; data: VehicleType }> => {
+  create: async (
+    payload: CreateVehicleTypePayload
+  ): Promise<{ success: boolean; data: VehicleType }> => {
     return apiClient.post('/vehicle-types', payload);
   },
 
   update: async (
     id: string,
-    payload: UpdateVehicleTypePayload,
+    payload: UpdateVehicleTypePayload
   ): Promise<{ success: boolean; data: VehicleType }> => {
     return apiClient.patch(`/vehicle-types/${id}`, payload);
   },

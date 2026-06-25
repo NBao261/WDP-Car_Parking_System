@@ -37,16 +37,18 @@ export const EXCEPTION_STATUS_LABELS: Record<ExceptionStatus, string> = {
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface IException {
   _id: string;
-  sessionId: {
-    _id: string;
-    code: string;
-    licensePlate: string;
-    checkInTime: string;
-    gateIn: string;
-    vehicleTypeId?: { name: string; code: string };
-    slotId?: { code: string };
-    floorId?: { name: string };
-  } | string;
+  sessionId:
+    | {
+        _id: string;
+        code: string;
+        licensePlate: string;
+        checkInTime: string;
+        gateIn: string;
+        vehicleTypeId?: { name: string; code: string };
+        slotId?: { code: string };
+        floorId?: { name: string };
+      }
+    | string;
   type: ExceptionType;
   description: string;
   staffId: { _id: string; name: string; email: string } | string;
@@ -61,7 +63,7 @@ export interface IException {
 }
 
 export interface CreateExceptionPayload {
-  sessionId: string;   // MongoDB ObjectId
+  sessionId: string; // MongoDB ObjectId
   type: ExceptionType;
   description: string;
   surcharge?: number;
