@@ -66,18 +66,28 @@ export function DashboardCharts({
   const [activeChart, setActiveChart] = useState<TabKey>('traffic');
   const currentTab = TABS.find((t) => t.key === activeChart)!;
 
-  let chartTraffic =
-    trafficData?.data.map((item) => ({
-      name: item.label,
+  let chartTraffic = [];
+  // Nếu dữ liệu traffic chỉ có 1 ngày (vd: Hôm nay), dùng dữ liệu phân bổ theo giờ từ peakHoursData để biểu đồ trực quan hơn
+  if (trafficData?.data.length === 1 && peakHoursData?.hourlyDistribution) {
+    chartTraffic = peakHoursData.hourlyDistribution.map((item) => ({
+      name: `${String(item.hour).padStart(2, '0')}:00`,
       'Xe vào': item.checkIn,
       'Xe ra': item.checkOut,
-    })) || [];
-  if (chartTraffic.length === 1) {
-    chartTraffic = [
-      { name: '', 'Xe vào': undefined, 'Xe ra': undefined },
-      chartTraffic[0],
-      { name: ' ', 'Xe vào': undefined, 'Xe ra': undefined },
-    ] as any[];
+    }));
+  } else {
+    chartTraffic =
+      trafficData?.data.map((item) => ({
+        name: item.label,
+        'Xe vào': item.checkIn,
+        'Xe ra': item.checkOut,
+      })) || [];
+    if (chartTraffic.length === 1) {
+      chartTraffic = [
+        { name: '', 'Xe vào': undefined, 'Xe ra': undefined },
+        chartTraffic[0],
+        { name: ' ', 'Xe vào': undefined, 'Xe ra': undefined },
+      ] as any[];
+    }
   }
 
   let chartRevenue =
