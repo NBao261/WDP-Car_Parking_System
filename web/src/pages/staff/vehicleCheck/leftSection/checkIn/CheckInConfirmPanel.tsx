@@ -1,4 +1,4 @@
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from "lucide-react";
 
 interface CheckInConfirmPanelProps {
   data?: {
@@ -12,7 +12,7 @@ interface CheckInConfirmPanelProps {
   };
 }
 
-export default function CheckInConfirmPanel({ data }: CheckInConfirmPanelProps) {
+export function CheckInConfirmPanel({ data }: CheckInConfirmPanelProps) {
   if (!data) {
     return (
       <div className="w-full h-[170px] border-2 border-[#A3E635] rounded-[8px] flex items-center justify-center bg-white mt-2 shrink-0">

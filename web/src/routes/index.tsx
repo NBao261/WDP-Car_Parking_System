@@ -36,12 +36,12 @@ const ExceptionsStaffPage = lazy(
   () => import('../pages/staff/exceptionsStaff/ExceptionsStaffPage')
 );
 const ShiftSelectionPage = lazy(() => import('../pages/staff/shiftSelection/ShiftSelectionPage'));
-// Driver Pages ──
+
+// ── Driver Pages ──
 const DriverDashboard = lazy(() => import('../pages/driver/dashboard/DriverDashboard'));
 const DriverFacilitiesPage = lazy(() => import('../pages/driver/facilities/FacilitiesPage'));
 const ReservationPage = lazy(() => import('../pages/driver/book/ReservationPage'));
 const HistoryPage = lazy(() => import('../pages/driver/history/HistoryPage'));
-
 const Loading = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
     <div className="w-8 h-8 border-2 border-[#d7ee46] border-t-transparent rounded-full animate-spin" />

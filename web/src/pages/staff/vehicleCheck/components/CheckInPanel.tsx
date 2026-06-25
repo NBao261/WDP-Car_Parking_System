@@ -1,19 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
-import { toast } from 'sonner';
-import {
-  ImagePlus,
-  RefreshCw,
-  X,
-  QrCode,
-  ScanLine,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-} from 'lucide-react';
-import { apiClient } from '../../../../services/api';
-import { VehicleType } from '../../../../services/vehicleType.service';
-import { facilityService } from '../../../../services/facility.service';
-import { sessionService } from '../../../../services/session.service';
+import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
+import { ImagePlus, RefreshCw, X, QrCode, ScanLine, CheckCircle2, XCircle, AlertTriangle, Building2, DoorOpen } from "lucide-react";
+import { apiClient } from "../../../../services/api";
+import { VehicleType } from "../../../../services/vehicleType.service";
+import { facilityService } from "../../../../services/facility.service";
+import { sessionService } from "../../../../services/session.service";
+
+interface SlotAvailability {
+  vehicleTypeId: string;
+  vehicleTypeName: string;
+  availableCount: number;
+}
 
 interface CheckInPanelProps {
   onCheckIn: (data: any) => void;
@@ -37,7 +34,14 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [ocrSuccess, setOcrSuccess] = useState(false);
+  const [pendingClear, setPendingClear] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [checkInError, setCheckInError] = useState<string | null>(null);
+
+  // Terminal / facility
+  const facilityId = sessionStorage.getItem("staff_facility_id") || "";
+  const facilityName = sessionStorage.getItem("staff_facility_name") || "Chưa chọn Toà nhà";
+  const gateIn = sessionStorage.getItem("staff_gate_name") || `Cổng - ${facilityName}`;
 
   // ── Reservation (thêm vào khung bên phải) ────────────────────────────────
   const [reservationCode, setReservationCode] = useState('');
@@ -46,7 +50,13 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   const [plateMatchStatus, setPlateMatchStatus] = useState<'idle' | 'match' | 'mismatch'>('idle');
   const [manualPlateConfirmed, setManualPlateConfirmed] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
+  const [inputReservationMode, setInputReservationMode] = useState<'qr' | 'code'>('qr');
+  const [manualReservationCode, setManualReservationCode] = useState("");
   const qrScannerRef = useRef<any>(null);
+
+  // ── Capacity status ────────────────────────────────────────────────────────
+  const [slotAvailability, setSlotAvailability] = useState<SlotAvailability[]>([]);
+  const [capacityLoaded, setCapacityLoaded] = useState(false);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -54,7 +64,8 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     const localUrl = URL.createObjectURL(file);
     setPreviewUrl(localUrl);
     setOcrSuccess(false);
-    setPlate(''); // CLEAR old plate when uploading a new image
+    setPlate(""); // CLEAR old plate when uploading a new image
+    setCheckInError(null);
     setIsUploading(true);
     const formData = new FormData();
     formData.append('image', file);
@@ -109,12 +120,14 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     }
   };
 
-  const clearPreview = () => {
-    setPreviewUrl(null);
-    setOcrSuccess(false);
-    setCheckInImage(null);
-    setPlateMatchStatus('idle');
-  };
+  const clearPreview = () => { setPreviewUrl(null); setOcrSuccess(false); setCheckInImage(null); setPlateMatchStatus('idle'); setCheckInError(null); };
+
+  // Auto trigger check-in after successful OCR - DISABLED PER USER REQUEST
+  // useEffect(() => {
+  //   if (ocrSuccess && plate && !isSubmitting && !pendingClear && facilityId && selectedVehicleTypeId) {
+  //     handleCheckIn();
+  //   }
+  // }, [ocrSuccess, plate, facilityId, selectedVehicleTypeId]);
 
   // Lắng nghe Hotkeys
   useEffect(() => {
@@ -130,14 +143,27 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
     };
 
     const onSpace = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
+      if (e.code === "Space" || e.code === "Enter") {
         const target = e.target as HTMLElement;
-        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+          if (e.code === "Space") return;
+        }
         e.preventDefault();
-        const selectedType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
-        const isNoPlate = selectedType?.requiresPlate === false;
-        if ((isNoPlate || plate.trim().length > 0) && !isSubmitting) {
-          handleCheckIn();
+
+        if (pendingClear) {
+          toast.success("Mở chắn thành công!");
+          setTimeout(() => {
+            setPlate(""); setCheckInImage(null); setPreviewUrl(null); setOcrSuccess(false);
+            setReservationCode(""); setReservationInfo(null); setPlateMatchStatus('idle'); setManualPlateConfirmed(false);
+            setPendingClear(false);
+            onCheckIn(null); // Clear the confirm panel
+          }, 2000);
+        } else {
+          const selectedType = vehicleTypes.find((v) => v._id === selectedVehicleTypeId);
+          const isNoPlate = selectedType?.requiresPlate === false;
+          if ((isNoPlate || plate.trim().length > 0) && !isSubmitting) {
+            handleCheckIn();
+          }
         }
       }
     };
@@ -148,22 +174,9 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
       window.removeEventListener('keydown', onSpace);
       window.removeEventListener('HOTKEY_F1', onF1);
     };
-  }, [
-    plate,
-    isSubmitting,
-    vehicleTypes,
-    selectedVehicleTypeId,
-    checkInImage,
-    reservationCode,
-    reservationInfo,
-    plateMatchStatus,
-    manualPlateConfirmed,
-  ]);
+  }, [plate, isSubmitting, vehicleTypes, selectedVehicleTypeId, checkInImage, reservationCode, reservationInfo, plateMatchStatus, manualPlateConfirmed, pendingClear]);
 
-  // Terminal / facility
-  const facilityId = sessionStorage.getItem('staff_facility_id') || '';
-  const facilityName = sessionStorage.getItem('staff_facility_name') || 'Chưa chọn Toà nhà';
-  const gateIn = sessionStorage.getItem('staff_gate_name') || `Cổng - ${facilityName}`;
+  // ── Fetch facility config ──────────────────────────────────
 
   useEffect(() => {
     if (!facilityId) return;
@@ -180,6 +193,25 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         }
       })
       .catch(() => toast.error('Không thể tải cấu hình loại xe'));
+  }, [facilityId]);
+
+  // ── Fetch capacity khi facility thay đổi ──────────────────────────────────
+  useEffect(() => {
+    if (!facilityId) return;
+    const fetchCapacity = async () => {
+      try {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+        const res: any = await apiClient.get(`/public/facilities/${facilityId}/available-slots`);
+        if (res.success && Array.isArray(res.data)) {
+          setSlotAvailability(res.data);
+        }
+      } catch { /* ignore */ }
+      setCapacityLoaded(true);
+    };
+    fetchCapacity();
+    // Refresh mỗi 30s
+    const interval = setInterval(fetchCapacity, 30000);
+    return () => clearInterval(interval);
   }, [facilityId]);
 
   // Tự động đoán loại xe dựa vào biển số
@@ -234,9 +266,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   // ── QR Scanner ────────────────────────────────────────────────────────────
   const toggleQrScanner = async () => {
     if (showQrScanner) {
-      try {
-        await qrScannerRef.current?.stop();
-      } catch {}
+      try { await qrScannerRef.current?.stop(); } catch { }
       setShowQrScanner(false);
       return;
     }
@@ -250,7 +280,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
           { facingMode: 'environment' },
           { fps: 10, qrbox: { width: 240, height: 70 } },
           (decodedText: string) => {
-            scanner.stop().catch(() => {});
+            scanner.stop().catch(() => { });
             setShowQrScanner(false);
             const code = decodedText.trim().toUpperCase();
             setReservationCode(code);
@@ -264,12 +294,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
       }
     }, 200);
   };
-  useEffect(
-    () => () => {
-      qrScannerRef.current?.stop().catch(() => {});
-    },
-    []
-  );
+  useEffect(() => () => { qrScannerRef.current?.stop().catch(() => { }); }, []);
 
   // ── Tra cứu reservation ───────────────────────────────────────────────────
   const lookupReservation = async (code: string) => {
@@ -356,16 +381,8 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
           zone: `${floorName} - Slot: ${slotCode}`,
           ...(reservationCode ? { fromReservation: true, reservationCode } : {}),
         });
-        toast.success(`Đã cấp phát: ${floorName} - Slot: ${slotCode}. Đã tự động mở chắn!`);
-
-        setPlate('');
-        setCheckInImage(null);
-        setPreviewUrl(null);
-        setOcrSuccess(false);
-        setReservationCode('');
-        setReservationInfo(null);
-        setPlateMatchStatus('idle');
-        setManualPlateConfirmed(false);
+        toast.success(`Đã cấp phát: ${floorName} - Slot: ${slotCode}. Bấm Enter để mở chắn!`);
+        setPendingClear(true);
 
         if (isNoPlate) {
           const defaultType =
@@ -374,7 +391,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         }
       }
     } catch (error: any) {
-      toast.error(error.message || 'Lỗi khi tạo phiên đỗ xe!');
+      setCheckInError(error.message || "Lỗi khi tạo phiên đỗ xe!");
     } finally {
       setIsSubmitting(false);
     }
@@ -385,63 +402,60 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   const displayPlate = isNoPlateVt ? 'KBS-AUTO' : plate;
 
   return (
-    <div className="flex flex-col bg-white rounded-[16px] border border-[#e8e9e8] shadow-lg shadow-[#9FE870]/20 px-5 pt-4 pb-4 h-full min-h-0 overflow-hidden">
-      <h2 className="text-[17px] font-bold text-[#060606] mb-3 shrink-0">Đăng Ký Xe Vào</h2>
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
 
-      <div className="flex flex-col gap-4 flex-1 min-h-0">
-        {/* Row 1: Toà nhà + Cổng trực */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-[11px] font-semibold text-[#6b6b6b] mb-1">Toà nhà</label>
-            <input
-              type="text"
-              value={facilityName}
-              readOnly
-              className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none"
-            />
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-[20px] shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <div className="w-7 h-7 rounded-md border border-[#9FE870]/50 bg-[#f0f9e8] flex items-center justify-center text-[#9FE870] shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
           </div>
-          <div>
-            <label className="block text-[11px] font-semibold text-[#6b6b6b] mb-1">Cổng trực</label>
-            <input
-              type="text"
-              value={gateIn}
-              readOnly
-              className="w-full h-8 px-3 bg-[#f5f5f4] border border-[#e8e9e8] rounded-[6px] text-[#6b6b6b] text-[12px] font-medium cursor-not-allowed outline-none"
-            />
+          <div className="flex flex-col min-w-0">
+            <h2 className="text-[14px] font-bold text-[#060606] uppercase leading-tight tracking-tight truncate">Đăng Ký Xe Vào</h2>
+            <div className="flex items-center gap-1.5 text-[10px] text-[#888] font-medium mt-0.5 whitespace-nowrap overflow-hidden">
+              <span className="flex items-center gap-1 truncate"><Building2 className="w-3 h-3 text-[#aaa] shrink-0" /> <span className="truncate">Tòa nhà: {facilityName}</span></span>
+              <span className="text-[#ccc] shrink-0">|</span>
+              <span className="flex items-center gap-1 truncate"><DoorOpen className="w-3 h-3 text-[#aaa] shrink-0" /> <span className="truncate">Cổng: {gateIn}</span></span>
+            </div>
           </div>
         </div>
 
-        {/* Row 2: Ảnh biển số Vào + Đặt chỗ trước (thay "Khung dự phòng") */}
-        <div className="flex gap-4 flex-1 min-h-0">
-          {/* Left: Ảnh + OCR (giữ nguyên) */}
-          <div className="flex-1 flex flex-col gap-1 min-h-0 relative">
-            <label className="block text-[11px] font-semibold text-[#6b6b6b]">
-              Ảnh biển số Vào
-            </label>
+        {/* Trạng thái OCR Header */}
+        <div className="flex-none ml-3">
+          <div className={`h-7 px-3 rounded-[4px] text-[12px] font-bold flex items-center justify-center transition-colors ${checkInImage && !ocrSuccess
+            ? 'bg-[#fdebea] text-[#d32f2f] border border-[#d32f2f]'
+            : ocrSuccess
+              ? 'bg-[#e8f5e9] text-[#1d7a4a] border border-[#a3c965]'
+              : 'bg-[#f9f9f9] text-[#888] border border-[#e8e9e8]'
+            }`}>
+            {checkInImage && !ocrSuccess ? '● Không nhận diện được' : (ocrSuccess ? '✓ Quét thành công' : '● Chưa quét')}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 flex-1 min-h-0">
+
+        {/* Row 1: Ảnh biển số Vào + QR đặt chỗ */}
+        <div className="flex gap-3 shrink-0">
+          {/* Left: Ảnh + OCR */}
+          <div className="flex-1 flex flex-col gap-1.5 relative">
+            <label className="block text-[10px] font-semibold text-[#6b6b6b]">Ảnh biển số Vào</label>
             {!previewUrl ? (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="flex-1 border-2 border-dashed border-[#c8c9c8] rounded-[6px] flex flex-col items-center justify-center gap-2 hover:border-[#9FE870] hover:bg-[#f5ffe8] transition-all duration-200 disabled:opacity-60"
-              >
+              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isUploading}
+                className="h-[210px] w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 hover:border-[#9FE870] hover:bg-[#f5ffe8] transition-all duration-200 disabled:opacity-60 bg-[#fcfcfc]">
                 {isUploading ? (
                   <RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" />
                 ) : (
                   <div className="flex flex-col items-center">
-                    <img src="/Logo_chu.png" alt="LYNC PARK" className="h-14 mb-3 object-contain" />
-                    <ImagePlus className="w-4 h-4 text-[#6b6b6b] mb-3" />
-                    <span className="text-[10px] font-semibold text-[#6b6b6b]">
-                      Chụp / Upload ảnh biển số (OCR)
-                    </span>
-                    <span className="text-[9px] text-[#aaa]">
-                      Hỗ trợ JPG, PNG — chụp thẳng góc, đủ sáng
-                    </span>
+                    <img src="/Logo_chu.png" alt="LYNC PARK" className="h-16 mb-2 object-contain" />
+                    <ImagePlus className="w-4 h-4 text-[#aaa] mb-2" />
+                    <span className="text-[10px] font-semibold text-[#6b6b6b]">Chụp / Upload ảnh biển số (OCR)</span>
+                    <span className="text-[9px] text-[#aaa]">Hỗ trợ JPG, PNG — chụp thẳng góc, đủ sáng</span>
                   </div>
                 )}
               </button>
             ) : (
-              <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden flex-1 bg-[#f5f5f4]">
+              <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden h-[210px] bg-[#f5f5f4]">
                 <img src={previewUrl} alt="preview" className="w-full h-full object-contain" />
                 <button
                   type="button"
@@ -462,43 +476,35 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
             />
           </div>
 
-          {/* Right: Đặt chỗ trước — thay khung dự phòng */}
-          <div className="flex-1 flex flex-col gap-1 min-h-0">
-            <label className="block text-[11px] font-semibold text-[#6b6b6b]">Đặt chỗ trước</label>
+          {/* Right: Đặt chỗ trước */}
+          <div className="flex-1 flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-[10px] font-semibold text-[#6b6b6b]">
+                {inputReservationMode === 'code' ? 'Nhập mã đặt chỗ' : 'Quét QR đặt chỗ'}
+              </label>
+              <button
+                onClick={() => setInputReservationMode(prev => prev === 'code' ? 'qr' : 'code')}
+                className="text-[10px] text-blue-600 hover:underline"
+              >
+                {inputReservationMode === 'code' ? 'Quét QR' : 'Nhập mã đặt chỗ'}
+              </button>
+            </div>
 
             {/* Nếu đã có reservation info → hiển thị card kết quả */}
             {reservationInfo ? (
-              <div
-                className={`flex-1 rounded-[6px] border p-3 flex flex-col gap-2 ${
-                  plateMatchStatus === 'match'
-                    ? 'bg-[#f0f9e8] border-[#9FE870]'
-                    : plateMatchStatus === 'mismatch'
-                      ? 'bg-[#fef2f2] border-[#ef4444]'
-                      : 'bg-[#f0f9e8] border-[#9FE870]/50'
-                }`}
-              >
+              <div className={`flex-1 rounded-[6px] border p-3 flex flex-col gap-2 ${plateMatchStatus === 'match' ? 'bg-[#f0f9e8] border-[#9FE870]' :
+                plateMatchStatus === 'mismatch' ? 'bg-[#fef2f2] border-[#ef4444]' :
+                  'bg-[#f0f9e8] border-[#9FE870]/50'
+                }`}>
                 {/* Header status */}
                 <div className="flex items-center justify-between">
-                  <div
-                    className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      plateMatchStatus === 'match'
-                        ? 'bg-[#9FE870] text-[#062F28]'
-                        : plateMatchStatus === 'mismatch'
-                          ? 'bg-red-100 text-red-600'
-                          : 'bg-[#9FE870]/30 text-[#2d6a1f]'
-                    }`}
-                  >
-                    {plateMatchStatus === 'match' ? (
-                      <>
-                        <CheckCircle2 className="w-3 h-3" /> Biển khớp
-                      </>
-                    ) : plateMatchStatus === 'mismatch' ? (
-                      <>
-                        <AlertTriangle className="w-3 h-3" /> Không khớp
-                      </>
-                    ) : (
-                      <>✓ Tìm thấy</>
-                    )}
+                  <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${plateMatchStatus === 'match' ? 'bg-[#9FE870] text-[#062F28]' :
+                    plateMatchStatus === 'mismatch' ? 'bg-red-100 text-red-600' :
+                      'bg-[#9FE870]/30 text-[#2d6a1f]'
+                    }`}>
+                    {plateMatchStatus === 'match' ? <><CheckCircle2 className="w-3 h-3" /> Biển khớp</> :
+                      plateMatchStatus === 'mismatch' ? <><AlertTriangle className="w-3 h-3" /> Không khớp</> :
+                        <>✓ Tìm thấy</>}
                   </div>
                   <button
                     onClick={() => {
@@ -565,9 +571,25 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
               </div>
             ) : (
               /* Chưa có reservation → show form tra cứu */
-              <div className="flex-1 border-2 border-dashed border-[#e8e9e8] rounded-[6px] flex flex-col items-center justify-center gap-2 bg-[#fdfdfd] px-3">
+              <div className="h-[210px] w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 bg-[#fcfcfc] px-3 relative">
                 {/* QR Scanner area */}
-                {showQrScanner ? (
+                {inputReservationMode === 'code' ? (
+                  <div className="w-full px-2">
+                    <input
+                      type="text"
+                      placeholder="Nhập mã đặt chỗ"
+                      value={manualReservationCode}
+                      onChange={(e) => setManualReservationCode(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          lookupReservation(manualReservationCode);
+                        }
+                      }}
+                      className="w-full h-12 text-[16px] text-center px-4 border border-[#e8e9e8] bg-[#e5ecda] rounded-[6px] uppercase font-bold outline-none focus:border-[#9FE870] placeholder-[#6b6b6b] text-[#062F28]"
+                    />
+                  </div>
+                ) : showQrScanner ? (
                   <div className="w-full flex flex-col gap-1">
                     <div
                       id="ci-qr-reader"
@@ -585,58 +607,60 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
                     </button>
                   </div>
                 ) : (
-                  <>
-                    <div className="flex flex-col items-center opacity-50 mb-1">
-                      <QrCode className="w-7 h-7 text-[#6b6b6b] mb-1" />
-                      <span className="text-[9px] text-[#6b6b6b] font-semibold">
-                        Khách có mã đặt chỗ?
-                      </span>
-                    </div>
-                    {/* Nút quét QR */}
-                    <button
-                      onClick={toggleQrScanner}
-                      className="w-full h-7 flex items-center justify-center gap-1.5 bg-[#060606] text-white text-[10px] font-bold rounded-[5px] hover:bg-[#1a1a1a] transition-colors"
-                    >
-                      <ScanLine className="w-3.5 h-3.5" />
-                      Quét QR
-                    </button>
-                    {/* Hoặc nhập tay */}
-                    <div className="w-full flex gap-1">
-                      <input
-                        type="text"
-                        value={reservationCode}
-                        placeholder="RES-XXXX-XXXX"
-                        onChange={(e) => setReservationCode(e.target.value.toUpperCase())}
-                        onKeyDown={(e) => e.key === 'Enter' && lookupReservation(reservationCode)}
-                        className="flex-1 h-7 px-2 border border-[#e8e9e8] rounded-[5px] text-[9px] font-mono uppercase outline-none focus:border-[#9FE870] bg-white"
-                      />
-                      <button
-                        onClick={() => lookupReservation(reservationCode)}
-                        disabled={!reservationCode.trim() || isLookingUp}
-                        className="h-7 px-2 bg-[#f0f9e8] border border-[#9FE870]/60 text-[#2d6a1f] text-[9px] font-bold rounded-[5px] disabled:opacity-50 hover:bg-[#9FE870]/30 transition-colors whitespace-nowrap"
-                      >
-                        {isLookingUp ? '...' : 'Tra cứu'}
-                      </button>
-                    </div>
-                    <p className="text-[8px] text-[#bbb] text-center">
-                      Walk-in: Bỏ qua, tiếp tục chụp ảnh
-                    </p>
-                  </>
+                  <div className="flex flex-col items-center mb-1" onClick={toggleQrScanner} style={{ cursor: 'pointer' }}>
+                    <img src="/Logo_chu.png" alt="LYNC PARK" className="h-16 mb-2 object-contain" />
+                    <QrCode className="w-4 h-4 text-[#aaa] mb-2" />
+                    <span className="text-[10px] font-semibold text-[#6b6b6b]">Quét QR được cấp khi đặt chỗ</span>
+                  </div>
                 )}
               </div>
             )}
           </div>
         </div>
 
-        {/* Row 3: Loại xe + Trạng thái OCR */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Row 2: Biển số xe vào (Full width) */}
+        <div className="flex flex-col gap-1 mt-1">
+          <label className="block text-[10px] font-semibold text-[#060606]">Biển số xe vào</label>
+          <input type="text" value={displayPlate}
+            onChange={(e) => {
+              setPlate(e.target.value.toUpperCase());
+              setCheckInError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.code === "Space") {
+                e.preventDefault();
+                if (pendingClear) {
+                  toast.success("Mở chắn thành công!");
+                  setTimeout(() => {
+                    setPlate(""); setCheckInImage(null); setPreviewUrl(null); setOcrSuccess(false);
+                    setReservationCode(""); setReservationInfo(null); setPlateMatchStatus('idle'); setManualPlateConfirmed(false);
+                    setPendingClear(false);
+                    setCheckInError(null);
+                    onCheckIn(null);
+                  }, 2000);
+                } else {
+                  handleCheckIn();
+                }
+              }
+            }}
+            disabled={isSubmitting || pendingClear}
+            className={`w-full h-9 text-[18px] text-center font-mono px-3 border rounded-[6px] uppercase font-bold outline-none transition-all duration-200 disabled:opacity-70
+              ${checkInError
+                ? 'bg-[#fdebea] border-[#d32f2f] text-[#d32f2f]'
+                : displayPlate
+                  ? 'bg-[#f0f9e8] border-[#9FE870] text-[#062F28]'
+                  : 'bg-[#fdfdfd] border-[#e8e9e8] text-[#9b9b9b] focus:border-[#9FE870]'
+              }`}
+            placeholder="XXX-XX-XXXXX"
+          />
+        </div>
+
+        {/* Row 3: 3 Columns: Loại xe | Chủ xe | Nhập lại biển vào */}
+        <div className="grid grid-cols-3 gap-2 mt-1">
           <div className="flex flex-col gap-1">
-            <label className="block text-[11px] font-semibold text-[#060606]">Loại xe</label>
-            <select
-              value={selectedVehicleTypeId}
-              onChange={(e) => setSelectedVehicleTypeId(e.target.value)}
-              className="w-full h-8 px-3 border border-[#e8e9e8] rounded-[6px] text-[12px] font-medium outline-none focus:border-[#060606]"
-            >
+            <label className="block text-[10px] font-semibold text-[#060606]">Loại xe</label>
+            <select value={selectedVehicleTypeId} onChange={(e) => setSelectedVehicleTypeId(e.target.value)}
+              className="w-full h-7 px-3 border border-[#e8e9e8] bg-white rounded-[6px] text-[10px] font-medium outline-none focus:border-[#060606]">
               {vehicleTypes.length === 0 && <option value="">Đang tải...</option>}
               {vehicleTypes.map((vt) => (
                 <option key={vt._id} value={vt._id}>
@@ -646,42 +670,89 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-[11px] font-semibold text-[#060606]">Trạng thái OCR</label>
-            <div
-              className={`w-full h-8 rounded-[6px] text-[12px] font-bold flex items-center justify-center border transition-colors ${
-                ocrSuccess
-                  ? 'bg-[#9FE870]/20 text-[#2d6a1f] border-[#9FE870]'
-                  : 'bg-[#f5f5f4] text-[#a8a29e] border-[#e8e9e8]'
-              }`}
-            >
-              {ocrSuccess ? '✓ Quét thành công' : 'Chưa quét'}
-            </div>
+            <label className="block text-[10px] font-semibold text-[#060606]">Chủ xe</label>
+            <input type="text" value={plate ? "Khách vãng lai" : ""} readOnly
+              className="w-full h-7 px-3 bg-[#fdfdfd] border border-[#e8e9e8] rounded-[6px] text-[#555] text-[10px] font-medium outline-none" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-[10px] font-semibold text-[#060606]">Nhập lại biển vào</label>
+            <input type="text" placeholder="F5 để nhập lại" value={plate} onChange={e => { setPlate(e.target.value.toUpperCase()); setCheckInError(null); }}
+              className="w-full h-7 px-3 bg-white border border-[#e8e9e8] rounded-[6px] text-[#333] text-[10px] font-medium outline-none focus:border-[#9FE870]" />
           </div>
         </div>
 
-        {/* Row 4: Biển số xe vào */}
-        <div className="flex flex-col gap-1">
-          <label className="block text-[11px] font-semibold text-[#060606]">Biển số xe vào</label>
-          <input
-            type="text"
-            value={displayPlate}
-            onChange={(e) => setPlate(e.target.value.toUpperCase())}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.code === 'Space') {
-                e.preventDefault();
-                handleCheckIn();
-              }
-            }}
-            disabled={isSubmitting}
-            className={`w-full h-12 text-[20px] font-mono px-3 border rounded-[6px] uppercase font-bold outline-none transition-all duration-200 disabled:opacity-70
-              ${
-                displayPlate
-                  ? 'bg-[#9FE870]/30 border-[#9FE870] text-[#062F28] focus:ring-2 focus:ring-[#9FE870]/40'
-                  : 'bg-[#f5f5f4] border-[#e8e9e8] text-[#9b9b9b] focus:border-[#1a1a1a]'
-              }`}
-            placeholder="XXX-XX-XXXXX"
-          />
+        {/* Row 4: Trạng thái (Nút Submit / Capacity) */}
+        <div className="flex flex-col gap-1 mt-1">
+          <label className="block text-[10px] font-semibold text-[#060606]">Trạng thái</label>
+          {(() => {
+            const selectedType = vehicleTypes.find(v => v._id === selectedVehicleTypeId);
+            const selectedTypeName = selectedType?.name || '';
+            const availability = slotAvailability.find(s => s.vehicleTypeId === selectedVehicleTypeId);
+            const isFull = capacityLoaded && availability !== undefined && availability.availableCount === 0;
+
+            if (checkInError) {
+              return (
+                <button
+                  onClick={handleCheckIn}
+                  disabled={isSubmitting}
+                  className="w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all bg-[#fdebea] text-[#d32f2f] border border-[#d32f2f]">
+                  {isSubmitting ? 'Đang xử lý...' : checkInError}
+                </button>
+              );
+            }
+            if (isFull) {
+              return (
+                <button
+                  onClick={() => {
+                    if (pendingClear) {
+                      toast.success("Mở chắn thành công!");
+                      setTimeout(() => {
+                        setPlate(""); setCheckInImage(null); setPreviewUrl(null); setOcrSuccess(false);
+                        setReservationCode(""); setReservationInfo(null); setPlateMatchStatus('idle'); setManualPlateConfirmed(false);
+                        setPendingClear(false);
+                        onCheckIn(null);
+                      }, 2000);
+                    } else {
+                      handleCheckIn();
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  className="w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all bg-[#d32f2f] text-white border border-[#d32f2f] hover:bg-[#c62828]">
+                  {isSubmitting ? 'Đang xử lý...' : pendingClear ? 'Mở chắn' : `Bãi ${selectedTypeName} Đã Đầy`}
+                </button>
+              );
+            }
+            return (
+              <button
+                onClick={() => {
+                  if (pendingClear) {
+                    toast.success("Mở chắn thành công!");
+                    setTimeout(() => {
+                      setPlate(""); setCheckInImage(null); setPreviewUrl(null); setOcrSuccess(false);
+                      setReservationCode(""); setReservationInfo(null); setPlateMatchStatus('idle'); setManualPlateConfirmed(false);
+                      setPendingClear(false);
+                      setCheckInError(null);
+                      onCheckIn(null);
+                    }, 2000);
+                  } else {
+                    handleCheckIn();
+                  }
+                }}
+                disabled={isSubmitting}
+                className={`w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all ${pendingClear
+                  ? 'bg-[#1d7a4a] text-white'
+                  : isSubmitting
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : !plate
+                      ? 'bg-[#fcfcfc] border border-[#e8e9e8] text-[#9b9b9b]'
+                      : 'bg-[#a3c965] hover:bg-[#9cbd5a] text-[#2c4015] border border-[#a3c965]'
+                  }`}>
+                {isSubmitting ? 'Đang xử lý...' : pendingClear ? 'Mở chắn' : !plate ? '—' : 'Cho xe qua'}
+              </button>
+            );
+          })()}
         </div>
+
       </div>
     </div>
   );
