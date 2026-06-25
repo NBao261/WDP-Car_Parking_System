@@ -7,7 +7,7 @@ export const FEE_TYPE_LABELS: Record<string, string> = {
   time_window: 'Theo khung giờ',
 };
 
-export const FEE_TYPE_OPTIONS = (Object.entries(FEE_TYPE_LABELS) as [string, string][]);
+export const FEE_TYPE_OPTIONS = Object.entries(FEE_TYPE_LABELS) as [string, string][];
 
 // Mapping từ UI type sang Backend payload
 export const mapToBackendFeeConfig = (uiType: string) => {
@@ -24,45 +24,87 @@ export const mapToUiType = (feeType: string, feeMethod: string) => {
 
 export const rateSchema = z.object({
   label: z.string().min(1, 'Bắt buộc'),
-  amount: z.preprocess((val) => (val === '' || val === null || val === undefined) ? undefined : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
+  amount: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
+    z
+      .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+      .min(0, 'Không được nhập số âm')
+  ),
   unit: z.string().min(1, 'Bắt buộc'),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
 });
 
-export const formSchema = z.object({
-  name: z.string({ required_error: 'Vui lòng nhập tên bảng giá' }).min(1, 'Vui lòng nhập tên bảng giá'),
-  vehicleTypeId: z.string({ required_error: 'Vui lòng chọn loại xe' }).min(1, 'Vui lòng chọn loại xe'),
-  facilityId: z.string({ required_error: 'Vui lòng chọn cơ sở' }).min(1, 'Vui lòng chọn cơ sở'),
-  uiFeeType: z.enum(['per_turn', 'hourly', 'time_window'], {
-    errorMap: () => ({ message: 'Vui lòng chọn loại hình thu phí' })
-  }),
-  rates: z.array(rateSchema).min(1, 'Cần ít nhất 1 mức giá'),
-  overnightFee: z.preprocess((val) => (val === '' || val === null || val === undefined) ? 0 : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
-  overtimeFeePerHour: z.preprocess((val) => (val === '' || val === null || val === undefined) ? 0 : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
-  lostCardFee: z.preprocess((val) => (val === '' || val === null || val === undefined) ? 50000 : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
-  gracePeriodMinutes: z.preprocess((val) => (val === '' || val === null || val === undefined) ? 0 : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm').max(60, 'Tối đa 60 phút')),
-  maxDailyFee: z.preprocess((val) => (val === '' || val === null || val === undefined) ? 0 : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(0, 'Không được nhập số âm')),
-  firstBlockHours: z.preprocess((val) => (val === '' || val === null || val === undefined) ? 1 : Number(val), z.number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' }).min(1, 'Tối thiểu 1 giờ')),
-}).superRefine((data, ctx) => {
-  if (data.uiFeeType === 'time_window') {
-    data.rates.forEach((rate, index) => {
-      if (!rate.startTime) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Bắt buộc',
-          path: ['rates', index, 'startTime']
-        });
-      }
-      if (!rate.endTime) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Bắt buộc',
-          path: ['rates', index, 'endTime']
-        });
-      }
-    });
-  }
-});
+export const formSchema = z
+  .object({
+    name: z
+      .string({ required_error: 'Vui lòng nhập tên bảng giá' })
+      .min(1, 'Vui lòng nhập tên bảng giá'),
+    vehicleTypeId: z
+      .string({ required_error: 'Vui lòng chọn loại xe' })
+      .min(1, 'Vui lòng chọn loại xe'),
+    facilityId: z.string({ required_error: 'Vui lòng chọn cơ sở' }).min(1, 'Vui lòng chọn cơ sở'),
+    uiFeeType: z.enum(['per_turn', 'hourly', 'time_window'], {
+      errorMap: () => ({ message: 'Vui lòng chọn loại hình thu phí' }),
+    }),
+    rates: z.array(rateSchema).min(1, 'Cần ít nhất 1 mức giá'),
+    overnightFee: z.preprocess(
+      (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
+      z
+        .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+        .min(0, 'Không được nhập số âm')
+    ),
+    overtimeFeePerHour: z.preprocess(
+      (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
+      z
+        .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+        .min(0, 'Không được nhập số âm')
+    ),
+    lostCardFee: z.preprocess(
+      (val) => (val === '' || val === null || val === undefined ? 50000 : Number(val)),
+      z
+        .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+        .min(0, 'Không được nhập số âm')
+    ),
+    gracePeriodMinutes: z.preprocess(
+      (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
+      z
+        .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+        .min(0, 'Không được nhập số âm')
+        .max(60, 'Tối đa 60 phút')
+    ),
+    maxDailyFee: z.preprocess(
+      (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
+      z
+        .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+        .min(0, 'Không được nhập số âm')
+    ),
+    firstBlockHours: z.preprocess(
+      (val) => (val === '' || val === null || val === undefined ? 1 : Number(val)),
+      z
+        .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+        .min(1, 'Tối thiểu 1 giờ')
+    ),
+  })
+  .superRefine((data, ctx) => {
+    if (data.uiFeeType === 'time_window') {
+      data.rates.forEach((rate, index) => {
+        if (!rate.startTime) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Bắt buộc',
+            path: ['rates', index, 'startTime'],
+          });
+        }
+        if (!rate.endTime) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Bắt buộc',
+            path: ['rates', index, 'endTime'],
+          });
+        }
+      });
+    }
+  });
 
 export type FormValues = z.infer<typeof formSchema>;

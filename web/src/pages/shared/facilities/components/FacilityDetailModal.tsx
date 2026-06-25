@@ -19,7 +19,14 @@ interface DetailModalProps {
   vehicleTypes?: { _id: string; name: string; icon?: string }[];
 }
 
-export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentFloors = 0, vehicleTypes = [] }: DetailModalProps) {
+export function FacilityDetailModal({
+  isOpen,
+  onClose,
+  facility,
+  stats,
+  currentFloors = 0,
+  vehicleTypes = [],
+}: DetailModalProps) {
   if (!isOpen || !facility) return null;
 
   const isActive = facility.status === 'active';
@@ -30,11 +37,19 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
   return createPortal(
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          onClick={onClose} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-        
-        <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }} transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        />
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
@@ -43,7 +58,10 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
               <h2 className="text-lg font-bold text-[#060606]">Chi tiết tòa nhà / bãi đỗ</h2>
               <p className="text-xs text-gray-500 mt-0.5">Xem thông tin và thống kê sức chứa</p>
             </div>
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+            >
               <X size={20} />
             </button>
           </div>
@@ -55,8 +73,26 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
                 <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5">
                   Vị trí tòa nhà / bãi đỗ
                 </p>
-                <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 5, ...badgeStyle }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
+                <span
+                  style={{
+                    fontSize: 11,
+                    padding: '3px 10px',
+                    borderRadius: 20,
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    ...badgeStyle,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: isActive ? '#10b981' : '#9b9e9b',
+                    }}
+                  />
                   {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
                 </span>
               </div>
@@ -73,11 +109,18 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
                     <span>{facility.address}</span>
                   </p>
                   <div className="flex items-center gap-1.5 text-[13px] text-gray-400 mt-2">
-                    <Calendar size={13} /> Ngày tạo: <span className="text-gray-600 font-medium">{new Date(facility.createdAt).toLocaleDateString('vi-VN')}</span>
+                    <Calendar size={13} /> Ngày tạo:{' '}
+                    <span className="text-gray-600 font-medium">
+                      {new Date(facility.createdAt).toLocaleDateString('vi-VN')}
+                    </span>
                     {!isActive && (
                       <>
                         <span className="mx-1.5 text-gray-300">•</span>
-                        <Lock size={13} className="text-red-400" /> <span className="text-red-500">Tạm khóa:</span> <span className="text-gray-600 font-medium">{new Date(facility.updatedAt).toLocaleDateString('vi-VN')}</span>
+                        <Lock size={13} className="text-red-400" />{' '}
+                        <span className="text-red-500">Tạm khóa:</span>{' '}
+                        <span className="text-gray-600 font-medium">
+                          {new Date(facility.updatedAt).toLocaleDateString('vi-VN')}
+                        </span>
                       </>
                     )}
                   </div>
@@ -92,10 +135,13 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
                 </p>
                 {vehicleTypes.length > 0 ? (
                   <div className="flex items-center gap-2 flex-wrap">
-                    {vehicleTypes.map(v => {
-                      const IconComp = (v.icon && ICON_MAP[v.icon]) ? ICON_MAP[v.icon] : Car;
+                    {vehicleTypes.map((v) => {
+                      const IconComp = v.icon && ICON_MAP[v.icon] ? ICON_MAP[v.icon] : Car;
                       return (
-                        <span key={v._id} className="px-2.5 py-1.5 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm">
+                        <span
+                          key={v._id}
+                          className="px-2.5 py-1.5 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm"
+                        >
                           <IconComp size={14} className="text-[#4a7c20]" /> {v.name}
                         </span>
                       );
@@ -113,24 +159,36 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
               <div className="p-3 rounded-xl bg-white border border-indigo-100 flex flex-col justify-center gap-1.5 text-center">
                 <Layers size={20} className="mx-auto text-indigo-500" />
                 <div>
-                  <p className="text-[11px] font-semibold text-indigo-500 uppercase truncate">Số tầng tối đa</p>
-                  <p className="text-[15px] font-bold text-[#060606] mt-0.5">{facility.totalFloors} tầng</p>
+                  <p className="text-[11px] font-semibold text-indigo-500 uppercase truncate">
+                    Số tầng tối đa
+                  </p>
+                  <p className="text-[15px] font-bold text-[#060606] mt-0.5">
+                    {facility.totalFloors} tầng
+                  </p>
                 </div>
               </div>
-              
+
               <div className="p-3 rounded-xl bg-white border border-teal-100 flex flex-col justify-center gap-1.5 text-center">
                 <Building2 size={20} className="mx-auto text-teal-500" />
                 <div>
-                  <p className="text-[11px] font-semibold text-teal-500 uppercase truncate">Tầng hiện có</p>
-                  <p className="text-[15px] font-bold text-[#060606] mt-0.5">{currentFloors} tầng</p>
+                  <p className="text-[11px] font-semibold text-teal-500 uppercase truncate">
+                    Tầng hiện có
+                  </p>
+                  <p className="text-[15px] font-bold text-[#060606] mt-0.5">
+                    {currentFloors} tầng
+                  </p>
                 </div>
               </div>
 
               <div className="p-3 rounded-xl bg-white border border-orange-100 flex flex-col justify-center gap-1.5 text-center">
                 <Clock size={20} className="mx-auto text-orange-500" />
                 <div>
-                  <p className="text-[11px] font-semibold text-orange-500 uppercase truncate">Giờ hoạt động</p>
-                  <p className="text-[14px] font-bold text-[#060606] mt-0.5">{facility.openTime} - {facility.closeTime}</p>
+                  <p className="text-[11px] font-semibold text-orange-500 uppercase truncate">
+                    Giờ hoạt động
+                  </p>
+                  <p className="text-[14px] font-bold text-[#060606] mt-0.5">
+                    {facility.openTime} - {facility.closeTime}
+                  </p>
                 </div>
               </div>
             </div>
@@ -140,16 +198,42 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
                 Thống kê sức chứa
               </p>
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '12px 4px' }}>
-                  <div className="text-xl tabular-nums font-semibold" style={{ color: '#060606' }}>{stats?.totalSlots ?? 0}</div>
+                <div
+                  style={{
+                    background: 'rgba(204,226,66,0.15)',
+                    borderRadius: 10,
+                    padding: '12px 4px',
+                  }}
+                >
+                  <div className="text-xl tabular-nums font-semibold" style={{ color: '#060606' }}>
+                    {stats?.totalSlots ?? 0}
+                  </div>
                   <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Tổng slot</div>
                 </div>
-                <div style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '12px 4px' }}>
-                  <div className="text-xl tabular-nums font-semibold" style={{ color: '#060606' }}>{stats?.occupied ?? 0}</div>
+                <div
+                  style={{
+                    background: 'rgba(204,226,66,0.15)',
+                    borderRadius: 10,
+                    padding: '12px 4px',
+                  }}
+                >
+                  <div className="text-xl tabular-nums font-semibold" style={{ color: '#060606' }}>
+                    {stats?.occupied ?? 0}
+                  </div>
                   <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Đang dùng</div>
                 </div>
-                <div style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '12px 4px' }}>
-                  <div className={`text-xl tabular-nums font-semibold ${getBarTextColor(stats?.fillRate ?? 0)}`}>{stats?.fillRate ?? 0}%</div>
+                <div
+                  style={{
+                    background: 'rgba(204,226,66,0.15)',
+                    borderRadius: 10,
+                    padding: '12px 4px',
+                  }}
+                >
+                  <div
+                    className={`text-xl tabular-nums font-semibold ${getBarTextColor(stats?.fillRate ?? 0)}`}
+                  >
+                    {stats?.fillRate ?? 0}%
+                  </div>
                   <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Lấp đầy</div>
                 </div>
               </div>
@@ -163,16 +247,20 @@ export function FacilityDetailModal({ isOpen, onClose, facility, stats, currentF
                 {facility.description ? (
                   <span className="whitespace-pre-wrap">{facility.description}</span>
                 ) : (
-                  <span className="text-gray-400 italic">Không có mô tả cho tòa nhà / bãi đỗ này.</span>
+                  <span className="text-gray-400 italic">
+                    Không có mô tả cho tòa nhà / bãi đỗ này.
+                  </span>
                 )}
               </div>
             </div>
-
           </div>
 
           {/* Footer */}
           <div className="px-6 pb-6 pt-2 flex justify-end">
-            <button onClick={onClose} className="px-5 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-[#cce242] hover:border-[#cce242] hover:text-[#060606] transition-all">
+            <button
+              onClick={onClose}
+              className="px-5 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-[#cce242] hover:border-[#cce242] hover:text-[#060606] transition-all"
+            >
               Đóng
             </button>
           </div>

@@ -18,7 +18,16 @@ interface FloorModalProps {
   maxFloors?: number;
 }
 
-export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleTypes, onSuccess, currentFloorCount, maxFloors }: FloorModalProps) {
+export function FloorFormModal({
+  isOpen,
+  onClose,
+  floor,
+  facilityId,
+  vehicleTypes,
+  onSuccess,
+  currentFloorCount,
+  maxFloors,
+}: FloorModalProps) {
   const isEdit = !!floor;
   const [name, setName] = useState('');
   const [totalSlots, setTotalSlots] = useState<number | string>('');
@@ -28,16 +37,21 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const getInputClass = (fieldName: string) => {
-    const base = "w-full px-4 py-2.5 bg-gray-50 rounded-xl text-sm focus:outline-none transition-all disabled:opacity-50";
+    const base =
+      'w-full px-4 py-2.5 bg-gray-50 rounded-xl text-sm focus:outline-none transition-all disabled:opacity-50';
     if (errors[fieldName]) {
       return `${base} border border-red-500 focus:ring-2 focus:ring-red-200 bg-red-50/10`;
     }
     return `${base} border border-gray-200 focus:ring-2 focus:ring-[#d7ee46] focus:bg-white`;
   };
 
-  const isFull = !isEdit && currentFloorCount !== undefined && maxFloors !== undefined && currentFloorCount >= maxFloors;
+  const isFull =
+    !isEdit &&
+    currentFloorCount !== undefined &&
+    maxFloors !== undefined &&
+    currentFloorCount >= maxFloors;
 
-  const filteredTypes = vehicleTypes.filter(vt =>
+  const filteredTypes = vehicleTypes.filter((vt) =>
     vt.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -63,7 +77,7 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
     setSelectedVehicleTypes((prev) => {
       const next = prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id];
       if (next.length > 0 && errors.vehicleTypes) {
-        setErrors(prevErrors => ({ ...prevErrors, vehicleTypes: '' }));
+        setErrors((prevErrors) => ({ ...prevErrors, vehicleTypes: '' }));
       }
       return next;
     });
@@ -75,7 +89,8 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
     const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = 'Vui lòng nhập tên tầng';
     if (!totalSlots) newErrors.totalSlots = 'Vui lòng nhập tổng số slot';
-    if (selectedVehicleTypes.length === 0) newErrors.vehicleTypes = 'Vui lòng chọn ít nhất một loại xe';
+    if (selectedVehicleTypes.length === 0)
+      newErrors.vehicleTypes = 'Vui lòng chọn ít nhất một loại xe';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -95,7 +110,11 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
         await floorService.assignVehicleTypes(floor._id, selectedVehicleTypes);
         toast.success('Cập nhật tầng thành công');
       } else {
-        const created = await floorService.create({ facilityId, name, totalSlots: Number(totalSlots) });
+        const created = await floorService.create({
+          facilityId,
+          name,
+          totalSlots: Number(totalSlots),
+        });
         await floorService.assignVehicleTypes(created.data._id, selectedVehicleTypes);
         toast.success('Tạo tầng thành công');
       }
@@ -113,18 +132,33 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
   return createPortal(
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          onClick={onClose} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-        <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }} transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
         >
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div>
-              <h2 className="text-lg font-bold text-[#060606]">{isEdit ? 'Sửa tầng' : 'Thêm tầng mới'}</h2>
-              <p className="text-xs text-gray-500 mt-0.5">{isEdit ? 'Cập nhật thông tin & loại xe' : 'Tạo tầng và gán loại xe'}</p>
+              <h2 className="text-lg font-bold text-[#060606]">
+                {isEdit ? 'Sửa tầng' : 'Thêm tầng mới'}
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {isEdit ? 'Cập nhật thông tin & loại xe' : 'Tạo tầng và gán loại xe'}
+              </p>
             </div>
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+            >
               <X size={20} />
             </button>
           </div>
@@ -139,16 +173,23 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
                 <p className="text-sm text-gray-500 mb-6">
                   Cơ sở này chỉ cho phép tối đa {maxFloors} tầng. Bạn không thể thêm tầng mới.
                 </p>
-                <button type="button" onClick={onClose}
-                  className="px-6 py-2.5 text-sm font-bold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors shadow-sm w-full">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-6 py-2.5 text-sm font-bold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors shadow-sm w-full"
+                >
                   Đã hiểu và Đóng
                 </button>
               </div>
             ) : (
               <>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tên tầng <span className="text-red-500">*</span></label>
-                  <input type="text" value={name}
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Tên tầng <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
                     onChange={(e) => {
                       setName(e.target.value);
                       if (errors.name) setErrors({ ...errors, name: '' });
@@ -159,22 +200,33 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
                   {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tổng slot <span className="text-red-500">*</span></label>
-                  <input type="number" min={1} max={999} placeholder="50" value={totalSlots}
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Tổng slot <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    placeholder="50"
+                    value={totalSlots}
                     onChange={(e) => {
                       setTotalSlots(e.target.value === '' ? '' : parseInt(e.target.value, 10));
                       if (errors.totalSlots) setErrors({ ...errors, totalSlots: '' });
                     }}
                     className={getInputClass('totalSlots')}
                   />
-                  {errors.totalSlots && <p className="text-xs text-red-500 mt-1">{errors.totalSlots}</p>}
+                  {errors.totalSlots && (
+                    <p className="text-xs text-red-500 mt-1">{errors.totalSlots}</p>
+                  )}
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-semibold text-gray-700">
                       Các loại xe cho phép <span className="text-red-500">*</span>
-                      <span className="text-gray-400 font-normal ml-1">({selectedVehicleTypes.length} đã chọn)</span>
+                      <span className="text-gray-400 font-normal ml-1">
+                        ({selectedVehicleTypes.length} đã chọn)
+                      </span>
                     </label>
                   </div>
 
@@ -195,15 +247,20 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
                     {filteredTypes.map((vt) => {
                       const isSelected = selectedVehicleTypes.includes(vt._id);
                       return (
-                        <button key={vt._id} type="button" onClick={() => toggleVehicle(vt._id)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${isSelected
-                            ? 'bg-[#d7ee46] text-[#060606] border-[#c4dc32] scale-[1.03]'
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                            }`}
+                        <button
+                          key={vt._id}
+                          type="button"
+                          onClick={() => toggleVehicle(vt._id)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${
+                            isSelected
+                              ? 'bg-[#d7ee46] text-[#060606] border-[#c4dc32] scale-[1.03]'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                          }`}
                         >
                           <span className="mr-1">
                             {(() => {
-                              const IconComp = (vt.icon && ICON_MAP[vt.icon]) ? ICON_MAP[vt.icon] : Car;
+                              const IconComp =
+                                vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : Car;
                               return <IconComp size={16} />;
                             })()}
                           </span>
@@ -213,19 +270,30 @@ export function FloorFormModal({ isOpen, onClose, floor, facilityId, vehicleType
                       );
                     })}
                     {filteredTypes.length === 0 && (
-                      <p className="text-xs text-gray-400 py-2">Không tìm thấy loại xe phù hợp với "{searchQuery}".</p>
+                      <p className="text-xs text-gray-400 py-2">
+                        Không tìm thấy loại xe phù hợp với "{searchQuery}".
+                      </p>
                     )}
                   </div>
-                  {errors.vehicleTypes && <p className="text-xs text-red-500 mt-2">{errors.vehicleTypes}</p>}
+                  {errors.vehicleTypes && (
+                    <p className="text-xs text-red-500 mt-2">{errors.vehicleTypes}</p>
+                  )}
                 </div>
 
                 <div className="pt-2 flex justify-end gap-3 border-t border-gray-100">
-                  <button type="button" onClick={onClose} disabled={isSubmitting}
-                    className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-60">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    disabled={isSubmitting}
+                    className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-60"
+                  >
                     Hủy
                   </button>
-                  <button type="submit" disabled={isSubmitting}
-                    className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
+                  >
                     {isSubmitting && <Loader2 size={16} className="animate-spin" />}
                     {isEdit ? 'Lưu Thay Đổi' : 'Tạo Tầng'}
                   </button>

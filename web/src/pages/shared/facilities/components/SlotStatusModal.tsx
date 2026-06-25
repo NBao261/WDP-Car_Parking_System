@@ -3,10 +3,28 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  X, Loader2, Trash2, MapPin, Layers, Car,
-  Clock, CreditCard, User, LogIn, LogOut, DoorOpen, Banknote, Edit2, ChevronDown
+  X,
+  Loader2,
+  Trash2,
+  MapPin,
+  Layers,
+  Car,
+  Clock,
+  CreditCard,
+  User,
+  LogIn,
+  LogOut,
+  DoorOpen,
+  Banknote,
+  Edit2,
+  ChevronDown,
 } from 'lucide-react';
-import { slotService, type ParkingSlot, type SlotStatus, type ParkingSessionPopulated } from '../../../../services/slot.service';
+import {
+  slotService,
+  type ParkingSlot,
+  type SlotStatus,
+  type ParkingSessionPopulated,
+} from '../../../../services/slot.service';
 import { facilityService } from '../../../../services/facility.service';
 import { floorService } from '../../../../services/floor.service';
 import { userService } from '../../../../services/user.service';
@@ -23,25 +41,53 @@ interface SlotStatusModalProps {
 
 // ── Config ────────────────────────────────────────────────
 
-
-
-const STATUS_CFG: Record<SlotStatus, { label: string; color: string; bg: string; border: string; dot: string }> = {
-  available:   { label: 'TRỐNG',      color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', dot: '#10b981' },
-  occupied:    { label: 'ĐANG DÙNG',  color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', dot: '#3b82f6' },
-  reserved:    { label: 'ĐẶT TRƯỚC',  color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe', dot: '#8b5cf6' },
-  maintenance: { label: 'BẢO TRÌ',    color: '#b45309', bg: '#fffbeb', border: '#fde68a', dot: '#f59e0b' },
-  locked:      { label: 'KHÓA',       color: '#dc2626', bg: '#fef2f2', border: '#fecaca', dot: '#ef4444' },
+const STATUS_CFG: Record<
+  SlotStatus,
+  { label: string; color: string; bg: string; border: string; dot: string }
+> = {
+  available: { label: 'TRỐNG', color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', dot: '#10b981' },
+  occupied: {
+    label: 'ĐANG DÙNG',
+    color: '#2563eb',
+    bg: '#eff6ff',
+    border: '#bfdbfe',
+    dot: '#3b82f6',
+  },
+  reserved: {
+    label: 'ĐẶT TRƯỚC',
+    color: '#7c3aed',
+    bg: '#f5f3ff',
+    border: '#ddd6fe',
+    dot: '#8b5cf6',
+  },
+  maintenance: {
+    label: 'BẢO TRÌ',
+    color: '#b45309',
+    bg: '#fffbeb',
+    border: '#fde68a',
+    dot: '#f59e0b',
+  },
+  locked: { label: 'KHÓA', color: '#dc2626', bg: '#fef2f2', border: '#fecaca', dot: '#ef4444' },
 };
 
-const SESSION_STATUS_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  active:          { label: 'HOẠT ĐỘNG', color: '#059669', bg: '#f0fdf4', border: '#86efac' },
+const SESSION_STATUS_CFG: Record<
+  string,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  active: { label: 'HOẠT ĐỘNG', color: '#059669', bg: '#f0fdf4', border: '#86efac' },
   pending_payment: { label: 'CHỜ THANH TOÁN', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
-  completed:       { label: 'HOÀN THÀNH',     color: '#374151', bg: '#f9fafb', border: '#e5e7eb' },
-  exception:       { label: 'NGOẠI LỆ',       color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
+  completed: { label: 'HOÀN THÀNH', color: '#374151', bg: '#f9fafb', border: '#e5e7eb' },
+  exception: { label: 'NGOẠI LỆ', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
 };
 
-function CustomSelect({ value, onChange, options, placement = 'bottom' }: {
-  value: string; onChange: (v: string) => void;
+function CustomSelect({
+  value,
+  onChange,
+  options,
+  placement = 'bottom',
+}: {
+  value: string;
+  onChange: (v: string) => void;
   options: { value: string; label: string }[];
   placement?: 'top' | 'bottom';
 }) {
@@ -58,7 +104,7 @@ function CustomSelect({ value, onChange, options, placement = 'bottom' }: {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const selectedOption = options.find(o => o.value === value) || options[0];
+  const selectedOption = options.find((o) => o.value === value) || options[0];
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
@@ -69,12 +115,12 @@ function CustomSelect({ value, onChange, options, placement = 'bottom' }: {
           border: isOpen ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
           boxShadow: isOpen ? '0 0 0 3px rgba(204,226,66,0.2)' : 'none',
           color: '#060606',
-          backgroundColor: isOpen ? '#ffffff' : '#f9fafb'
+          backgroundColor: isOpen ? '#ffffff' : '#f9fafb',
         }}
       >
         <span className="truncate pr-4">{selectedOption?.label}</span>
-        <ChevronDown 
-          size={16} 
+        <ChevronDown
+          size={16}
           className="text-gray-500 shrink-0 transition-transform duration-200"
           style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
         />
@@ -101,15 +147,22 @@ function CustomSelect({ value, onChange, options, placement = 'bottom' }: {
               {options.map((o) => (
                 <div
                   key={o.value}
-                  onClick={() => { onChange(o.value); setIsOpen(false); }}
+                  onClick={() => {
+                    onChange(o.value);
+                    setIsOpen(false);
+                  }}
                   className="px-4 py-2.5 text-[14px] cursor-pointer transition-colors flex items-center"
                   style={{
                     color: value === o.value ? '#060606' : '#4a4a4a',
                     background: value === o.value ? '#f8fce2' : '#ffffff',
                     fontWeight: value === o.value ? 500 : 400,
                   }}
-                  onMouseEnter={(e) => { if (value !== o.value) e.currentTarget.style.background = '#f5f5f5'; }}
-                  onMouseLeave={(e) => { if (value !== o.value) e.currentTarget.style.background = '#ffffff'; }}
+                  onMouseEnter={(e) => {
+                    if (value !== o.value) e.currentTarget.style.background = '#f5f5f5';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (value !== o.value) e.currentTarget.style.background = '#ffffff';
+                  }}
                 >
                   {o.label}
                 </div>
@@ -133,7 +186,10 @@ function fmtDateTime(dt?: string | null) {
 }
 
 function fmtDuration(checkIn: string, checkOut?: string | null) {
-  const ms = Math.max(0, (checkOut ? new Date(checkOut) : new Date()).getTime() - new Date(checkIn).getTime());
+  const ms = Math.max(
+    0,
+    (checkOut ? new Date(checkOut) : new Date()).getTime() - new Date(checkIn).getTime()
+  );
   const h = Math.floor(ms / 3_600_000);
   const m = Math.floor((ms % 3_600_000) / 60_000);
   return h > 0 ? `${h} giờ ${m} phút` : `${m} phút`;
@@ -157,13 +213,25 @@ function idFromField(field: any): string | null {
 
 // ── InfoItem (Grid based) ─────────────────────────────────
 
-function InfoItem({ icon: Icon, label, value, highlight }: { icon: any, label: string, value: React.ReactNode, highlight?: boolean }) {
+function InfoItem({
+  icon: Icon,
+  label,
+  value,
+  highlight,
+}: {
+  icon: any;
+  label: string;
+  value: React.ReactNode;
+  highlight?: boolean;
+}) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-1.5 text-gray-400 text-[11px] font-bold uppercase tracking-widest">
         <Icon size={14} strokeWidth={2.5} /> {label}
       </div>
-      <div className={`text-[15px] font-semibold break-words leading-relaxed ${highlight ? 'text-emerald-600 text-base' : 'text-gray-800'}`}>
+      <div
+        className={`text-[15px] font-semibold break-words leading-relaxed ${highlight ? 'text-emerald-600 text-base' : 'text-gray-800'}`}
+      >
         {value}
       </div>
     </div>
@@ -177,39 +245,52 @@ function SessionInfo({ session }: { session: ParkingSessionPopulated }) {
   const isActive = session.status === 'active' || session.status === 'pending_payment';
 
   const [staffInName, setStaffInName] = useState(nameFromField(session.staffInId) ?? '…');
-  const [staffOutName, setStaffOutName] = useState<string | null>(nameFromField(session.staffOutId));
+  const [staffOutName, setStaffOutName] = useState<string | null>(
+    nameFromField(session.staffOutId)
+  );
   const [liveFee, setLiveFee] = useState<number>(session.totalFee || 0);
 
   useEffect(() => {
     const inId = idFromField(session.staffInId);
     if (inId) {
-      userService.getUserById(inId)
-        .then(r => { if (r.success) setStaffInName(r.data.name); })
+      userService
+        .getUserById(inId)
+        .then((r) => {
+          if (r.success) setStaffInName(r.data.name);
+        })
         .catch(() => setStaffInName('—'));
     }
     const outId = idFromField(session.staffOutId);
     if (outId) {
-      userService.getUserById(outId)
-        .then(r => { if (r.success) setStaffOutName(r.data.name); })
+      userService
+        .getUserById(outId)
+        .then((r) => {
+          if (r.success) setStaffOutName(r.data.name);
+        })
         .catch(() => setStaffOutName('—'));
     }
 
     if (session._id && isActive) {
-      sessionService.calculateFee(session._id)
-        .then(r => { if (r.success) setLiveFee(r.data.finalFee ?? r.data.totalFee ?? 0); })
+      sessionService
+        .calculateFee(session._id)
+        .then((r) => {
+          if (r.success) setLiveFee(r.data.finalFee ?? r.data.totalFee ?? 0);
+        })
         .catch(() => {});
     }
   }, [session]);
-
-
 
   return (
     <div className="flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest pl-1 mb-1.5">Biển số xe</p>
-          <p className="text-3xl font-black text-[#4A7C20] tracking-widest uppercase">{session.licensePlate}</p>
+          <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest pl-1 mb-1.5">
+            Biển số xe
+          </p>
+          <p className="text-3xl font-black text-[#4A7C20] tracking-widest uppercase">
+            {session.licensePlate}
+          </p>
         </div>
         <span
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-bold mt-1"
@@ -222,19 +303,36 @@ function SessionInfo({ session }: { session: ParkingSessionPopulated }) {
 
       {/* Grid details */}
       <div className="grid grid-cols-2 gap-x-6 gap-y-6 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
-        <InfoItem icon={User}       label="NV vào"     value={staffInName} />
-        <InfoItem icon={CreditCard} label="Mã thẻ"     value={<span className="font-mono bg-[#f8fce2] px-2.5 py-0.5 rounded text-[#556314] border border-[#d7ee46]/40">{session.cardCode}</span>} />
+        <InfoItem icon={User} label="NV vào" value={staffInName} />
+        <InfoItem
+          icon={CreditCard}
+          label="Mã thẻ"
+          value={
+            <span className="font-mono bg-[#f8fce2] px-2.5 py-0.5 rounded text-[#556314] border border-[#d7ee46]/40">
+              {session.cardCode}
+            </span>
+          }
+        />
 
-        <InfoItem icon={DoorOpen}   label="Cổng"       value={`${session.gateIn || 'Cổng A'}`} />
-        <InfoItem icon={LogIn}      label="Giờ vào"    value={fmtDateTime(session.checkInTime)} />
+        <InfoItem icon={DoorOpen} label="Cổng" value={`${session.gateIn || 'Cổng A'}`} />
+        <InfoItem icon={LogIn} label="Giờ vào" value={fmtDateTime(session.checkInTime)} />
 
-        <InfoItem icon={Clock}      label="Thời gian"  value={fmtDuration(session.checkInTime, session.checkOutTime)} />
-        <InfoItem icon={Banknote}   label="Tổng phí"   value={fmtFee(isActive ? liveFee : session.totalFee)} highlight />
+        <InfoItem
+          icon={Clock}
+          label="Thời gian"
+          value={fmtDuration(session.checkInTime, session.checkOutTime)}
+        />
+        <InfoItem
+          icon={Banknote}
+          label="Tổng phí"
+          value={fmtFee(isActive ? liveFee : session.totalFee)}
+          highlight
+        />
 
         {!isActive && (
           <>
-            <InfoItem icon={User}   label="NV ra"      value={staffOutName ?? '…'} />
-            <InfoItem icon={LogOut} label="Giờ ra"     value={fmtDateTime(session.checkOutTime)} />
+            <InfoItem icon={User} label="NV ra" value={staffOutName ?? '…'} />
+            <InfoItem icon={LogOut} label="Giờ ra" value={fmtDateTime(session.checkOutTime)} />
           </>
         )}
       </div>
@@ -245,39 +343,45 @@ function SessionInfo({ session }: { session: ParkingSessionPopulated }) {
 // ── Main Modal ────────────────────────────────────────────
 
 export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalProps) {
-  const [selected, setSelected]     = useState<SlotStatus | ''>('');
-  const [loading, setLoading]       = useState(false);
+  const [selected, setSelected] = useState<SlotStatus | ''>('');
+  const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [isEditing, setIsEditing]   = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
-  const [editCode, setEditCode]         = useState('');
-  const [editVtId, setEditVtId]         = useState('');
-  const [editStatus, setEditStatus]     = useState<SlotStatus | ''>('');
+  const [editCode, setEditCode] = useState('');
+  const [editVtId, setEditVtId] = useState('');
+  const [editStatus, setEditStatus] = useState<SlotStatus | ''>('');
 
   useEffect(() => {
-    vehicleTypeService.getAll({ limit: 100 })
-      .then(res => { if (res.success) setVehicleTypes(res.data); })
+    vehicleTypeService
+      .getAll({ limit: 100 })
+      .then((res) => {
+        if (res.success) setVehicleTypes(res.data);
+      })
       .catch(() => {});
   }, []);
 
   // Re-fetch slot with full populated currentSessionId
-  const [freshSlot, setFreshSlot]       = useState<ParkingSlot | null>(null);
+  const [freshSlot, setFreshSlot] = useState<ParkingSlot | null>(null);
   const [fetchingSlot, setFetchingSlot] = useState(false);
 
   const [facilityName, setFacilityName] = useState('');
-  const [floorName, setFloorName]       = useState('');
+  const [floorName, setFloorName] = useState('');
   const [fetchingNames, setFetchingNames] = useState(false);
-  const [allowedVtIds, setAllowedVtIds]   = useState<string[]>([]);
+  const [allowedVtIds, setAllowedVtIds] = useState<string[]>([]);
 
   const loadFreshSlot = useCallback(async (id: string) => {
     setFetchingSlot(true);
     try {
       const res = await slotService.getById(id);
       if (res.success) setFreshSlot(res.data);
-    } catch { /* silent */ }
-    finally { setFetchingSlot(false); }
+    } catch {
+      /* silent */
+    } finally {
+      setFetchingSlot(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -292,8 +396,9 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
     const fetchNames = async () => {
       setFetchingNames(true);
       try {
-        const facId = typeof slot.facilityId === 'object' ? (slot.facilityId as any)._id : slot.facilityId;
-        const flrId = typeof slot.floorId    === 'object' ? (slot.floorId    as any)._id : slot.floorId;
+        const facId =
+          typeof slot.facilityId === 'object' ? (slot.facilityId as any)._id : slot.facilityId;
+        const flrId = typeof slot.floorId === 'object' ? (slot.floorId as any)._id : slot.floorId;
 
         if (typeof slot.facilityId === 'object' && (slot.facilityId as any).name) {
           setFacilityName((slot.facilityId as any).name);
@@ -316,8 +421,11 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
             setAllowedVtIds(allowedIds);
           }
         }
-      } catch { /* silent */ }
-      finally { setFetchingNames(false); }
+      } catch {
+        /* silent */
+      } finally {
+        setFetchingNames(false);
+      }
     };
     fetchNames();
   }, [slot, loadFreshSlot]);
@@ -326,7 +434,9 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
     const s = freshSlot ?? slot;
     if (s) {
       setEditCode(s.code);
-      setEditVtId(typeof s.vehicleTypeId === 'object' ? (s.vehicleTypeId as any)._id : s.vehicleTypeId);
+      setEditVtId(
+        typeof s.vehicleTypeId === 'object' ? (s.vehicleTypeId as any)._id : s.vehicleTypeId
+      );
       setEditStatus(s.status);
     }
   }, [freshSlot, slot, isEditing]);
@@ -334,20 +444,20 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
   if (!slot) return null;
 
   const displaySlot = freshSlot ?? slot;
-  
+
   let nexts: SlotStatus[] = [];
   if (displaySlot.status === 'available') {
     nexts = ['maintenance'];
   } else if (displaySlot.status === 'maintenance' || displaySlot.status === 'locked') {
     nexts = ['available'];
   }
-  
-  const canDelete   = displaySlot.status === 'available';
-  const curCfg      = STATUS_CFG[displaySlot.status];
+
+  const canDelete = displaySlot.status === 'available';
+  const curCfg = STATUS_CFG[displaySlot.status];
 
   const session: ParkingSessionPopulated | null =
     displaySlot.currentSessionId && typeof displaySlot.currentSessionId === 'object'
-      ? displaySlot.currentSessionId as ParkingSessionPopulated
+      ? (displaySlot.currentSessionId as ParkingSessionPopulated)
       : null;
 
   let VtIcon = Car;
@@ -370,13 +480,19 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
       onClose();
     } catch (e: any) {
       toast.error(e.message || 'Cập nhật thất bại');
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSaveEdit = async () => {
     const hasStatusChange = editStatus !== '' && editStatus !== displaySlot.status;
-    const currentVtId = typeof displaySlot.vehicleTypeId === 'object' ? (displaySlot.vehicleTypeId as any)._id : displaySlot.vehicleTypeId;
-    const hasInfoChange = editCode.trim().toUpperCase() !== displaySlot.code || editVtId !== currentVtId;
+    const currentVtId =
+      typeof displaySlot.vehicleTypeId === 'object'
+        ? (displaySlot.vehicleTypeId as any)._id
+        : displaySlot.vehicleTypeId;
+    const hasInfoChange =
+      editCode.trim().toUpperCase() !== displaySlot.code || editVtId !== currentVtId;
 
     if (!hasStatusChange && !hasInfoChange) {
       setIsEditing(false);
@@ -389,7 +505,10 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
         await slotService.updateStatus(slot._id, { status: editStatus as SlotStatus });
       }
       if (hasInfoChange) {
-        await slotService.update(slot._id, { code: editCode.trim().toUpperCase(), vehicleTypeId: editVtId });
+        await slotService.update(slot._id, {
+          code: editCode.trim().toUpperCase(),
+          vehicleTypeId: editVtId,
+        });
       }
 
       toast.success('Cập nhật thành công');
@@ -398,7 +517,9 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
       loadFreshSlot(slot._id);
     } catch (e: any) {
       toast.error(e.message || 'Cập nhật thất bại');
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleConfirmDelete = async () => {
@@ -435,7 +556,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 16 }}
           transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-          onClick={e => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
           className="w-full max-w-[500px] bg-white rounded-[32px] shadow-[0_24px_64px_rgba(0,0,0,0.18)] flex flex-col overflow-hidden max-h-[95vh]"
         >
           {/* ═══ HEADER (FIXED) ═══ */}
@@ -445,7 +566,9 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                 {isEditing ? 'Chỉnh Sửa Vị Trí' : 'Chi Tiết Vị Trí Đỗ Xe'}
               </h3>
               <p className="text-[13px] text-gray-500 mt-0.5">
-                {isEditing ? 'Cập nhật thông tin và trạng thái' : 'Thông tin chi tiết về vị trí đỗ xe'}
+                {isEditing
+                  ? 'Cập nhật thông tin và trạng thái'
+                  : 'Thông tin chi tiết về vị trí đỗ xe'}
               </p>
             </div>
             <div className="flex items-center gap-1 -mt-1 -mr-2">
@@ -480,7 +603,9 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
             {isEditing ? (
               <div className="p-7 flex flex-col gap-5">
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2">Mã vị trí</label>
+                  <label className="block text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2">
+                    Mã vị trí
+                  </label>
                   <input
                     type="text"
                     value={editCode}
@@ -490,21 +615,28 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2">Loại xe</label>
+                  <label className="block text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2">
+                    Loại xe
+                  </label>
                   <CustomSelect
                     value={editVtId}
                     onChange={setEditVtId}
                     options={vehicleTypes
-                      .filter(vt => allowedVtIds.length === 0 || allowedVtIds.includes(vt._id))
-                      .map(vt => ({ value: vt._id, label: vt.name }))}
+                      .filter((vt) => allowedVtIds.length === 0 || allowedVtIds.includes(vt._id))
+                      .map((vt) => ({ value: vt._id, label: vt.name }))}
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2">Trạng thái</label>
+                  <label className="block text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2">
+                    Trạng thái
+                  </label>
                   <CustomSelect
                     value={editStatus}
                     onChange={(v) => setEditStatus(v as SlotStatus)}
-                    options={[displaySlot.status, ...nexts].map(s => ({ value: s, label: STATUS_CFG[s].label }))}
+                    options={[displaySlot.status, ...nexts].map((s) => ({
+                      value: s,
+                      label: STATUS_CFG[s].label,
+                    }))}
                     placement="top"
                   />
                 </div>
@@ -514,196 +646,205 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                 <div className="p-7 pb-6 bg-white shrink-0">
                   {/* Slot Position, Status, Floor */}
                   <div className="mb-6">
-              {/* Row 1: Title & Status */}
-              <div className="flex items-center justify-between mb-2.5">
-                <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest pl-1">
-                  Vị trí đỗ xe
-                </p>
-                <span
-                  className="flex items-center gap-1.5 text-[12px] font-bold px-3 py-1 rounded-xl border"
-                  style={{ color: curCfg.color, background: curCfg.bg, borderColor: curCfg.border }}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: curCfg.dot }} />
-                  {curCfg.label}
-                </span>
-              </div>
-
-              {/* Row 2: Box & Floor */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center min-w-[72px] h-[72px] px-3 bg-[#f4f7ed] border-[1.5px] border-[#d4e0c4] rounded-[18px] shadow-sm">
-                  <h2 className="text-[28px] font-black text-[#4a7c20] tracking-tight leading-none">
-                    {displaySlot.code}
-                  </h2>
-                </div>
-
-                <div>
-                  {fetchingNames ? (
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-3.5 h-3.5 bg-gray-200 rounded-sm animate-pulse" />
-                        <div className="h-4 w-20 rounded bg-gray-200 animate-pulse" />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-3.5 h-3.5 bg-gray-200 rounded-sm animate-pulse" />
-                        <div className="h-4 w-16 rounded bg-gray-200 animate-pulse" />
-                      </div>
-                    </div>
-                  ) : (facilityName || floorName) ? (
-                    <div className="flex flex-col gap-1.5 text-[14px] font-medium text-gray-500">
-                      {facilityName && (
-                        <span className="inline-flex items-center gap-1.5">
-                          <MapPin size={16} className="text-gray-400" /> {facilityName}
-                        </span>
-                      )}
-                      {floorName && (
-                        <span className="inline-flex items-center gap-1.5">
-                          <Layers size={16} className="text-gray-400" /> Tầng: {floorName}
-                        </span>
-                      )}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
-            {/* Vehicle Types (Image 2 style) */}
-            <div className="mb-6">
-              <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-3">
-                Các loại xe cho phép
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#f4f7ed] border border-[#d4e0c4] rounded-lg text-[#4a7c20]">
-                  <VtIcon size={16} strokeWidth={2.5} />
-                  <span className="text-[13px] font-bold">{vtNameStr}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Status Switcher (Grid) */}
-            {nexts.length > 0 && (
-              <div className="mb-6">
-                <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-3">Cập nhật trạng thái</p>
-                <div className="flex gap-3">
-                  {nexts.map(s => {
-                    const cfg = STATUS_CFG[s];
-                    const isSelected = selected === s;
-                    
-                    let hoverClass = 'hover:border-gray-200 hover:bg-gray-50';
-                    let selectedClass = 'border-[#060606] bg-[#060606] text-white';
-
-                    if (s === 'available') {
-                      hoverClass = 'hover:border-emerald-300 hover:bg-emerald-50';
-                      selectedClass = 'border-emerald-500 bg-emerald-50 text-emerald-700';
-                    }
-                    if (s === 'maintenance') {
-                      hoverClass = 'hover:border-amber-300 hover:bg-amber-50';
-                      selectedClass = 'border-amber-500 bg-amber-50 text-amber-700';
-                    }
-                    if (s === 'locked') {
-                      hoverClass = 'hover:border-rose-300 hover:bg-rose-50';
-                      selectedClass = 'border-rose-500 bg-rose-50 text-rose-700';
-                    }
-
-                    return (
-                      <button
-                        key={s}
-                        onClick={() => setSelected(isSelected ? '' : s)}
-                        className={`flex-1 relative flex flex-col items-center justify-center py-3 rounded-[14px] border-[3px] transition-all ${
-                          isSelected
-                            ? `${selectedClass} scale-[1.02] shadow-sm`
-                            : `border-gray-100 bg-white ${hoverClass}`
-                        }`}
-                    >
-                      <span className={`text-[14px] font-bold ${isSelected ? '' : 'text-gray-600'}`}>
-                        {cfg.label}
+                    {/* Row 1: Title & Status */}
+                    <div className="flex items-center justify-between mb-2.5">
+                      <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest pl-1">
+                        Vị trí đỗ xe
+                      </p>
+                      <span
+                        className="flex items-center gap-1.5 text-[12px] font-bold px-3 py-1 rounded-xl border"
+                        style={{
+                          color: curCfg.color,
+                          background: curCfg.bg,
+                          borderColor: curCfg.border,
+                        }}
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ background: curCfg.dot }}
+                        />
+                        {curCfg.label}
                       </span>
-                    </button>
-                  );
-                  })}
-                </div>
-              </div>
-            )}
+                    </div>
 
-              {/* Submit Button (Animated presence) */}
-              <AnimatePresence>
-                {selected && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                    animate={{ height: 'auto', opacity: 1, marginTop: 16 }}
-                    exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                    className="overflow-hidden flex flex-col gap-3 p-1 -m-1"
-                  >
-                    <button
-                      disabled={loading}
-                      onClick={handleSubmit}
-                      className="w-full h-[52px] bg-[#d7ee46] text-[#060606] font-extrabold text-sm rounded-[16px] shadow-sm hover:bg-[#cfe63e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-                    >
-                      {loading && <Loader2 size={16} className="animate-spin" />}
-                      Cập nhật trạng thái
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-          </div> {/* End of Top Section */}
+                    {/* Row 2: Box & Floor */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center min-w-[72px] h-[72px] px-3 bg-[#f4f7ed] border-[1.5px] border-[#d4e0c4] rounded-[18px] shadow-sm">
+                        <h2 className="text-[28px] font-black text-[#4a7c20] tracking-tight leading-none">
+                          {displaySlot.code}
+                        </h2>
+                      </div>
 
-          {/* ═══ CURRENT SESSION ═══ */}
-          <div className="bg-[#fafafa] flex-1 min-h-[300px]">
-            {fetchingSlot ? (
-              <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400 p-8">
-                <Loader2 className="animate-spin" size={24} />
-                <p className="text-[13px] font-medium">Đang tải chi tiết...</p>
-              </div>
-            ) : session ? (
-              <div className="p-7">
-                <SessionInfo session={session} />
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center px-8 text-gray-400 p-8 pt-16 pb-16">
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                  <Car size={24} className="text-gray-300" />
+                      <div>
+                        {fetchingNames ? (
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-3.5 h-3.5 bg-gray-200 rounded-sm animate-pulse" />
+                              <div className="h-4 w-20 rounded bg-gray-200 animate-pulse" />
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-3.5 h-3.5 bg-gray-200 rounded-sm animate-pulse" />
+                              <div className="h-4 w-16 rounded bg-gray-200 animate-pulse" />
+                            </div>
+                          </div>
+                        ) : facilityName || floorName ? (
+                          <div className="flex flex-col gap-1.5 text-[14px] font-medium text-gray-500">
+                            {facilityName && (
+                              <span className="inline-flex items-center gap-1.5">
+                                <MapPin size={16} className="text-gray-400" /> {facilityName}
+                              </span>
+                            )}
+                            {floorName && (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Layers size={16} className="text-gray-400" /> Tầng: {floorName}
+                              </span>
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vehicle Types (Image 2 style) */}
+                  <div className="mb-6">
+                    <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-3">
+                      Các loại xe cho phép
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#f4f7ed] border border-[#d4e0c4] rounded-lg text-[#4a7c20]">
+                        <VtIcon size={16} strokeWidth={2.5} />
+                        <span className="text-[13px] font-bold">{vtNameStr}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status Switcher (Grid) */}
+                  {nexts.length > 0 && (
+                    <div className="mb-6">
+                      <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-3">
+                        Cập nhật trạng thái
+                      </p>
+                      <div className="flex gap-3">
+                        {nexts.map((s) => {
+                          const cfg = STATUS_CFG[s];
+                          const isSelected = selected === s;
+
+                          let hoverClass = 'hover:border-gray-200 hover:bg-gray-50';
+                          let selectedClass = 'border-[#060606] bg-[#060606] text-white';
+
+                          if (s === 'available') {
+                            hoverClass = 'hover:border-emerald-300 hover:bg-emerald-50';
+                            selectedClass = 'border-emerald-500 bg-emerald-50 text-emerald-700';
+                          }
+                          if (s === 'maintenance') {
+                            hoverClass = 'hover:border-amber-300 hover:bg-amber-50';
+                            selectedClass = 'border-amber-500 bg-amber-50 text-amber-700';
+                          }
+                          if (s === 'locked') {
+                            hoverClass = 'hover:border-rose-300 hover:bg-rose-50';
+                            selectedClass = 'border-rose-500 bg-rose-50 text-rose-700';
+                          }
+
+                          return (
+                            <button
+                              key={s}
+                              onClick={() => setSelected(isSelected ? '' : s)}
+                              className={`flex-1 relative flex flex-col items-center justify-center py-3 rounded-[14px] border-[3px] transition-all ${
+                                isSelected
+                                  ? `${selectedClass} scale-[1.02] shadow-sm`
+                                  : `border-gray-100 bg-white ${hoverClass}`
+                              }`}
+                            >
+                              <span
+                                className={`text-[14px] font-bold ${isSelected ? '' : 'text-gray-600'}`}
+                              >
+                                {cfg.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Submit Button (Animated presence) */}
+                  <AnimatePresence>
+                    {selected && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                        animate={{ height: 'auto', opacity: 1, marginTop: 16 }}
+                        exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                        className="overflow-hidden flex flex-col gap-3 p-1 -m-1"
+                      >
+                        <button
+                          disabled={loading}
+                          onClick={handleSubmit}
+                          className="w-full h-[52px] bg-[#d7ee46] text-[#060606] font-extrabold text-sm rounded-[16px] shadow-sm hover:bg-[#cfe63e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                        >
+                          {loading && <Loader2 size={16} className="animate-spin" />}
+                          Cập nhật trạng thái
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>{' '}
+                {/* End of Top Section */}
+                {/* ═══ CURRENT SESSION ═══ */}
+                <div className="bg-[#fafafa] flex-1 min-h-[300px]">
+                  {fetchingSlot ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400 p-8">
+                      <Loader2 className="animate-spin" size={24} />
+                      <p className="text-[13px] font-medium">Đang tải chi tiết...</p>
+                    </div>
+                  ) : session ? (
+                    <div className="p-7">
+                      <SessionInfo session={session} />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-center px-8 text-gray-400 p-8 pt-16 pb-16">
+                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                        <Car size={24} className="text-gray-300" />
+                      </div>
+                      <p className="text-[14px] font-medium text-gray-500 mb-1">
+                        Vị trí đang trống
+                      </p>
+                      <p className="text-[13px]">Chưa có xe nào đang đỗ tại đây.</p>
+                    </div>
+                  )}
                 </div>
-                <p className="text-[14px] font-medium text-gray-500 mb-1">
-                  Vị trí đang trống
-                </p>
-                <p className="text-[13px]">
-                  Chưa có xe nào đang đỗ tại đây.
-                </p>
               </div>
             )}
           </div>
-        </div>
-      )}
-      </div>
 
-        {/* ═══ FOOTER ═══ */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
-          {isEditing ? (
-            <>
+          {/* ═══ FOOTER ═══ */}
+          <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
+            {isEditing ? (
+              <>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  disabled={loading}
+                  className="h-10 px-6 rounded-xl font-semibold text-sm bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors disabled:opacity-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={loading}
+                  className="h-10 px-6 rounded-xl font-bold text-sm bg-[#d7ee46] text-[#060606] hover:bg-[#cfe63e] shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading && <Loader2 size={16} className="animate-spin" />}
+                  Lưu Thay Đổi
+                </button>
+              </>
+            ) : (
               <button
-                onClick={() => setIsEditing(false)}
-                disabled={loading}
-                className="h-10 px-6 rounded-xl font-semibold text-sm bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors disabled:opacity-50"
+                onClick={onClose}
+                className="h-10 px-6 rounded-xl font-bold text-sm bg-gray-200 text-gray-700 hover:bg-[#d7ee46] hover:text-[#060606] transition-colors"
               >
-                Hủy
+                Đóng
               </button>
-              <button
-                onClick={handleSaveEdit}
-                disabled={loading}
-                className="h-10 px-6 rounded-xl font-bold text-sm bg-[#d7ee46] text-[#060606] hover:bg-[#cfe63e] shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loading && <Loader2 size={16} className="animate-spin" />}
-                Lưu Thay Đổi
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={onClose}
-              className="h-10 px-6 rounded-xl font-bold text-sm bg-gray-200 text-gray-700 hover:bg-[#d7ee46] hover:text-[#060606] transition-colors"
-            >
-              Đóng
-            </button>
-          )}
-        </div>
+            )}
+          </div>
         </motion.div>
       </motion.div>
 

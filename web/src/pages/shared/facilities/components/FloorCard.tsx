@@ -2,8 +2,15 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  Loader2, MoreVertical,
-  PowerOff, CheckCircle, Trash2, Pencil, Map, Plus, Layers
+  Loader2,
+  MoreVertical,
+  PowerOff,
+  CheckCircle,
+  Trash2,
+  Pencil,
+  Map,
+  Plus,
+  Layers,
 } from 'lucide-react';
 import { floorService, Floor } from '../../../../services/floor.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
@@ -12,10 +19,10 @@ import { ConfirmModal } from '../../../../components/ConfirmModal';
 // ── Types ───────────────────────────────────────────────────────────────────
 
 export interface FloorSlotStats {
-  total: number;       // totalSlots from Floor model
-  occupied: number;    // slots with status 'occupied'
-  reserved: number;    // slots with status 'reserved'
-  fillRate: number;    // percentage
+  total: number; // totalSlots from Floor model
+  occupied: number; // slots with status 'occupied'
+  reserved: number; // slots with status 'reserved'
+  fillRate: number; // percentage
 }
 
 interface FloorCardProps {
@@ -40,7 +47,7 @@ interface FloorGridProps {
   onViewFloor: (floor: Floor) => void;
   onUpdate: (updated: Floor) => void;
   onRemove: (id: string) => void;
-  onRefresh: () => void;   // only needed for create/edit
+  onRefresh: () => void; // only needed for create/edit
   onViewMap: (floor: Floor) => void;
   isFacilityActive?: boolean;
 }
@@ -106,9 +113,11 @@ export const FloorCard = React.memo(function FloorCard({
       const reserved = slotStats?.reserved ?? 0;
 
       if (occupied > 0 || reserved > 0) {
-        toast.error(confirmAction === 'delete'
-          ? 'Không thể xóa tầng vì đang có slot đang dùng hoặc đã đặt trước.'
-          : 'Không thể thay đổi trạng thái vì đang có slot đang dùng hoặc đã đặt trước.');
+        toast.error(
+          confirmAction === 'delete'
+            ? 'Không thể xóa tầng vì đang có slot đang dùng hoặc đã đặt trước.'
+            : 'Không thể thay đổi trạng thái vì đang có slot đang dùng hoặc đã đặt trước.'
+        );
         setConfirmAction(null);
         setLoading(false);
         return;
@@ -181,9 +190,10 @@ export const FloorCard = React.memo(function FloorCard({
         boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.06)',
         transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
         transition: 'all 0.2s ease',
-        display: 'flex', flexDirection: 'column',
+        display: 'flex',
+        flexDirection: 'column',
         overflow: 'hidden',
-        cursor: 'pointer'
+        cursor: 'pointer',
       }}
       className={!isActive ? 'opacity-70' : ''}
       onClick={() => onView(floor)}
@@ -192,7 +202,18 @@ export const FloorCard = React.memo(function FloorCard({
       <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-3 relative">
         <div className="flex gap-3 min-w-0">
           {/* Icon */}
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(204,226,66,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 12,
+              background: 'rgba(204,226,66,0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
             <Layers size={24} style={{ color: '#4a7c20' }} />
           </div>
           {/* Text */}
@@ -211,23 +232,42 @@ export const FloorCard = React.memo(function FloorCard({
               `}</style>
               {vtNames.length === 0 ? (
                 <span className="text-[13px] text-gray-400 italic">Không có loại xe</span>
-              ) : vtNames.map(name => (
-                <span
-                  key={name}
-                  className="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium"
-                  style={{ background: '#EAF3DE', color: '#27500A' }}
-                >
-                  {name}
-                </span>
-              ))}
+              ) : (
+                vtNames.map((name) => (
+                  <span
+                    key={name}
+                    className="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium"
+                    style={{ background: '#EAF3DE', color: '#27500A' }}
+                  >
+                    {name}
+                  </span>
+                ))
+              )}
             </div>
           </div>
         </div>
 
         {/* Badge & Action Menu */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 5, ...badgeStyle }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#10b981' : '#9b9e9b' }} />
+          <span
+            style={{
+              fontSize: 10,
+              padding: '3px 10px',
+              borderRadius: 20,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              ...badgeStyle,
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: isActive ? '#10b981' : '#9b9e9b',
+              }}
+            />
             {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
           </span>
 
@@ -235,72 +275,85 @@ export const FloorCard = React.memo(function FloorCard({
           {isFacilityActive && (
             <div className="relative -mr-2" onClick={(e) => e.stopPropagation()}>
               {loading ? (
-              <div className="w-7 h-7 flex items-center justify-center">
-                <Loader2 size={14} className="animate-spin text-gray-400" />
-              </div>
-            ) : (
-              <button
-                onClick={(e) => { e.stopPropagation(); setMenuOpen(v => !v); }}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <MoreVertical size={16} />
-              </button>
-            )}
-            <AnimatePresence>
-              {menuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -6 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -6 }}
-                  transition={{ duration: 0.12 }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="absolute right-0 top-8 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-20"
+                <div className="w-7 h-7 flex items-center justify-center">
+                  <Loader2 size={14} className="animate-spin text-gray-400" />
+                </div>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen((v) => !v);
+                  }}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <div className="fixed inset-0 z-[-1]" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); }} />
-                  {isActive && (
-                    <>
+                  <MoreVertical size={16} />
+                </button>
+              )}
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -6 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -6 }}
+                    transition={{ duration: 0.12 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-0 top-8 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-20"
+                  >
+                    <div
+                      className="fixed inset-0 z-[-1]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpen(false);
+                      }}
+                    />
+                    {isActive && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(floor);
+                            setMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <Pencil size={14} /> Chỉnh sửa
+                        </button>
+                        <div className="h-px bg-gray-100 mx-2 my-1" />
+                      </>
+                    )}
+                    {isActive ? (
                       <button
-                        onClick={(e) => { e.stopPropagation(); onEdit(floor); setMenuOpen(false); }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setConfirmAction('deactivate');
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2"
                       >
-                        <Pencil size={14} /> Chỉnh sửa
+                        <PowerOff size={14} /> Vô hiệu hóa
                       </button>
-                      <div className="h-px bg-gray-100 mx-2 my-1" />
-                    </>
-                  )}
-                  {isActive ? (
+                    ) : (
+                      <button
+                        onClick={handleReactivate}
+                        className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2"
+                        style={{ color: '#27500A' }}
+                      >
+                        <CheckCircle size={14} /> Kích hoạt lại
+                      </button>
+                    )}
+                    <div className="h-px bg-gray-100 mx-2 my-1" />
                     <button
                       onClick={() => {
                         setMenuOpen(false);
-                        setConfirmAction('deactivate');
+                        setConfirmAction('delete');
                       }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2"
+                      className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                     >
-                      <PowerOff size={14} /> Vô hiệu hóa
+                      <Trash2 size={14} /> Xóa tầng
                     </button>
-                  ) : (
-                    <button
-                      onClick={handleReactivate}
-                      className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2"
-                      style={{ color: '#27500A' }}
-                    >
-                      <CheckCircle size={14} /> Kích hoạt lại
-                    </button>
-                  )}
-                  <div className="h-px bg-gray-100 mx-2 my-1" />
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setConfirmAction('delete');
-                    }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                  >
-                    <Trash2 size={14} /> Xóa tầng
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           )}
         </div>
       </div>
@@ -308,16 +361,28 @@ export const FloorCard = React.memo(function FloorCard({
       {/* Stats grid */}
       <div className="px-5 pb-3 mt-1">
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}>
-            <div className="text-[17px] tabular-nums font-semibold" style={{ color: '#060606' }}>{total}</div>
+          <div
+            style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}
+          >
+            <div className="text-[17px] tabular-nums font-semibold" style={{ color: '#060606' }}>
+              {total}
+            </div>
             <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Tổng slot</div>
           </div>
-          <div style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}>
-            <div className="text-[17px] tabular-nums font-semibold" style={{ color: '#060606' }}>{occupied}</div>
+          <div
+            style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}
+          >
+            <div className="text-[17px] tabular-nums font-semibold" style={{ color: '#060606' }}>
+              {occupied}
+            </div>
             <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Đang dùng</div>
           </div>
-          <div style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}>
-            <div className="text-[17px] tabular-nums font-semibold" style={{ color: fillColor }}>{fillRate}%</div>
+          <div
+            style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}
+          >
+            <div className="text-[17px] tabular-nums font-semibold" style={{ color: fillColor }}>
+              {fillRate}%
+            </div>
             <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Lấp đầy</div>
           </div>
         </div>
@@ -325,9 +390,14 @@ export const FloorCard = React.memo(function FloorCard({
 
       {/* Occupancy bar */}
       <div className="px-5 pb-4">
-        <div className="flex items-center justify-between mb-1.5" style={{ fontSize: 12, color: '#9b9e9b' }}>
+        <div
+          className="flex items-center justify-between mb-1.5"
+          style={{ fontSize: 12, color: '#9b9e9b' }}
+        >
           <span>Tỷ lệ lấp đầy</span>
-          <span style={{ color: '#6b6e6b' }}>{new Date(floor.createdAt).toLocaleDateString('vi-VN')}</span>
+          <span style={{ color: '#6b6e6b' }}>
+            {new Date(floor.createdAt).toLocaleDateString('vi-VN')}
+          </span>
         </div>
         <div style={{ background: '#eff0ef', height: 6, borderRadius: 999, overflow: 'hidden' }}>
           <motion.div
@@ -342,16 +412,24 @@ export const FloorCard = React.memo(function FloorCard({
       {/* Footer */}
       <div className="px-5 py-3 mt-auto" style={{ borderTop: '1px solid #f0f1f0' }}>
         <button
-          onClick={(e) => { e.stopPropagation(); onViewMap(floor); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewMap(floor);
+          }}
           style={{
-            width: '100%', padding: '10px 20px', borderRadius: 10,
+            width: '100%',
+            padding: '10px 20px',
+            borderRadius: 10,
             border: hovered ? '1.5px solid #cce242' : '1.5px solid #c8d4b8',
             background: hovered ? '#cce242' : 'white',
             color: '#060606',
             fontWeight: hovered ? 600 : 500,
             fontSize: 14,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            transition: 'all 0.2s ease'
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            transition: 'all 0.2s ease',
           }}
         >
           <Map size={14} /> Sơ đồ tầng
@@ -415,7 +493,9 @@ export function FloorGrid({
         <div className="text-center">
           <p className="text-sm font-semibold text-[#060606]">Không có tầng nào trong cơ sở này</p>
           {isFacilityActive && (
-            <p className="text-xs text-gray-400 mt-1">Thêm tầng đầu tiên để bắt đầu quản lý chỗ đỗ xe</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Thêm tầng đầu tiên để bắt đầu quản lý chỗ đỗ xe
+            </p>
           )}
         </div>
         {isFacilityActive && (
