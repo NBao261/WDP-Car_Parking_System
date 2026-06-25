@@ -197,8 +197,9 @@ export default function ManagerDashboard() {
     ? revenueData.summary.grandTotal.toLocaleString('vi-VN') + 'đ'
     : '--';
   const occupancyRate = occupancyData ? occupancyData.summary.overallOccupancyRate + '%' : '--';
-  const currentlyParked = trafficData
-    ? Math.max(0, trafficData.summary.currentlyParked).toLocaleString('vi-VN')
+  // Lấy số xe đang đỗ thực tế từ occupancy (real-time) thay vì ước tính từ traffic
+  const currentlyParked = occupancyData
+    ? occupancyData.summary.totalOccupied.toLocaleString('vi-VN')
     : '--';
 
   /* ── Render ── */
@@ -250,7 +251,7 @@ export default function ManagerDashboard() {
         {/* ── Quick Stats Row ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard
-            label="Lượt xe"
+            label="Lượt ra/vào"
             value={totalTraffic}
             icon={<Car size={22} className="text-[#060606]" />}
             iconBg="bg-[#d7ee46]"
