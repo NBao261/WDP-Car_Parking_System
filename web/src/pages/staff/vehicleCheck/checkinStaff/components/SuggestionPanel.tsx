@@ -1,4 +1,4 @@
-import { MapPin, RefreshCw } from "lucide-react";
+import { MapPin, RefreshCw } from 'lucide-react';
 
 interface SuggestionPanelProps {
   suggestedFloors: any[];
@@ -11,7 +11,7 @@ export default function SuggestionPanel({
   suggestedFloors,
   loading,
   onSelectFloor,
-  onCancel
+  onCancel,
 }: SuggestionPanelProps) {
   return (
     <div className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -20,7 +20,9 @@ export default function SuggestionPanel({
           <MapPin className="w-4 h-4 text-[#d7ee46] fill-[#d7ee46]" />
           Các khu vực được đề xuất
         </h3>
-        <button onClick={onCancel} className="text-xs text-blue-600 hover:underline">Cancel</button>
+        <button onClick={onCancel} className="text-xs text-blue-600 hover:underline">
+          Cancel
+        </button>
       </div>
 
       {suggestedFloors.length > 0 ? (
@@ -30,23 +32,30 @@ export default function SuggestionPanel({
               key={floor.floorId}
               onClick={() => onSelectFloor(floor.floorId)}
               disabled={loading}
-              className={`flex flex-col items-start p-3 border-2 rounded-xl text-left transition-all relative overflow-hidden ${idx === 0
-                ? "border-[#d7ee46] bg-[#fcfee8] hover:bg-[#f4faaf]"
-                : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                }`}
+              className={`flex flex-col items-start p-3 border-2 rounded-xl text-left transition-all relative overflow-hidden ${
+                idx === 0
+                  ? 'border-[#d7ee46] bg-[#fcfee8] hover:bg-[#f4faaf]'
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+              }`}
             >
               {idx === 0 && (
                 <div className="absolute top-0 right-0 bg-[#d7ee46] text-[#060606] text-[9px] font-bold px-2 py-0.5 rounded-bl-lg">
                   ĐỀ XUẤT
                 </div>
               )}
-              <span className="font-bold text-sm text-[#060606] mb-1 truncate w-full pr-8">{floor.floorName}</span>
-              <span className="text-xs font-semibold text-gray-500">Khả dụng: {floor.availableSlots} / {floor.totalSlots} slots</span>
+              <span className="font-bold text-sm text-[#060606] mb-1 truncate w-full pr-8">
+                {floor.floorName}
+              </span>
+              <span className="text-xs font-semibold text-gray-500">
+                Khả dụng: {floor.availableSlots} / {floor.totalSlots} slots
+              </span>
             </button>
           ))}
         </div>
       ) : (
-        <div className="text-sm text-gray-500 italic p-4 text-center border rounded-xl">Không có khu vực nào trống.</div>
+        <div className="text-sm text-gray-500 italic p-4 text-center border rounded-xl">
+          Không có khu vực nào trống.
+        </div>
       )}
 
       {loading && (

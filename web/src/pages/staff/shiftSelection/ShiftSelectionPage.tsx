@@ -1,7 +1,7 @@
-import { useNavigate } from "react-router-dom";
-import { Building2 } from "lucide-react";
-import { useState } from "react";
-import { useAuthStore } from "../../../store";
+import { useNavigate } from 'react-router-dom';
+import { Building2 } from 'lucide-react';
+import { useState } from 'react';
+import { useAuthStore } from '../../../store';
 
 export default function ShiftSelectionPage() {
   const navigate = useNavigate();
@@ -10,22 +10,20 @@ export default function ShiftSelectionPage() {
   const assignedFacilities = (user?.assignedFacilities || []) as any[];
 
   const [selectedFacilityId, setSelectedFacilityId] = useState(
-    assignedFacilities.length > 0 ? assignedFacilities[0]._id : ""
+    assignedFacilities.length > 0 ? assignedFacilities[0]._id : ''
   );
 
   const handleStartShift = () => {
     if (!selectedFacilityId) return;
 
-    const facility = assignedFacilities.find(
-      (f: any) => f._id === selectedFacilityId
-    );
-    const facilityName = facility?.name || "";
+    const facility = assignedFacilities.find((f: any) => f._id === selectedFacilityId);
+    const facilityName = facility?.name || '';
 
-    sessionStorage.setItem("staff_facility_id", selectedFacilityId);
-    sessionStorage.setItem("staff_facility_name", facilityName);
-    sessionStorage.setItem("staff_gate_name", `Cổng - ${facilityName}`);
+    sessionStorage.setItem('staff_facility_id', selectedFacilityId);
+    sessionStorage.setItem('staff_facility_name', facilityName);
+    sessionStorage.setItem('staff_gate_name', `Cổng - ${facilityName}`);
 
-    navigate("/staff");
+    navigate('/staff');
   };
 
   return (
@@ -47,9 +45,7 @@ export default function ShiftSelectionPage() {
 
         <div className="pt-4 border-t border-[#e8e9e8]">
           {/* Building */}
-          <label className="block text-sm font-medium mb-1.5">
-            Toà nhà (Building)
-          </label>
+          <label className="block text-sm font-medium mb-1.5">Toà nhà (Building)</label>
           <div className="relative">
             <select
               value={selectedFacilityId}
@@ -81,7 +77,7 @@ export default function ShiftSelectionPage() {
           <button
             onClick={() => {
               logout();
-              navigate("/login");
+              navigate('/login');
             }}
             className="flex-1 h-11 border border-[#e8e9e8] rounded-[8px] text-[#060606] font-medium hover:bg-gray-50 transition-colors"
           >

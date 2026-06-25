@@ -1,6 +1,6 @@
-import { Search, Loader2, ShieldAlert } from "lucide-react";
-import { ExceptionStatus } from "../../../../services/exception.service";
-import { useState, useEffect } from "react";
+import { Search, Loader2, ShieldAlert } from 'lucide-react';
+import { ExceptionStatus } from '../../../../services/exception.service';
+import { useState, useEffect } from 'react';
 
 export interface ExceptionData {
   id: string;
@@ -10,7 +10,7 @@ export interface ExceptionData {
   type: string;
   typeEnum: string;
   time: string;
-  status: "NEW" | "PROCESSING" | "RESOLVED" | "REJECTED";
+  status: 'NEW' | 'PROCESSING' | 'RESOLVED' | 'REJECTED';
   staffName: string;
   resolvedByStaffName: string | null;
   staffNote: string;
@@ -43,16 +43,36 @@ interface ExceptionsListProps {
 }
 
 const STATUS_BADGE: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  RESOLVED:   { bg: "bg-[#9FE870]/10",   text: "text-[#2d6a1f]",  border: "border-[#9FE870]/50",  label: "Đã xử lý" },
-  NEW:        { bg: "bg-[#fef3c7]",     text: "text-[#92400e]",  border: "border-[#fcd34d]/60",  label: "Chờ xử lý" },
-  PROCESSING: { bg: "bg-[#dbeafe]",     text: "text-[#1e40af]",  border: "border-[#93c5fd]/60",  label: "Đang xử lý" },
-  REJECTED:   { bg: "bg-[#fee2e2]",     text: "text-[#991b1b]",  border: "border-[#fca5a5]/60",  label: "Từ chối" },
+  RESOLVED: {
+    bg: 'bg-[#9FE870]/10',
+    text: 'text-[#2d6a1f]',
+    border: 'border-[#9FE870]/50',
+    label: 'Đã xử lý',
+  },
+  NEW: {
+    bg: 'bg-[#fef3c7]',
+    text: 'text-[#92400e]',
+    border: 'border-[#fcd34d]/60',
+    label: 'Chờ xử lý',
+  },
+  PROCESSING: {
+    bg: 'bg-[#dbeafe]',
+    text: 'text-[#1e40af]',
+    border: 'border-[#93c5fd]/60',
+    label: 'Đang xử lý',
+  },
+  REJECTED: {
+    bg: 'bg-[#fee2e2]',
+    text: 'text-[#991b1b]',
+    border: 'border-[#fca5a5]/60',
+    label: 'Từ chối',
+  },
 };
 
 const TYPE_BADGE: Record<string, { bg: string; text: string; border: string }> = {
-  lost_card: { bg: "bg-[#fee2e2]", text: "text-[#991b1b]", border: "border-[#fca5a5]/60" },
-  overtime:  { bg: "bg-[#fef3c7]", text: "text-[#92400e]", border: "border-[#fcd34d]/60" },
-  default:   { bg: "bg-[#f5f5f5]", text: "text-[#6b6b6b]", border: "border-[#e5e5e5]" },
+  lost_card: { bg: 'bg-[#fee2e2]', text: 'text-[#991b1b]', border: 'border-[#fca5a5]/60' },
+  overtime: { bg: 'bg-[#fef3c7]', text: 'text-[#92400e]', border: 'border-[#fcd34d]/60' },
+  default: { bg: 'bg-[#f5f5f5]', text: 'text-[#6b6b6b]', border: 'border-[#e5e5e5]' },
 };
 
 export default function ExceptionsList({
@@ -73,7 +93,10 @@ export default function ExceptionsList({
   }, [searchQuery, filterStatus]);
 
   const totalPages = Math.ceil(exceptionsList.length / itemsPerPage) || 1;
-  const currentData = exceptionsList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const currentData = exceptionsList.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <>
@@ -134,7 +157,9 @@ export default function ExceptionsList({
                 <td colSpan={9} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center justify-center text-[#6b6b6b]">
                     <ShieldAlert className="w-12 h-12 text-gray-300 mb-3" strokeWidth={1.5} />
-                    <span className="text-sm font-medium">Danh sách báo cáo ngoại lệ đang trống.</span>
+                    <span className="text-sm font-medium">
+                      Danh sách báo cáo ngoại lệ đang trống.
+                    </span>
                   </div>
                 </td>
               </tr>
@@ -146,16 +171,24 @@ export default function ExceptionsList({
 
                 return (
                   <tr key={exc.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 text-[13px] text-[#6b6b6b] text-center font-medium">{stt}</td>
+                    <td className="px-4 py-4 text-[13px] text-[#6b6b6b] text-center font-medium">
+                      {stt}
+                    </td>
                     <td className="px-4 py-4">
-                      <div className="font-mono text-[#060606] text-[12px] truncate">{exc.code}</div>
-                      <div className="text-[11px] text-[#6b6b6b] truncate mt-0.5">{exc.cardCode}</div>
+                      <div className="font-mono text-[#060606] text-[12px] truncate">
+                        {exc.code}
+                      </div>
+                      <div className="text-[11px] text-[#6b6b6b] truncate mt-0.5">
+                        {exc.cardCode}
+                      </div>
                     </td>
                     <td className="px-4 py-4 font-mono font-bold text-[14px] text-[#060606]">
                       {exc.plate}
                     </td>
                     <td className="px-4 py-4 text-[12px]">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${typeBadge.bg} ${typeBadge.text} ${typeBadge.border} whitespace-nowrap`}>
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${typeBadge.bg} ${typeBadge.text} ${typeBadge.border} whitespace-nowrap`}
+                      >
                         {exc.type}
                       </span>
                     </td>
@@ -164,7 +197,7 @@ export default function ExceptionsList({
                     </td>
                     <td className="px-4 py-4 text-[12px] text-[#6b6b6b]">{exc.time}</td>
                     <td className="px-4 py-4 text-[13px] font-medium text-[#060606]">
-                      {exc.surcharge > 0 ? `${exc.surcharge.toLocaleString("vi-VN")} VNĐ` : "—"}
+                      {exc.surcharge > 0 ? `${exc.surcharge.toLocaleString('vi-VN')} VNĐ` : '—'}
                     </td>
                     <td className="px-4 py-4">
                       <span
@@ -175,7 +208,10 @@ export default function ExceptionsList({
                     </td>
                     <td className="px-4 py-4 flex items-center justify-center">
                       <button
-                        onClick={(e) => { e.stopPropagation(); onSelectException(exc); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectException(exc);
+                        }}
                         className="px-3 py-1.5 bg-white border border-[#d7ee46] text-[#060606] font-medium rounded-lg hover:bg-[#d7ee46]/10 transition-all text-[12px] shadow-sm whitespace-nowrap"
                       >
                         Chi tiết
@@ -193,12 +229,14 @@ export default function ExceptionsList({
       {exceptionsList.length > 0 && (
         <div className="p-4 flex items-center justify-between">
           <div className="text-sm text-gray-500">
-            Hiển thị {(currentPage - 1) * itemsPerPage + 1} đến {Math.min(currentPage * itemsPerPage, exceptionsList.length)} trên tổng số {exceptionsList.length} mục
+            Hiển thị {(currentPage - 1) * itemsPerPage + 1} đến{' '}
+            {Math.min(currentPage * itemsPerPage, exceptionsList.length)} trên tổng số{' '}
+            {exceptionsList.length} mục
           </div>
           <div className="flex items-center gap-1">
             <button
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               className="px-3 py-1.5 border border-gray-200 rounded-md text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
             >
               Trước
@@ -216,7 +254,7 @@ export default function ExceptionsList({
             </div>
             <button
               disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
               className="px-3 py-1.5 border border-gray-200 rounded-md text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
             >
               Sau

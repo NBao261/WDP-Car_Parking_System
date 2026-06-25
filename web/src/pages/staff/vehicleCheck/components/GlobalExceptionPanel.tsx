@@ -1,18 +1,18 @@
-import { useState } from "react";
-import { AlertTriangle, X, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { AlertTriangle, X, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   exceptionService,
   ExceptionType,
   EXCEPTION_TYPE_LABELS,
-} from "../../../../services/exception.service";
-import { sessionService } from "../../../../services/session.service";
-import { pricingService } from "../../../../services/pricing.service";
-import { useEffect } from "react";
+} from '../../../../services/exception.service';
+import { sessionService } from '../../../../services/session.service';
+import { pricingService } from '../../../../services/pricing.service';
+import { useEffect } from 'react';
 
 interface GlobalExceptionPanelProps {
   coPlateCam: string;
-  currentSession?: any;  // ParkingSession object từ sessionService.searchSession()
+  currentSession?: any; // ParkingSession object từ sessionService.searchSession()
   onClose: () => void;
   onExceptionCreated?: () => void;
 }
@@ -23,15 +23,13 @@ export default function GlobalExceptionPanel({
   onClose,
   onExceptionCreated,
 }: GlobalExceptionPanelProps) {
-  const [exceptionType, setExceptionType] = useState<ExceptionType>(
-    ExceptionType.WRONG_PLATE
-  );
-  const [note, setNote] = useState("");
-  const [surcharge, setSurcharge] = useState<number | "">("");
+  const [exceptionType, setExceptionType] = useState<ExceptionType>(ExceptionType.WRONG_PLATE);
+  const [note, setNote] = useState('');
+  const [surcharge, setSurcharge] = useState<number | ''>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Thêm tính năng search session nếu không có currentSession
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchedSession, setSearchedSession] = useState<any>(null);
 
@@ -59,7 +57,7 @@ export default function GlobalExceptionPanel({
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      toast.error("Vui lòng nhập Biển số hoặc Mã vé!");
+      toast.error('Vui lòng nhập Biển số hoặc Mã vé!');
       return;
     }
     setIsSearching(true);
@@ -67,21 +65,21 @@ export default function GlobalExceptionPanel({
     try {
       const queryStr = searchQuery.trim().toUpperCase();
       let searchParams: any = { licensePlate: queryStr };
-      if (queryStr.startsWith("PS-")) {
+      if (queryStr.startsWith('PS-')) {
         searchParams = { code: queryStr };
-      } else if (queryStr.startsWith("CARD-")) {
+      } else if (queryStr.startsWith('CARD-')) {
         searchParams = { cardCode: queryStr };
       }
-      
+
       const res = await sessionService.searchSession(searchParams);
       if (res.success && res.data) {
         setSearchedSession(res.data);
-        toast.success("Tìm thấy phiên gửi xe hợp lệ!");
+        toast.success('Tìm thấy phiên gửi xe hợp lệ!');
       } else {
-        toast.error("Không tìm thấy phiên xe đang hoạt động!");
+        toast.error('Không tìm thấy phiên xe đang hoạt động!');
       }
     } catch (error: any) {
-      toast.error(error.message || "Không tìm thấy phiên gửi xe!");
+      toast.error(error.message || 'Không tìm thấy phiên gửi xe!');
     } finally {
       setIsSearching(false);
     }
@@ -91,14 +89,12 @@ export default function GlobalExceptionPanel({
     // Guard: cần có sessionId thực (MongoDB ObjectId)
     const sessionId = activeSession?._id;
     if (!sessionId) {
-      toast.error(
-        "Không xác định được phiên gửi xe. Vui lòng tìm kiếm vé trước khi báo ngoại lệ!"
-      );
+      toast.error('Không xác định được phiên gửi xe. Vui lòng tìm kiếm vé trước khi báo ngoại lệ!');
       return;
     }
 
     if (!note.trim()) {
-      toast.error("Vui lòng mô tả chi tiết tình huống ngoại lệ!");
+      toast.error('Vui lòng mô tả chi tiết tình huống ngoại lệ!');
       return;
     }
 
@@ -110,21 +106,21 @@ export default function GlobalExceptionPanel({
         description: note.trim(),
       };
 
-      if (exceptionType === ExceptionType.LOST_CARD && lostCardFee === 0 && surcharge !== "") {
+      if (exceptionType === ExceptionType.LOST_CARD && lostCardFee === 0 && surcharge !== '') {
         payload.surcharge = Number(surcharge);
-      } else if (exceptionType !== ExceptionType.LOST_CARD && surcharge !== "") {
+      } else if (exceptionType !== ExceptionType.LOST_CARD && surcharge !== '') {
         payload.surcharge = Number(surcharge);
       }
 
       await exceptionService.createException(payload);
 
-      toast.success("Đã gửi ngoại lệ thành công! Đang chờ Quản lý duyệt.");
+      toast.success('Đã gửi ngoại lệ thành công! Đang chờ Quản lý duyệt.');
       if (onExceptionCreated) {
         onExceptionCreated();
       }
       onClose();
     } catch (error: any) {
-      toast.error(error.message || "Lỗi khi gửi ngoại lệ, thử lại sau!");
+      toast.error(error.message || 'Lỗi khi gửi ngoại lệ, thử lại sau!');
     } finally {
       setIsSubmitting(false);
     }
@@ -146,7 +142,7 @@ export default function GlobalExceptionPanel({
             <p className="text-[12px] text-[#6b6b6b] mt-1">
               {activeSession?._id
                 ? `Phiên #${activeSession.code || activeSession._id}`
-                : "⚠ Không có phiên xe — hãy tìm vé trước"}
+                : '⚠ Không có phiên xe — hãy tìm vé trước'}
             </p>
           </div>
           <button
@@ -170,7 +166,7 @@ export default function GlobalExceptionPanel({
                   placeholder="Nhập biển số hoặc mã vé..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   className="flex-1 bg-white border border-[#e8e9e8] rounded-[8px] px-4 h-11 text-[14px] font-mono focus:outline-none focus:border-[#060606]"
                 />
                 <button
@@ -178,7 +174,7 @@ export default function GlobalExceptionPanel({
                   disabled={isSearching}
                   className="h-11 px-6 bg-[#060606] text-white font-bold rounded-[8px] hover:bg-[#222] transition-colors disabled:opacity-50"
                 >
-                  {isSearching ? "Tìm..." : "Tìm"}
+                  {isSearching ? 'Tìm...' : 'Tìm'}
                 </button>
               </div>
             </div>
@@ -188,7 +184,7 @@ export default function GlobalExceptionPanel({
           {activeSession && (
             <div className="bg-[#f9faf9] rounded-[12px] p-5 mb-8 border border-[#e8e9e8] relative">
               {searchedSession && (
-                <button 
+                <button
                   onClick={() => setSearchedSession(null)}
                   className="absolute top-3 right-3 text-[12px] font-bold text-red-500 hover:text-red-700 underline"
                 >
@@ -197,41 +193,39 @@ export default function GlobalExceptionPanel({
               )}
               <div className="bg-white border border-[#e8e9e8] rounded-[8px] p-3 mb-4 text-center shadow-sm">
                 <div className="font-mono text-[24px] font-bold text-[#060606] tracking-widest uppercase">
-                  {searchedSession ? searchedSession.licensePlate : (coPlateCam || currentSession?.licensePlate || "—")}
+                  {searchedSession
+                    ? searchedSession.licensePlate
+                    : coPlateCam || currentSession?.licensePlate || '—'}
                 </div>
                 <div className="text-sm font-medium text-[#6b6b6b] mt-1">
-                  {(activeSession?.vehicleTypeId as any)?.name || "Chưa xác định"}
+                  {(activeSession?.vehicleTypeId as any)?.name || 'Chưa xác định'}
                 </div>
               </div>
               <div className="space-y-2 text-[13px] text-[#6b6b6b] font-medium border-t border-gray-100 pt-3">
                 <div className="flex justify-between">
                   <span>Biển số vào (Ghi nhận):</span>
                   <span className="text-[#060606] font-mono">
-                    {activeSession?.licensePlate || "N/A"}
+                    {activeSession?.licensePlate || 'N/A'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Mã vé:</span>
-                  <span className="text-[#060606]">
-                    {activeSession?.code || "N/A"}
-                  </span>
+                  <span className="text-[#060606]">{activeSession?.code || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Giờ vào:</span>
                   <span className="text-[#060606]">
                     {activeSession?.checkInTime
-                      ? new Date(activeSession.checkInTime).toLocaleTimeString(
-                          "vi-VN",
-                          { hour: "2-digit", minute: "2-digit" }
-                        )
-                      : "N/A"}
+                      ? new Date(activeSession.checkInTime).toLocaleTimeString('vi-VN', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : 'N/A'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Cổng vào:</span>
-                  <span className="text-[#060606]">
-                    {activeSession?.gateIn || "N/A"}
-                  </span>
+                  <span className="text-[#060606]">{activeSession?.gateIn || 'N/A'}</span>
                 </div>
               </div>
             </div>
@@ -267,9 +261,11 @@ export default function GlobalExceptionPanel({
                   <div className="p-4 bg-orange-50 border border-orange-200 rounded-[8px] flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <h5 className="text-[13px] font-bold text-orange-900">Phí làm lại thẻ (quy định theo loại xe)</h5>
+                      <h5 className="text-[13px] font-bold text-orange-900">
+                        Phí làm lại thẻ (quy định theo loại xe)
+                      </h5>
                       <p className="text-[14px] font-bold text-orange-700 mt-1">
-                        {lostCardFee.toLocaleString("vi-VN")} VNĐ
+                        {lostCardFee.toLocaleString('vi-VN')} VNĐ
                       </p>
                       <p className="text-[12px] text-orange-800 mt-1">
                         Khoản phí này sẽ tự động được cộng vào tổng tiền khi khách hàng check-out.
@@ -284,7 +280,7 @@ export default function GlobalExceptionPanel({
                     <input
                       type="number"
                       value={surcharge}
-                      onChange={(e) => setSurcharge(e.target.value ? Number(e.target.value) : "")}
+                      onChange={(e) => setSurcharge(e.target.value ? Number(e.target.value) : '')}
                       placeholder="Quản lý chưa cài đặt mức phí, vui lòng tự nhập (VD: 50000)"
                       className="w-full bg-white border border-[#e8e9e8] rounded-[8px] px-4 h-11 text-[14px] focus:outline-none focus:border-[#060606]"
                     />
@@ -295,8 +291,7 @@ export default function GlobalExceptionPanel({
 
             <div>
               <label className="block text-[13px] font-bold mb-2 text-[#060606]">
-                Mô tả chi tiết tình huống{" "}
-                <span className="text-[#ef4444]">*</span>
+                Mô tả chi tiết tình huống <span className="text-[#ef4444]">*</span>
               </label>
               <textarea
                 rows={4}
@@ -323,7 +318,7 @@ export default function GlobalExceptionPanel({
             disabled={isSubmitting || !activeSession?._id}
             className="flex-[2] h-11 bg-[#ef4444] text-white font-bold rounded-[8px] hover:bg-red-600 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "Đang gửi..." : "Gửi Ngoại Lệ"}
+            {isSubmitting ? 'Đang gửi...' : 'Gửi Ngoại Lệ'}
           </button>
         </div>
       </div>

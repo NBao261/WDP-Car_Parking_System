@@ -1,4 +1,4 @@
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from 'lucide-react';
 
 interface CheckOutConfirmPanelProps {
   data?: {
@@ -27,34 +27,34 @@ interface CheckOutConfirmPanelProps {
 const calculateDuration = (checkInTime: string) => {
   const diff = Date.now() - new Date(checkInTime).getTime();
   if (diff < 0) return '0p';
-  
+
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  
+
   const parts = [];
   if (days > 0) parts.push(`${days} ngày`);
   if (hours > 0) parts.push(`${hours}h`);
   if (minutes > 0 || parts.length === 0) parts.push(`${minutes}p`);
-  
+
   return parts.join(' ');
 };
 
 export default function CheckOutConfirmPanel({ data }: CheckOutConfirmPanelProps) {
   const {
-    ticketCode = "—",
-    plateIn = "—",
-    plateOut = "—",
-    checkInTime = "—",
-    checkOutTime = "—",
-    checkInDate = "—",
-    checkOutDate = "—",
-    gateIn = "—",
-    gateOut = "—",
+    ticketCode = '—',
+    plateIn = '—',
+    plateOut = '—',
+    checkInTime = '—',
+    checkOutTime = '—',
+    checkInDate = '—',
+    checkOutDate = '—',
+    gateIn = '—',
+    gateOut = '—',
     fee = 0,
     feeDetails,
-    paymentStatus = "—",
-    rawCheckInTime
+    paymentStatus = '—',
+    rawCheckInTime,
   } = data || {};
 
   return (
@@ -76,13 +76,17 @@ export default function CheckOutConfirmPanel({ data }: CheckOutConfirmPanelProps
           </div>
           <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Biển số (Vào):</span>
-            <span className="font-bold text-[#6b6b6b] font-mono text-[13px] uppercase">{plateIn}</span>
+            <span className="font-bold text-[#6b6b6b] font-mono text-[13px] uppercase">
+              {plateIn}
+            </span>
           </div>
           <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Biển số (Ra):</span>
-            <span className="font-bold text-[#060606] font-mono text-[13px] uppercase">{plateOut}</span>
+            <span className="font-bold text-[#060606] font-mono text-[13px] uppercase">
+              {plateOut}
+            </span>
           </div>
-          
+
           {/* Row 2 */}
           <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Giờ vào:</span>
@@ -119,29 +123,58 @@ export default function CheckOutConfirmPanel({ data }: CheckOutConfirmPanelProps
         <div className="flex flex-col justify-center items-end text-right min-w-[140px] shrink-0">
           <span className="text-[11px] text-[#6b6b6b] mb-0.5">Tổng tiền (VNĐ):</span>
           <span className="font-bold text-[26px] text-[#060606] leading-none">
-            {fee > 0 ? fee.toLocaleString("vi-VN") : "0"} ₫
+            {fee > 0 ? fee.toLocaleString('vi-VN') : '0'} ₫
           </span>
-          <span className={`text-[12px] font-semibold mt-1 ${paymentStatus === "Đã thanh toán" ? "text-[#1d7a4a]" : "text-[#b03030]"}`}>
+          <span
+            className={`text-[12px] font-semibold mt-1 ${paymentStatus === 'Đã thanh toán' ? 'text-[#1d7a4a]' : 'text-[#b03030]'}`}
+          >
             {paymentStatus}
           </span>
           {/* Bảng kê chi tiết phí (nhỏ gọn) */}
           <div className="mt-2 text-[10px] text-[#6b6b6b] space-y-0.5 text-right">
             {(rawCheckInTime || feeDetails?.durationHours !== undefined) && (
-              <div>Thời gian: <span className="font-medium text-[#060606]">{rawCheckInTime ? calculateDuration(rawCheckInTime) : `${feeDetails?.durationHours}h`}</span></div>
+              <div>
+                Thời gian:{' '}
+                <span className="font-medium text-[#060606]">
+                  {rawCheckInTime
+                    ? calculateDuration(rawCheckInTime)
+                    : `${feeDetails?.durationHours}h`}
+                </span>
+              </div>
             )}
             {feeDetails?.baseFee !== undefined && (
-                <div>Cơ bản: <span className="font-medium text-[#060606]">{feeDetails.baseFee.toLocaleString("vi-VN")}₫</span></div>
-              )}
-              {!!feeDetails?.overnightFee && (
-                <div>Qua đêm: <span className="font-medium text-[#b45309]">{feeDetails.overnightFee.toLocaleString("vi-VN")}₫</span></div>
-              )}
-              {!!feeDetails?.exceptionSurcharge && (
-                <div>Phụ phí: <span className="font-medium text-[#b03030]">{feeDetails.exceptionSurcharge.toLocaleString("vi-VN")}₫</span></div>
-              )}
-              {!!feeDetails?.lostCardFee && (
-                <div>Mất thẻ: <span className="font-medium text-[#b03030]">{feeDetails.lostCardFee.toLocaleString("vi-VN")}₫</span></div>
-              )}
-            </div>
+              <div>
+                Cơ bản:{' '}
+                <span className="font-medium text-[#060606]">
+                  {feeDetails.baseFee.toLocaleString('vi-VN')}₫
+                </span>
+              </div>
+            )}
+            {!!feeDetails?.overnightFee && (
+              <div>
+                Qua đêm:{' '}
+                <span className="font-medium text-[#b45309]">
+                  {feeDetails.overnightFee.toLocaleString('vi-VN')}₫
+                </span>
+              </div>
+            )}
+            {!!feeDetails?.exceptionSurcharge && (
+              <div>
+                Phụ phí:{' '}
+                <span className="font-medium text-[#b03030]">
+                  {feeDetails.exceptionSurcharge.toLocaleString('vi-VN')}₫
+                </span>
+              </div>
+            )}
+            {!!feeDetails?.lostCardFee && (
+              <div>
+                Mất thẻ:{' '}
+                <span className="font-medium text-[#b03030]">
+                  {feeDetails.lostCardFee.toLocaleString('vi-VN')}₫
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

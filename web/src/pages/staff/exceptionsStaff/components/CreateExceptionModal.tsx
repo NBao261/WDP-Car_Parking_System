@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
-import { X, Search, AlertTriangle, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { sessionService } from "../../../../services/session.service";
+import { useState, useEffect } from 'react';
+import { X, Search, AlertTriangle, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { sessionService } from '../../../../services/session.service';
 import {
   exceptionService,
   ExceptionType,
   EXCEPTION_TYPE_LABELS,
-} from "../../../../services/exception.service";
-import { pricingService } from "../../../../services/pricing.service";
+} from '../../../../services/exception.service';
+import { pricingService } from '../../../../services/pricing.service';
 
 interface CreateExceptionModalProps {
   isOpen: boolean;
@@ -20,15 +20,13 @@ export default function CreateExceptionModal({
   onClose,
   onSuccess,
 }: CreateExceptionModalProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [foundSession, setFoundSession] = useState<any>(null);
 
-  const [exceptionType, setExceptionType] = useState<ExceptionType>(
-    ExceptionType.OTHER
-  );
-  const [description, setDescription] = useState("");
-  const [surcharge, setSurcharge] = useState<number | "">("");
+  const [exceptionType, setExceptionType] = useState<ExceptionType>(ExceptionType.OTHER);
+  const [description, setDescription] = useState('');
+  const [surcharge, setSurcharge] = useState<number | ''>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [lostCardFee, setLostCardFee] = useState<number>(0);
@@ -55,7 +53,7 @@ export default function CreateExceptionModal({
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      toast.error("Vui lòng nhập Biển số hoặc Mã vé!");
+      toast.error('Vui lòng nhập Biển số hoặc Mã vé!');
       return;
     }
     setIsSearching(true);
@@ -63,21 +61,21 @@ export default function CreateExceptionModal({
     try {
       const queryStr = searchQuery.trim().toUpperCase();
       let searchParams: any = { licensePlate: queryStr };
-      if (queryStr.startsWith("PS-")) {
+      if (queryStr.startsWith('PS-')) {
         searchParams = { code: queryStr };
-      } else if (queryStr.startsWith("CARD-")) {
+      } else if (queryStr.startsWith('CARD-')) {
         searchParams = { cardCode: queryStr };
       }
-      
+
       const res = await sessionService.searchSession(searchParams);
       if (res.success && res.data) {
         setFoundSession(res.data);
-        toast.success("Tìm thấy phiên gửi xe hợp lệ!");
+        toast.success('Tìm thấy phiên gửi xe hợp lệ!');
       } else {
-        toast.error("Không tìm thấy phiên xe đang hoạt động!");
+        toast.error('Không tìm thấy phiên xe đang hoạt động!');
       }
     } catch (error: any) {
-      toast.error(error.message || "Không tìm thấy phiên gửi xe!");
+      toast.error(error.message || 'Không tìm thấy phiên gửi xe!');
     } finally {
       setIsSearching(false);
     }
@@ -85,11 +83,11 @@ export default function CreateExceptionModal({
 
   const handleSubmit = async () => {
     if (!foundSession?._id) {
-      toast.error("Vui lòng tìm và chọn phiên gửi xe trước!");
+      toast.error('Vui lòng tìm và chọn phiên gửi xe trước!');
       return;
     }
     if (!description.trim()) {
-      toast.error("Vui lòng nhập mô tả ngoại lệ!");
+      toast.error('Vui lòng nhập mô tả ngoại lệ!');
       return;
     }
 
@@ -101,38 +99,35 @@ export default function CreateExceptionModal({
         description: description.trim(),
       };
 
-      if (exceptionType === ExceptionType.LOST_CARD && lostCardFee === 0 && surcharge !== "") {
+      if (exceptionType === ExceptionType.LOST_CARD && lostCardFee === 0 && surcharge !== '') {
         payload.surcharge = Number(surcharge);
-      } else if (exceptionType !== ExceptionType.LOST_CARD && surcharge !== "") {
+      } else if (exceptionType !== ExceptionType.LOST_CARD && surcharge !== '') {
         payload.surcharge = Number(surcharge);
       }
 
       await exceptionService.createException(payload);
 
-      toast.success("Đã tạo báo cáo ngoại lệ thành công!");
+      toast.success('Đã tạo báo cáo ngoại lệ thành công!');
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.message || "Lỗi khi tạo ngoại lệ!");
+      toast.error(error.message || 'Lỗi khi tạo ngoại lệ!');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleReset = () => {
-    setSearchQuery("");
+    setSearchQuery('');
     setFoundSession(null);
     setExceptionType(ExceptionType.OTHER);
-    setDescription("");
-    setSurcharge("");
+    setDescription('');
+    setSurcharge('');
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[500px] overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="px-6 py-4 border-b border-[#e8e9e8] flex justify-between items-center bg-gray-50/50">
@@ -160,7 +155,7 @@ export default function CreateExceptionModal({
                 placeholder="Nhập biển số hoặc mã vé..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value.toUpperCase())}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="flex-1 bg-white border border-[#e8e9e8] rounded-[8px] px-4 h-11 text-[14px] font-mono focus:outline-none focus:border-[#060606]"
               />
               <button
@@ -168,7 +163,11 @@ export default function CreateExceptionModal({
                 disabled={isSearching}
                 className="h-11 px-6 bg-[#1a1a1a] text-[#9FE870] font-bold rounded-[8px] hover:bg-black transition-colors disabled:opacity-50 flex items-center gap-2"
               >
-                {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                {isSearching ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4" />
+                )}
                 Tìm
               </button>
             </div>
@@ -181,10 +180,10 @@ export default function CreateExceptionModal({
                     {foundSession.licensePlate}
                   </div>
                   <div className="text-[12px] text-[#64748b] mt-0.5">
-                    Mã vé: {foundSession.code} • Giờ vào:{" "}
-                    {new Date(foundSession.checkInTime).toLocaleTimeString("vi-VN", {
-                      hour: "2-digit",
-                      minute: "2-digit",
+                    Mã vé: {foundSession.code} • Giờ vào:{' '}
+                    {new Date(foundSession.checkInTime).toLocaleTimeString('vi-VN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
                     })}
                   </div>
                 </div>
@@ -199,7 +198,9 @@ export default function CreateExceptionModal({
           </div>
 
           {/* Bước 2: Nhập thông tin */}
-          <div className={`transition-opacity duration-300 ${foundSession ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+          <div
+            className={`transition-opacity duration-300 ${foundSession ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}
+          >
             <label className="block text-[13px] font-bold text-[#060606] mb-4 uppercase tracking-wider pt-2 border-t border-gray-100">
               2. Chi tiết ngoại lệ
             </label>
@@ -233,9 +234,11 @@ export default function CreateExceptionModal({
                     <div className="p-4 bg-orange-50 border border-orange-200 rounded-[8px] flex items-start gap-3">
                       <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
                       <div>
-                        <h5 className="text-[13px] font-bold text-orange-900">Phí làm lại thẻ (quy định theo loại xe)</h5>
+                        <h5 className="text-[13px] font-bold text-orange-900">
+                          Phí làm lại thẻ (quy định theo loại xe)
+                        </h5>
                         <p className="text-[14px] font-bold text-orange-700 mt-1">
-                          {lostCardFee.toLocaleString("vi-VN")} VNĐ
+                          {lostCardFee.toLocaleString('vi-VN')} VNĐ
                         </p>
                         <p className="text-[12px] text-orange-800 mt-1">
                           Khoản phí này sẽ tự động được cộng vào tổng tiền khi khách hàng check-out.
@@ -250,7 +253,7 @@ export default function CreateExceptionModal({
                       <input
                         type="number"
                         value={surcharge}
-                        onChange={(e) => setSurcharge(e.target.value ? Number(e.target.value) : "")}
+                        onChange={(e) => setSurcharge(e.target.value ? Number(e.target.value) : '')}
                         placeholder="Quản lý chưa cài đặt mức phí, vui lòng tự nhập (VD: 50000)"
                         className="w-full bg-white border border-[#e8e9e8] rounded-[8px] px-4 h-11 text-[14px] focus:outline-none focus:border-[#060606]"
                       />

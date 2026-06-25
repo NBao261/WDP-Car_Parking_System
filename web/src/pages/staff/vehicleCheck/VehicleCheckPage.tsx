@@ -1,20 +1,20 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from 'react';
 
-import { useLocation } from "react-router-dom";
-import { Toaster } from "sonner";
-import CheckInPanel from "./components/CheckInPanel";
-import CheckOutPanel from "./components/CheckOutPanel";
-import CheckInConfirmPanel from "./components/CheckInConfirmPanel";
-import CheckOutConfirmPanel from "./components/CheckOutConfirmPanel";
-import GlobalExceptionPanel from "./components/GlobalExceptionPanel";
+import { useLocation } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import CheckInPanel from './components/CheckInPanel';
+import CheckOutPanel from './components/CheckOutPanel';
+import CheckInConfirmPanel from './components/CheckInConfirmPanel';
+import CheckOutConfirmPanel from './components/CheckOutConfirmPanel';
+import GlobalExceptionPanel from './components/GlobalExceptionPanel';
 
 export default function VehicleCheckPage() {
   const [showExceptionPanel, setShowExceptionPanel] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
-  
+
   // State from exceptions routing if any
-  const initialPlate = location.state?.plate || "";
+  const initialPlate = location.state?.plate || '';
   const [coPlateCam, setCoPlateCam] = useState(initialPlate);
 
   const [checkInResult, setCheckInResult] = useState<any>(null);
@@ -24,22 +24,22 @@ export default function VehicleCheckPage() {
   // GLOBAL HOTKEYS
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input and presses a non-function key, 
+      // Ignore if user is typing in an input and presses a non-function key,
       // but function keys should be intercepted.
       switch (e.key) {
-        case "F1":
+        case 'F1':
           e.preventDefault();
-          window.dispatchEvent(new CustomEvent("HOTKEY_F1"));
+          window.dispatchEvent(new CustomEvent('HOTKEY_F1'));
           break;
-        case "F9":
+        case 'F9':
           e.preventDefault();
           setShowExceptionPanel(true);
           break;
-        case "F10":
+        case 'F10':
           e.preventDefault();
-          window.dispatchEvent(new CustomEvent("HOTKEY_F10"));
+          window.dispatchEvent(new CustomEvent('HOTKEY_F10'));
           break;
-        case "F11":
+        case 'F11':
           e.preventDefault();
           if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(() => {});
@@ -52,15 +52,12 @@ export default function VehicleCheckPage() {
       }
     };
 
-    window.addEventListener("keydown", handleGlobalKeyDown);
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
 
   return (
-    <div 
-      ref={containerRef}
-      className="flex flex-col flex-1 min-h-0 bg-[#eff0ef] font-sans pt-2"
-    >
+    <div ref={containerRef} className="flex flex-col flex-1 min-h-0 bg-[#eff0ef] font-sans pt-2">
       {/* Toaster riêng cho fullscreen — hiển thị toast ngay trong stacking context của fullscreen */}
       <Toaster position="top-right" richColors />
 
@@ -80,12 +77,12 @@ export default function VehicleCheckPage() {
 
       {/* GLOBAL EXCEPTION SLIDE-OVER PANEL */}
       {showExceptionPanel && (
-        <GlobalExceptionPanel 
+        <GlobalExceptionPanel
           coPlateCam={coPlateCam}
           currentSession={currentCheckOutSession}
           onClose={() => setShowExceptionPanel(false)}
           onExceptionCreated={() => {
-            window.dispatchEvent(new CustomEvent("RESET_CHECKOUT"));
+            window.dispatchEvent(new CustomEvent('RESET_CHECKOUT'));
           }}
         />
       )}

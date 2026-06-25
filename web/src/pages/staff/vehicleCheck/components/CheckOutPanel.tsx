@@ -70,7 +70,7 @@ export default function CheckOutPanel({
     formData.append('image', file);
     try {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
-      
+
       if (isNoPlateVehicle) {
         // Xe không biển số: chỉ upload ảnh
         const response = await axios.post(`${API_BASE_URL}/upload/image`, formData, {
@@ -278,21 +278,21 @@ export default function CheckOutPanel({
   const finishCheckOutProcess = (checkOutResData: any, methodStr: string) => {
     const actualCheckOutTime = checkOutResData.checkOutTime
       ? new Date(checkOutResData.checkOutTime).toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+          hour: '2-digit',
+          minute: '2-digit',
+        })
       : new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     const actualCheckOutDate = checkOutResData.checkOutTime
       ? new Date(checkOutResData.checkOutTime).toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      })
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        })
       : new Date().toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      });
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        });
 
     onCheckOut((prev: any) => ({
       ...prev,
@@ -311,7 +311,7 @@ export default function CheckOutPanel({
   const validateMismatch = () => {
     const isMismatch = !isNoPlateVehicle && plate.toUpperCase() !== plateIn.toUpperCase();
     if (isMismatch && !manualConfirmed) {
-      toast.error("LỖI: Biển số xe ra KHÔNG KHỚP với biển số vào. Xác nhận thủ công trước!");
+      toast.error('LỖI: Biển số xe ra KHÔNG KHỚP với biển số vào. Xác nhận thủ công trước!');
       return false;
     }
     return true;
@@ -330,7 +330,7 @@ export default function CheckOutPanel({
           checkOutImage: checkoutImageUrl || undefined,
         });
         if (checkOutRes.success) {
-          toast.success("Đã thu tiền mặt & mở barie xe ra thành công!");
+          toast.success('Đã thu tiền mặt & mở barie xe ra thành công!');
           finishCheckOutProcess(checkOutRes.data, 'Tiền mặt');
         }
       } catch (error: any) {
@@ -350,9 +350,9 @@ export default function CheckOutPanel({
       try {
         const res = await paymentService.createIntent({
           sessionId: currentSession._id,
-          method: 'e_wallet'
+          method: 'e_wallet',
         });
-        
+
         if (res.success && (res.data?.qrCodeUrl || res.data?.paymentUrl)) {
           // Momo qrCodeUrl is actually a raw EMVCo string or payUrl. We MUST generate an image from it.
           const qrContent = res.data.qrCodeUrl || res.data.paymentUrl;
@@ -360,7 +360,7 @@ export default function CheckOutPanel({
           setMomoQR(finalQrUrl);
           setTransactionCode(res.data.payment.transactionCode);
           setIsPolling(true);
-          
+
           // Start polling
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = setInterval(async () => {
@@ -369,24 +369,24 @@ export default function CheckOutPanel({
               if (statusRes.data?.isPaid) {
                 // Success!
                 if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-                toast.success("Khách đã thanh toán Momo thành công!");
-                
+                toast.success('Khách đã thanh toán Momo thành công!');
+
                 setMomoQR(null); // Clear modal
-                
+
                 // Perform final checkout logically (the backend already closed the session via webhook/polling)
                 // We just need to update UI. We mock the checkout time for UI since it's already closed.
                 const mockSessionForUI = {
                   ...currentSession,
-                  checkOutTime: new Date().toISOString()
+                  checkOutTime: new Date().toISOString(),
                 };
                 finishCheckOutProcess(mockSessionForUI, 'Momo');
               }
             } catch (err) {
-              console.error("Polling error", err);
+              console.error('Polling error', err);
             }
           }, 3000);
         } else {
-          toast.error("Không thể tạo mã QR Momo!");
+          toast.error('Không thể tạo mã QR Momo!');
         }
       } catch (error: any) {
         toast.error(error.message || 'Lỗi khi tạo giao dịch Momo!');
@@ -471,7 +471,9 @@ export default function CheckOutPanel({
         {/* Row 2: Ảnh biển số Vào + Ảnh biển số Ra */}
         <div className="flex gap-4 flex-1 min-h-0">
           <div className="flex-1 flex flex-col gap-1 min-h-0">
-            <label className="block text-[11px] font-semibold text-[#6b6b6b]">Ảnh biển số Vào</label>
+            <label className="block text-[11px] font-semibold text-[#6b6b6b]">
+              Ảnh biển số Vào
+            </label>
             <div className="flex-1 border-2 border-dashed border-[#e8e9e8] rounded-[6px] flex flex-col items-center justify-center gap-2 bg-[#fdfdfd] overflow-hidden relative">
               {currentSession?.checkInImage ? (
                 (() => {
@@ -483,13 +485,17 @@ export default function CheckOutPanel({
                     const cleanPath = imgSrc.startsWith('/') ? imgSrc : `/${imgSrc}`;
                     imgSrc = `${SERVER_URL}${cleanPath}`;
                   }
-                  return <img src={imgSrc} alt="check-in" className="w-full h-full object-contain" />;
+                  return (
+                    <img src={imgSrc} alt="check-in" className="w-full h-full object-contain" />
+                  );
                 })()
               ) : (
                 <div className="flex flex-col items-center opacity-60">
                   <img src="/Logo_chu.png" alt="LYNC PARK" className="h-14 mb-3 object-contain" />
                   <ImagePlus className="w-4 h-4 text-[#6b6b6b] mb-3" />
-                  <span className="text-[10px] font-semibold text-[#6b6b6b]">Ảnh biển số (OCR)</span>
+                  <span className="text-[10px] font-semibold text-[#6b6b6b]">
+                    Ảnh biển số (OCR)
+                  </span>
                   <span className="text-[9px] text-[#aaa]">Chưa có dữ liệu</span>
                 </div>
               )}
@@ -511,18 +517,35 @@ export default function CheckOutPanel({
                   <div className="flex flex-col items-center">
                     <img src="/Logo_chu.png" alt="LYNC PARK" className="h-14 mb-3 object-contain" />
                     <ImagePlus className="w-4 h-4 text-[#6b6b6b] mb-3" />
-                    <span className="text-[10px] font-semibold text-[#6b6b6b]">Chụp / Upload ảnh biển số (OCR)</span>
-                    <span className="text-[9px] text-[#aaa]">Hỗ trợ JPG, PNG — chụp thẳng góc, đủ sáng</span>
+                    <span className="text-[10px] font-semibold text-[#6b6b6b]">
+                      Chụp / Upload ảnh biển số (OCR)
+                    </span>
+                    <span className="text-[9px] text-[#aaa]">
+                      Hỗ trợ JPG, PNG — chụp thẳng góc, đủ sáng
+                    </span>
                   </div>
                 )}
               </button>
             ) : (
               <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden flex-1 bg-[#f5f5f4]">
                 <img src={ocrPreviewUrl} alt="preview" className="w-full h-full object-contain" />
-                <button type="button" onClick={clearOcrPreview} className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center"><X className="w-3.5 h-3.5" /></button>
+                <button
+                  type="button"
+                  onClick={clearOcrPreview}
+                  className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
-            <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleImageUpload}
+            />
           </div>
         </div>
 
@@ -566,11 +589,20 @@ export default function CheckOutPanel({
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-semibold text-[#060606]">Trạng thái OCR</label>
-              <div className={`w-full h-8 rounded-[6px] text-[12px] font-bold flex items-center justify-center border transition-colors ${ocrSuccess
-                ? (isMismatch ? 'bg-[#fef2f2] text-[#ef4444] border-[#fca5a5]' : 'bg-[#9FE870]/20 text-[#2d6a1f] border-[#9FE870]')
-                : 'bg-[#f5f5f4] text-[#a8a29e] border-[#e8e9e8]'
-                }`}>
-                {ocrSuccess ? (isMismatch ? '✕ Không khớp biển số' : '✓ Quét thành công') : 'Chưa quét'}
+              <div
+                className={`w-full h-8 rounded-[6px] text-[12px] font-bold flex items-center justify-center border transition-colors ${
+                  ocrSuccess
+                    ? isMismatch
+                      ? 'bg-[#fef2f2] text-[#ef4444] border-[#fca5a5]'
+                      : 'bg-[#9FE870]/20 text-[#2d6a1f] border-[#9FE870]'
+                    : 'bg-[#f5f5f4] text-[#a8a29e] border-[#e8e9e8]'
+                }`}
+              >
+                {ocrSuccess
+                  ? isMismatch
+                    ? '✕ Không khớp biển số'
+                    : '✓ Quét thành công'
+                  : 'Chưa quét'}
               </div>
             </div>
           </div>
@@ -581,18 +613,19 @@ export default function CheckOutPanel({
           <label className="block text-[11px] font-semibold text-[#060606]">Biển số xe ra</label>
           <input
             type="text"
-            value={isNoPlateVehicle ? "KBS-AUTO" : plate}
+            value={isNoPlateVehicle ? 'KBS-AUTO' : plate}
             onChange={(e) => onChangePlate(e.target.value.toUpperCase())}
             onKeyDown={handleKeyDown}
             disabled={step === 'SEARCH' || isSubmitting || isNoPlateVehicle}
             className={`w-full h-12 text-[20px] font-mono px-3 border rounded-[6px] uppercase font-bold outline-none transition-all duration-200
-              ${step === 'CONFIRM'
-                ? (isNoPlateVehicle || isException
+              ${
+                step === 'CONFIRM'
+                  ? isNoPlateVehicle || isException
                     ? 'bg-[#fff7ed] border-[#ea580c] text-[#ea580c] focus:border-[#c2410c]'
                     : isMismatch
                       ? 'bg-[#fef2f2] border-[#ef4444] text-[#ef4444] focus:border-[#dc2626]'
-                      : 'bg-[#9FE870]/30 border-[#9FE870] text-[#062F28] focus:ring-2 focus:ring-[#9FE870]/40')
-                : 'bg-[#f5f5f4] border-[#e8e9e8] text-[#9b9b9b]'
+                      : 'bg-[#9FE870]/30 border-[#9FE870] text-[#062F28] focus:ring-2 focus:ring-[#9FE870]/40'
+                  : 'bg-[#f5f5f4] border-[#e8e9e8] text-[#9b9b9b]'
               }`}
             placeholder="XXX-XX-XXXXX"
           />
@@ -639,21 +672,23 @@ export default function CheckOutPanel({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-[16px] p-6 w-[400px] max-w-[90%] shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
             <h3 className="text-xl font-bold text-[#A50064] mb-1">Thanh toán Momo</h3>
-            <p className="text-sm text-gray-500 mb-4 text-center">Tài xế sử dụng ứng dụng Momo hoặc ứng dụng ngân hàng để quét mã QR dưới đây</p>
-            
+            <p className="text-sm text-gray-500 mb-4 text-center">
+              Tài xế sử dụng ứng dụng Momo hoặc ứng dụng ngân hàng để quét mã QR dưới đây
+            </p>
+
             <div className="bg-white p-3 rounded-xl border-2 border-pink-100 shadow-inner mb-4">
               <img src={momoQR} alt="Momo QR Code" className="w-56 h-56 object-contain" />
             </div>
-            
+
             <div className="flex items-center gap-2 text-sm text-[#A50064] font-medium mb-6 bg-pink-50 px-4 py-2 rounded-full">
               <RefreshCw className="w-4 h-4 animate-spin" /> Đang chờ khách thanh toán...
             </div>
-            
-            <button 
+
+            <button
               onClick={() => {
                 setMomoQR(null);
                 if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-              }} 
+              }}
               className="w-full h-11 border-2 border-gray-200 text-gray-600 font-bold rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
             >
               <X className="w-4 h-4" /> Hủy giao dịch Momo

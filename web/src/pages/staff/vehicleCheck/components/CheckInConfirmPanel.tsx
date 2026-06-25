@@ -1,4 +1,4 @@
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from 'lucide-react';
 
 interface CheckInConfirmPanelProps {
   data?: {
@@ -14,13 +14,13 @@ interface CheckInConfirmPanelProps {
 
 export default function CheckInConfirmPanel({ data }: CheckInConfirmPanelProps) {
   const {
-    cardCode = "—",
-    plate = "—",
-    vehicleType = "—",
-    checkInTime = "—",
-    checkInDate = "—",
-    gate = "—",
-    zone = "—"
+    cardCode = '—',
+    plate = '—',
+    vehicleType = '—',
+    checkInTime = '—',
+    checkInDate = '—',
+    gate = '—',
+    zone = '—',
   } = data || {};
 
   return (
@@ -41,7 +41,9 @@ export default function CheckInConfirmPanel({ data }: CheckInConfirmPanelProps) 
           </div>
           <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Biển số xe:</span>
-            <span className="font-bold text-[#060606] font-mono text-[14px] uppercase">{plate}</span>
+            <span className="font-bold text-[#060606] font-mono text-[14px] uppercase">
+              {plate}
+            </span>
           </div>
           <div className="flex flex-col">
             <span className="text-[#6b6b6b] mb-0.5">Loại xe:</span>
