@@ -1,4 +1,5 @@
 import { Building2, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { User, AssignedFacility } from '../../../types/user.types';
 
 interface FacilityListWidgetProps {
@@ -7,14 +8,24 @@ interface FacilityListWidgetProps {
 }
 
 export function FacilityListWidget({ managerFacilities, staffList }: FacilityListWidgetProps) {
+  const navigate = useNavigate();
+
+  // Preload FacilitiesPage khi hover để giảm delay khi click
+  const preloadFacilities = () => {
+    import('../../shared/facilities/FacilitiesPage');
+  };
+
   return (
-    <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5 h-full flex flex-col">
-      <h2 className="text-[14px] font-semibold text-[#1a1a1a] mb-3">Danh sách tòa nhà bạn quản lý</h2>
+    <div
+      className="bg-white rounded-2xl border border-[#e5e7eb] p-5 h-full flex flex-col"
+      onMouseEnter={preloadFacilities}
+    >
+      <h2 className="text-[14px] font-semibold text-[#1a1a1a] mb-3">Danh sách tòa nhà bạn quản lý ({managerFacilities.length})</h2>
 
       <div className="overflow-y-auto -mr-2 pr-2 facility-list-scroll max-h-[180px]">
         {managerFacilities.length === 0 ? (
           <div className="text-center text-[#6b7280] py-8">
-            <Building2 className="w-6 h-6 mx-auto mb-1 text-[#9ca3af]" />
+            <Building2 className="w-6 h-6 mx-auto mb-1 text-[#d7ee46]" />
             <p className="text-[13px]">Chưa có tòa nhà nào.</p>
           </div>
         ) : (
@@ -29,10 +40,16 @@ export function FacilityListWidget({ managerFacilities, staffList }: FacilityLis
 
               return (
                 <div key={facility._id}>
-                  <div className="flex items-center justify-between py-3 px-2 rounded-lg group cursor-default transition-all duration-150 hover:bg-[#f9f9f7] hover:border-l-2 hover:border-l-[#d7ee46] hover:pl-3">
+                  <div
+                    className="flex items-center justify-between py-3 px-2 rounded-lg group cursor-pointer transition-all duration-150 hover:bg-[#f9f9f7] hover:border-l-2 hover:border-l-[#d7ee46] hover:pl-3"
+                    onClick={() => navigate('/manager/facilities', { state: { selectedFacilityId: facility._id } })}
+                  >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-[#f5f5f3] flex items-center justify-center shrink-0">
-                        <Building2 size={14} className="text-[#6b7280]" />
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ background: 'rgba(204,226,66,0.15)' }}
+                      >
+                        <Building2 size={14} style={{ color: '#4a7c20' }} />
                       </div>
                       <div className="min-w-0">
                         <h3 className="text-[14px] font-bold text-[#1a1a1a] truncate">
@@ -55,7 +72,7 @@ export function FacilityListWidget({ managerFacilities, staffList }: FacilityLis
                             : 'bg-[#f3f4f6] text-[#9ca3af]'
                         }`}
                       >
-                        {facility.status === 'active' ? 'Active' : 'Inactive'}
+                        {facility.status === 'active' ? 'Hoạt động' : 'Ngừng'}
                       </span>
                     </div>
                   </div>
