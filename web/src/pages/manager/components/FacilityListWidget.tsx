@@ -9,7 +9,7 @@ interface FacilityListWidgetProps {
 export function FacilityListWidget({ managerFacilities, staffList }: FacilityListWidgetProps) {
   return (
     <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5 h-full flex flex-col">
-      <h2 className="text-[14px] font-semibold text-[#1a1a1a] mb-3">Danh sách tòa nhà</h2>
+      <h2 className="text-[14px] font-semibold text-[#1a1a1a] mb-3">Danh sách tòa nhà bạn quản lý</h2>
 
       <div className="overflow-y-auto -mr-2 pr-2 facility-list-scroll max-h-[180px]">
         {managerFacilities.length === 0 ? (

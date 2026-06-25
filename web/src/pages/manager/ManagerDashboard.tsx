@@ -198,7 +198,7 @@ export default function ManagerDashboard() {
     : '--';
   const occupancyRate = occupancyData ? occupancyData.summary.overallOccupancyRate + '%' : '--';
   const currentlyParked = trafficData
-    ? trafficData.summary.currentlyParked.toLocaleString('vi-VN')
+    ? Math.max(0, trafficData.summary.currentlyParked).toLocaleString('vi-VN')
     : '--';
 
   /* ── Render ── */

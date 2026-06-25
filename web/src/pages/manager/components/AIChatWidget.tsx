@@ -197,9 +197,23 @@ export function AIChatWidget() {
                   <ReactMarkdown 
                     remarkPlugins={[remarkGfm]}
                     components={{
+                      // 1. Markdown GFM (Mở rộng)
                       table: ({node, ...props}) => <table className="w-full border-collapse border border-[#e5e7eb] my-3" {...props} />,
                       th: ({node, ...props}) => <th className="border border-[#e5e7eb] bg-[#f5f5f3] px-3 py-2 text-left font-bold text-[#1a1a1a]" {...props} />,
                       td: ({node, ...props}) => <td className="border border-[#e5e7eb] px-3 py-2 text-left" {...props} />,
+                      
+                      // 2. Markdown Nguyên Thủy (Gốc)
+                      p: ({node, ...props}) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
+                      ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
+                      ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
+                      li: ({node, ...props}) => <li className="leading-relaxed" {...props} />,
+                      a: ({node, ...props}) => <a className="text-[#889b1c] hover:text-[#d7ee46] underline decoration-[#e5e7eb] hover:decoration-[#d7ee46] underline-offset-2 transition-colors font-medium" {...props} />,
+                      strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
+                      blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-[#d7ee46] pl-3 italic opacity-80 my-3" {...props} />,
+                      code: ({node, inline, ...props}: any) => 
+                        inline 
+                          ? <code className="bg-black/5 dark:bg-white/10 rounded-[4px] px-1.5 py-0.5 text-[12px] font-mono text-[#ea580c]" {...props} />
+                          : <code className="block bg-[#1a1a1a] text-[#f8f8f8] rounded-lg p-3 text-[12px] overflow-x-auto my-3 font-mono shadow-sm" {...props} />,
                     }}
                   >
                     {msg.content}
