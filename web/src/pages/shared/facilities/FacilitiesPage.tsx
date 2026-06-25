@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Plus,
@@ -47,7 +48,21 @@ function SkeletonFacilityCard() {
 
 export default function FacilitiesPage() {
   const data = useFacilitiesData();
+  const location = useLocation();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Nếu navigate từ dashboard với selectedFacilityId, tự mở view quản lý tầng
+  useEffect(() => {
+    const state = location.state as { selectedFacilityId?: string } | null;
+    if (state?.selectedFacilityId && data.facilities.length > 0) {
+      const facility = data.facilities.find((f) => f._id === state.selectedFacilityId);
+      if (facility) {
+        data.setViewFacility(facility);
+        // Xóa state để không trigger lại khi re-render
+        window.history.replaceState({}, '');
+      }
+    }
+  }, [location.state, data.facilities]);
 
   // Modals state
   const [isFacilityModalOpen, setIsFacilityModalOpen] = useState(false);
