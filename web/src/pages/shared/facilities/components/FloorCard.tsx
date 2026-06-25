@@ -154,7 +154,7 @@ export const FloorCard = React.memo(function FloorCard({
     }
   };
 
-  const total = slotStats?.total ?? floor.totalSlots ?? 0;
+  const total = slotStats?.total ?? 0;
   const occupied = slotStats?.occupied ?? 0;
   const fillRate = slotStats?.fillRate ?? 0;
   const barColor = getBarColor(fillRate);
