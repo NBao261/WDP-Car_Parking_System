@@ -78,6 +78,9 @@ export default function RootLayout() {
         <Stack.Screen name="feedback/index" options={{ headerShown: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="feedback/create" options={{ headerShown: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="profile/change-password" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="profile/my-vehicles" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="profile/add-vehicle" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="profile/edit-vehicle" options={{ headerShown: false, animation: 'slide_from_right' }} />
       </Stack>
     </>
   );
