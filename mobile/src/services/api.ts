@@ -101,6 +101,24 @@ export const authApi = {
   }
 };
 
+export const vehicleApi = {
+  addVehicle: (data: { vehicleTypeId: string; licensePlate: string; nickname?: string; image?: string }) => {
+    return apiClient.post('/vehicles', data);
+  },
+  getMyVehicles: () => {
+    return apiClient.get('/vehicles/my');
+  },
+  getVehicleById: (id: string) => {
+    return apiClient.get(`/vehicles/${id}`);
+  },
+  updateVehicle: (id: string, data: { vehicleTypeId?: string; licensePlate?: string; nickname?: string; image?: string; isDefault?: boolean }) => {
+    return apiClient.patch(`/vehicles/${id}`, data);
+  },
+  deleteVehicle: (id: string) => {
+    return apiClient.delete(`/vehicles/${id}`);
+  },
+};
+
 export const userApi = {
   updateDeviceToken: (deviceToken: string) => {
     return apiClient.put('/users/device-token', { deviceToken });
