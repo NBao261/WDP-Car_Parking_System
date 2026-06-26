@@ -362,8 +362,17 @@ def fix_vn_plate(raw: str) -> str:
         if c in _L2D:
             number[i] = _L2D[c]
 
-    series_str = ''.join(series)
     number_str = ''.join(number)
+    
+    # Remove any trailing non-digits (e.g. random text like "HIEU" caught by OCR)
+    # We only want digits and dots at the beginning of the number part
+    m = re.match(r'^([\d.]+)', number_str)
+    if m:
+        number_str = m.group(1).rstrip('.')
+    else:
+        number_str = ""
+
+    series_str = ''.join(series)
 
     # 8. Tra ve dung format
     if series_str:

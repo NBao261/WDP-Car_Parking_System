@@ -1,4 +1,5 @@
 import React from "react";
+import { formatPlate } from "../../../../../utils/format";
 import { VehicleType } from "../../../../../services/vehicleType.service";
 
 interface CheckInFormProps {
@@ -56,7 +57,7 @@ export function CheckInForm({
         <div className="flex flex-col gap-1">
           <label className="block text-[10px] font-semibold text-[#060606]">Nhập lại biển vào</label>
           <input type="text" placeholder="F5 để nhập lại" value={plate} 
-            onChange={e => { setPlate(e.target.value.toUpperCase()); setCheckInError(null); }}
+            onChange={e => { setPlate(formatPlate(e.target.value)); setCheckInError(null); }}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.code === "Space") {
                 e.preventDefault();

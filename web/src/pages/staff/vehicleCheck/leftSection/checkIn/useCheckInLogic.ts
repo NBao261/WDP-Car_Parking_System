@@ -4,14 +4,7 @@ import { apiClient } from "../../../../../services/api";
 import { sessionService } from "../../../../../services/session.service";
 import { facilityService } from "../../../../../services/facility.service";
 import { useCheckInState } from "./useCheckInState";
-
-function formatPlate(raw: string): string {
-  let s = raw.trim().toUpperCase();
-  s = s.replace(/[^A-Z0-9\s.\-]/g, '');
-  s = s.replace(/\s+/g, ' ').trim();
-  s = s.replace(/^(\d{2})([A-Z])/, '$1-$2');
-  return s;
-}
+import { formatPlate } from "../../../../../utils/format";
 
 export function useCheckInLogic(onCheckIn: (data: any) => void) {
   const state = useCheckInState();

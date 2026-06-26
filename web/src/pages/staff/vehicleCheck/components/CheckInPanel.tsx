@@ -634,9 +634,11 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
         {/* Row 2: Biển số xe vào (Full width) */}
         <div className="flex flex-col gap-1 mt-1">
           <label className="block text-[10px] font-semibold text-[#060606]">Biển số xe vào</label>
-          <input type="text" value={displayPlate}
+          <input
+            type="text"
+            value={plate}
             onChange={(e) => {
-              setPlate(e.target.value.toUpperCase());
+              setPlate(formatPlate(e.target.value));
               setCheckInError(null);
             }}
             onKeyDown={(e) => {
