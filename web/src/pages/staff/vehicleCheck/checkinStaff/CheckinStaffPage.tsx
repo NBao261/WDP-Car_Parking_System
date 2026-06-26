@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import axios from 'axios';
+import { formatPlate } from '../../../../utils/format';
 import SuggestionPanel from './components/SuggestionPanel';
 import FacilitySelectorStep from './components/FacilitySelectorStep';
 import { useCheckinFlow } from './hooks/useCheckinFlow';
@@ -287,7 +288,7 @@ export default function CheckinStaffPage({ onFlagException }: { onFlagException?
                 <input
                   type="text"
                   value={plate}
-                  onChange={(e) => setPlate(e.target.value.toUpperCase())}
+                  onChange={(e) => setPlate(formatPlate(e.target.value))}
                   placeholder="VD: 29A-123.45"
                   disabled={step === 'suggest'}
                   className="w-full text-center font-mono text-2xl font-bold uppercase tracking-widest text-[#060606] bg-gray-50 border border-gray-200 rounded-2xl py-4 focus:outline-none focus:border-[#d7ee46] focus:bg-white transition-all shadow-sm placeholder:text-gray-300 disabled:opacity-60"

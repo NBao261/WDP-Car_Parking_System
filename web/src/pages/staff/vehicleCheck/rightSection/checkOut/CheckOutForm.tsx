@@ -1,3 +1,5 @@
+import { formatPlate } from '../../../../../utils/format';
+
 export function CheckOutForm({
   plateIn, plate, isNoPlateVehicle, onChangePlate, handleKeyDown, step, isSubmitting, isException, isMismatch,
   searchMode, setSearchMode, setSearchInput, searchInputRef, searchInput, vehicleTypeName
@@ -34,7 +36,7 @@ export function CheckOutForm({
         </div>
         <div className="flex flex-col gap-1">
           <label className="block text-[10px] font-semibold text-[#060606]">Nhập lại biển ra</label>
-          <input type="text" placeholder="F5 để nhập lại" value={plate} onChange={e => onChangePlate(e.target.value.toUpperCase())} onKeyDown={handleKeyDown} className="w-full h-7 px-3 bg-white border border-[#e8e9e8] rounded-[6px] text-[#333] text-[10px] font-medium outline-none focus:border-[#A3E635]" />
+          <input type="text" placeholder="F5 để nhập lại" value={plate} onChange={e => onChangePlate(formatPlate(e.target.value))} onKeyDown={handleKeyDown} className="w-full h-7 px-3 bg-white border border-[#e8e9e8] rounded-[6px] text-[#333] text-[10px] font-medium outline-none focus:border-[#A3E635]" />
         </div>
       </div>
     </>

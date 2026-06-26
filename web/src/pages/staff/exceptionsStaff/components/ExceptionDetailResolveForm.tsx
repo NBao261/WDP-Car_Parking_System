@@ -1,4 +1,5 @@
 import { ExceptionType } from "../../../../services/exception.service";
+import { formatPlate } from "../../../../utils/format";
 
 export const ExceptionDetailResolveForm = ({
   selectedException, canResolve, staffNote, setStaffNote, newLicensePlate, setNewLicensePlate,
@@ -13,7 +14,7 @@ export const ExceptionDetailResolveForm = ({
         {selectedException.typeEnum === ExceptionType.WRONG_PLATE && (
           <div>
             <label className="block text-[13px] font-medium text-[#060606] mb-1.5">Biển số đúng (Hệ thống sẽ cập nhật lại vé) <span className="text-red-500">*</span></label>
-            <input type="text" value={newLicensePlate} onChange={(e) => setNewLicensePlate(e.target.value.toUpperCase())} placeholder="Nhập biển số đúng..." className="w-full bg-white border border-[#fdeab1] rounded-[8px] px-3 h-10 text-[13px] font-mono focus:outline-none focus:border-[#f39c12]" />
+            <input type="text" value={newLicensePlate} onChange={(e) => setNewLicensePlate(formatPlate(e.target.value))} placeholder="Nhập biển số đúng..." className="w-full bg-white border border-[#fdeab1] rounded-[8px] px-3 h-10 text-[13px] font-mono focus:outline-none focus:border-[#f39c12]" />
           </div>
         )}
         {selectedException.typeEnum === ExceptionType.WRONG_ZONE && (

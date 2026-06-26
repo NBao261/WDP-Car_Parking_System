@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import axios from 'axios';
+import { formatPlate } from '../../../../utils/format';
 import { apiClient } from '../../../../services/api';
 
 export default function CheckoutStaffPage({ onFlagException }: { onFlagException?: () => void }) {
@@ -216,8 +217,8 @@ export default function CheckoutStaffPage({ onFlagException }: { onFlagException
             <input
               type="text"
               value={plate}
-              onChange={(e) => setPlate(e.target.value.toUpperCase())}
-              placeholder="VD: XX-XXX-XXXX"
+              onChange={(e) => setPlate(formatPlate(e.target.value))}
+              placeholder="VD: 29A-123.45"
               className="w-full text-center font-mono text-2xl font-bold uppercase tracking-widest text-[#060606] bg-gray-50 border border-gray-200 rounded-2xl py-4 focus:outline-none focus:border-[#d7ee46] focus:bg-white transition-all shadow-sm placeholder:text-gray-300"
             />
             {ocrSuccess && (

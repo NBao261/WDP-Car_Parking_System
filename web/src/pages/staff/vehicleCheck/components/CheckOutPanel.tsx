@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { formatPlate } from '../../../../utils/format';
 import { toast } from 'sonner';
 import { ImagePlus, RefreshCw, X, Building2, DoorOpen } from 'lucide-react';
 import axios from 'axios';
@@ -13,14 +14,7 @@ interface CheckOutPanelProps {
   onFlagException?: () => void;
 }
 
-/** Client-side cleanup cho biển số xe sau khi OCR */
-function formatPlate(raw: string): string {
-  let s = raw.trim().toUpperCase();
-  s = s.replace(/[^A-Z0-9\s.\-]/g, '');
-  s = s.replace(/\s+/g, ' ').trim();
-  s = s.replace(/^(\d{2})([A-Z])/, '$1-$2');
-  return s;
-}
+
 
 export default function CheckOutPanel({
   plate,
@@ -581,7 +575,7 @@ export default function CheckOutPanel({
             <input
               type="text"
               value={isNoPlateVehicle ? "KBS-AUTO" : plate}
-              onChange={(e) => onChangePlate(e.target.value.toUpperCase())}
+              onChange={(e) => onChangePlate(formatPlate(e.target.value))}
               onKeyDown={handleKeyDown}
               disabled={step === 'SEARCH' || isSubmitting || isNoPlateVehicle}
               className={`w-full h-9 text-[18px] text-center font-mono px-3 border rounded-[6px] uppercase font-bold outline-none transition-all duration-200
@@ -639,8 +633,8 @@ export default function CheckOutPanel({
           </div>
           <div className="flex flex-col gap-1">
             <label className="block text-[10px] font-semibold text-[#060606]">Nhập lại biển ra</label>
-            <input type="text" placeholder="F5 để nhập lại" value={plate} onChange={e => onChangePlate(e.target.value.toUpperCase())}
-              className="w-full h-7 px-3 bg-white border border-[#e8e9e8] rounded-[6px] text-[#333] text-[10px] font-medium outline-none focus:border-[#A3E635]" />
+            <input type="text" placeholder="F5 để nhập lại" value={plate} onChange={e => onChangePlate(formatPlate(e.target.value))}
+              className="w-full h-7 px-3 bg-white border border-[#e8e9e8] rounded-[6px] text-[#333] text-[10px] font-medium outline-none focus:border-[#9FE870]" />
           </div>
         </div>
 
