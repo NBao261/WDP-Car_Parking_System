@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { formatPlate } from '../../../../utils/format';
-import { useCheckoutFlow } from './hooks/useCheckoutFlow';
 import { apiClient } from '../../../../services/api';
 
 export default function CheckoutStaffPage({ onFlagException }: { onFlagException?: () => void }) {

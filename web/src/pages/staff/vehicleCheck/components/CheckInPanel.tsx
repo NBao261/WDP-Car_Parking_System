@@ -16,14 +16,7 @@ interface CheckInPanelProps {
   onCheckIn: (data: any) => void;
 }
 
-/** Client-side cleanup cho biển số xe sau khi OCR */
-function formatPlate(raw: string): string {
-  let s = raw.trim().toUpperCase();
-  s = s.replace(/[^A-Z0-9\s.\-]/g, '');
-  s = s.replace(/\s+/g, ' ').trim();
-  s = s.replace(/^(\d{2})([A-Z])/, '$1-$2');
-  return s;
-}
+import { formatPlate } from '../../../../utils/format';
 
 export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
   const [plate, setPlate] = useState('');
@@ -691,7 +684,7 @@ export default function CheckInPanel({ onCheckIn }: CheckInPanelProps) {
           </div>
           <div className="flex flex-col gap-1">
             <label className="block text-[10px] font-semibold text-[#060606]">Nhập lại biển vào</label>
-            <input type="text" placeholder="F5 để nhập lại" value={plate} onChange={e => { setPlate(e.target.value.toUpperCase()); setCheckInError(null); }}
+            <input type="text" placeholder="F5 để nhập lại" value={plate} onChange={e => { setPlate(formatPlate(e.target.value)); setCheckInError(null); }}
               className="w-full h-7 px-3 bg-white border border-[#e8e9e8] rounded-[6px] text-[#333] text-[10px] font-medium outline-none focus:border-[#9FE870]" />
           </div>
         </div>
