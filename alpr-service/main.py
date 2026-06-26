@@ -310,17 +310,16 @@ def fix_vn_plate(raw: str) -> str:
         return s
     prefix_raw, number_raw = parts[0], parts[1]
 
-    # 5. Phan tich prefix: province (2 digits) + series (letters)
-    m_pre = re.match(r'^(\d{2})([A-Z]*)$', prefix_raw)
+    # 5. Phan tich prefix: province (2 digits) + series (letters/digits)
+    m_pre = re.match(r'^(\d{2})([A-Z0-9]*)$', prefix_raw)
     if not m_pre:
         return s
     province = m_pre.group(1)
     series   = list(m_pre.group(2))
 
-    # Sua series: digit-looking → letter (chi ap dung neu ky tu dau la digit)
-    for i, c in enumerate(series):
-        if c in _D2L:
-            series[i] = _D2L[c]
+    # Sua series: ky tu dau tien cua series phai la chu cai
+    if series and series[0] in _D2L:
+        series[0] = _D2L[series[0]]
 
     # 6. Neu series rong ma number bat dau bang letter → do la series letter (Type B plate)
     #    Rules:
