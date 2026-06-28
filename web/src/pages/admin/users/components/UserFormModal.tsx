@@ -81,7 +81,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0 rounded-t-2xl">
           <div>
-            <h2 className="text-lg font-bold text-[#060606]">
+            <h2 className="text-lg font-bold text-[#062F28]">
               {isEdit ? 'Chỉnh sửa tài khoản' : 'Thêm tài khoản mới'}
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
@@ -109,7 +109,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                 <div key={step.id} className="flex items-center gap-1 flex-1">
                   <div
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex-1
-                      ${isActive ? 'bg-[#d7ee46] text-[#060606]' : isDone ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400'}`}
+                      ${isActive ? 'bg-[#9FE870] text-[#062F28]' : isDone ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400'}`}
                   >
                     {isDone ? <Check size={12} strokeWidth={3} /> : <Icon size={12} />}
                     <span className="hidden sm:inline">{step.label}</span>
@@ -232,7 +232,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                 type="button"
                 onClick={() => setCurrentStep((s) => (s + 1) as 1 | 2 | 3 | 4)}
                 disabled={!canGoNext()}
-                className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 text-sm font-bold text-white bg-[#062F28] rounded-xl hover:bg-[#062F28]/90 transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Tiếp theo
                 <ChevronRight size={16} />
@@ -243,10 +243,9 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className={`px-5 py-2.5 text-sm font-bold rounded-xl transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed
-                  ${
-                    !isEdit && isOnFacilityStep && selectedFacilityIds.length === 0
-                      ? 'bg-amber-200 hover:bg-amber-300 text-amber-900' // Cảnh báo nhẹ khi không gán
-                      : 'bg-[#d7ee46] hover:bg-[#c4dc32] text-[#060606]'
+                  ${!isEdit && isOnFacilityStep && selectedFacilityIds.length === 0
+                    ? 'bg-amber-200 hover:bg-amber-300 text-amber-900' // Cảnh báo nhẹ khi không gán
+                    : 'bg-[#062F28] hover:bg-[#062F28]/90 text-white'
                   }
                 `}
               >

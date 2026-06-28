@@ -112,9 +112,9 @@ function CustomSelect({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-4 py-2.5 bg-gray-50 rounded-xl text-sm font-medium flex items-center justify-between cursor-pointer transition-all select-none"
         style={{
-          border: isOpen ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
-          boxShadow: isOpen ? '0 0 0 3px rgba(204,226,66,0.2)' : 'none',
-          color: '#060606',
+          border: isOpen ? '1px solid #9FE870' : '1px solid #e2e3e2',
+          boxShadow: isOpen ? '0 0 0 3px rgba(159,232,112,0.2)' : 'none',
+          color: '#062F28',
           backgroundColor: isOpen ? '#ffffff' : '#f9fafb',
         }}
       >
@@ -153,8 +153,8 @@ function CustomSelect({
                   }}
                   className="px-4 py-2.5 text-[14px] cursor-pointer transition-colors flex items-center"
                   style={{
-                    color: value === o.value ? '#060606' : '#4a4a4a',
-                    background: value === o.value ? '#f8fce2' : '#ffffff',
+                    color: value === o.value ? '#062F28' : '#4a4a4a',
+                    background: value === o.value ? '#f4fbe9' : '#ffffff',
                     fontWeight: value === o.value ? 500 : 400,
                   }}
                   onMouseEnter={(e) => {
@@ -288,7 +288,7 @@ function SessionInfo({ session }: { session: ParkingSessionPopulated }) {
           <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest pl-1 mb-1.5">
             Biển số xe
           </p>
-          <p className="text-3xl font-black text-[#4A7C20] tracking-widest uppercase">
+          <p className="text-3xl font-black text-[#062F28] tracking-widest uppercase">
             {session.licensePlate}
           </p>
         </div>
@@ -308,7 +308,7 @@ function SessionInfo({ session }: { session: ParkingSessionPopulated }) {
           icon={CreditCard}
           label="Mã thẻ"
           value={
-            <span className="font-mono bg-[#f8fce2] px-2.5 py-0.5 rounded text-[#556314] border border-[#d7ee46]/40">
+            <span className="font-mono bg-[#9FE870]/15 px-2.5 py-0.5 rounded text-[#062F28] border border-[#9FE870]/30">
               {session.cardCode}
             </span>
           }
@@ -610,7 +610,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                     type="text"
                     value={editCode}
                     onChange={(e) => setEditCode(e.target.value.toUpperCase())}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#d7ee46] uppercase"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#9FE870] uppercase"
                     maxLength={10}
                   />
                 </div>
@@ -655,8 +655,8 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
 
                     {/* Row 2: Box & Floor */}
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center min-w-[72px] h-[72px] px-3 bg-[#f4f7ed] border-[1.5px] border-[#d4e0c4] rounded-[18px] shadow-sm">
-                        <h2 className="text-[28px] font-black text-[#4a7c20] tracking-tight leading-none">
+                      <div className="flex items-center justify-center min-w-[72px] h-[72px] px-3 bg-[#9FE870]/15 border border-[#9FE870]/30 rounded-[18px] shadow-sm">
+                        <h2 className="text-[28px] font-black text-[#062F28] tracking-tight leading-none">
                           {displaySlot.code}
                         </h2>
                       </div>
@@ -697,7 +697,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                       Các loại xe cho phép
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#f4f7ed] border border-[#d4e0c4] rounded-lg text-[#4a7c20]">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#9FE870]/15 border border-[#9FE870]/30 rounded-lg text-[#062F28]">
                         <VtIcon size={16} strokeWidth={2.5} />
                         <span className="text-[13px] font-bold">{vtNameStr}</span>
                       </div>
@@ -716,7 +716,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                           const isSelected = selected === s;
 
                           let hoverClass = 'hover:border-gray-200 hover:bg-gray-50';
-                          let selectedClass = 'border-[#060606] bg-[#060606] text-white';
+                          let selectedClass = 'border-[#062F28] bg-[#062F28] text-white';
 
                           if (s === 'available') {
                             hoverClass = 'hover:border-emerald-300 hover:bg-emerald-50';
@@ -765,7 +765,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                         <button
                           disabled={loading}
                           onClick={handleSubmit}
-                          className="w-full h-[52px] bg-[#d7ee46] text-[#060606] font-extrabold text-sm rounded-[16px] shadow-sm hover:bg-[#cfe63e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                          className="w-full h-[52px] bg-[#062F28] text-white font-extrabold text-sm rounded-[16px] shadow-sm hover:bg-[#062F28]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                         >
                           {loading && <Loader2 size={16} className="animate-spin" />}
                           Cập nhật trạng thái
@@ -816,7 +816,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                 <button
                   onClick={handleSaveEdit}
                   disabled={loading}
-                  className="h-10 px-6 rounded-xl font-bold text-sm bg-[#d7ee46] text-[#060606] hover:bg-[#cfe63e] shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="h-10 px-6 rounded-xl font-bold text-sm bg-[#062F28] text-white hover:bg-[#062F28]/90 shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading && <Loader2 size={16} className="animate-spin" />}
                   Lưu Thay Đổi
@@ -825,7 +825,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
             ) : (
               <button
                 onClick={onClose}
-                className="h-10 px-6 rounded-xl font-bold text-sm bg-gray-200 text-gray-700 hover:bg-[#d7ee46] hover:text-[#060606] transition-colors"
+                className="h-10 px-6 rounded-xl font-bold text-sm bg-gray-200 text-gray-700 hover:bg-[#9FE870] hover:text-[#062F28] transition-colors"
               >
                 Đóng
               </button>

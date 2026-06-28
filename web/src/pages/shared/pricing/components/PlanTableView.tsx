@@ -17,6 +17,8 @@ interface PlanTableProps {
   onEdit: (p: PricingPlan) => void;
   onViewDetail: (p: PricingPlan) => void;
   onRefresh: () => void;
+  currentPage?: number;
+  itemsPerPage?: number;
 }
 
 export function PlanTableView({
@@ -25,6 +27,8 @@ export function PlanTableView({
   onEdit,
   onViewDetail,
   onRefresh,
+  currentPage = 1,
+  itemsPerPage = 10,
 }: PlanTableProps) {
   const [loading, setLoading] = useState(false);
   const [deletePlan, setDeletePlan] = useState<PricingPlan | null>(null);
@@ -110,19 +114,20 @@ export function PlanTableView({
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col relative">
       <div className="w-full overflow-x-auto min-h-[160px]">
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-lime-50/50 text-lime-700 font-semibold border-b border-lime-100/50">
+          <thead className="bg-[#f5f5f5] text-[#6b6b6b] text-[11px] uppercase font-semibold border-b border-[#e8e9e8]">
             <tr>
-              <th className="px-6 py-4 rounded-tl-2xl">Tên bảng giá</th>
-              <th className="px-6 py-4">Loại xe</th>
-              <th className="px-6 py-4">Loại giá</th>
-              <th className="px-6 py-4">Đơn giá cơ bản</th>
-              <th className="px-6 py-4">Phụ phí</th>
-              <th className="px-6 py-4 text-center">Trạng thái</th>
-              <th className="px-6 py-4 text-right rounded-tr-2xl">Thao tác</th>
+              <th className="px-4 py-3 text-center w-[50px] rounded-tl-2xl">STT</th>
+              <th className="px-4 py-3">Tên bảng giá</th>
+              <th className="px-4 py-3">Loại xe</th>
+              <th className="px-4 py-3">Loại giá</th>
+              <th className="px-4 py-3">Đơn giá cơ bản</th>
+              <th className="px-4 py-3">Phụ phí</th>
+              <th className="px-4 py-3 text-center">Trạng thái</th>
+              <th className="px-4 py-3 text-right rounded-tr-2xl">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {plans.map((plan) => {
+            {plans.map((plan, index) => {
               const vtId =
                 typeof plan.vehicleTypeId === 'object'
                   ? plan.vehicleTypeId?._id
@@ -145,31 +150,49 @@ export function PlanTableView({
                 <tr
                   key={plan._id}
                   onClick={() => onViewDetail(plan)}
-                  className={`hover:bg-gray-50 transition-colors cursor-pointer ${!isActive ? 'opacity-75 bg-gray-50/50' : ''}`}
+                  className={`hover:bg-[#9FE870]/10 transition-colors cursor-pointer border-b border-gray-50 last:border-0 ${!isActive ? 'opacity-75 bg-gray-50/50' : ''}`}
                 >
+                  <td className="px-4 py-4 text-[#6b6b6b] text-[13px] text-center font-medium truncate">
+                    {(currentPage - 1) * itemsPerPage + index + 1}
+                  </td>
                   <td
-                    className="px-6 py-4 font-bold text-[14px] text-[#060606] max-w-[200px] truncate"
+                    className="px-4 py-4 font-bold text-[14px] text-[#062F28] max-w-[200px] truncate"
                     title={plan.name}
                   >
                     {plan.name}
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[12px] font-semibold rounded-lg">
-                      <VtIcon size={14} className="text-[#4a7c20]" strokeWidth={2} /> {vtName}
-                    </span>
+                  <td className="px-4 py-4">
+                    {(() => {
+                      const idx = Math.max(0, vehicleTypes.findIndex(v => v._id === vtId));
+                      const colors = [
+                        { bg: '#F3F4F6', text: '#4B5563' },
+                        { bg: '#EAF5E4', text: '#062F28' },
+                        { bg: '#9FE870', text: '#062F28' },
+                        { bg: '#062F28', text: '#9FE870' },
+                      ];
+                      const color = colors[Math.min(idx, colors.length - 1)];
+                      return (
+                        <span
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[12px] font-semibold rounded-lg"
+                          style={{ background: color.bg, color: color.text }}
+                        >
+                          <VtIcon size={14} color={color.text} strokeWidth={2} /> {vtName}
+                        </span>
+                      );
+                    })()}
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="text-gray-600 font-medium">
+                  <td className="px-4 py-4">
+                    <span className="text-[#6b6b6b] text-[13px] font-medium">
                       {FEE_TYPE_LABELS[uiFeeType] ?? plan.feeType}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4">
                     {baseRate ? (
                       <div className="whitespace-nowrap">
-                        <span className="font-bold text-[#4a7c20] text-[14px]">
+                        <span className="font-bold text-[#062F28] text-[14px]">
                           {fmt(baseRate.amount)}
                         </span>
-                        <span className="text-gray-500 text-xs ml-1">
+                        <span className="text-[#6b6b6b] text-[12px] ml-1">
                           /{translateUnit(baseRate.unit)}
                         </span>
                       </div>
@@ -177,12 +200,12 @@ export function PlanTableView({
                       <span className="text-gray-400">-</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-xs text-gray-500">
+                  <td className="px-4 py-4 text-[12px] text-[#6b6b6b]">
                     <div className="flex flex-col gap-0.5 whitespace-nowrap">
                       {plan.overnightFee > 0 && (
                         <span>
                           Qua đêm:{' '}
-                          <span className="font-medium text-gray-700">
+                          <span className="font-medium text-[#062F28]">
                             {fmt(plan.overnightFee)}
                           </span>
                         </span>
@@ -190,7 +213,7 @@ export function PlanTableView({
                       {plan.overtimeFeePerHour > 0 && (
                         <span>
                           Quá giờ:{' '}
-                          <span className="font-medium text-gray-700">
+                          <span className="font-medium text-[#062F28]">
                             {fmt(plan.overtimeFeePerHour)}/h
                           </span>
                         </span>
@@ -198,7 +221,7 @@ export function PlanTableView({
                       {plan.lostCardFee > 0 && (
                         <span>
                           Mất thẻ:{' '}
-                          <span className="font-medium text-gray-700">{fmt(plan.lostCardFee)}</span>
+                          <span className="font-medium text-[#062F28]">{fmt(plan.lostCardFee)}</span>
                         </span>
                       )}
                       {!plan.overnightFee && !plan.overtimeFeePerHour && !plan.lostCardFee && (
@@ -206,14 +229,14 @@ export function PlanTableView({
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 py-4 text-center">
                     <span
-                      className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}
+                      className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-[rgba(159,232,112,0.15)] text-[#82C94E]' : (plan as any).status === 'maintenance' ? 'bg-[rgba(250,204,21,0.15)] text-[#EAB308]' : 'bg-gray-100 text-[#6b6b6b]'}`}
                     >
-                      {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
+                      {isActive ? 'HOẠT ĐỘNG' : (plan as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-4 py-4 text-right">
                     <div
                       className="flex items-center justify-end relative"
                       onClick={(e) => e.stopPropagation()}

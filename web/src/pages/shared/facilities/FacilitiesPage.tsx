@@ -26,7 +26,7 @@ import { vehicleTypeService } from '../../../services/vehicleType.service';
 // ── Skeleton Card ────────
 function SkeletonFacilityCard() {
   return (
-    <div className="bg-white rounded-2xl border border-[#e8eae8] p-5 space-y-3 animate-pulse h-52">
+    <div className="bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] p-5 space-y-3 animate-pulse h-52">
       <div className="flex justify-between">
         <div className="space-y-2 flex-1">
           <div className="h-3.5 bg-gray-100 rounded w-2/3" />
@@ -95,7 +95,7 @@ export default function FacilitiesPage() {
                   setEditingFacility(undefined);
                   setIsFacilityModalOpen(true);
                 }}
-                className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
+                className="bg-black text-white px-5 py-2.5 rounded-xl font-bold hover:bg-black/80 transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
               >
                 <Plus size={20} /> Thêm Tòa Nhà
               </button>
@@ -124,12 +124,11 @@ export default function FacilitiesPage() {
               ))}
             </div>
           ) : data.paginatedFacilities.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-[#e8eae8] py-20 flex flex-col items-center gap-4">
+            <div className="bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] py-20 flex flex-col items-center gap-4">
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                style={{ background: 'rgba(215,238,70,0.15)' }}
+                className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white border-[1.5px] border-[#f0f0f0]"
               >
-                <Building2 size={28} style={{ color: '#4a7c20' }} />
+                <Building2 size={28} className="text-[#9FE870]" />
               </div>
               <div className="text-center">
                 <p className="text-sm font-semibold text-[#060606]">Không tìm thấy cơ sở nào</p>
@@ -142,7 +141,7 @@ export default function FacilitiesPage() {
                   data.setSearch('');
                   data.setStatusFilter('all');
                 }}
-                className="bg-[#f0f1f0] text-[#060606] font-medium px-5 py-2.5 rounded-xl hover:bg-gray-200 transition-colors"
+                className="bg-gray-100 text-[#062F28] font-medium px-5 py-2.5 rounded-xl hover:bg-gray-200 transition-colors"
               >
                 Xóa bộ lọc
               </button>
@@ -244,13 +243,12 @@ export default function FacilitiesPage() {
                       key={i}
                       onClick={() => typeof p === 'number' && data.setCurrentPage(p)}
                       disabled={p === '...'}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                        p === '...'
-                          ? 'text-gray-400 bg-transparent cursor-default'
-                          : data.currentPage === p
-                            ? 'bg-[#cce242] text-[#060606] border border-[#b8cc30] font-bold shadow-sm'
-                            : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === '...'
+                        ? 'text-gray-400 bg-transparent cursor-default'
+                        : data.currentPage === p
+                          ? 'bg-[#062F28] text-white font-bold shadow-sm'
+                          : 'bg-white text-gray-600 hover:bg-gray-50'
+                        }`}
                     >
                       {p}
                     </button>
@@ -283,7 +281,7 @@ export default function FacilitiesPage() {
       )}
 
       {/* ══ View 2: Floor List for a Facility ══ */}
-      {data.viewFacility && (
+      {data.viewFacility && !data.mapFloor && (
         <FacilityFloorsView
           viewFacility={data.viewFacility}
           setViewFacility={data.setViewFacility}
@@ -367,6 +365,7 @@ export default function FacilitiesPage() {
             : 0
         }
         vehicleTypes={data.detailFacilityVehicleTypes}
+        allVehicleTypes={data.vehicleTypes}
       />
 
       {data.viewFacility && (

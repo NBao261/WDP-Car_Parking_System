@@ -163,8 +163,10 @@ export const FloorCard = React.memo(function FloorCard({
   const isActive = floor.status === 'active';
 
   const badgeStyle = isActive
-    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5', fontWeight: 'bold' }
-    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2', fontWeight: 'bold' };
+    ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
+    : (floor as any).status === 'maintenance'
+      ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
+      : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
   // Vehicle type name pills - Optimized with useMemo
   const vtNames = useMemo(() => {
@@ -186,8 +188,8 @@ export const FloorCard = React.memo(function FloorCard({
       style={{
         background: 'white',
         borderRadius: 16,
-        border: hovered ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
-        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.06)',
+        border: hovered ? '2px solid #9FE870' : '2px solid #f0f0f0',
+        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.06)' : '0 2px 10px rgba(0,0,0,0.03)',
         transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
         transition: 'all 0.2s ease',
         display: 'flex',
@@ -207,19 +209,20 @@ export const FloorCard = React.memo(function FloorCard({
               width: 48,
               height: 48,
               borderRadius: 12,
-              background: 'rgba(204,226,66,0.15)',
+              background: '#ffffff',
+              border: '1.5px solid #f0f0f0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
             }}
           >
-            <Layers size={24} style={{ color: '#4a7c20' }} />
+            <Layers size={24} style={{ color: '#9FE870' }} />
           </div>
           {/* Text */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3 className="text-[15px] font-semibold text-[#060606] truncate" title={floor.name}>
+              <h3 className="text-[15px] font-bold text-[#062F28] truncate" title={floor.name}>
                 {floor.name}
               </h3>
             </div>
@@ -233,15 +236,28 @@ export const FloorCard = React.memo(function FloorCard({
               {vtNames.length === 0 ? (
                 <span className="text-[13px] text-gray-400 italic">Không có loại xe</span>
               ) : (
-                vtNames.map((name) => (
-                  <span
-                    key={name}
-                    className="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium"
-                    style={{ background: '#EAF3DE', color: '#27500A' }}
-                  >
-                    {name}
-                  </span>
-                ))
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {vtNames.map((name, i) => {
+                    const vtIndex = vehicleTypes.findIndex((v) => v.name === name);
+                    const idx = Math.max(0, vtIndex);
+                    const colors = [
+                      { bg: '#F3F4F6', text: '#4B5563' },
+                      { bg: '#EAF5E4', text: '#062F28' },
+                      { bg: '#9FE870', text: '#062F28' },
+                      { bg: '#062F28', text: '#9FE870' },
+                    ];
+                    const color = colors[Math.min(idx, colors.length - 1)];
+                    return (
+                      <span
+                        key={i}
+                        className="px-2 py-0.5 rounded text-[11px] font-medium"
+                        style={{ background: color.bg, color: color.text }}
+                      >
+                        {name}
+                      </span>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </div>
@@ -265,10 +281,10 @@ export const FloorCard = React.memo(function FloorCard({
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                background: isActive ? '#10b981' : '#9b9e9b',
+                background: isActive ? '#82C94E' : (floor as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
               }}
             />
-            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
+            {isActive ? 'HOẠT ĐỘNG' : (floor as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
           </span>
 
           {/* Menu dropdown */}
@@ -358,81 +374,39 @@ export const FloorCard = React.memo(function FloorCard({
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="px-5 pb-3 mt-1">
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div
-            style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}
-          >
-            <div className="text-[17px] tabular-nums font-semibold" style={{ color: '#060606' }}>
-              {total}
-            </div>
-            <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Tổng slot</div>
+      {/* 3 Stats Box */}
+      <div className="px-5 pb-5 mt-1">
+        <div className="flex items-center justify-between border border-gray-100 rounded-xl p-3 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <div className="text-center flex-1">
+            <div className="text-[11px] text-[#7B7B7B] mb-1">Tổng slot</div>
+            <div className="text-[15px] font-bold text-[#062F28]">{total}</div>
           </div>
-          <div
-            style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}
-          >
-            <div className="text-[17px] tabular-nums font-semibold" style={{ color: '#060606' }}>
-              {occupied}
-            </div>
-            <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Đang dùng</div>
+          <div className="w-px h-8 bg-gray-100" />
+          <div className="text-center flex-1">
+            <div className="text-[11px] text-[#7B7B7B] mb-1">Đang dùng</div>
+            <div className="text-[15px] font-bold text-[#062F28]">{occupied}</div>
           </div>
-          <div
-            style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}
-          >
-            <div className="text-[17px] tabular-nums font-semibold" style={{ color: fillColor }}>
-              {fillRate}%
-            </div>
-            <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Lấp đầy</div>
+          <div className="w-px h-8 bg-gray-100" />
+          <div className="text-center flex-1">
+            <div className="text-[11px] text-[#7B7B7B] mb-1">Lấp đầy</div>
+            <div className="text-[15px] font-bold" style={{ color: fillColor }}>{fillRate}%</div>
           </div>
-        </div>
-      </div>
-
-      {/* Occupancy bar */}
-      <div className="px-5 pb-4">
-        <div
-          className="flex items-center justify-between mb-1.5"
-          style={{ fontSize: 12, color: '#9b9e9b' }}
-        >
-          <span>Tỷ lệ lấp đầy</span>
-          <span style={{ color: '#6b6e6b' }}>
-            {new Date(floor.createdAt).toLocaleDateString('vi-VN')}
-          </span>
-        </div>
-        <div style={{ background: '#eff0ef', height: 6, borderRadius: 999, overflow: 'hidden' }}>
-          <motion.div
-            className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${fillRate}%`, background: barColor }}
-            initial={{ width: 0 }}
-            animate={{ width: `${fillRate}%` }}
-          />
         </div>
       </div>
 
       {/* Footer */}
-      <div className="px-5 py-3 mt-auto" style={{ borderTop: '1px solid #f0f1f0' }}>
+      <div className="px-5 pb-5 mt-auto">
         <button
           onClick={(e) => {
             e.stopPropagation();
             onViewMap(floor);
           }}
-          style={{
-            width: '100%',
-            padding: '10px 20px',
-            borderRadius: 10,
-            border: hovered ? '1.5px solid #cce242' : '1.5px solid #c8d4b8',
-            background: hovered ? '#cce242' : 'white',
-            color: '#060606',
-            fontWeight: hovered ? 600 : 500,
-            fontSize: 14,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            transition: 'all 0.2s ease',
-          }}
+          className={`w-full py-3.5 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-colors duration-200 ${isActive
+              ? 'bg-[#9FE870] text-[#062F28] hover:bg-[#062F28] hover:text-[#9FE870]'
+              : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+            }`}
         >
-          <Map size={14} /> Sơ đồ tầng
+          Sơ đồ tầng →
         </button>
       </div>
 
@@ -485,10 +459,9 @@ export function FloorGrid({
     return (
       <div className="bg-white rounded-2xl border border-[#e8eae8] py-20 flex flex-col items-center gap-4">
         <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center"
-          style={{ background: '#EAF3DE' }}
+          className="w-14 h-14 rounded-2xl bg-white border-[1.5px] border-[#f0f0f0] flex items-center justify-center"
         >
-          <Layers size={24} style={{ color: '#3B6D11' }} />
+          <Layers size={24} className="text-[#9FE870]" />
         </div>
         <div className="text-center">
           <p className="text-sm font-semibold text-[#060606]">Không có tầng nào trong cơ sở này</p>
@@ -501,8 +474,7 @@ export function FloorGrid({
         {isFacilityActive && (
           <button
             onClick={onAddFloor}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors hover:bg-[#c4dc32]"
-            style={{ background: '#d7ee46', color: '#1a1a0a' }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors bg-black text-white hover:bg-black/80"
           >
             <Plus size={20} /> Thêm Tầng
           </button>

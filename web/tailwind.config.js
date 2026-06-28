@@ -9,14 +9,14 @@ export default {
       colors: {
         // Brand
         brand: {
-          DEFAULT: '#060606',
+          DEFAULT: '#062F28',
           foreground: '#ffffff',
         },
         accent: {
-          DEFAULT: '#d7ee46',
-          dark: '#96a827',
-          darker: '#7a8c17',
-          foreground: '#556314',
+          DEFAULT: '#9FE870',
+          dark: '#8bd95d',
+          darker: '#7ac54d',
+          foreground: '#062F28',
         },
 
         // Surfaces

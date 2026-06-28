@@ -23,46 +23,50 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   roles?: UserRole[];
+  category?: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
   // ── Admin ──
-  { path: '/admin', label: 'Trang Chủ', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
-  { path: '/admin/facilities', label: 'Tòa nhà & Bãi đỗ', icon: Map, roles: [UserRole.ADMIN] },
+  { path: '/admin', label: 'Trang Chủ', icon: LayoutDashboard, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
+  { path: '/admin/facilities', label: 'Tòa nhà & Bãi đỗ', icon: Map, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
 
-  { path: '/admin/pricing', label: 'Bảng Giá', icon: Wallet, roles: [UserRole.ADMIN] },
-  { path: '/admin/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.ADMIN] },
-  { path: '/admin/users', label: 'Người Dùng', icon: Users, roles: [UserRole.ADMIN] },
-  { path: '/admin/roles', label: 'Phân Quyền', icon: Shield, roles: [UserRole.ADMIN] },
-  { path: '/admin/config', label: 'Cấu Hình Hệ Thống', icon: Settings, roles: [UserRole.ADMIN] },
-  { path: '/admin/logs', label: 'Lịch Sử Hoạt Động', icon: ScrollText, roles: [UserRole.ADMIN] },
+  { path: '/admin/pricing', label: 'Bảng Giá', icon: Wallet, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
+  { path: '/admin/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
+  { path: '/admin/users', label: 'Người Dùng', icon: Users, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
+  { path: '/admin/roles', label: 'Phân Quyền', icon: Shield, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
+  { path: '/admin/config', label: 'Cấu Hình Hệ Thống', icon: Settings, roles: [UserRole.ADMIN], category: 'TÙY CHỈNH' },
+  { path: '/admin/logs', label: 'Lịch Sử Hoạt Động', icon: ScrollText, roles: [UserRole.ADMIN], category: 'TÙY CHỈNH' },
 
   // ── Manager ──
-  { path: '/manager', label: 'Trang Chủ', icon: LayoutDashboard, roles: [UserRole.MANAGER] },
+  { path: '/manager', label: 'Trang Chủ', icon: LayoutDashboard, roles: [UserRole.MANAGER], category: 'MENU CHÍNH' },
   {
     path: '/manager/assignments',
     label: 'Phân công tòa nhà',
     icon: Users,
     roles: [UserRole.MANAGER],
+    category: 'MENU CHÍNH',
   },
-  { path: '/manager/facilities', label: 'Tòa nhà & Bãi đỗ', icon: Map, roles: [UserRole.MANAGER] },
-  { path: '/manager/pricing', label: 'Bảng Giá', icon: Wallet, roles: [UserRole.MANAGER] },
-  { path: '/manager/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.MANAGER] },
+  { path: '/manager/facilities', label: 'Tòa nhà & Bãi đỗ', icon: Map, roles: [UserRole.MANAGER], category: 'MENU CHÍNH' },
+  { path: '/manager/pricing', label: 'Bảng Giá', icon: Wallet, roles: [UserRole.MANAGER], category: 'MENU CHÍNH' },
+  { path: '/manager/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.MANAGER], category: 'MENU CHÍNH' },
   {
     path: '/manager/exceptions',
     label: 'Quản Lý Ngoại Lệ',
     icon: AlertTriangle,
     roles: [UserRole.MANAGER],
+    category: 'MENU CHÍNH',
   },
 
   // ── Staff ──
-  { path: '/staff', label: 'Xe Ra Vào', icon: ScanLine, roles: [UserRole.STAFF] },
-  { path: '/staff/active-sessions', label: 'Xe Đang Gửi', icon: Car, roles: [UserRole.STAFF] },
+  { path: '/staff', label: 'Xe Ra Vào', icon: ScanLine, roles: [UserRole.STAFF], category: 'MENU CHÍNH' },
+  { path: '/staff/active-sessions', label: 'Xe Đang Gửi', icon: Car, roles: [UserRole.STAFF], category: 'MENU CHÍNH' },
   {
     path: '/staff/exceptions',
     label: 'Xử Lý Ngoại Lệ',
     icon: AlertTriangle,
     roles: [UserRole.STAFF],
+    category: 'MENU CHÍNH',
   },
 ];
 
@@ -97,9 +101,23 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { logout, user } = useAuthStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const visibleNavItems = useMemo(() => {
-    if (!user) return [];
-    return NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user.role));
+  const groupedItems = useMemo(() => {
+    if (!user) return {};
+    const items = NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user.role));
+
+    // Maintain order by using an ordered structure
+    const groups: Record<string, NavItem[]> = {
+      'MENU CHÍNH': [],
+      'TÙY CHỈNH': [],
+    };
+
+    items.forEach(item => {
+      const cat = item.category || 'MENU CHÍNH';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(item);
+    });
+
+    return groups;
   }, [user]);
 
   return (
@@ -107,7 +125,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-40
-          w-64 bg-surface-sidebar flex flex-col transition-transform duration-300 ease-in-out
+          w-64 bg-[#f5f6f8] flex flex-col transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
         role="navigation"
@@ -120,22 +138,37 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <span className="font-bold text-xl tracking-tight">LYNC PARK</span>
         </div>
 
-        <nav className="flex-1 px-4 pb-6 space-y-1.5 overflow-y-auto">
-          {visibleNavItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/admin' || item.path === '/manager' || item.path === '/staff'}
-              onClick={onClose}
-              className={({ isActive }) => `
-                flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 font-medium text-sm
-                ${isActive ? 'bg-white text-brand shadow-sm' : 'text-brand/70 hover:bg-brand/5 hover:text-brand'}
-              `}
-            >
-              <item.icon size={20} className="shrink-0" />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
+        <nav className="flex-1 px-4 pb-6 overflow-y-auto custom-scrollbar">
+          {Object.entries(groupedItems).map(([category, items]) => {
+            if (items.length === 0) return null;
+            return (
+              <div key={category} className="mb-6">
+                <div className="text-xs font-bold text-gray-400 mb-2 px-3 tracking-wider">
+                  {category}
+                </div>
+                <div className="space-y-1">
+                  {items.map((item) => (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      end={item.path === '/admin' || item.path === '/manager' || item.path === '/staff'}
+                      onClick={onClose}
+                      className={({ isActive }) => `
+                        flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 font-medium text-sm
+                        ${isActive
+                          ? 'bg-white text-[#062F28] shadow-sm font-bold'
+                          : 'text-gray-500 hover:bg-gray-200/50 hover:text-[#062F28]'
+                        }
+                      `}
+                    >
+                      <item.icon size={20} className="shrink-0" />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </nav>
 
         <div className="p-4 mt-auto shrink-0">

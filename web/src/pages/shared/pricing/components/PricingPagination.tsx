@@ -38,7 +38,7 @@ export function PricingPagination({
             <button
               key={i}
               onClick={() => setCurrentPage(i + 1)}
-              className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === i + 1 ? 'bg-[#cce242] text-[#060606] border border-[#b8cc30]' : 'text-gray-600 hover:bg-gray-100'}`}
+              className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === i + 1 ? 'bg-[#062F28] text-[#9FE870] border border-[#062F28]' : 'text-gray-600 hover:bg-gray-100'}`}
             >
               {i + 1}
             </button>

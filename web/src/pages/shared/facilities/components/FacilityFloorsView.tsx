@@ -55,14 +55,14 @@ export function FacilityFloorsView({
           {/* Back button */}
           <button
             onClick={() => setViewFacility(null)}
-            className="w-8 h-8 rounded-lg border flex items-center justify-center transition-colors hover:bg-[#f0f5e8]"
-            style={{ borderColor: '#b8cc30', color: '#3B6D11', background: 'white' }}
+            className="w-8 h-8 rounded-lg border flex items-center justify-center transition-colors hover:bg-[#f4fbe9]"
+            style={{ borderColor: '#9FE870', color: '#062F28', background: 'white' }}
           >
             <ChevronLeft size={16} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-[#060606] flex items-center gap-2">
-              <Building2 size={20} style={{ color: '#4a7c20' }} />
+            <h1 className="text-2xl font-bold text-[#062F28] flex items-center gap-2">
+              <Building2 size={20} style={{ color: '#062F28' }} />
               {viewFacility.name}
             </h1>
             <p className="text-gray-400 text-sm flex items-center gap-1 mt-0.5">
@@ -76,7 +76,7 @@ export function FacilityFloorsView({
               setEditingFloor(undefined);
               setIsFloorModalOpen(true);
             }}
-            className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
+            className="bg-black text-white px-5 py-2.5 rounded-xl font-bold hover:bg-black/80 transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
           >
             <Plus size={20} /> Thêm Tầng
           </button>
@@ -84,9 +84,9 @@ export function FacilityFloorsView({
       </div>
 
       {/* Facility summary strip */}
-      <div className="bg-white rounded-2xl border border-[#e8eae8] px-5 py-3.5 flex flex-wrap items-center gap-5">
+      <div className="bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] px-5 py-3.5 flex flex-wrap items-center gap-5">
         <div className="flex items-center gap-1.5 text-[14px] font-medium text-gray-500">
-          <Clock size={16} /> {viewFacility.openTime} – {viewFacility.closeTime}
+          <Clock size={16} /> Thời gian hoạt động: {viewFacility.openTime} – {viewFacility.closeTime}
         </div>
         <div
           className="flex items-center gap-1.5 text-[14px] font-medium text-gray-500"
@@ -167,10 +167,10 @@ export function FacilityFloorsView({
         vehicleTypes={
           detailFloor
             ? vehicleTypes.filter((vt) =>
-                (detailFloor.allowedVehicleTypes || []).some(
-                  (item: any) => (typeof item === 'string' ? item : item._id) === vt._id
-                )
+              (detailFloor.allowedVehicleTypes || []).some(
+                (item: any) => (typeof item === 'string' ? item : item._id) === vt._id
               )
+            )
             : []
         }
       />

@@ -42,7 +42,7 @@ export function FloorFormModal({
     if (errors[fieldName]) {
       return `${base} border border-red-500 focus:ring-2 focus:ring-red-200 bg-red-50/10`;
     }
-    return `${base} border border-gray-200 focus:ring-2 focus:ring-[#d7ee46] focus:bg-white`;
+    return `${base} border border-gray-200 focus:ring-2 focus:ring-[#9FE870] focus:bg-white`;
   };
 
   const isFull =
@@ -148,7 +148,7 @@ export function FloorFormModal({
         >
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div>
-              <h2 className="text-lg font-bold text-[#060606]">
+              <h2 className="text-lg font-bold text-[#062F28]">
                 {isEdit ? 'Sửa tầng' : 'Thêm tầng mới'}
               </h2>
               <p className="text-xs text-gray-500 mt-0.5">
@@ -239,7 +239,7 @@ export function FloorFormModal({
                       placeholder="Tìm kiếm loại xe..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
+                      className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all"
                     />
                   </div>
 
@@ -253,7 +253,7 @@ export function FloorFormModal({
                           onClick={() => toggleVehicle(vt._id)}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${
                             isSelected
-                              ? 'bg-[#d7ee46] text-[#060606] border-[#c4dc32] scale-[1.03]'
+                              ? 'bg-[#9FE870] text-[#062F28] border-[#9FE870] scale-[1.03]'
                               : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                           }`}
                         >
@@ -292,7 +292,7 @@ export function FloorFormModal({
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
+                    className="px-5 py-2.5 text-sm font-bold text-white bg-[#062F28] rounded-xl hover:bg-[#062F28]/90 transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
                   >
                     {isSubmitting && <Loader2 size={16} className="animate-spin" />}
                     {isEdit ? 'Lưu Thay Đổi' : 'Tạo Tầng'}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RefreshCw, Plus, GripHorizontal, Map, Car, X } from 'lucide-react';
+import { RefreshCw, Plus, GripHorizontal, Map, Car, ChevronLeft } from 'lucide-react';
 import { Floor } from '../../../../services/floor.service';
 import { ParkingSlot, SlotStatus } from '../../../../services/slot.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
@@ -64,21 +64,22 @@ export function SlotMappingEditorView({
         className="bg-white rounded-2xl shadow-sm border border-[#e8eae8] p-6 mt-6"
       >
         {/* Header */}
-        <div className="flex items-start justify-between mb-5">
-          <div>
-            <h2 className="text-lg font-bold text-[#060606]">
-              Sơ đồ vị trí đỗ xe — Tầng {floor.name}
-            </h2>
-            <p className="text-sm text-gray-400 mt-0.5">Nhấp vào một slot để thay đổi trạng thái</p>
-          </div>
+        <div className="flex items-center gap-4 mb-5 pb-5 border-b border-gray-100">
           {onClose && (
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+              className="p-2 text-gray-500 hover:text-[#062F28] hover:bg-[#9FE870]/20 rounded-xl transition-colors border border-gray-200 hover:border-[#9FE870]"
+              title="Quay lại danh sách tầng"
             >
-              <X size={20} />
+              <ChevronLeft size={24} />
             </button>
           )}
+          <div>
+            <h2 className="text-xl font-bold text-[#062F28]">
+              Sơ đồ vị trí đỗ xe — Tầng {floor.name}
+            </h2>
+            <p className="text-sm text-gray-500 mt-0.5">Nhấp vào một slot để thay đổi trạng thái</p>
+          </div>
         </div>
 
         {/* Filters and Actions */}
@@ -91,7 +92,7 @@ export function SlotMappingEditorView({
                 onClick={() => setFilterStatus(btn.value)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   filterStatus === btn.value
-                    ? 'bg-[#d7ee46] text-[#060606] font-semibold'
+                    ? 'bg-[#9FE870] text-[#062F28] font-semibold'
                     : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
@@ -111,9 +112,9 @@ export function SlotMappingEditorView({
             {floor.status === 'active' && isFacilityActive && (
               <button
                 onClick={() => setBulkOpen(true)}
-                className="bg-[#d7ee46] text-[#060606] px-5 py-2 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm text-sm"
+                className="bg-[#062F28] text-white px-5 py-2 rounded-xl font-bold hover:bg-[#062F28]/90 transition-colors flex items-center gap-2 shadow-sm text-sm"
               >
-                <Plus size={18} /> Tạo Slot
+                <Plus size={18} className="text-[#9FE870]" /> Tạo Slot
               </button>
             )}
           </div>

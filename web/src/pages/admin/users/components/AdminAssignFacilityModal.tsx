@@ -88,11 +88,11 @@ export function AdminAssignFacilityModal({
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#d7ee46]/20 flex items-center justify-center shrink-0">
-              <Building2 size={18} className="text-[#5a9e0f]" />
+            <div className="w-9 h-9 rounded-xl bg-[#9FE870]/20 flex items-center justify-center shrink-0">
+              <Building2 size={18} className="text-[#062F28]" />
             </div>
             <div>
-              <h3 className="font-bold text-[#060606] leading-tight">Phân công Tòa nhà</h3>
+              <h3 className="font-bold text-[#062F28] leading-tight">Phân công Tòa nhà</h3>
               <p className="text-xs text-gray-400 mt-0.5">
                 <span className="font-semibold text-gray-600">{user.name}</span>
                 <span className="mx-1">·</span>
@@ -134,19 +134,19 @@ export function AdminAssignFacilityModal({
                     onClick={() => toggle(facility._id)}
                     className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-start gap-3 ${
                       selected
-                        ? 'bg-[#f0f9dc] border-[#d7ee46]'
+                        ? 'bg-[#9FE870]/20 border-[#9FE870]'
                         : 'bg-gray-50 border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <div className="mt-0.5 shrink-0">
                       {selected ? (
-                        <CheckSquare className="w-4 h-4 text-[#5a9e0f]" />
+                        <CheckSquare className="w-4 h-4 text-[#062F28]" />
                       ) : (
                         <Square className="w-4 h-4 text-gray-300" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-xs text-[#060606] truncate">{facility.name}</p>
+                      <p className="font-bold text-xs text-[#062F28] truncate">{facility.name}</p>
                       <div className="flex items-center gap-1 mt-0.5">
                         <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
                         <p className="text-[11px] text-gray-400 truncate">{facility.address}</p>
@@ -171,8 +171,8 @@ export function AdminAssignFacilityModal({
 
         {/* Summary bar */}
         {selectedIds.length > 0 && (
-          <div className="mx-4 mb-2 px-3 py-2 bg-[#f0f9dc] border border-[#d7ee46] rounded-xl">
-            <p className="text-xs font-semibold text-[#5a9e0f] text-center">
+          <div className="mx-4 mb-2 px-3 py-2 bg-[#9FE870]/20 border border-[#9FE870] rounded-xl">
+            <p className="text-xs font-semibold text-[#062F28] text-center">
               ✓ Đã chọn {selectedIds.length} tòa nhà
             </p>
           </div>
@@ -189,7 +189,7 @@ export function AdminAssignFacilityModal({
           <button
             onClick={handleSave}
             disabled={saving || loadingFacilities}
-            className="flex-1 py-2.5 text-sm font-bold bg-[#d7ee46] text-[#060606] rounded-xl hover:bg-[#c4dc32] transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+            className="flex-1 py-2.5 text-sm font-bold bg-[#062F28] text-white rounded-xl hover:bg-[#062F28]/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
           >
             {saving ? (
               <>
