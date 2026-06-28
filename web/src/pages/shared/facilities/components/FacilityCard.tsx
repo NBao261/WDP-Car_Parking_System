@@ -68,8 +68,10 @@ export function FacilityCard({
   const textColor = getBarTextColor(fillRate);
 
   const badgeStyle = isActive
-    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5', fontWeight: 'bold' }
-    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2', fontWeight: 'bold' };
+    ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
+    : (facility as any).status === 'maintenance'
+      ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
+      : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
   const handleConfirm = async () => {
     setLoading(true);
@@ -151,8 +153,8 @@ export function FacilityCard({
       style={{
         background: 'white',
         borderRadius: 16,
-        border: hovered ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
-        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.06)',
+        border: hovered ? '2px solid #9FE870' : '2px solid #f0f0f0',
+        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.06)' : '0 2px 10px rgba(0,0,0,0.03)',
         transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
         transition: 'all 0.2s ease',
         overflow: 'hidden',
@@ -172,20 +174,21 @@ export function FacilityCard({
               width: 48,
               height: 48,
               borderRadius: 12,
-              background: 'rgba(204,226,66,0.15)',
+              background: '#ffffff',
+              border: '1.5px solid #f0f0f0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
             }}
           >
-            <Building2 size={24} style={{ color: '#4a7c20' }} />
+            <Building2 size={24} style={{ color: '#9FE870' }} />
           </div>
           {/* Text */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <h3
-                className="text-[15px] text-[#060606] font-semibold truncate"
+                className="text-[15px] text-[#062F28] font-bold truncate"
                 title={facility.name}
               >
                 {facility.name}
@@ -193,7 +196,7 @@ export function FacilityCard({
             </div>
             <div
               className="text-[13px] flex items-center gap-1.5 mt-1 min-w-0"
-              style={{ color: '#6b6e6b' }}
+              style={{ color: '#7B7B7B' }}
             >
               <MapPin size={12} className="flex-shrink-0" />
               <span className="truncate" title={facility.address}>
@@ -221,10 +224,10 @@ export function FacilityCard({
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                background: isActive ? '#10b981' : '#9b9e9b',
+                background: isActive ? '#82C94E' : (facility as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
               }}
             />
-            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
+            {isActive ? 'HOẠT ĐỘNG' : (facility as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
           </span>
           <div className="relative -mr-2" onClick={(e) => e.stopPropagation()}>
             {loading ? (
@@ -280,12 +283,12 @@ export function FacilityCard({
                   ) : (
                     <button
                       onClick={handleReactivate}
-                      className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2"
-                      style={{ color: '#27500A' }}
+                      className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 text-[#062F28]"
                     >
                       <CheckCircle size={14} /> Kích hoạt lại
                     </button>
                   )}
+
                   <div className="h-px bg-gray-100 mx-2 my-1" />
                   <button
                     onClick={(e) => {
@@ -304,87 +307,49 @@ export function FacilityCard({
       </div>
 
       {/* Meta row */}
-      <div className="px-5 pb-3 flex items-center gap-4 text-[13px]" style={{ color: '#9b9e9b' }}>
+      <div className="px-5 pb-3 flex items-center gap-4 text-[13px]" style={{ color: '#7B7B7B' }}>
         <span className="flex items-center gap-1">
           <Layers size={12} /> {facility.totalFloors} tầng
         </span>
         <span className="flex items-center gap-1">
-          <Clock size={12} /> {facility.openTime} – {facility.closeTime}
+          <Clock size={12} /> Thời gian hoạt động: {facility.openTime} – {facility.closeTime}
         </span>
       </div>
 
-      {/* Stats grid */}
-      <div className="px-5 pb-3">
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div
-            style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}
-          >
-            <div className="text-[17px] tabular-nums font-semibold" style={{ color: '#060606' }}>
-              {totalSlots}
-            </div>
-            <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Tổng slot</div>
+      {/* 3 Stats Box */}
+      <div className="px-5 pb-5">
+        <div className="flex items-center justify-between border border-gray-100 rounded-xl p-3 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <div className="text-center flex-1">
+            <div className="text-[11px] text-[#7B7B7B] mb-1">Tổng slot</div>
+            <div className="text-[15px] font-bold text-[#062F28]">{totalSlots}</div>
           </div>
-          <div
-            style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}
-          >
-            <div className="text-[17px] tabular-nums font-semibold" style={{ color: '#060606' }}>
-              {inUse}
-            </div>
-            <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Đang dùng</div>
+          <div className="w-px h-8 bg-gray-100" />
+          <div className="text-center flex-1">
+            <div className="text-[11px] text-[#7B7B7B] mb-1">Đang dùng</div>
+            <div className="text-[15px] font-bold text-[#062F28]">{inUse}</div>
           </div>
-          <div
-            style={{ background: 'rgba(204,226,66,0.15)', borderRadius: 10, padding: '8px 4px' }}
-          >
-            <div className={`text-[17px] tabular-nums font-semibold ${textColor}`}>{fillRate}%</div>
-            <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Lấp đầy</div>
+          <div className="w-px h-8 bg-gray-100" />
+          <div className="text-center flex-1">
+            <div className="text-[11px] text-[#7B7B7B] mb-1">Lấp đầy</div>
+            <div className={`text-[15px] font-bold ${textColor}`}>{fillRate}%</div>
           </div>
-        </div>
-      </div>
-
-      {/* Occupancy bar */}
-      <div className="px-5 pb-4">
-        <div
-          className="flex items-center justify-between mb-1.5"
-          style={{ fontSize: 12, color: '#9b9e9b' }}
-        >
-          <span>Tỷ lệ lấp đầy</span>
-          <span style={{ color: '#6b6e6b' }}>
-            {new Date(facility.createdAt).toLocaleDateString('en-US')}
-          </span>
-        </div>
-        <div style={{ background: '#eff0ef', height: 6, borderRadius: 999, overflow: 'hidden' }}>
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${fillRate}%`, background: barColor }}
-          />
         </div>
       </div>
 
       {/* View Floors button */}
-      <div className="px-5 py-3 mt-auto" style={{ borderTop: '1px solid #f0f1f0' }}>
+      <div className="px-5 pb-5 mt-auto">
         <button
           onClick={(e) => {
             e.stopPropagation();
             if (!confirmOpen) onViewFloors(facility);
           }}
-          style={{
-            width: '100%',
-            padding: '10px 20px',
-            borderRadius: 10,
-            border: hovered ? '1.5px solid #cce242' : '1.5px solid #c8d4b8',
-            background: hovered ? '#cce242' : 'white',
-            color: '#060606',
-            fontWeight: hovered ? 600 : 500,
-            fontSize: 14,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            transition: 'all 0.2s ease',
-          }}
+          className={`w-full py-3.5 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-colors duration-200 ${
+            isActive
+              ? 'bg-[#9FE870] text-[#062F28] hover:bg-[#062F28] hover:text-[#9FE870]'
+              : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+          }`}
         >
-          <Building2 size={13} style={{ color: '#4a7c20' }} /> Xem các tầng →
+          Xem các tầng →
         </button>
       </div>
 
@@ -420,21 +385,24 @@ export function FacilityListItem({
   const [hovered, setHovered] = useState(false);
   const isActive = facility.status === 'active';
   const totalSlots = stats?.totalSlots ?? 0;
+  const inUse = stats?.occupied ?? 0;
   const fillRate = stats?.fillRate ?? 0;
-  const barColor = getBarColor(fillRate);
+  const textColor = getBarTextColor(fillRate);
 
-  const accentColor = isActive ? '#cce242' : '#e2e3e2';
+  const accentColor = isActive ? '#9FE870' : '#e2e3e2';
   const badgeStyle = isActive
-    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5', fontWeight: 'bold' }
-    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2', fontWeight: 'bold' };
+    ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
+    : (facility as any).status === 'maintenance'
+      ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
+      : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
   return (
     <div
       className={`bg-white flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer ${!isActive ? 'opacity-70' : ''}`}
       style={{
-        border: hovered ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
+        border: hovered ? '1.5px solid #9FE870' : '1.5px solid #f0f0f0',
         borderLeft: `4px solid ${accentColor}`,
-        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
+        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.06)' : '0 2px 8px rgba(0,0,0,0.02)',
         transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
         transition: 'all 0.2s ease',
       }}
@@ -448,19 +416,20 @@ export function FacilityListItem({
           width: 40,
           height: 40,
           borderRadius: 10,
-          background: 'rgba(204,226,66,0.15)',
+          background: '#ffffff',
+          border: '1.5px solid #f0f0f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        <Building2 size={20} style={{ color: '#4a7c20' }} />
+        <Building2 size={20} style={{ color: '#9FE870' }} />
       </div>
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-[15px] text-[#060606] font-semibold">{facility.name}</span>
+          <span className="text-[15px] text-[#062F28] font-bold">{facility.name}</span>
           <span
             style={{
               fontSize: 10,
@@ -477,54 +446,37 @@ export function FacilityListItem({
                 width: 5,
                 height: 5,
                 borderRadius: '50%',
-                background: isActive ? '#10b981' : '#9b9e9b',
+                background: isActive ? '#82C94E' : (facility as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
               }}
             />
-            {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
+            {isActive ? 'HOẠT ĐỘNG' : (facility as any).status === 'maintenance' ? 'BẢO TRÌ' : 'VÔ HIỆU HÓA'}
           </span>
         </div>
         <span
           className="text-[13px] block truncate"
           title={facility.address}
-          style={{ color: '#9b9e9b' }}
+          style={{ color: '#7B7B7B' }}
         >
           {facility.address}
         </span>
       </div>
       {/* Stats */}
-      <div className="flex items-center gap-6 shrink-0 hidden md:flex">
-        <div className="text-center">
-          <div className="text-[15px] text-[#060606] tabular-nums font-medium">
+      <div className="flex items-center gap-6 shrink-0 hidden md:flex border border-gray-100 rounded-xl px-4 py-2 bg-gray-50/50">
+        <div className="text-center w-12">
+          <div className="text-[14px] text-[#062F28] tabular-nums font-bold">
             {facility.totalFloors}
           </div>
-          <div style={{ fontSize: 11, color: '#9b9e9b' }}>Tầng</div>
+          <div style={{ fontSize: 11, color: '#7B7B7B' }}>Tầng</div>
         </div>
-        <div className="text-center">
-          <div className="text-[15px] text-[#060606] tabular-nums font-medium">{totalSlots}</div>
-          <div style={{ fontSize: 11, color: '#9b9e9b' }}>Tổng slot</div>
+        <div className="w-px h-6 bg-gray-200" />
+        <div className="text-center w-16">
+          <div className="text-[14px] text-[#062F28] tabular-nums font-bold">{totalSlots}</div>
+          <div style={{ fontSize: 11, color: '#7B7B7B' }}>Tổng slot</div>
         </div>
-        <div className="flex items-center gap-2">
-          <div
-            style={{
-              width: 80,
-              background: '#eff0ef',
-              height: 6,
-              borderRadius: 999,
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                width: `${fillRate}%`,
-                height: '100%',
-                background: barColor,
-                borderRadius: 999,
-              }}
-            />
-          </div>
-          <span className="text-[15px] tabular-nums font-semibold" style={{ color: barColor }}>
-            {fillRate}%
-          </span>
+        <div className="w-px h-6 bg-gray-200" />
+        <div className="text-center w-16">
+          <div className={`text-[14px] tabular-nums font-bold ${textColor}`}>{fillRate}%</div>
+          <div style={{ fontSize: 11, color: '#7B7B7B' }}>Lấp đầy</div>
         </div>
       </div>
       {/* Button */}
@@ -533,25 +485,11 @@ export function FacilityListItem({
           e.stopPropagation();
           onViewFloors(facility);
         }}
-        style={{
-          padding: '7px 16px',
-          borderRadius: 10,
-          border: '1.5px solid #c8d4b8',
-          background: 'white',
-          color: '#060606',
-          fontSize: 13,
-          fontWeight: 500,
-          cursor: 'pointer',
-          flexShrink: 0,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = '#cce242';
-          e.currentTarget.style.borderColor = '#cce242';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'white';
-          e.currentTarget.style.borderColor = '#c8d4b8';
-        }}
+        className={`ml-2 px-5 py-2.5 rounded-xl text-[13px] font-bold transition-colors duration-200 flex-shrink-0 ${
+          isActive
+            ? 'bg-[#9FE870] text-[#062F28] hover:bg-[#062F28] hover:text-[#9FE870]'
+            : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+        }`}
       >
         Xem tầng →
       </button>

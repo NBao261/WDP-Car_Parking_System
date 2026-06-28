@@ -121,17 +121,17 @@ export function PermissionMatrixModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl flex flex-col"
+            className="relative w-full max-w-5xl bg-white rounded-[24px] shadow-xl flex flex-col overflow-hidden"
             style={{ maxHeight: 'min(90vh, 720px)' }}
           >
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#d7ee46]/20 flex items-center justify-center">
-                  <Shield size={20} className="text-[#96a827]" />
+                <div className="w-10 h-10 rounded-xl bg-[#9FE870]/20 flex items-center justify-center">
+                  <Shield size={20} className="text-[#062F28]" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-[#060606]">Cấu hình Quyền hạn</h2>
+                  <h2 className="text-lg font-bold text-[#062F28]">Cấu hình Quyền hạn</h2>
                   <p className="text-xs text-gray-500 mt-0.5">
                     Role: <span className="font-semibold text-gray-700">{role.name}</span>
                     <span className="ml-2 font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
@@ -169,14 +169,14 @@ export function PermissionMatrixModal({
             {/* Summary bar */}
             <div className="px-6 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
               <span className="text-xs text-gray-500">
-                Đã chọn: <span className="font-bold text-[#060606]">{selectedPerms.size}</span> /{' '}
+                Đã chọn: <span className="font-bold text-[#062F28]">{selectedPerms.size}</span> /{' '}
                 {totalPermCount} quyền
               </span>
               {role.isDefault && (
                 <button
                   onClick={handleReset}
                   disabled={isResetting || isSaving}
-                  className="text-xs text-gray-500 hover:text-[#060606] flex items-center gap-1 transition-colors disabled:opacity-50"
+                  className="text-xs text-gray-500 hover:text-[#062F28] flex items-center gap-1 transition-colors disabled:opacity-50"
                 >
                   <RotateCcw size={12} />
                   Reset về mặc định
@@ -207,7 +207,7 @@ export function PermissionMatrixModal({
               <button
                 onClick={handleSave}
                 disabled={isSaving || isResetting}
-                className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 text-[14px] font-bold text-[#062F28] bg-[#9FE870] rounded-xl hover:bg-[#062F28] hover:text-[#9FE870] transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isSaving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
                 Lưu thay đổi

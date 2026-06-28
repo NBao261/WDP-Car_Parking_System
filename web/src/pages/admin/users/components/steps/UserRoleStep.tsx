@@ -75,10 +75,10 @@ export function UserRoleStep({
             <div
               className={`
                 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all
-                ${isSelected ? 'border-[#96a827] bg-[#d7ee46]' : 'border-gray-300 bg-white'}
+                ${isSelected ? 'border-[#062F28] bg-[#9FE870]' : 'border-gray-300 bg-white'}
               `}
             >
-              {isSelected && <div className="w-2 h-2 rounded-full bg-[#060606]" />}
+              {isSelected && <div className="w-2 h-2 rounded-full bg-[#062F28]" />}
             </div>
             <div className="flex-1">
               <div className={`font-bold text-sm ${opt.color}`}>{opt.label}</div>

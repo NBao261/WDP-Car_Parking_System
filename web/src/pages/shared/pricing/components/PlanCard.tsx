@@ -149,9 +149,8 @@ export function PlanCard({
       style={{
         background: 'white',
         borderRadius: 16,
-        border: hovered ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
-        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.06)',
-        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+        border: hovered ? '2px solid #cce242' : '2px solid #e2e3e2',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
         transition: 'all 0.2s ease',
       }}
     >

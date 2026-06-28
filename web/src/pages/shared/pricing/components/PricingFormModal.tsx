@@ -156,7 +156,7 @@ export function PricingFormModal({
     if (hasError) {
       return `${base} border border-red-500 focus:ring-2 focus:ring-red-200 bg-white`;
     }
-    return `${base} border border-gray-200 focus:ring-2 focus:ring-[#d7ee46] bg-gray-50/50 text-gray-800`;
+    return `${base} border border-gray-200 focus:ring-2 focus:ring-[#9FE870] bg-gray-50/50 text-gray-800`;
   };
   const errCls = 'text-xs text-red-500 mt-1';
 
@@ -175,7 +175,7 @@ export function PricingFormModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gray-50/50">
           <div>
-            <h2 className="text-lg font-bold text-[#060606]">
+            <h2 className="text-lg font-bold text-[#062F28]">
               {isEdit ? 'Chỉnh Sửa Bảng Giá' : 'Thêm Bảng Giá Mới'}
             </h2>
             <p className="text-sm text-gray-500 mt-0.5">Thiết lập cấu hình thu phí cho bãi đỗ xe</p>
@@ -206,7 +206,7 @@ export function PricingFormModal({
         >
           {/* SECTION 1: THÔNG TIN CHUNG */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-[#060606] border-b pb-2">1. Thông tin chung</h3>
+            <h3 className="font-semibold text-[#062F28] border-b pb-2">1. Thông tin chung</h3>
 
             {/* Facility */}
             <div>
@@ -226,7 +226,7 @@ export function PricingFormModal({
                         onClick={() => !isLocked && setIsFacOpen(!isFacOpen)}
                         className={`${getInputCls(hasErr, '!bg-transparent !border-transparent !shadow-none !px-0')} flex items-center justify-between transition-colors ${isLocked ? 'bg-gray-100 opacity-70 cursor-not-allowed' : 'cursor-pointer'} !py-2`}
                       >
-                        <div className={selected ? 'text-[#060606]' : 'text-gray-400'}>
+                        <div className={selected ? 'text-[#062F28]' : 'text-gray-400'}>
                           {selected ? (
                             <div className="flex items-center gap-3 py-1">
                               <div
@@ -234,8 +234,8 @@ export function PricingFormModal({
                                   width: 48,
                                   height: 48,
                                   borderRadius: 12,
-                                  background: 'rgba(204,226,66,0.15)',
-                                  border: '1px solid rgba(204,226,66,0.3)',
+                                  background: 'rgba(159,232,112,0.15)',
+                                  border: '1px solid rgba(159,232,112,0.3)',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
@@ -244,12 +244,11 @@ export function PricingFormModal({
                               >
                                 <Building2
                                   size={24}
-                                  style={{ color: '#4a7c20' }}
-                                  strokeWidth={1.5}
+                                  style={{ color: '#062F28' }}
                                 />
                               </div>
                               <div className="flex flex-col gap-1 min-w-0">
-                                <span className="font-bold text-[16px] text-[#060606] truncate">
+                                <span className="font-bold text-[16px] text-[#062F28] truncate">
                                   {selected.name}
                                 </span>
                                 <span className="flex items-center gap-2 text-[14px] text-gray-500 font-normal">
@@ -293,7 +292,7 @@ export function PricingFormModal({
                                     field.onChange(f._id);
                                     setIsFacOpen(false);
                                   }}
-                                  className={`px-4 py-3 cursor-pointer border-b border-gray-50 last:border-0 ${field.value === f._id ? 'bg-[#d7ee46]/20' : 'hover:bg-gray-50'}`}
+                                  className={`px-4 py-3 cursor-pointer border-b border-gray-50 last:border-0 ${field.value === f._id ? 'bg-[#9FE870]/20' : 'hover:bg-gray-50'}`}
                                 >
                                   <div className="flex items-center gap-3">
                                     <div
@@ -301,8 +300,8 @@ export function PricingFormModal({
                                         width: 44,
                                         height: 44,
                                         borderRadius: 12,
-                                        background: 'rgba(204,226,66,0.15)',
-                                        border: '1px solid rgba(204,226,66,0.3)',
+                                        background: 'rgba(159,232,112,0.15)',
+                                        border: '1px solid rgba(159,232,112,0.3)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -311,13 +310,12 @@ export function PricingFormModal({
                                     >
                                       <Building2
                                         size={22}
-                                        style={{ color: '#4a7c20' }}
-                                        strokeWidth={1.5}
+                                        style={{ color: '#062F28' }}
                                       />
                                     </div>
                                     <div className="flex flex-col gap-1 min-w-0">
                                       <span
-                                        className={`text-[15px] ${field.value === f._id ? 'text-[#060606] font-bold' : 'text-gray-700 font-semibold'}`}
+                                        className={`text-[15px] ${field.value === f._id ? 'text-[#062F28] font-bold' : 'text-gray-700 font-semibold'}`}
                                       >
                                         {f.name}
                                       </span>
@@ -373,20 +371,20 @@ export function PricingFormModal({
                   const borderClass = isVtOpen
                     ? hasErr
                       ? 'ring-2 ring-red-200 border-red-500'
-                      : 'ring-2 ring-[#d7ee46] border-[#d7ee46]'
+                      : 'ring-2 ring-[#9FE870] border-[#9FE870]'
                     : hasErr
                       ? ''
-                      : 'hover:border-[#d7ee46]';
+                      : 'hover:border-[#9FE870]';
                   return (
                     <div className="relative">
                       <div
                         onClick={() => !isEdit && setIsVtOpen(!isVtOpen)}
                         className={`${getInputCls(hasErr)} flex items-center justify-between cursor-pointer transition-colors ${isEdit ? 'bg-gray-100 opacity-70 pointer-events-none' : ''} ${borderClass}`}
                       >
-                        <span className={selected ? 'text-[#060606]' : 'text-gray-400'}>
+                        <span className={selected ? 'text-[#062F28]' : 'text-gray-400'}>
                           {selected ? (
                             <span className="flex items-center gap-2">
-                              <SelectedIcon size={16} className="text-[#4a7c20]" />
+                              <SelectedIcon size={16} className="text-[#062F28]" />
                               {selected.name}
                             </span>
                           ) : (
@@ -421,11 +419,11 @@ export function PricingFormModal({
                                       field.onChange(v._id);
                                       setIsVtOpen(false);
                                     }}
-                                    className={`px-3 py-2.5 text-sm cursor-pointer flex items-center gap-2 whitespace-normal break-words ${field.value === v._id ? 'bg-[#d7ee46]/20 text-[#060606] font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
+                                    className={`px-3 py-2.5 text-sm cursor-pointer flex items-center gap-2 whitespace-normal break-words ${field.value === v._id ? 'bg-[#9FE870]/20 text-[#062F28] font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
                                   >
                                     <IconComp
                                       size={16}
-                                      className={`flex-shrink-0 ${field.value === v._id ? 'text-[#060606]' : 'text-gray-400'}`}
+                                      className={`flex-shrink-0 ${field.value === v._id ? 'text-[#062F28]' : 'text-gray-400'}`}
                                     />
                                     {v.name}
                                   </div>
@@ -445,7 +443,7 @@ export function PricingFormModal({
 
           {/* SECTION 2: CƠ CHẾ THU PHÍ */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-[#060606] border-b pb-2">2. Cơ chế thu phí</h3>
+            <h3 className="font-semibold text-[#062F28] border-b pb-2">2. Cơ chế thu phí</h3>
 
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-1.5">
@@ -459,11 +457,11 @@ export function PricingFormModal({
                     name="uiFeeType"
                     render={({ field }) => (
                       <label
-                        className={`flex items-center gap-2 border rounded-xl px-4 py-2.5 cursor-pointer transition-all text-sm font-semibold ${field.value === val ? 'border-[#d7ee46] bg-[#d7ee46]/10 text-[#060606] ring-1 ring-[#d7ee46]' : errors.uiFeeType ? 'border-red-500 bg-white text-gray-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'}`}
+                        className={`flex items-center gap-2 border rounded-xl px-4 py-2.5 cursor-pointer transition-all text-sm font-semibold ${field.value === val ? 'border-[#062F28] bg-[#9FE870]/20 text-[#062F28] ring-1 ring-[#062F28]' : errors.uiFeeType ? 'border-red-500 bg-white text-gray-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'}`}
                       >
                         <input
                           type="radio"
-                          className="w-4 h-4 accent-[#4a7c20]"
+                          className="w-4 h-4 accent-[#062F28]"
                           value={val}
                           checked={field.value === val}
                           onChange={() => {
@@ -485,14 +483,14 @@ export function PricingFormModal({
               {/* SECTION 3: MỨC GIÁ */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between border-b pb-2">
-                  <h3 className="font-semibold text-[#060606]">3. Cấu hình mức giá</h3>
+                  <h3 className="font-semibold text-[#062F28]">3. Cấu hình mức giá</h3>
                   {currentUiFeeType === 'time_window' && (
                     <button
                       type="button"
                       onClick={() =>
                         append({ label: '', amount: 0, unit: 'giờ', startTime: '', endTime: '' })
                       }
-                      className="text-xs font-bold text-[#4a7c20] hover:bg-[#d7ee46]/20 px-2 py-1 rounded-lg flex items-center gap-1 transition-colors"
+                      className="text-xs font-bold text-[#062F28] hover:bg-[#9FE870]/20 px-2 py-1 rounded-lg flex items-center gap-1 transition-colors"
                     >
                       <Plus size={14} /> Thêm Khung Giờ
                     </button>
@@ -588,7 +586,7 @@ export function PricingFormModal({
                           placeholder="0"
                           className={getInputCls(
                             !!errors.rates?.[idx]?.amount,
-                            'py-1.5 font-bold text-lg text-[#4a7c20]'
+                            'py-1.5 font-bold text-lg text-[#062F28]'
                           )}
                         />
                       </div>
@@ -621,7 +619,7 @@ export function PricingFormModal({
 
               {/* SECTION 4: CÀI ĐẶT NÂNG CAO */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-[#060606] border-b pb-2">
+                <h3 className="font-semibold text-[#062F28] border-b pb-2">
                   4. Phụ phí & Cài đặt nâng cao
                 </h3>
 
@@ -763,7 +761,7 @@ export function PricingFormModal({
             type="submit"
             onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting}
-            className="px-6 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
+            className="px-6 py-2.5 text-sm font-bold text-[#9FE870] bg-[#062F28] rounded-xl hover:bg-[#062F28]/90 transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
           >
             {isSubmitting && <Loader2 size={16} className="animate-spin" />}
             {isEdit ? 'Lưu Thay Đổi' : 'Tạo Bảng Giá'}

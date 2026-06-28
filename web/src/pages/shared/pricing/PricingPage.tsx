@@ -90,9 +90,9 @@ export default function PricingPage() {
       const scopedFacilityIds = new Set(scopedFacilities.map((f: Facility) => f._id));
       const scopedPlans = assignedFacilityIds
         ? pRes.data.filter((p: PricingPlan) => {
-            const facId = typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
-            return scopedFacilityIds.has(facId);
-          })
+          const facId = typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
+          return scopedFacilityIds.has(facId);
+        })
         : pRes.data;
       const scopedFloors = assignedFacilityIds
         ? flRes.data.filter((fl: Floor) => scopedFacilityIds.has(fl.facilityId))
@@ -231,8 +231,14 @@ export default function PricingPage() {
             </button>
           )}
           <div>
-            <h1 className="text-2xl font-bold text-[#060606]">
-              {selectedFacility ? `Bảng Giá: ${selectedFacility.name}` : 'Bảng Giá'}
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <span className="text-[#062F28]">BẢNG GIÁ</span>
+              {selectedFacility && (
+                <>
+                  <span className="text-gray-300">/</span>
+                  <span className="text-[#7B7B7B] uppercase">{selectedFacility.name}</span>
+                </>
+              )}
             </h1>
             <div className="flex flex-col mt-1">
               {!selectedFacility && (
@@ -262,7 +268,7 @@ export default function PricingPage() {
               setEditingPlan(undefined);
               setModalOpen(true);
             }}
-            className="bg-[#d7ee46] text-[#060606] font-bold px-5 py-2.5 rounded-xl hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm"
+            className="bg-black text-white font-bold px-5 py-2.5 rounded-xl hover:bg-black/80 transition-colors flex items-center gap-2 shadow-sm"
           >
             <Plus size={20} /> Thêm Bảng Giá
           </button>
@@ -327,8 +333,10 @@ export default function PricingPage() {
             {paginatedFacilities.map((fac) => {
               const isActive = fac.status === 'active';
               const badgeStyle = isActive
-                ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5' }
-                : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2' };
+                ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
+                : (fac as any).status === 'maintenance'
+                  ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
+                  : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
               return (
                 <motion.div
@@ -337,20 +345,16 @@ export default function PricingPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className={`group bg-white rounded-[16px] flex flex-col justify-between overflow-hidden ${!isActive ? 'opacity-70' : ''}`}
                   style={{
-                    border: '1.5px solid #e2e3e2',
+                    border: '2px solid #e2e3e2',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                     transition: 'all 0.2s ease',
                     minHeight: 180,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#cce242';
-                    e.currentTarget.style.transform = 'translateY(-3px)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
+                    e.currentTarget.style.borderColor = '#9FE870';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = '#e2e3e2';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
                   }}
                 >
                   <div className="px-5 pt-4 pb-3">
@@ -362,20 +366,21 @@ export default function PricingPage() {
                           width: 48,
                           height: 48,
                           borderRadius: 12,
-                          background: 'rgba(204,226,66,0.15)',
+                          background: '#ffffff',
+                          border: '1.5px solid #f0f0f0',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
                         }}
                       >
-                        <Building2 size={24} style={{ color: '#4a7c20' }} strokeWidth={1.5} />
+                        <Building2 size={24} style={{ color: '#9FE870' }} />
                       </div>
                       {/* Text */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <h3
-                            className="text-[15px] font-semibold text-[#060606] truncate"
+                            className="text-[15px] font-bold text-[#062F28] truncate"
                             title={fac.name}
                           >
                             {fac.name}
@@ -383,7 +388,7 @@ export default function PricingPage() {
                         </div>
                         <div
                           className="flex flex-col gap-1 mt-1.5 min-w-0"
-                          style={{ color: '#6b6e6b' }}
+                          style={{ color: '#7B7B7B' }}
                         >
                           <div className="flex items-center gap-1.5 text-[13px]">
                             <MapPin size={12} className="shrink-0" />
@@ -391,11 +396,8 @@ export default function PricingPage() {
                               {fac.address}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-[13px]">
-                            <Clock size={12} className="shrink-0" />
-                            <span className="truncate tracking-wide">
-                              {fac.openTime} - {fac.closeTime}
-                            </span>
+                          <div className="flex items-center gap-1.5 text-[14px] text-gray-500 font-medium">
+                            <Clock size={15} className="text-gray-400" /> Thời gian hoạt động: {fac.openTime} - {fac.closeTime}
                           </div>
                         </div>
                       </div>
@@ -417,10 +419,10 @@ export default function PricingPage() {
                               width: 6,
                               height: 6,
                               borderRadius: '50%',
-                              background: isActive ? '#10b981' : '#9b9e9b',
+                              background: isActive ? '#82C94E' : (fac as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
                             }}
                           />
-                          {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
+                          {isActive ? 'HOẠT ĐỘNG' : (fac as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
                         </span>
                       </div>
                     </div>
@@ -434,15 +436,15 @@ export default function PricingPage() {
                   </div>
 
                   {/* View Pricing button */}
-                  <div className="px-5 py-3 mt-auto" style={{ borderTop: '1px solid #f0f1f0' }}>
+                  <div className="px-5 pb-5 mt-auto">
                     <button
                       onClick={() => {
                         setSelectedFacility(fac);
                         setCurrentPage(1);
                       }}
-                      className="w-full py-[10px] px-5 rounded-[10px] text-[#060606] text-[14px] flex items-center justify-center gap-[6px] transition-all duration-200 bg-white group-hover:bg-[#cce242] border-[1.5px] border-[#c8d4b8] group-hover:border-[#cce242] font-medium group-hover:font-semibold cursor-pointer"
+                      className={`w-full py-3.5 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-colors duration-200 ${isActive ? 'bg-[#9FE870] text-[#062F28] hover:bg-[#062F28] hover:text-[#9FE870]' : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'}`}
                     >
-                      <FileText size={13} style={{ color: '#4a7c20' }} /> Xem bảng giá &rarr;
+                      Xem bảng giá &rarr;
                     </button>
                   </div>
                 </motion.div>
@@ -468,8 +470,8 @@ export default function PricingPage() {
         </div>
       ) : displayed.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 py-24 text-center">
-          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <DollarSign size={28} className="text-gray-300" />
+          <div className="w-16 h-16 bg-white border-[1.5px] border-[#f0f0f0] rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <DollarSign size={28} className="text-[#9FE870]" />
           </div>
           <p className="text-gray-500 font-medium">Tòa nhà này chưa có bảng giá nào.</p>
           <button
@@ -477,7 +479,7 @@ export default function PricingPage() {
               setEditingPlan(undefined);
               setModalOpen(true);
             }}
-            className="mt-4 bg-[#d7ee46] text-[#060606] font-bold px-5 py-2.5 rounded-xl border border-[#c4dc32] hover:bg-[#c4dc32] transition-colors inline-flex items-center gap-2 shadow-sm"
+            className="mt-4 bg-black text-white font-bold px-5 py-2.5 rounded-xl hover:bg-black/80 transition-colors inline-flex items-center gap-2 shadow-sm"
           >
             <Plus size={16} /> Tạo bảng giá đầu tiên
           </button>
@@ -497,6 +499,8 @@ export default function PricingPage() {
               setDetailModalOpen(true);
             }}
             onRefresh={fetchAll}
+            currentPage={currentPage}
+            itemsPerPage={pageLimit}
           />
 
           <PricingPagination

@@ -70,8 +70,8 @@ function DropFilter({
           display: 'flex',
           alignItems: 'center',
           padding: Icon ? '0 32px 0 32px' : '0 32px 0 14px',
-          border: isOpen || active ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
-          boxShadow: isOpen ? '0 0 0 3px rgba(204,226,66,0.2)' : 'none',
+          border: isOpen || active ? '1.5px solid #9FE870' : '1.5px solid #e2e3e2',
+          boxShadow: isOpen ? '0 0 0 3px rgba(159,232,112,0.2)' : 'none',
           color: active ? '#060606' : '#6b6e6b',
           fontWeight: active ? 600 : 400,
           transition: 'all 0.2s ease',
@@ -220,32 +220,28 @@ export default function VehiclesPage() {
   }, [search, filterSize]);
 
   // Filter & Sort Logic
-  const filtered = vehicles
-    .filter((v) => {
-      const matchesSearch =
-        v.name.toLowerCase().includes(search.toLowerCase()) ||
-        v.code.toLowerCase().includes(search.toLowerCase());
-      const matchesSize = filterSize === 'all' || v.slotSize === filterSize;
-      return matchesSearch && matchesSize;
-    })
-    .sort((a, b) => {
-      if (sortField === 'none') return 0;
+  const filtered = vehicles.filter((v) => {
+    const matchesSearch = v.name.toLowerCase().includes(search.toLowerCase()) || v.code.toLowerCase().includes(search.toLowerCase());
+    const matchesSize = filterSize === 'all' || v.slotSize === filterSize;
+    return matchesSearch && matchesSize;
+  }).sort((a, b) => {
+    if (sortField === 'none') return 0;
 
-      let aVal: any = a[sortField];
-      let bVal: any = b[sortField];
+    let aVal: any = a[sortField];
+    let bVal: any = b[sortField];
 
-      if (sortField === 'name' || sortField === 'code') {
-        aVal = aVal?.toLowerCase() || '';
-        bVal = bVal?.toLowerCase() || '';
-      } else if (sortField === 'createdAt') {
-        aVal = new Date(aVal || 0).getTime();
-        bVal = new Date(bVal || 0).getTime();
-      }
+    if (sortField === 'name' || sortField === 'code') {
+      aVal = aVal?.toLowerCase() || '';
+      bVal = bVal?.toLowerCase() || '';
+    } else if (sortField === 'createdAt') {
+      aVal = new Date(aVal || 0).getTime();
+      bVal = new Date(bVal || 0).getTime();
+    }
 
-      if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
-      return 0;
-    });
+    if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   // Pagination Logic
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
@@ -291,7 +287,7 @@ export default function VehiclesPage() {
           floor: fl,
           facilityName:
             facMap[
-              typeof fl.facilityId === 'string' ? fl.facilityId : (fl.facilityId as any)?._id
+            typeof fl.facilityId === 'string' ? fl.facilityId : (fl.facilityId as any)?._id
             ] || 'Bãi Xe Không Xác Định',
         }));
 
@@ -348,7 +344,7 @@ export default function VehiclesPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleAdd}
-            className="bg-[#d7ee46] text-[#060606] px-5 py-2.5 rounded-xl font-bold hover:bg-[#c4dc32] transition-colors flex items-center gap-2 shadow-sm"
+            className="bg-black text-white hover:bg-black/80 px-5 py-2.5 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-sm"
           >
             <Plus size={20} /> Thêm Loại Xe
           </button>
@@ -503,26 +499,27 @@ export default function VehiclesPage() {
       >
         <div className="w-full">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-lime-50/50 text-lime-700 font-semibold border-b border-lime-100/50">
+            <thead className="bg-[#FAFAFA] text-[#6b6b6b] text-[13px] border-b border-gray-100 font-semibold uppercase tracking-wider">
               <tr>
-                <th className="px-6 py-4 rounded-tl-2xl w-[25%]">Loại Xe</th>
+                <th className="px-6 py-4 rounded-tl-2xl w-[5%] text-center">STT</th>
+                <th className="px-6 py-4 w-[25%]">Loại Xe</th>
                 <th className="px-6 py-4 w-[20%]">Mã Xe</th>
                 <th className="px-6 py-4 w-[20%]">Kích Thước Slot</th>
-                <th className="px-6 py-4 w-[20%]">Ngày Tạo</th>
+                <th className="px-6 py-4 w-[15%]">Ngày Giờ Tạo</th>
                 <th className="px-6 py-4 text-right rounded-tr-2xl w-[15%]">Thao Tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-14 text-center text-gray-400">
+                  <td colSpan={6} className="px-6 py-14 text-center text-gray-400">
                     <div className="w-6 h-6 border-2 border-[#d7ee46] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     Đang tải...
                   </td>
                 </tr>
               ) : paginatedVehicles.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-14 text-center text-gray-400">
+                  <td colSpan={6} className="px-6 py-14 text-center text-gray-400">
                     <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Package size={22} className="text-gray-300" />
                     </div>
@@ -536,6 +533,8 @@ export default function VehiclesPage() {
                   <VehicleRow
                     key={v._id}
                     vehicle={v}
+                    index={(currentPage - 1) * itemsPerPage + idx + 1}
+                    globalIndex={Math.max(0, vehicles.findIndex((allV) => allV._id === v._id))}
                     onEdit={() => handleEdit(v)}
                     onView={() => handleView(v)}
                     onDelete={() => handleDeleteClick(v)}
@@ -606,13 +605,12 @@ export default function VehiclesPage() {
                     key={i}
                     onClick={() => typeof p === 'number' && setCurrentPage(p)}
                     disabled={p === '...'}
-                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                      p === '...'
-                        ? 'text-gray-400 bg-transparent cursor-default'
-                        : currentPage === p
-                          ? 'bg-[#d7ee46] text-[#060606] border border-[#c4dc32] font-bold shadow-sm'
-                          : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                    }`}
+                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === '...'
+                      ? 'text-gray-400 bg-transparent cursor-default'
+                      : currentPage === p
+                        ? 'bg-[#d7ee46] text-[#060606] border border-[#c4dc32] font-bold shadow-sm'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
                   >
                     {p}
                   </button>
@@ -651,6 +649,7 @@ export default function VehiclesPage() {
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         vehicle={selected}
+        allVehicles={vehicles}
       />
 
       <AnimatePresence>

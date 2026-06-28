@@ -126,7 +126,7 @@ export function SlotFormModal({
       >
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
           <div>
-            <h2 className="text-lg font-bold text-[#060606]">Tạo Slot</h2>
+            <h2 className="text-lg font-bold text-[#062F28]">Tạo Slot</h2>
             <p className="text-xs text-gray-500 mt-0.5">Thêm slot mới cho tầng hiện tại</p>
           </div>
           <button
@@ -145,7 +145,7 @@ export function SlotFormModal({
                 setMode('single');
                 setErrors({});
               }}
-              className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors ${mode === 'single' ? 'bg-[#d7ee46] shadow-sm text-[#060606]' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors ${mode === 'single' ? 'bg-[#9FE870] shadow-sm text-[#062F28]' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Tạo 1 Slot
             </button>
@@ -154,7 +154,7 @@ export function SlotFormModal({
                 setMode('bulk');
                 setErrors({});
               }}
-              className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors ${mode === 'bulk' ? 'bg-[#d7ee46] shadow-sm text-[#060606]' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors ${mode === 'bulk' ? 'bg-[#9FE870] shadow-sm text-[#062F28]' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Tạo Nhiều Slot
             </button>
@@ -163,7 +163,7 @@ export function SlotFormModal({
           {/* Capacity indicator */}
           <div
             className={`flex items-center gap-2 text-sm mb-4 font-medium ${
-              isFull ? 'text-red-600' : remainingSlots <= 5 ? 'text-amber-600' : 'text-[#4a7c20]'
+              isFull ? 'text-red-600' : remainingSlots <= 5 ? 'text-amber-600' : 'text-[#062F28]'
             }`}
           >
             <span>Sức chứa tầng:</span>
@@ -185,7 +185,7 @@ export function SlotFormModal({
                   if (errors.code) setErrors({ ...errors, code: '' });
                 }}
                 placeholder="A1, B2"
-                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] ${errors.code ? 'border-red-400' : 'border-gray-200'}`}
+                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${errors.code ? 'border-red-400' : 'border-gray-200'}`}
               />
               {errors.code && <p className="text-xs text-red-500 mt-1">{errors.code}</p>}
             </div>
@@ -204,7 +204,7 @@ export function SlotFormModal({
                       if (errors.prefix) setErrors({ ...errors, prefix: '' });
                     }}
                     maxLength={4}
-                    className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] ${errors.prefix ? 'border-red-400' : 'border-gray-200'}`}
+                    className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${errors.prefix ? 'border-red-400' : 'border-gray-200'}`}
                   />
                   {errors.prefix && <p className="text-xs text-red-500 mt-1">{errors.prefix}</p>}
                 </div>
@@ -222,7 +222,7 @@ export function SlotFormModal({
                       setStartNumber(val === '' ? '' : Number(val));
                       if (errors.startNumber) setErrors({ ...errors, startNumber: '' });
                     }}
-                    className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] ${errors.startNumber ? 'border-red-400' : 'border-gray-200'}`}
+                    className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${errors.startNumber ? 'border-red-400' : 'border-gray-200'}`}
                   />
                   {errors.startNumber && (
                     <p className="text-xs text-red-500 mt-1">{errors.startNumber}</p>
@@ -248,7 +248,7 @@ export function SlotFormModal({
                       }
                       if (errors.count) setErrors({ ...errors, count: '' });
                     }}
-                    className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] ${
+                    className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${
                       errors.count ? 'border-red-400' : 'border-gray-200'
                     }`}
                   />
@@ -285,7 +285,7 @@ export function SlotFormModal({
                 placeholder="Tìm kiếm loại xe..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:bg-white transition-all"
+                className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all"
               />
             </div>
 
@@ -309,8 +309,8 @@ export function SlotFormModal({
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${
                         isSelected
-                          ? 'bg-[#d7ee46] text-[#060606] border-[#c4dc32] scale-[1.03]'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-[#c4dc32]'
+                          ? 'bg-[#9FE870] text-[#062F28] border-[#9FE870] scale-[1.03]'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-[#9FE870]'
                       }`}
                     >
                       <Icon size={16} />
@@ -342,7 +342,7 @@ export function SlotFormModal({
             <button
               disabled={loading || isFull || (mode === 'bulk' && Number(count) > remainingSlots)}
               onClick={handleSubmit}
-              className="px-5 py-2.5 text-sm font-bold text-[#060606] bg-[#d7ee46] rounded-xl hover:bg-[#c4dc32] transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
+              className="px-5 py-2.5 text-sm font-bold text-white bg-[#062F28] rounded-xl hover:bg-[#062F28]/90 transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
               {mode === 'single' ? 'Tạo Slot' : 'Tạo Nhiều Slot'}

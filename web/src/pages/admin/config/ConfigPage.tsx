@@ -38,46 +38,46 @@ const CONFIG_GROUPS: {
   description: string;
   keys: string[];
 }[] = [
-  {
-    key: 'general',
-    icon: <Globe size={18} />,
-    label: 'Thông số chung',
-    description: 'Tên hệ thống, múi giờ, đơn vị tiền tệ',
-    keys: ['system_name', 'timezone', 'currency', 'language', 'items_per_page'],
-  },
-  {
-    key: 'security',
-    icon: <Shield size={18} />,
-    label: 'Bảo mật tài khoản',
-    description: 'Chính sách mật khẩu, khóa tài khoản, session',
-    keys: [
-      'min_password_length',
-      'max_login_attempts',
-      'lockout_duration_minutes',
-      'session_timeout_minutes',
-      'require_special_char',
-    ],
-  },
-  {
-    key: 'notification',
-    icon: <Bell size={18} />,
-    label: 'Cấu hình thông báo',
-    description: 'Email/SMS, bật tắt từng loại thông báo',
-    keys: [
-      'email_notifications',
-      'sms_notifications',
-      'notify_on_create_account',
-      'notify_on_reset_password',
-    ],
-  },
-  {
-    key: 'business',
-    icon: <Clock size={18} />,
-    label: 'Quy tắc vận hành',
-    description: 'Phí mất thẻ, thời gian giữ chỗ tối đa',
-    keys: ['lost_card_fee', 'max_reservation_hours', 'grace_period_minutes'],
-  },
-];
+    {
+      key: 'general',
+      icon: <Globe size={18} />,
+      label: 'Thông số chung',
+      description: 'Tên hệ thống, múi giờ, đơn vị tiền tệ',
+      keys: ['system_name', 'timezone', 'currency', 'language', 'items_per_page'],
+    },
+    {
+      key: 'security',
+      icon: <Shield size={18} />,
+      label: 'Bảo mật tài khoản',
+      description: 'Chính sách mật khẩu, khóa tài khoản, session',
+      keys: [
+        'min_password_length',
+        'max_login_attempts',
+        'lockout_duration_minutes',
+        'session_timeout_minutes',
+        'require_special_char',
+      ],
+    },
+    {
+      key: 'notification',
+      icon: <Bell size={18} />,
+      label: 'Cấu hình thông báo',
+      description: 'Email/SMS, bật tắt từng loại thông báo',
+      keys: [
+        'email_notifications',
+        'sms_notifications',
+        'notify_on_create_account',
+        'notify_on_reset_password',
+      ],
+    },
+    {
+      key: 'business',
+      icon: <Clock size={18} />,
+      label: 'Quy tắc vận hành',
+      description: 'Phí mất thẻ, thời gian giữ chỗ tối đa',
+      keys: ['lost_card_fee', 'max_reservation_hours', 'grace_period_minutes'],
+    },
+  ];
 
 // ── Single Config Row ──────────────────────────────────
 interface ConfigRowProps {
@@ -124,7 +124,7 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
   return (
     <div className="flex items-center justify-between gap-4 py-3.5 border-b border-gray-50 last:border-0 group">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-[#060606]">
+        <p className="text-sm font-semibold text-[#062F28]">
           {config.key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
         </p>
         {config.description && (
@@ -139,18 +139,12 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
           <button
             onClick={() => handleToggle(!config.value)}
             disabled={isSaving}
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              config.value ? 'bg-[#d7ee46]' : 'bg-gray-200'
-            } disabled:opacity-60`}
+            className={`relative w-11 h-6 rounded-full transition-colors ${config.value ? 'bg-[#9FE870]' : 'bg-gray-200'
+              } disabled:opacity-60`}
           >
-            <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                config.value ? 'translate-x-5' : 'translate-x-0'
-              }`}
-            />
-            {isSaving && (
-              <Loader2 size={12} className="absolute right-1 top-1.5 animate-spin text-gray-400" />
-            )}
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${config.value ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            {isSaving && <Loader2 size={12} className="absolute right-1 top-1.5 animate-spin text-gray-400" />}
           </button>
         ) : (
           /* Text / Number input */
@@ -160,9 +154,8 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
                 type={isNumber ? 'number' : isSecret && !showPassword ? 'password' : 'text'}
                 value={editValue}
                 onChange={(e) => handleChange(e.target.value)}
-                className={`w-44 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d7ee46] transition-all ${
-                  isDirty ? 'border-[#d7ee46] bg-[#d7ee46]/5' : 'border-gray-200 bg-gray-50'
-                }`}
+                className={`w-44 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9FE870] transition-all ${isDirty ? 'border-[#9FE870] bg-[#9FE870]/5' : 'border-gray-200 bg-gray-50'
+                  }`}
               />
               {isSecret && (
                 <button
@@ -178,7 +171,7 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex items-center gap-1 px-3 py-1.5 bg-[#d7ee46] text-[#060606] text-xs font-bold rounded-lg hover:bg-[#c4dc32] transition-colors disabled:opacity-60"
+                className="flex items-center gap-1 px-3 py-1.5 bg-[#062F28] text-white text-xs font-bold rounded-lg hover:bg-[#9FE870] hover:text-[#062F28] border border-[#062F28] hover:border-[#9FE870] transition-colors disabled:opacity-60 disabled:hover:bg-[#062F28] disabled:hover:text-white disabled:hover:border-[#062F28]"
               >
                 {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                 Lưu
@@ -243,7 +236,7 @@ export default function ConfigPage() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-2xl font-bold text-[#060606]">Cấu hình Hệ thống</h1>
+          <h1 className="text-2xl font-bold text-[#062F28]">Cấu hình Hệ thống</h1>
           <p className="text-gray-500 text-sm mt-1">
             Quản lý các thông số hoạt động của Smart Parking
           </p>
@@ -305,11 +298,11 @@ export default function ConfigPage() {
               >
                 {/* Group header */}
                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#d7ee46]/20 text-[#6a7a0a] flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-[#9FE870]/20 text-[#062F28] flex items-center justify-center">
                     {group.icon}
                   </div>
                   <div>
-                    <h2 className="font-bold text-[#060606] text-sm">{group.label}</h2>
+                    <h2 className="font-bold text-[#062F28] text-sm">{group.label}</h2>
                     <p className="text-xs text-gray-400">{group.description}</p>
                   </div>
                 </div>
@@ -335,7 +328,7 @@ export default function ConfigPage() {
                   <Settings size={18} />
                 </div>
                 <div>
-                  <h2 className="font-bold text-[#060606] text-sm">Cấu hình khác</h2>
+                  <h2 className="font-bold text-[#062F28] text-sm">Cấu hình khác</h2>
                   <p className="text-xs text-gray-400">Các thông số bổ sung</p>
                 </div>
               </div>
@@ -352,10 +345,10 @@ export default function ConfigPage() {
       {/* Info box */}
       <motion.div
         variants={itemVariants}
-        className="bg-[#060606] rounded-2xl p-6 flex items-start gap-4"
+        className="bg-[#062F28] rounded-2xl p-6 flex items-start gap-4"
       >
-        <div className="w-10 h-10 rounded-xl bg-[#d7ee46]/20 flex items-center justify-center flex-shrink-0">
-          <Lock size={20} className="text-[#d7ee46]" />
+        <div className="w-10 h-10 rounded-xl bg-[#9FE870]/20 flex items-center justify-center flex-shrink-0">
+          <Lock size={20} className="text-[#9FE870]" />
         </div>
         <div>
           <h3 className="font-bold text-white mb-1">Audit Log</h3>

@@ -96,12 +96,12 @@ export function FloorDetailModal({
                 </span>
               </div>
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-[#f4f9ea] flex items-center justify-center border border-[#e2edce] shrink-0 text-[#4a7c20]">
+                <div className="w-16 h-16 rounded-2xl bg-[#9FE870]/15 flex items-center justify-center border border-[#9FE870]/30 shrink-0 text-[#062F28]">
                   <Layers size={32} strokeWidth={1.5} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 flex-wrap mb-1.5">
-                    <h3 className="text-xl font-bold text-[#060606]">{floor.name}</h3>
+                    <h3 className="text-xl font-bold text-[#062F28]">{floor.name}</h3>
                   </div>
                   <div className="flex items-center gap-1.5 text-[13px] text-gray-400 mt-2">
                     <Calendar size={13} /> Ngày tạo:{' '}
@@ -128,15 +128,24 @@ export function FloorDetailModal({
                 Các loại xe cho phép
               </p>
               {vehicleTypes.length > 0 ? (
-                <div className="flex items-center gap-2 flex-wrap">
-                  {vehicleTypes.map((v) => {
-                    const IconComp = v.icon && ICON_MAP[v.icon] ? ICON_MAP[v.icon] : Car;
-                    return (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {floor.supportedVehicles.map((v) => {
+                      const IconComp = ICON_MAP[v.name] || Car;
+                      const idx = Math.max(0, vehicleTypes.findIndex(vt => vt._id === v._id));
+                      const colors = [
+                        { bg: '#F3F4F6', text: '#4B5563' },
+                        { bg: '#EAF5E4', text: '#062F28' },
+                        { bg: '#9FE870', text: '#062F28' },
+                        { bg: '#062F28', text: '#9FE870' },
+                      ];
+                      const color = colors[Math.min(idx, colors.length - 1)];
+                      return (
                       <span
                         key={v._id}
-                        className="px-2.5 py-1.5 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm"
+                        className="px-2.5 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm"
+                        style={{ background: color.bg, color: color.text }}
                       >
-                        <IconComp size={14} className="text-[#4a7c20]" /> {v.name}
+                        <IconComp size={14} color={color.text} /> {v.name}
                       </span>
                     );
                   })}
@@ -152,44 +161,28 @@ export function FloorDetailModal({
               <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-2">
                 Thống kê sức chứa
               </p>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div
-                  style={{
-                    background: 'rgba(204,226,66,0.15)',
-                    borderRadius: 10,
-                    padding: '12px 4px',
-                  }}
-                >
-                  <div className="text-xl tabular-nums font-semibold" style={{ color: '#060606' }}>
+              <div className="flex items-center justify-between border border-gray-100 rounded-xl p-3 bg-white shadow-sm">
+                <div className="text-center flex-1">
+                  <div className="text-xl tabular-nums font-semibold text-[#062F28]">
                     {stats?.total ?? 0}
                   </div>
-                  <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Tổng slot</div>
+                  <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Tổng slot</div>
                 </div>
-                <div
-                  style={{
-                    background: 'rgba(204,226,66,0.15)',
-                    borderRadius: 10,
-                    padding: '12px 4px',
-                  }}
-                >
-                  <div className="text-xl tabular-nums font-semibold" style={{ color: '#060606' }}>
+                <div className="w-px h-8 bg-gray-100" />
+                <div className="text-center flex-1">
+                  <div className="text-xl tabular-nums font-semibold text-[#062F28]">
                     {stats?.occupied ?? 0}
                   </div>
-                  <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Đang dùng</div>
+                  <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Đang dùng</div>
                 </div>
-                <div
-                  style={{
-                    background: 'rgba(204,226,66,0.15)',
-                    borderRadius: 10,
-                    padding: '12px 4px',
-                  }}
-                >
+                <div className="w-px h-8 bg-gray-100" />
+                <div className="text-center flex-1">
                   <div
                     className={`text-xl tabular-nums font-semibold ${getBarTextColor(stats?.fillRate ?? 0)}`}
                   >
                     {stats?.fillRate ?? 0}%
                   </div>
-                  <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Lấp đầy</div>
+                  <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Lấp đầy</div>
                 </div>
               </div>
             </div>
@@ -199,7 +192,7 @@ export function FloorDetailModal({
           <div className="px-6 pb-6 pt-2 flex justify-end">
             <button
               onClick={onClose}
-              className="px-5 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-[#cce242] hover:border-[#cce242] hover:text-[#060606] transition-all shadow-sm"
+              className="px-5 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-[#9FE870] hover:border-[#9FE870] hover:text-[#062F28] transition-all shadow-sm"
             >
               Đóng
             </button>

@@ -17,6 +17,7 @@ interface DetailModalProps {
   stats?: { totalSlots: number; occupied: number; fillRate: number };
   currentFloors?: number;
   vehicleTypes?: { _id: string; name: string; icon?: string }[];
+  allVehicleTypes?: { _id: string; name: string; icon?: string }[];
 }
 
 export function FacilityDetailModal({
@@ -26,13 +27,16 @@ export function FacilityDetailModal({
   stats,
   currentFloors = 0,
   vehicleTypes = [],
+  allVehicleTypes = [],
 }: DetailModalProps) {
   if (!isOpen || !facility) return null;
 
   const isActive = facility.status === 'active';
   const badgeStyle = isActive
-    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5' }
-    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2' };
+    ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
+    : (facility as any).status === 'maintenance'
+      ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
+      : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
   return createPortal(
     <AnimatePresence>
@@ -90,19 +94,19 @@ export function FacilityDetailModal({
                       width: 6,
                       height: 6,
                       borderRadius: '50%',
-                      background: isActive ? '#10b981' : '#9b9e9b',
+                      background: isActive ? '#82C94E' : (facility as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
                     }}
                   />
-                  {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
+                  {isActive ? 'HOẠT ĐỘNG' : (facility as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
                 </span>
               </div>
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-[#f4f9ea] flex items-center justify-center border border-[#e2edce] shrink-0 text-[#4a7c20]">
-                  <Building2 size={32} strokeWidth={1.5} />
+                <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center border-[1.5px] border-[#f0f0f0] shrink-0">
+                  <Building2 size={32} strokeWidth={1.5} className="text-[#9FE870]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 flex-wrap mb-1.5">
-                    <h3 className="text-xl font-bold text-[#060606]">{facility.name}</h3>
+                    <h3 className="text-xl font-bold text-[#062F28]">{facility.name}</h3>
                   </div>
                   <p className="text-[14px] text-gray-500 flex items-start gap-1.5 leading-snug">
                     <MapPin size={14} className="shrink-0 mt-[3px]" />
@@ -134,15 +138,24 @@ export function FacilityDetailModal({
                   Các loại xe cho phép
                 </p>
                 {vehicleTypes.length > 0 ? (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {vehicleTypes.map((v) => {
+                  <div className="flex flex-wrap gap-2">
+                    {vehicleTypes.map((v: any) => {
                       const IconComp = v.icon && ICON_MAP[v.icon] ? ICON_MAP[v.icon] : Car;
+                      const idx = Math.max(0, allVehicleTypes.findIndex((av: any) => av._id === v._id));
+                      const colors = [
+                        { bg: '#F3F4F6', text: '#4B5563' },
+                        { bg: '#EAF5E4', text: '#062F28' },
+                        { bg: '#9FE870', text: '#062F28' },
+                        { bg: '#062F28', text: '#9FE870' },
+                      ];
+                      const color = colors[Math.min(idx, colors.length - 1)];
                       return (
                         <span
                           key={v._id}
-                          className="px-2.5 py-1.5 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm"
+                          className="px-2.5 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm"
+                          style={{ background: color.bg, color: color.text }}
                         >
-                          <IconComp size={14} className="text-[#4a7c20]" /> {v.name}
+                          <IconComp size={14} color={color.text} /> {v.name}
                         </span>
                       );
                     })}
@@ -156,37 +169,37 @@ export function FacilityDetailModal({
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              <div className="p-3 rounded-xl bg-white border border-indigo-100 flex flex-col justify-center gap-1.5 text-center">
-                <Layers size={20} className="mx-auto text-indigo-500" />
+              <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex flex-col justify-center gap-1.5 text-center">
+                <Layers size={20} className="mx-auto text-[#062F28]" />
                 <div>
-                  <p className="text-[11px] font-semibold text-indigo-500 uppercase truncate">
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase truncate">
                     Số tầng tối đa
                   </p>
-                  <p className="text-[15px] font-bold text-[#060606] mt-0.5">
+                  <p className="text-[15px] font-bold text-[#062F28] mt-0.5">
                     {facility.totalFloors} tầng
                   </p>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-white border border-teal-100 flex flex-col justify-center gap-1.5 text-center">
-                <Building2 size={20} className="mx-auto text-teal-500" />
+              <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex flex-col justify-center gap-1.5 text-center">
+                <Building2 size={20} className="mx-auto text-[#062F28]" />
                 <div>
-                  <p className="text-[11px] font-semibold text-teal-500 uppercase truncate">
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase truncate">
                     Tầng hiện có
                   </p>
-                  <p className="text-[15px] font-bold text-[#060606] mt-0.5">
+                  <p className="text-[15px] font-bold text-[#062F28] mt-0.5">
                     {currentFloors} tầng
                   </p>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-white border border-orange-100 flex flex-col justify-center gap-1.5 text-center">
-                <Clock size={20} className="mx-auto text-orange-500" />
+              <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex flex-col justify-center gap-1.5 text-center">
+                <Clock size={20} className="mx-auto text-[#062F28]" />
                 <div>
-                  <p className="text-[11px] font-semibold text-orange-500 uppercase truncate">
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase truncate">
                     Giờ hoạt động
                   </p>
-                  <p className="text-[14px] font-bold text-[#060606] mt-0.5">
+                  <p className="text-[14px] font-bold text-[#062F28] mt-0.5">
                     {facility.openTime} - {facility.closeTime}
                   </p>
                 </div>
@@ -197,44 +210,28 @@ export function FacilityDetailModal({
               <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-2">
                 Thống kê sức chứa
               </p>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div
-                  style={{
-                    background: 'rgba(204,226,66,0.15)',
-                    borderRadius: 10,
-                    padding: '12px 4px',
-                  }}
-                >
-                  <div className="text-xl tabular-nums font-semibold" style={{ color: '#060606' }}>
+              <div className="flex items-center justify-between border border-gray-100 rounded-xl p-3 bg-white shadow-sm">
+                <div className="text-center flex-1">
+                  <div className="text-xl tabular-nums font-semibold text-[#062F28]">
                     {stats?.totalSlots ?? 0}
                   </div>
-                  <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Tổng slot</div>
+                  <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Tổng slot</div>
                 </div>
-                <div
-                  style={{
-                    background: 'rgba(204,226,66,0.15)',
-                    borderRadius: 10,
-                    padding: '12px 4px',
-                  }}
-                >
-                  <div className="text-xl tabular-nums font-semibold" style={{ color: '#060606' }}>
+                <div className="w-px h-8 bg-gray-100" />
+                <div className="text-center flex-1">
+                  <div className="text-xl tabular-nums font-semibold text-[#062F28]">
                     {stats?.occupied ?? 0}
                   </div>
-                  <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Đang dùng</div>
+                  <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Đang dùng</div>
                 </div>
-                <div
-                  style={{
-                    background: 'rgba(204,226,66,0.15)',
-                    borderRadius: 10,
-                    padding: '12px 4px',
-                  }}
-                >
+                <div className="w-px h-8 bg-gray-100" />
+                <div className="text-center flex-1">
                   <div
                     className={`text-xl tabular-nums font-semibold ${getBarTextColor(stats?.fillRate ?? 0)}`}
                   >
                     {stats?.fillRate ?? 0}%
                   </div>
-                  <div style={{ fontSize: 12, color: '#6b6e6b', marginTop: 2 }}>Lấp đầy</div>
+                  <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Lấp đầy</div>
                 </div>
               </div>
             </div>
@@ -259,7 +256,7 @@ export function FacilityDetailModal({
           <div className="px-6 pb-6 pt-2 flex justify-end">
             <button
               onClick={onClose}
-              className="px-5 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-[#cce242] hover:border-[#cce242] hover:text-[#060606] transition-all"
+              className="px-5 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-[#9FE870] hover:border-[#9FE870] hover:text-[#062F28] transition-all"
             >
               Đóng
             </button>

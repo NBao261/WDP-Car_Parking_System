@@ -1,5 +1,40 @@
-import { Check, RefreshCw } from 'lucide-react';
+import { 
+  Check, 
+  RefreshCw,
+  Building,
+  Car,
+  Coins,
+  Clock,
+  CreditCard,
+  BarChart,
+  Settings,
+  MessageSquare
+} from 'lucide-react';
 import { PERMISSION_GROUPS } from '../../constants/permissions';
+
+const getGroupIcon = (groupId: string) => {
+  const size = 16;
+  switch (groupId) {
+    case 'facility':
+      return <Building size={size} className="text-[#9FE870]" />;
+    case 'slot':
+      return <Car size={size} className="text-[#9FE870]" />;
+    case 'session':
+      return <Clock size={size} className="text-[#9FE870]" />;
+    case 'payment':
+      return <CreditCard size={size} className="text-[#9FE870]" />;
+    case 'pricing':
+      return <Coins size={size} className="text-[#062F28]" />;
+    case 'report':
+      return <BarChart size={size} className="text-[#062F28]" />;
+    case 'admin':
+      return <Settings size={size} className="text-[#062F28]" />;
+    case 'feedback':
+      return <MessageSquare size={size} className="text-[#062F28]" />;
+    default:
+      return null;
+  }
+};
 
 interface PermissionGroupListProps {
   /** Set of currently selected permission IDs. */
@@ -46,7 +81,7 @@ export function PermissionGroupList({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {PERMISSION_GROUPS.map((group) => {
         const groupIds = group.permissions.map((p) => p.id);
         const checkedCount = groupIds.filter(
@@ -65,8 +100,10 @@ export function PermissionGroupList({
                 className="w-full bg-gray-50/80 px-4 py-2.5 border-b border-gray-100 flex items-center justify-between hover:bg-gray-100/60 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{group.icon}</span>
-                  <span className="font-bold text-[#060606] text-xs">{group.name}</span>
+                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                    {getGroupIcon(group.id) || <span className="text-sm">{group.icon}</span>}
+                  </div>
+                  <span className="font-bold text-[#062F28] text-xs">{group.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-gray-500 bg-white px-2 py-0.5 rounded-md border border-gray-200">
@@ -77,15 +114,15 @@ export function PermissionGroupList({
                       w-5 h-5 rounded flex items-center justify-center border-2 transition-all
                       ${
                         allChecked
-                          ? 'bg-[#d7ee46] border-[#c4dc32]'
+                          ? 'bg-[#9FE870] border-[#9FE870]'
                           : someChecked
-                            ? 'bg-[#d7ee46]/40 border-[#c4dc32]/60'
+                            ? 'bg-[#9FE870]/40 border-[#9FE870]/60'
                             : 'bg-white border-gray-300'
                       }
                     `}
                   >
                     {(allChecked || someChecked) && (
-                      <Check size={12} className="text-[#060606]" strokeWidth={3} />
+                      <Check size={12} className="text-[#062F28]" strokeWidth={3} />
                     )}
                   </div>
                 </div>
@@ -93,11 +130,13 @@ export function PermissionGroupList({
             ) : (
               <div className="bg-gray-50/80 px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{group.icon}</span>
-                  <span className="font-bold text-[#060606] text-xs">{group.name}</span>
+                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                    {getGroupIcon(group.id) || <span className="text-sm">{group.icon}</span>}
+                  </div>
+                  <span className="font-bold text-[#062F28] text-xs">{group.name}</span>
                 </div>
                 {checkedCount > 0 && (
-                  <span className="text-[10px] font-bold text-[#96a827] bg-[#d7ee46]/20 px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-bold text-[#062F28] bg-[#9FE870]/20 px-2 py-0.5 rounded">
                     +{checkedCount}
                   </span>
                 )}
@@ -134,7 +173,7 @@ export function PermissionGroupList({
                     }`}
                   >
                     <div className="flex flex-col flex-1 min-w-0 pr-4">
-                      <span className="text-sm font-medium text-gray-700 group-hover:text-[#060606] transition-colors leading-snug">
+                      <span className="text-sm font-medium text-gray-700 group-hover:text-[#062F28] transition-colors leading-snug">
                         {perm.label}
                       </span>
                       <span className="text-[11px] text-gray-400 font-mono mt-0.5 truncate">
@@ -148,7 +187,7 @@ export function PermissionGroupList({
                           isBase
                             ? 'bg-gray-200 border-gray-300 text-gray-500'
                             : isCustom
-                              ? 'bg-[#d7ee46] border-[#c4dc32] text-[#060606]'
+                              ? 'bg-[#9FE870] border-[#9FE870] text-[#062F28]'
                               : 'bg-white border-gray-300 group-hover:border-gray-400 text-transparent'
                         }
                       `}

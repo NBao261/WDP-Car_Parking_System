@@ -27,7 +27,7 @@ export function UserPermissionsStep({
           thêm vào quyền của vai trò.
         </p>
         {customPerms.size > 0 && (
-          <div className="mt-2 inline-flex items-center gap-1.5 bg-[#d7ee46]/20 border border-[#d7ee46]/40 text-[#5a6b00] text-xs font-semibold px-3 py-1 rounded-lg">
+          <div className="mt-2 inline-flex items-center gap-1.5 bg-[#9FE870]/20 border border-[#9FE870]/40 text-[#062F28] text-xs font-semibold px-3 py-1 rounded-lg">
             <Key size={12} />
             {customPerms.size} quyền bổ sung đang áp dụng
           </div>
