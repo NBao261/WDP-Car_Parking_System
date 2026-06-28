@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import { Vehicle, IVehicle } from '../models/vehicle.model';
 import { VehicleType } from '../models/vehicleType.model';
 import { AppError } from '../middlewares/error.middleware';
+import { Reservation, ReservationStatus } from '../models/reservation.model';
+import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
 
 interface AddVehicleDto {
   userId: string;
@@ -21,6 +23,37 @@ interface UpdateVehicleDto {
 }
 
 export class VehicleService {
+  /**
+   * Kiểm tra xe có đang được sử dụng (có reservation active hoặc session active)
+   */
+  static async checkVehicleInUse(licensePlate: string): Promise<{ isInUse: boolean; reason: string }> {
+    // Kiểm tra phiên đỗ xe đang active
+    const activeSession = await ParkingSession.findOne({
+      licensePlate: licensePlate.toUpperCase(),
+      status: { $in: [SessionStatus.ACTIVE, SessionStatus.PENDING_PAYMENT] },
+    });
+    if (activeSession) {
+      return {
+        isInUse: true,
+        reason: `Xe đang đỗ trong bãi (mã phiên: ${activeSession.code}). Không thể thao tác cho đến khi xe rời bãi.`,
+      };
+    }
+
+    // Kiểm tra đặt chỗ đang active
+    const activeReservation = await Reservation.findOne({
+      licensePlate: licensePlate.toUpperCase(),
+      status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
+    });
+    if (activeReservation) {
+      return {
+        isInUse: true,
+        reason: `Xe đang có đặt chỗ (mã: ${activeReservation.code}). Vui lòng huỷ đặt chỗ trước khi thao tác.`,
+      };
+    }
+
+    return { isInUse: false, reason: '' };
+  }
+
   /**
    * Thêm xe mới cho Driver
    */
@@ -68,22 +101,54 @@ export class VehicleService {
   /**
    * Lấy danh sách xe của Driver
    */
-  static async getMyVehicles(userId: string): Promise<IVehicle[]> {
-    return Vehicle.find({ userId, isDeleted: false })
+  static async getMyVehicles(userId: string) {
+    const vehicles = await Vehicle.find({ userId, isDeleted: false })
       .sort({ isDefault: -1, createdAt: -1 })
-      .populate('vehicleTypeId', 'name code icon');
+      .populate('vehicleTypeId', 'name code icon')
+      .lean();
+
+    // Batch check trạng thái sử dụng cho tất cả xe
+    const plates = vehicles.map(v => v.licensePlate);
+
+    const [activeReservations, activeSessions] = await Promise.all([
+      Reservation.find({
+        licensePlate: { $in: plates },
+        status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
+      }).select('licensePlate').lean(),
+      ParkingSession.find({
+        licensePlate: { $in: plates },
+        status: { $in: [SessionStatus.ACTIVE, SessionStatus.PENDING_PAYMENT] },
+      }).select('licensePlate').lean(),
+    ]);
+
+    const reservedPlates = new Set(activeReservations.map(r => r.licensePlate));
+    const parkedPlates = new Set(activeSessions.map(s => s.licensePlate));
+
+    return vehicles.map(v => ({
+      ...v,
+      isInUse: reservedPlates.has(v.licensePlate) || parkedPlates.has(v.licensePlate),
+      inUseReason: parkedPlates.has(v.licensePlate)
+        ? 'Xe đang đỗ trong bãi'
+        : reservedPlates.has(v.licensePlate)
+          ? 'Xe đang có đặt chỗ'
+          : '',
+    }));
   }
 
   /**
    * Lấy chi tiết 1 xe
    */
-  static async getVehicleById(userId: string, vehicleId: string): Promise<IVehicle> {
+  static async getVehicleById(userId: string, vehicleId: string) {
     const vehicle = await Vehicle.findOne({ _id: vehicleId, userId, isDeleted: false })
-      .populate('vehicleTypeId', 'name code icon');
+      .populate('vehicleTypeId', 'name code icon')
+      .lean();
     if (!vehicle) {
       throw new AppError('Xe không tồn tại hoặc không thuộc về bạn', 404);
     }
-    return vehicle;
+
+    // Kiểm tra trạng thái sử dụng
+    const inUseCheck = await VehicleService.checkVehicleInUse(vehicle.licensePlate);
+    return { ...vehicle, isInUse: inUseCheck.isInUse, inUseReason: inUseCheck.reason };
   }
 
   /**
@@ -93,6 +158,12 @@ export class VehicleService {
     const vehicle = await Vehicle.findOne({ _id: vehicleId, userId, isDeleted: false });
     if (!vehicle) {
       throw new AppError('Xe không tồn tại hoặc không thuộc về bạn', 404);
+    }
+
+    // Kiểm tra xe có đang được sử dụng không
+    const inUseCheck = await VehicleService.checkVehicleInUse(vehicle.licensePlate);
+    if (inUseCheck.isInUse) {
+      throw new AppError(inUseCheck.reason, 400);
     }
 
     // Cập nhật loại xe
@@ -142,6 +213,12 @@ export class VehicleService {
     const vehicle = await Vehicle.findOne({ _id: vehicleId, userId, isDeleted: false });
     if (!vehicle) {
       throw new AppError('Xe không tồn tại hoặc không thuộc về bạn', 404);
+    }
+
+    // Kiểm tra xe có đang được sử dụng không
+    const inUseCheck = await VehicleService.checkVehicleInUse(vehicle.licensePlate);
+    if (inUseCheck.isInUse) {
+      throw new AppError(inUseCheck.reason, 400);
     }
 
     vehicle.isDeleted = true;
