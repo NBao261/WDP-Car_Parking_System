@@ -16,6 +16,8 @@ interface VehicleItem {
   nickname: string;
   image: string;
   isDefault: boolean;
+  isInUse: boolean;
+  inUseReason: string;
   vehicleTypeId: { _id: string; name: string; code: string; icon: string } | null;
 }
 
@@ -46,6 +48,13 @@ export default function MyVehiclesScreen() {
   );
 
   const handleDelete = (vehicle: VehicleItem) => {
+    if (vehicle.isInUse) {
+      Alert.alert(
+        "Không thể xoá",
+        `${vehicle.inUseReason}. Vui lòng hoàn tất trước khi xoá xe.`
+      );
+      return;
+    }
     Alert.alert(
       "Xoá xe",
       `Bạn có chắc muốn xoá xe biển số "${vehicle.licensePlate}"?`,
@@ -79,6 +88,17 @@ export default function MyVehiclesScreen() {
     }
   };
 
+  const handleEdit = (vehicle: VehicleItem) => {
+    if (vehicle.isInUse) {
+      Alert.alert(
+        "Không thể chỉnh sửa",
+        `${vehicle.inUseReason}. Vui lòng hoàn tất trước khi chỉnh sửa xe.`
+      );
+      return;
+    }
+    router.push(`/profile/edit-vehicle?id=${vehicle._id}` as any);
+  };
+
   const getVehicleIcon = (code?: string): any => {
     if (!code) return "car-outline";
     const lower = code.toLowerCase();
@@ -93,10 +113,10 @@ export default function MyVehiclesScreen() {
 
     return (
       <TouchableOpacity
-        style={[styles.card, item.isDefault && styles.cardDefault]}
+        style={[styles.card, item.isDefault && styles.cardDefault, item.isInUse && styles.cardInUse]}
         activeOpacity={0.85}
         onLongPress={() => handleDelete(item)}
-        onPress={() => router.push(`/profile/edit-vehicle?id=${item._id}` as any)}
+        onPress={() => handleEdit(item)}
       >
         {/* Ảnh xe hoặc icon fallback */}
         <View style={styles.cardImageWrap}>
@@ -131,6 +151,12 @@ export default function MyVehiclesScreen() {
 
         {/* Badge & Actions */}
         <View style={styles.cardActions}>
+          {item.isInUse && (
+            <View style={styles.inUseBadge}>
+              <Ionicons name="lock-closed" size={10} color={Colors.white} />
+              <Text style={styles.inUseBadgeText}>{item.inUseReason || 'Đang sử dụng'}</Text>
+            </View>
+          )}
           {item.isDefault && (
             <View style={styles.defaultBadge}>
               <Ionicons name="star" size={10} color={Colors.white} />
@@ -139,16 +165,18 @@ export default function MyVehiclesScreen() {
           )}
           <View style={styles.cardActionsRow}>
             <TouchableOpacity
-              onPress={() => router.push(`/profile/edit-vehicle?id=${item._id}` as any)}
+              onPress={() => handleEdit(item)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              disabled={item.isInUse}
             >
-              <Ionicons name="create-outline" size={18} color={Colors.primary} />
+              <Ionicons name="create-outline" size={18} color={item.isInUse ? Colors.disabled : Colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => handleDelete(item)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              disabled={item.isInUse}
             >
-              <Ionicons name="trash-outline" size={18} color={Colors.danger} />
+              <Ionicons name="trash-outline" size={18} color={item.isInUse ? Colors.disabled : Colors.danger} />
             </TouchableOpacity>
           </View>
         </View>
@@ -328,6 +356,19 @@ const styles = StyleSheet.create({
   defaultBadgeText: {
     fontSize: 10, fontFamily: Typography.fontFamily.semiBold,
     color: Colors.white,
+  },
+  inUseBadge: {
+    flexDirection: "row", alignItems: "center", gap: 3,
+    backgroundColor: "#E65100", borderRadius: 10,
+    paddingHorizontal: 8, paddingVertical: 3,
+  },
+  inUseBadgeText: {
+    fontSize: 10, fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.white,
+  },
+  cardInUse: {
+    opacity: 0.65,
+    borderColor: "#E65100" + "40",
   },
 
   // Empty
