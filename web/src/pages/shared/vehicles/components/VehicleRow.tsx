@@ -8,12 +8,12 @@ import { ICON_MAP } from './constants';
 interface VehicleRowProps {
   vehicle: VehicleType;
   onEdit: () => void;
-  onView: () => void;
-  onDelete: () => void;
   isLast?: boolean;
+  index: number;
+  globalIndex: number;
 }
 
-export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: VehicleRowProps) {
+export function VehicleRow({ vehicle, index, globalIndex, onEdit, onView, onDelete, isLast }: VehicleRowProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
 
@@ -23,17 +23,32 @@ export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: Vehicl
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
+      className="hover:bg-[#9FE870]/10 transition-colors group cursor-pointer"
       onClick={onView}
     >
+      <td className="px-6 py-4 text-[#6b6b6b] text-[13px] text-center font-medium">
+        {index}
+      </td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center border border-emerald-100 text-emerald-600">
-            {(() => {
-              const Icon = vehicle.icon && ICON_MAP[vehicle.icon] ? ICON_MAP[vehicle.icon] : Car;
-              return <Icon size={20} strokeWidth={1.5} />;
-            })()}
-          </div>
+          {(() => {
+            const colors = [
+              { bg: '#F3F4F6', text: '#4B5563' },
+              { bg: '#EAF5E4', text: '#062F28' },
+              { bg: '#9FE870', text: '#062F28' },
+              { bg: '#062F28', text: '#9FE870' },
+            ];
+            const color = colors[Math.min(globalIndex, colors.length - 1)];
+            const Icon = vehicle.icon && ICON_MAP[vehicle.icon] ? ICON_MAP[vehicle.icon] : Car;
+            return (
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center border border-[#f0f0f0] shadow-sm shrink-0"
+                style={{ background: color.bg, color: color.text }}
+              >
+                <Icon size={20} strokeWidth={2} />
+              </div>
+            );
+          })()}
           <div>
             <p className="font-semibold text-[#060606] text-base">{vehicle.name}</p>
           </div>
@@ -44,7 +59,7 @@ export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: Vehicl
       </td>
 
       <td className="px-6 py-4 text-sm text-gray-500">
-        {new Date(vehicle.createdAt).toLocaleDateString()}
+        {new Date(vehicle.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} {new Date(vehicle.createdAt).toLocaleDateString('vi-VN')}
       </td>
       <td className="px-6 py-4 text-right relative">
         <button

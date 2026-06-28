@@ -43,6 +43,8 @@ export default function EditVehicleScreen() {
   const [image, setImage] = useState<string | null>(null);
   const [isDefault, setIsDefault] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isInUse, setIsInUse] = useState(false);
+  const [inUseReason, setInUseReason] = useState('');
 
   // Load vehicle types + vehicle data
   useEffect(() => {
@@ -67,6 +69,8 @@ export default function EditVehicleScreen() {
           setNickname(v.nickname || "");
           setImage(v.image || null);
           setIsDefault(v.isDefault || false);
+          setIsInUse(v.isInUse || false);
+          setInUseReason(v.inUseReason || '');
         }
       } catch (err) {
         console.error("Failed to load data:", err);
@@ -149,6 +153,10 @@ export default function EditVehicleScreen() {
   };
 
   const handleSubmit = async () => {
+    if (isInUse) {
+      Alert.alert("Không thể chỉnh sửa", inUseReason);
+      return;
+    }
     if (!selectedTypeId) {
       Alert.alert("Thiếu thông tin", "Vui lòng chọn loại xe.");
       return;
@@ -239,6 +247,16 @@ export default function EditVehicleScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {/* ── Warning: Xe đang sử dụng ── */}
+          {isInUse && (
+            <View style={styles.warningBanner}>
+              <Ionicons name="warning" size={22} color="#E65100" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.warningTitle}>Không thể chỉnh sửa</Text>
+                <Text style={styles.warningText}>{inUseReason}</Text>
+              </View>
+            </View>
+          )}
           {/* ── Step 1: Loại xe (Dropdown) ── */}
           <View style={styles.stepHeader}>
             <View style={styles.stepBadge}>
@@ -455,10 +473,10 @@ export default function EditVehicleScreen() {
           <TouchableOpacity
             style={[
               styles.submitBtn,
-              (!selectedTypeId || !licensePlate.trim() || submitting) && styles.submitBtnDisabled,
+              (!selectedTypeId || !licensePlate.trim() || submitting || isInUse) && styles.submitBtnDisabled,
             ]}
             onPress={handleSubmit}
-            disabled={!selectedTypeId || !licensePlate.trim() || submitting}
+            disabled={!selectedTypeId || !licensePlate.trim() || submitting || isInUse}
             activeOpacity={0.85}
           >
             <Ionicons
@@ -507,6 +525,22 @@ const styles = StyleSheet.create({
 
   // Content
   content: { padding: 16 },
+
+  // Warning banner
+  warningBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#FFF3E0',
+    borderRadius: 14, padding: 14, marginBottom: 20,
+    borderWidth: 1, borderColor: '#E6510030',
+  },
+  warningTitle: {
+    fontSize: 14, fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.textPrimary,
+  },
+  warningText: {
+    fontSize: 12, fontFamily: Typography.fontFamily.regular,
+    color: Colors.textSecondary, marginTop: 2,
+  },
 
   // Step header
   stepHeader: {

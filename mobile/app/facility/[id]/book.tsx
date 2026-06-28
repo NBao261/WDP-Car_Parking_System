@@ -42,7 +42,7 @@ interface UserVehicle {
     _id: string;
     name: string;
     code: string;
-  } | string;
+  } | string | null;
 }
 
 export default function BookingScreen() {
@@ -131,22 +131,24 @@ export default function BookingScreen() {
   const selectVehicle = (vehicle: UserVehicle, slots?: AvailableSlot[]) => {
     setSelectedVehicleId(vehicle._id);
     setLicensePlate(vehicle.licensePlate);
-    const typeId = typeof vehicle.vehicleTypeId === 'string'
-      ? vehicle.vehicleTypeId
-      : vehicle.vehicleTypeId._id;
+    const typeId = !vehicle.vehicleTypeId
+      ? ''
+      : typeof vehicle.vehicleTypeId === 'string'
+        ? vehicle.vehicleTypeId
+        : vehicle.vehicleTypeId._id;
     setSelectedVehicleType(typeId);
   };
 
   const getVehicleTypeId = (vehicle: UserVehicle): string => {
+    if (!vehicle.vehicleTypeId) return '';
     return typeof vehicle.vehicleTypeId === 'string'
       ? vehicle.vehicleTypeId
       : vehicle.vehicleTypeId._id;
   };
 
   const getVehicleTypeName = (vehicle: UserVehicle): string => {
-    return typeof vehicle.vehicleTypeId === 'string'
-      ? ''
-      : vehicle.vehicleTypeId.name;
+    if (!vehicle.vehicleTypeId || typeof vehicle.vehicleTypeId === 'string') return '';
+    return vehicle.vehicleTypeId.name;
   };
 
   // Filter vehicles by selected vehicle type

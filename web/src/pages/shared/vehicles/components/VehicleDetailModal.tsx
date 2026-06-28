@@ -10,9 +10,10 @@ interface DetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   vehicle?: VehicleType;
+  allVehicles?: VehicleType[];
 }
 
-export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProps) {
+export function VehicleDetailModal({ isOpen, onClose, vehicle, allVehicles = [] }: DetailModalProps) {
   const [facilitiesWithFloors, setFacilitiesWithFloors] = useState<
     Record<string, { id: string; name: string; floors: { id: string; name: string }[] }>
   >({});
@@ -107,13 +108,25 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
 
           <div className="p-6 space-y-6 overflow-y-auto">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center border border-emerald-100 shadow-sm text-emerald-600">
-                {(() => {
-                  const Icon =
-                    vehicle.icon && ICON_MAP[vehicle.icon] ? ICON_MAP[vehicle.icon] : Car;
-                  return <Icon size={32} strokeWidth={1.5} />;
-                })()}
-              </div>
+              {(() => {
+                const globalIndex = Math.max(0, allVehicles.findIndex(v => v._id === vehicle._id));
+                const colors = [
+                  { bg: '#F3F4F6', text: '#4B5563' },
+                  { bg: '#EAF5E4', text: '#062F28' },
+                  { bg: '#9FE870', text: '#062F28' },
+                  { bg: '#062F28', text: '#9FE870' },
+                ];
+                const colorTheme = colors[Math.min(globalIndex, colors.length - 1)];
+                const Icon = vehicle.icon && ICON_MAP[vehicle.icon] ? ICON_MAP[vehicle.icon] : Car;
+                return (
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center border-[1.5px] border-[#f0f0f0] shadow-sm shrink-0"
+                    style={{ background: colorTheme.bg, color: colorTheme.text }}
+                  >
+                    <Icon size={32} strokeWidth={2} />
+                  </div>
+                );
+              })()}
               <div>
                 <h3 className="text-xl font-bold text-[#060606]">{vehicle.name}</h3>
                 <p className="text-sm font-mono text-gray-500 mt-1">{vehicle.code}</p>
@@ -124,14 +137,22 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
 
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                  Ngày Tạo
+                  Ngày Giờ Tạo
                 </p>
-                <p className="text-sm font-medium text-gray-800">
-                  {new Date(vehicle.createdAt).toLocaleDateString()}
-                </p>
+                <span className="text-sm font-medium text-[#060606]">
+                  {new Date(vehicle.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} {new Date(vehicle.createdAt).toLocaleDateString('vi-VN')}
+                </span>
               </div>
-
-            </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Yêu cầu Biển số</p>
+                <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold border ${vehicle.requiresPlate !== false
+                  ? 'bg-[#060606] text-[#d7ee46] border-[#060606]'
+                  : 'bg-[#ffffff] text-[#060606] border-[#9FE870]'
+                  }`}>
+                  {vehicle.requiresPlate !== false ? 'Có — Quét biển số' : 'Không — Dùng ảnh đối chiếu'}
+                </span>
+              </div>
+            </div >
 
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -180,7 +201,7 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
                 )}
               </div>
             </div>
-          </div>
+          </div >
 
           <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end shrink-0">
             <button
@@ -190,8 +211,8 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
               Đóng
             </button>
           </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+        </motion.div >
+      </div >
+    </AnimatePresence >
   );
 }

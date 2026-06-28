@@ -44,22 +44,22 @@ export function RoleCard({ role, onConfigPerms, onDeleted }: RoleCardProps) {
     <>
       <motion.div
         variants={itemVariants}
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow group relative"
+        className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:border-[#9FE870]/50 transition-colors group relative"
       >
         {/* Card Header */}
         <div className="p-6 border-b border-gray-50 flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 group-hover:bg-[#9FE870]/10 group-hover:border-[#9FE870]/30 transition-colors">
               <RoleIcon role={role.code} size={24} />
             </div>
             <div>
-              <h3 className="font-bold text-[#060606] text-lg leading-tight">{role.name}</h3>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs font-mono text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
+              <h3 className="font-bold text-[#062F28] text-[17px] leading-tight">{role.name}</h3>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="text-[11px] font-mono font-semibold text-[#6b6b6b] bg-gray-100 px-2.5 py-0.5 rounded-md border border-gray-200">
                   {role.code}
                 </span>
                 {role.isDefault && (
-                  <span className="text-[10px] uppercase font-bold text-[#96a827] bg-[#d7ee46]/20 px-2 py-0.5 rounded-md">
+                  <span className="text-[10px] uppercase font-bold text-[#062F28] bg-[#9FE870]/20 px-2 py-0.5 rounded-md border border-[#9FE870]/30">
                     System Role
                   </span>
                 )}
@@ -70,7 +70,7 @@ export function RoleCard({ role, onConfigPerms, onDeleted }: RoleCardProps) {
           {/* Actions Dropdown */}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <button className="select-none p-2 text-gray-400 hover:text-[#060606] bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors focus:outline-none outline-none">
+              <button className="select-none p-2 text-gray-400 hover:text-[#062F28] bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors focus:outline-none outline-none">
                 <MoreVertical size={18} />
               </button>
             </DropdownMenu.Trigger>
@@ -122,14 +122,14 @@ export function RoleCard({ role, onConfigPerms, onDeleted }: RoleCardProps) {
 
         {/* Card Footer */}
         <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-          <span className="text-xs font-medium text-gray-400">
-            {role.isDefault ? 'Vai trò hệ thống cố định' : 'Vai trò tùy chỉnh'}
+          <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+            {role.isDefault ? 'Vai trò cố định' : 'Vai trò tùy chỉnh'}
           </span>
           <button
             onClick={() => onConfigPerms(role)}
-            className="text-sm font-bold text-[#060606] hover:text-[#96a827] flex items-center gap-1 transition-colors"
+            className="text-[13px] font-bold text-white bg-[#062F28] hover:bg-[#9FE870] hover:text-[#062F28] px-4 py-1.5 rounded-full border border-[#062F28] hover:border-[#9FE870] transition-colors flex items-center gap-1"
           >
-            Cấu hình quyền <span className="text-lg leading-none">→</span>
+            Cấu hình quyền <span className="leading-none">→</span>
           </button>
         </div>
       </motion.div>

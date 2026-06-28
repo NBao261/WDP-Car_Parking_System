@@ -39,8 +39,10 @@ export function PricingDetailModal({
 
   const isActive = plan.status === 'active';
   const badgeStyle = isActive
-    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5' }
-    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2' };
+    ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
+    : (plan as any).status === 'maintenance'
+      ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
+      : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
   const vtId =
     typeof plan.vehicleTypeId === 'object' ? plan.vehicleTypeId?._id : plan.vehicleTypeId;
@@ -97,9 +99,9 @@ export function PricingDetailModal({
   };
 
   const FEE_TYPE_BADGE: Record<string, string> = {
-    per_turn: 'bg-violet-100 text-violet-700',
-    hourly: 'bg-sky-100 text-sky-700',
-    time_window: 'bg-amber-100 text-amber-700',
+    per_turn: 'bg-[#9FE870]/15 text-[#062F28]',
+    hourly: 'bg-[#9FE870]/15 text-[#062F28]',
+    time_window: 'bg-[#9FE870]/15 text-[#062F28]',
   };
 
   return createPortal(
@@ -123,7 +125,7 @@ export function PricingDetailModal({
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div>
-              <h2 className="text-lg font-bold text-[#060606]">Chi tiết Bảng Giá</h2>
+              <h2 className="text-lg font-bold text-[#062F28]">Chi tiết Bảng Giá</h2>
               <p className="text-xs text-gray-500 mt-0.5">Thông tin chi tiết giá và phụ phí</p>
             </div>
             <button
@@ -158,18 +160,18 @@ export function PricingDetailModal({
                       width: 6,
                       height: 6,
                       borderRadius: '50%',
-                      background: isActive ? '#10b981' : '#9b9e9b',
+                      background: isActive ? '#82C94E' : (plan as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
                     }}
                   />
-                  {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
+                  {isActive ? 'HOẠT ĐỘNG' : (plan as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
                 </span>
               </div>
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-[rgba(204,226,66,0.15)] flex items-center justify-center shrink-0">
-                  <DollarSign size={32} className="text-[#4a7c20]" strokeWidth={1.5} />
+                <div className="w-16 h-16 rounded-2xl bg-[#ffffff] border-[1.5px] border-[#f0f0f0] flex items-center justify-center shrink-0">
+                  <DollarSign size={32} className="text-[#9FE870]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-bold text-[#060606] mb-1.5">{plan.name}</h3>
+                  <h3 className="text-xl font-bold text-[#062F28] mb-1.5">{plan.name}</h3>
                   <div className="flex items-center gap-1.5 text-[13px] text-gray-500">
                     <Calendar size={13} /> Ngày tạo:{' '}
                     <span className="text-gray-700 font-medium">
@@ -202,9 +204,24 @@ export function PricingDetailModal({
                     <Car size={14} /> Loại xe
                   </p>
                   <div className="flex items-center">
-                    <span className="px-2.5 py-1.5 bg-[#f4f9ea] text-[#4a7c20] border border-[#e2edce] text-[12px] font-semibold rounded-lg flex items-center gap-1.5">
-                      <VtIcon size={14} className="text-[#4a7c20]" strokeWidth={2} /> {vtName}
-                    </span>
+                    {(() => {
+                      const idx = Math.max(0, vehicleTypes.findIndex(v => v._id === vtId));
+                      const colors = [
+                        { bg: '#F3F4F6', text: '#4B5563' },
+                        { bg: '#EAF5E4', text: '#062F28' },
+                        { bg: '#9FE870', text: '#062F28' },
+                        { bg: '#062F28', text: '#9FE870' },
+                      ];
+                      const color = colors[Math.min(idx, colors.length - 1)];
+                      return (
+                        <span
+                          className="px-2.5 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5"
+                          style={{ background: color.bg, color: color.text }}
+                        >
+                          <VtIcon size={14} color={color.text} strokeWidth={2} /> {vtName}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div>
@@ -253,7 +270,7 @@ export function PricingDetailModal({
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="font-bold text-[#4a7c20] text-[15px]">
+                      <span className="font-bold text-[#062F28] text-[15px]">
                         {fmt(rate.amount)}
                       </span>
                       <span className="text-xs text-gray-400 ml-1">
@@ -276,65 +293,65 @@ export function PricingDetailModal({
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {plan.gracePeriodMinutes ? (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100">
-                      <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
                         <ShieldCheck size={16} />
                       </div>
                       <div>
                         <p className="text-[11px] text-gray-500 font-medium">Thời gian miễn phí</p>
-                        <p className="text-sm font-semibold text-emerald-700">
+                        <p className="text-sm font-semibold text-[#062F28]">
                           {plan.gracePeriodMinutes} phút đầu
                         </p>
                       </div>
                     </div>
                   ) : null}
                   {plan.maxDailyFee ? (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50/50 border border-blue-100">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
                         <TrendingUp size={16} />
                       </div>
                       <div>
                         <p className="text-[11px] text-gray-500 font-medium">Phí trần tối đa</p>
-                        <p className="text-sm font-semibold text-blue-700">
+                        <p className="text-sm font-semibold text-[#062F28]">
                           {fmt(plan.maxDailyFee)} / ngày
                         </p>
                       </div>
                     </div>
                   ) : null}
                   {plan.overnightFee > 0 && (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-indigo-50/50 border border-indigo-100">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
                         <Moon size={16} />
                       </div>
                       <div>
                         <p className="text-[11px] text-gray-500 font-medium">Phí qua đêm</p>
-                        <p className="text-sm font-semibold text-indigo-700">
+                        <p className="text-sm font-semibold text-[#062F28]">
                           {fmt(plan.overnightFee)} / đêm
                         </p>
                       </div>
                     </div>
                   )}
                   {plan.overtimeFeePerHour > 0 && (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-orange-50/50 border border-orange-100">
-                      <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
                         <Clock size={16} />
                       </div>
                       <div>
                         <p className="text-[11px] text-gray-500 font-medium">Phí quá giờ</p>
-                        <p className="text-sm font-semibold text-orange-700">
+                        <p className="text-sm font-semibold text-[#062F28]">
                           {fmt(plan.overtimeFeePerHour)} / giờ
                         </p>
                       </div>
                     </div>
                   )}
                   {plan.lostCardFee > 0 && (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50/50 border border-red-100">
-                      <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
                         <CreditCard size={16} />
                       </div>
                       <div>
                         <p className="text-[11px] text-gray-500 font-medium">Phí mất thẻ</p>
-                        <p className="text-sm font-semibold text-red-700">
+                        <p className="text-sm font-semibold text-[#062F28]">
                           {fmt(plan.lostCardFee)}
                         </p>
                       </div>

@@ -273,7 +273,7 @@ export function PricingFacilityFilterBar({
                 borderRadius: 10,
                 border: 'none',
                 cursor: 'pointer',
-                background: viewMode === mode ? '#d7ee46' : '#f0f1f0',
+                background: viewMode === mode ? '#000000' : '#f0f1f0',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -283,10 +283,10 @@ export function PricingFacilityFilterBar({
               {mode === 'grid' ? (
                 <LayoutGrid
                   size={16}
-                  style={{ color: viewMode === 'grid' ? '#060606' : '#6b6e6b' }}
+                  style={{ color: viewMode === 'grid' ? '#ffffff' : '#6b6e6b' }}
                 />
               ) : (
-                <List size={16} style={{ color: viewMode === 'list' ? '#060606' : '#6b6e6b' }} />
+                <List size={16} style={{ color: viewMode === 'list' ? '#ffffff' : '#6b6e6b' }} />
               )}
             </button>
           ))}

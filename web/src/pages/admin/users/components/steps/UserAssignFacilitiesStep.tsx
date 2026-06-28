@@ -82,14 +82,14 @@ export function UserAssignFacilitiesStep({
         onClick={handleToggleAssign}
         className={`w-full p-4 rounded-xl border flex items-center justify-between transition-colors ${
           wantsToAssign
-            ? 'bg-[#f0f9dc] border-[#d7ee46]'
+            ? 'bg-[#9FE870]/20 border-[#9FE870]'
             : 'bg-white border-gray-200 hover:bg-gray-50'
         }`}
       >
         <div className="flex items-center gap-3">
           <div
             className={`w-10 h-6 rounded-full flex items-center p-1 transition-colors ${
-              wantsToAssign ? 'bg-[#5a9e0f]' : 'bg-gray-300'
+              wantsToAssign ? 'bg-[#062F28]' : 'bg-gray-300'
             }`}
           >
             <div
@@ -99,7 +99,7 @@ export function UserAssignFacilitiesStep({
             />
           </div>
           <div className="text-left">
-            <p className="text-sm font-bold text-[#060606]">Phân công tòa nhà ngay</p>
+            <p className="text-sm font-bold text-[#062F28]">Phân công tòa nhà ngay</p>
             <p className="text-xs text-gray-500 mt-0.5">Bật để chọn tòa nhà cho nhân viên này</p>
           </div>
         </div>
@@ -123,19 +123,19 @@ export function UserAssignFacilitiesStep({
                     onClick={() => toggleFacility(facility._id)}
                     className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-start gap-3 ${
                       selected
-                        ? 'bg-[#f0f9dc] border-[#d7ee46]'
+                        ? 'bg-[#9FE870]/20 border-[#9FE870]'
                         : 'bg-gray-50 border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <div className="mt-0.5 shrink-0">
                       {selected ? (
-                        <CheckSquare className="w-4 h-4 text-[#5a9e0f]" />
+                        <CheckSquare className="w-4 h-4 text-[#062F28]" />
                       ) : (
                         <Square className="w-4 h-4 text-gray-300" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-xs text-[#060606] truncate">{facility.name}</p>
+                      <p className="font-bold text-xs text-[#062F28] truncate">{facility.name}</p>
                       <div className="flex items-center gap-1 mt-0.5">
                         <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
                         <p className="text-[11px] text-gray-400 truncate">{facility.address}</p>
@@ -151,7 +151,7 @@ export function UserAssignFacilitiesStep({
           )}
 
           {selectedFacilityIds.length > 0 && (
-            <p className="text-xs text-center font-semibold text-[#5a9e0f]">
+            <p className="text-xs text-center font-semibold text-[#062F28]">
               ✓ Đã chọn {selectedFacilityIds.length} tòa nhà
             </p>
           )}

@@ -5,6 +5,7 @@
 # Virtual environments
 alpr-service/venv/
 alpr-service/env/
+alpr-service/venv310/
 venv/
 env/
 .venv/

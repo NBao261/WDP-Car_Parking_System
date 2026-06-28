@@ -56,9 +56,9 @@ function DropFilter({
           display: 'flex',
           alignItems: 'center',
           padding: '0 32px 0 14px',
-          border: isOpen || active ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
-          boxShadow: isOpen ? '0 0 0 3px rgba(204,226,66,0.2)' : 'none',
-          color: active ? '#060606' : '#6b6e6b',
+          border: isOpen || active ? '1px solid #9FE870' : '1.5px solid #e2e3e2',
+          boxShadow: isOpen ? '0 0 0 3px rgba(159,232,112,0.2)' : 'none',
+          color: active ? '#062F28' : '#7B7B7B',
           fontWeight: active ? 600 : 400,
           transition: 'all 0.2s ease',
           userSelect: 'none',
@@ -76,7 +76,7 @@ function DropFilter({
           right: 12,
           top: '50%',
           transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`,
-          color: '#6b6e6b',
+          color: '#7B7B7B',
           pointerEvents: 'none',
           transition: 'transform 0.2s ease',
         }}
@@ -134,8 +134,8 @@ function DropFilter({
                 padding: '10px 14px',
                 fontSize: 14,
                 cursor: 'pointer',
-                color: value === o.value ? '#060606' : '#4a4a4a',
-                background: value === o.value ? '#f8fce2' : '#ffffff',
+                color: value === o.value ? '#062F28' : '#4a4a4a',
+                background: value === o.value ? '#f4fbe9' : '#ffffff',
                 fontWeight: value === o.value ? 500 : 400,
                 display: 'flex',
                 alignItems: 'center',
@@ -190,7 +190,7 @@ export function FacilityFilterBar({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Tìm tòa nhà, địa chỉ..."
-          className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:border-transparent transition-all"
+          className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:border-transparent transition-all"
         />
       </div>
 
@@ -245,7 +245,7 @@ export function FacilityFilterBar({
                 borderRadius: 10,
                 border: 'none',
                 cursor: 'pointer',
-                background: viewMode === mode ? '#d7ee46' : '#f0f1f0',
+                background: viewMode === mode ? '#000000' : '#f0f1f0',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -255,10 +255,10 @@ export function FacilityFilterBar({
               {mode === 'grid' ? (
                 <LayoutGrid
                   size={16}
-                  style={{ color: viewMode === 'grid' ? '#060606' : '#6b6e6b' }}
+                  style={{ color: viewMode === 'grid' ? '#ffffff' : '#7B7B7B' }}
                 />
               ) : (
-                <List size={16} style={{ color: viewMode === 'list' ? '#060606' : '#6b6e6b' }} />
+                <List size={16} style={{ color: viewMode === 'list' ? '#ffffff' : '#7B7B7B' }} />
               )}
             </button>
           ))}
