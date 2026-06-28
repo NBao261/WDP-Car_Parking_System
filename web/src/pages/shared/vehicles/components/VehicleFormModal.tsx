@@ -11,7 +11,7 @@ import {
 } from '../../../../services/vehicleType.service';
 import { facilityService, Facility } from '../../../../services/facility.service';
 import { floorService, Floor } from '../../../../services/floor.service';
-import { ICON_OPTIONS, SLOT_SIZE_LABELS } from './constants';
+import { ICON_OPTIONS } from './constants';
 
 interface ModalProps {
   isOpen: boolean;
@@ -23,7 +23,7 @@ interface ModalProps {
 interface FormErrors {
   name?: string;
   code?: string;
-  slotSize?: string;
+
   icon?: string;
 }
 
@@ -32,7 +32,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
   const [form, setForm] = useState<CreateVehicleTypePayload>({
     name: '',
     code: '',
-    slotSize: '' as SlotSize,
+    slotSize: 'medium' as SlotSize,
     description: '',
     icon: '',
     requiresPlate: true,
@@ -65,7 +65,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
         setForm({
           name: '',
           code: '',
-          slotSize: '' as SlotSize,
+          slotSize: 'medium' as SlotSize,
           description: '',
           icon: '',
           requiresPlate: true,
@@ -114,7 +114,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
     const newErrors: FormErrors = {};
     if (!form.name.trim()) newErrors.name = 'Vui lòng nhập tên loại xe';
     if (!isEdit && !form.code.trim()) newErrors.code = 'Vui lòng nhập mã loại xe';
-    if (!form.slotSize) newErrors.slotSize = 'Vui lòng chọn kích thước slot';
+
     if (!form.icon) newErrors.icon = 'Vui lòng chọn biểu tượng';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -282,35 +282,6 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
               )}
             </div>
 
-            {/* Slot Size */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Kích Thước Slot <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(Object.keys(SLOT_SIZE_LABELS) as SlotSize[]).map((size) => {
-                  const { label } = SLOT_SIZE_LABELS[size];
-                  return (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => {
-                        setForm({ ...form, slotSize: size });
-                        setErrors((e) => ({ ...e, slotSize: undefined }));
-                      }}
-                      className={`py-2 rounded-xl text-sm font-semibold border transition-all ${form.slotSize === size ? 'border-[#d7ee46] bg-[#d7ee46] text-[#060606] scale-[1.03]' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-              {errors.slotSize && (
-                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                  <span>⚠</span> {errors.slotSize}
-                </p>
-              )}
-            </div>
 
             {/* Requires Plate Toggle */}
             <div>

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
 import { Car } from 'lucide-react';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { SLOT_SIZE_LABELS, ICON_MAP } from './constants';
+import { ICON_MAP } from './constants';
 
 interface VehicleRowProps {
   vehicle: VehicleType;
@@ -15,10 +15,7 @@ interface VehicleRowProps {
 
 export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: VehicleRowProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { label, color } = SLOT_SIZE_LABELS[vehicle.slotSize] || {
-    label: vehicle.slotSize,
-    color: 'bg-gray-100 text-gray-600 border-gray-200',
-  };
+
 
   return (
     <motion.tr
@@ -45,11 +42,7 @@ export function VehicleRow({ vehicle, onEdit, onView, onDelete, isLast }: Vehicl
       <td className="px-6 py-4">
         <span className="text-sm text-gray-500 font-mono tracking-wide">{vehicle.code}</span>
       </td>
-      <td className="px-6 py-4">
-        <span className={`px-2.5 py-1 rounded-md text-sm font-semibold border ${color}`}>
-          {label}
-        </span>
-      </td>
+
       <td className="px-6 py-4 text-sm text-gray-500">
         {new Date(vehicle.createdAt).toLocaleDateString()}
       </td>

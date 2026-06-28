@@ -14,7 +14,7 @@ import {
   X,
   ArrowUpDown,
 } from 'lucide-react';
-import { vehicleTypeService, VehicleType, SlotSize } from '../../../services/vehicleType.service';
+import { vehicleTypeService, VehicleType } from '../../../services/vehicleType.service';
 import { floorService, Floor } from '../../../services/floor.service';
 import { facilityService, Facility } from '../../../services/facility.service';
 import { VehicleFormModal } from './components/VehicleFormModal';
@@ -181,7 +181,7 @@ export default function VehiclesPage() {
 
   // Filters & Search
   const [search, setSearch] = useState('');
-  const [filterSize, setFilterSize] = useState<SlotSize | 'all'>('all');
+
 
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -217,7 +217,7 @@ export default function VehiclesPage() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, filterSize]);
+  }, [search]);
 
   // Filter & Sort Logic
   const filtered = vehicles
@@ -225,8 +225,7 @@ export default function VehiclesPage() {
       const matchesSearch =
         v.name.toLowerCase().includes(search.toLowerCase()) ||
         v.code.toLowerCase().includes(search.toLowerCase());
-      const matchesSize = filterSize === 'all' || v.slotSize === filterSize;
-      return matchesSearch && matchesSize;
+      return matchesSearch;
     })
     .sort((a, b) => {
       if (sortField === 'none') return 0;
@@ -372,20 +371,7 @@ export default function VehiclesPage() {
           />
         </div>
 
-        {/* Slot Size Filter */}
-        <div className="relative w-auto sm:w-48 shrink-0">
-          <DropFilter
-            width="100%"
-            value={filterSize}
-            onChange={(v) => setFilterSize(v as any)}
-            options={[
-              { value: 'all', label: 'Tất Cả Kích Thước' },
-              { value: 'small', label: 'Nhỏ' },
-              { value: 'medium', label: 'Vừa' },
-              { value: 'large', label: 'Lớn' },
-            ]}
-          />
-        </div>
+
 
         {/* Divider for large screens */}
         <div className="h-6 w-px bg-gray-200 hidden xl:block mx-1" />
@@ -463,11 +449,10 @@ export default function VehiclesPage() {
         </div>
 
         {/* Clear Filters Button */}
-        {(search || filterSize !== 'all' || sortField !== 'createdAt' || sortDir !== 'desc') && (
+        {(search || sortField !== 'createdAt' || sortDir !== 'desc') && (
           <button
             onClick={() => {
               setSearch('');
-              setFilterSize('all');
               setSortField('createdAt');
               setSortDir('desc');
             }}
@@ -507,7 +492,7 @@ export default function VehiclesPage() {
               <tr>
                 <th className="px-6 py-4 rounded-tl-2xl w-[25%]">Loại Xe</th>
                 <th className="px-6 py-4 w-[20%]">Mã Xe</th>
-                <th className="px-6 py-4 w-[20%]">Kích Thước Slot</th>
+
                 <th className="px-6 py-4 w-[20%]">Ngày Tạo</th>
                 <th className="px-6 py-4 text-right rounded-tr-2xl w-[15%]">Thao Tác</th>
               </tr>
@@ -526,7 +511,7 @@ export default function VehiclesPage() {
                     <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Package size={22} className="text-gray-300" />
                     </div>
-                    {search || filterSize !== 'all'
+                    {search
                       ? 'Không tìm thấy loại xe nào phù hợp với bộ lọc'
                       : 'Chưa có loại xe nào'}
                   </td>

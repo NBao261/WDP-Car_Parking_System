@@ -4,7 +4,7 @@ import { X, Car, Building2, Loader2 } from 'lucide-react';
 import { VehicleType } from '../../../../services/vehicleType.service';
 import { floorService, Floor } from '../../../../services/floor.service';
 import { facilityService, Facility } from '../../../../services/facility.service';
-import { SLOT_SIZE_LABELS, ICON_MAP } from './constants';
+import { ICON_MAP } from './constants';
 
 interface DetailModalProps {
   isOpen: boolean;
@@ -71,10 +71,7 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
 
   if (!isOpen || !vehicle) return null;
 
-  const { label, color } = SLOT_SIZE_LABELS[vehicle.slotSize] || {
-    label: vehicle.slotSize,
-    color: 'bg-gray-100 text-gray-600 border-gray-200',
-  };
+
 
   const groupedFacilities = Object.values(facilitiesWithFloors);
 
@@ -124,16 +121,7 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                  Kích Thước Slot
-                </p>
-                <span
-                  className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold border ${color}`}
-                >
-                  {label}
-                </span>
-              </div>
+
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                   Ngày Tạo
@@ -142,22 +130,7 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle }: DetailModalProp
                   {new Date(vehicle.createdAt).toLocaleDateString()}
                 </p>
               </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                  Yêu cầu Biển số
-                </p>
-                <span
-                  className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold border ${
-                    vehicle.requiresPlate !== false
-                      ? 'bg-blue-50 text-blue-700 border-blue-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
-                  }`}
-                >
-                  {vehicle.requiresPlate !== false
-                    ? 'Có — Quét biển số'
-                    : 'Không — Dùng ảnh đối chiếu'}
-                </span>
-              </div>
+
             </div>
 
             <div>
