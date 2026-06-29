@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
 import { Car } from 'lucide-react';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { SLOT_SIZE_LABELS, ICON_MAP } from './constants';
+import { ICON_MAP, getVehicleColorTheme } from './constants';
 
 interface VehicleRowProps {
   vehicle: VehicleType;
   onEdit: () => void;
+  onView: () => void;
+  onDelete: () => void;
   isLast?: boolean;
   index: number;
   globalIndex: number;
@@ -15,10 +17,6 @@ interface VehicleRowProps {
 
 export function VehicleRow({ vehicle, index, globalIndex, onEdit, onView, onDelete, isLast }: VehicleRowProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { label, color } = SLOT_SIZE_LABELS[vehicle.slotSize] || {
-    label: vehicle.slotSize,
-    color: 'bg-gray-100 text-gray-600 border-gray-200',
-  };
 
   return (
     <motion.tr
@@ -35,35 +33,24 @@ export function VehicleRow({ vehicle, index, globalIndex, onEdit, onView, onDele
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           {(() => {
-            const colors = [
-              { bg: '#F3F4F6', text: '#4B5563' },
-              { bg: '#EAF5E4', text: '#062F28' },
-              { bg: '#9FE870', text: '#062F28' },
-              { bg: '#062F28', text: '#9FE870' },
-            ];
-            const color = colors[Math.min(globalIndex, colors.length - 1)];
+            const colorTheme = getVehicleColorTheme(vehicle.code, vehicle.icon);
             const Icon = vehicle.icon && ICON_MAP[vehicle.icon] ? ICON_MAP[vehicle.icon] : Car;
             return (
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center border border-[#f0f0f0] shadow-sm shrink-0"
-                style={{ background: color.bg, color: color.text }}
+                style={{ background: colorTheme.bg, color: colorTheme.text }}
               >
                 <Icon size={20} strokeWidth={2} />
               </div>
             );
           })()}
           <div>
-            <p className="font-semibold text-[#060606] text-base">{vehicle.name}</p>
+            <p className="font-semibold text-[#062F28] text-base">{vehicle.name}</p>
           </div>
         </div>
       </td>
       <td className="px-6 py-4">
         <span className="text-sm text-gray-500 font-mono tracking-wide">{vehicle.code}</span>
-      </td>
-      <td className="px-6 py-4">
-        <span className={`px-2.5 py-1 rounded-md text-sm font-semibold border ${color}`}>
-          {label}
-        </span>
       </td>
       <td className="px-6 py-4 text-sm text-gray-500">
         {new Date(vehicle.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} {new Date(vehicle.createdAt).toLocaleDateString('vi-VN')}

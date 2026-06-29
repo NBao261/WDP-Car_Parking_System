@@ -131,7 +131,7 @@ export function FloorFormModal({
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -144,7 +144,7 @@ export function FloorFormModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
         >
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div>
@@ -163,7 +163,7 @@ export function FloorFormModal({
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 flex flex-col justify-between">
             {isFull ? (
               <div className="flex flex-col items-center justify-center py-6 text-center">
                 <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
@@ -183,104 +183,113 @@ export function FloorFormModal({
               </div>
             ) : (
               <>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Tên tầng <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => {
-                      setName(e.target.value);
-                      if (errors.name) setErrors({ ...errors, name: '' });
-                    }}
-                    className={getInputClass('name')}
-                    placeholder="Floor B1, Floor 1, Zone A..."
-                  />
-                  {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Tổng slot <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={999}
-                    placeholder="50"
-                    value={totalSlots}
-                    onChange={(e) => {
-                      setTotalSlots(e.target.value === '' ? '' : parseInt(e.target.value, 10));
-                      if (errors.totalSlots) setErrors({ ...errors, totalSlots: '' });
-                    }}
-                    className={getInputClass('totalSlots')}
-                  />
-                  {errors.totalSlots && (
-                    <p className="text-xs text-red-500 mt-1">{errors.totalSlots}</p>
-                  )}
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Các loại xe cho phép <span className="text-red-500">*</span>
-                      <span className="text-gray-400 font-normal ml-1">
-                        ({selectedVehicleTypes.length} đã chọn)
-                      </span>
-                    </label>
-                  </div>
-
-                  <div className="relative mb-3">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search size={14} className="text-gray-400" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                  {/* Left Column */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Tên tầng <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          if (errors.name) setErrors({ ...errors, name: '' });
+                        }}
+                        className={getInputClass('name')}
+                        placeholder="Floor B1, Floor 1, Zone A..."
+                      />
+                      {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
                     </div>
-                    <input
-                      type="text"
-                      placeholder="Tìm kiếm loại xe..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all"
-                    />
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Tổng slot <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={999}
+                        placeholder="50"
+                        value={totalSlots}
+                        onChange={(e) => {
+                          setTotalSlots(e.target.value === '' ? '' : parseInt(e.target.value, 10));
+                          if (errors.totalSlots) setErrors({ ...errors, totalSlots: '' });
+                        }}
+                        className={getInputClass('totalSlots')}
+                      />
+                      {errors.totalSlots && (
+                        <p className="text-xs text-red-500 mt-1">{errors.totalSlots}</p>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-1">
-                    {filteredTypes.map((vt) => {
-                      const isSelected = selectedVehicleTypes.includes(vt._id);
-                      return (
-                        <button
-                          key={vt._id}
-                          type="button"
-                          onClick={() => toggleVehicle(vt._id)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${
-                            isSelected
-                              ? 'bg-[#9FE870] text-[#062F28] border-[#9FE870] scale-[1.03]'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <span className="mr-1">
-                            {(() => {
-                              const IconComp =
-                                vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : Car;
-                              return <IconComp size={16} />;
-                            })()}
+                  {/* Right Column */}
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-semibold text-gray-700">
+                          Các loại xe cho phép <span className="text-red-500">*</span>
+                          <span className="text-gray-400 font-normal ml-1">
+                            ({selectedVehicleTypes.length} đã chọn)
                           </span>
-                          {vt.name}
-                          {isSelected && <Check size={13} />}
-                        </button>
-                      );
-                    })}
-                    {filteredTypes.length === 0 && (
-                      <p className="text-xs text-gray-400 py-2">
-                        Không tìm thấy loại xe phù hợp với "{searchQuery}".
-                      </p>
-                    )}
+                        </label>
+                      </div>
+
+                      <div className="relative mb-3">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Search size={14} className="text-gray-400" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Tìm kiếm loại xe..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all"
+                        />
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-1">
+                        {filteredTypes.map((vt) => {
+                          const isSelected = selectedVehicleTypes.includes(vt._id);
+                          return (
+                            <button
+                              key={vt._id}
+                              type="button"
+                              onClick={() => toggleVehicle(vt._id)}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${
+                                isSelected
+                                  ? 'bg-[#9FE870] text-[#062F28] border-[#9FE870] scale-[1.03]'
+                                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <span className="mr-1">
+                                {(() => {
+                                  const IconComp =
+                                    vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : Car;
+                                  return <IconComp size={16} />;
+                                })()}
+                              </span>
+                              {vt.name}
+                              {isSelected && <Check size={13} />}
+                            </button>
+                          );
+                        })}
+                        {filteredTypes.length === 0 && (
+                          <p className="text-xs text-gray-400 py-2">
+                            Không tìm thấy loại xe phù hợp với "{searchQuery}".
+                          </p>
+                        )}
+                      </div>
+                      {errors.vehicleTypes && (
+                        <p className="text-xs text-red-500 mt-2">{errors.vehicleTypes}</p>
+                      )}
+                    </div>
                   </div>
-                  {errors.vehicleTypes && (
-                    <p className="text-xs text-red-500 mt-2">{errors.vehicleTypes}</p>
-                  )}
                 </div>
 
-                <div className="pt-2 flex justify-end gap-3 border-t border-gray-100">
+                <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 mt-6 shrink-0">
                   <button
                     type="button"
                     onClick={onClose}
@@ -292,7 +301,7 @@ export function FloorFormModal({
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-5 py-2.5 text-sm font-bold text-white bg-[#062F28] rounded-xl hover:bg-[#062F28]/90 transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
+                    className="px-5 py-2.5 text-sm font-bold text-[#062F28] bg-[#9FE870] rounded-xl hover:bg-[#9FE870]/90 transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
                   >
                     {isSubmitting && <Loader2 size={16} className="animate-spin" />}
                     {isEdit ? 'Lưu Thay Đổi' : 'Tạo Tầng'}

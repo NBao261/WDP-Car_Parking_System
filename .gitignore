@@ -12,3 +12,6 @@ env/
 
 # Uploaded images
 server/public/uploads/
+
+# Dependencies
+node_modules/

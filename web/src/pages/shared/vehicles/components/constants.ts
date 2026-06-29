@@ -1,27 +1,48 @@
-import { Car, Bike, Truck, Bus, CarTaxiFront, BusFront, type LucideIcon } from 'lucide-react';
-import { SlotSize } from '../../../../services/vehicleType.service';
+import { Car, Bike, Truck, Motorbike, type LucideIcon } from 'lucide-react';
 
 /** Danh sách icon xe đường bộ — name lưu vào DB dưới dạng string */
 export const ICON_OPTIONS: { name: string; label: string; Icon: LucideIcon }[] = [
-  { name: 'Car', label: 'Ô tô', Icon: Car },
-  { name: 'CarTaxiFront', label: 'Taxi', Icon: CarTaxiFront },
-  { name: 'Bike', label: 'Xe máy', Icon: Bike },
   { name: 'Bicycle', label: 'Xe đạp', Icon: Bike },
-  { name: 'Truck', label: 'Xe tải', Icon: Truck },
-  { name: 'Bus', label: 'Xe buýt', Icon: Bus },
-  { name: 'BusFront', label: 'Xe khách', Icon: BusFront },
+  { name: 'Motorbike', label: 'Xe máy', Icon: Motorbike },
+  { name: 'Car', label: 'Xe ô tô', Icon: Car },
+  { name: 'Truck', label: 'Xe bán tải', Icon: Truck },
 ];
 
 /** Lookup nhanh từ tên icon → component Lucide */
-export const ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
-  ICON_OPTIONS.map(({ name, Icon }) => [name, Icon])
-);
+export const ICON_MAP: Record<string, LucideIcon> = {
+  Bicycle: Bike,
+  Bike: Motorbike,
+  Motorcycle: Motorbike,
+  Motorbike: Motorbike,
+  Car: Car,
+  Truck: Truck,
+};
 
 /** Tên icon mặc định */
 export const DEFAULT_ICON = 'Car';
 
-export const SLOT_SIZE_LABELS: Record<SlotSize, { label: string; color: string }> = {
-  small: { label: 'Nhỏ', color: 'bg-gray-100 text-gray-700 border-gray-200' },
-  medium: { label: 'Vừa', color: 'bg-gray-100 text-gray-700 border-gray-200' },
-  large: { label: 'Lớn', color: 'bg-gray-100 text-gray-700 border-gray-200' },
+/** Cấu hình màu sắc cố định cho các loại xe */
+export const getVehicleColorTheme = (code?: string, icon?: string) => {
+  const c = code?.toUpperCase() || '';
+  const i = icon?.toLowerCase() || '';
+
+  // Nền xanh nhạt cho xe đạp (Bicycle)
+  if (c.includes('BICYCLE') || c.includes('DAP') || i === 'bicycle') {
+    return { bg: '#EAF5E4', text: '#062F28' };
+  }
+  // Nền xanh lá icon đen cho xe máy (Motorbike)
+  if (c.includes('MOTORBIKE') || c.includes('BIKE') || c.includes('MAY') || i === 'bike') {
+    return { bg: '#9FE870', text: '#062F28' };
+  }
+  // Nền đen icon xanh cho xe ô tô (Car)
+  if (c.includes('CAR') || c.includes('OTO') || c.includes('TO') || i === 'car') {
+    return { bg: '#1A1A1A', text: '#9FE870' };
+  }
+  // Nền xám cho xe bán tải (Truck)
+  if (c.includes('TRUCK') || c.includes('TAI') || i === 'truck') {
+    return { bg: '#F3F4F6', text: '#4B5563' };
+  }
+
+  // Mặc định
+  return { bg: '#F3F4F6', text: '#4B5563' };
 };

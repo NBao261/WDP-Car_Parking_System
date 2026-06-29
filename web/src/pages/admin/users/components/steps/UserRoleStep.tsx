@@ -57,44 +57,46 @@ export function UserRoleStep({
   onChange,
 }: UserRoleStepProps) {
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-gray-500 mb-4">
+    <div className="space-y-4">
+      <p className="text-sm text-gray-500">
         Chọn <strong>1 vai trò</strong> cho tài khoản này. Vai trò xác định quyền hạn cơ bản.
       </p>
 
-      {ROLE_OPTIONS.map((opt) => {
-        const isSelected = selectedRole === opt.value;
-        return (
-          <label
-            key={opt.value}
-            className={`
-              flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all
-              ${isSelected ? `${opt.bg} border-opacity-100` : 'border-gray-100 hover:border-gray-200 bg-white'}
-            `}
-          >
-            <div
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {ROLE_OPTIONS.map((opt) => {
+          const isSelected = selectedRole === opt.value;
+          return (
+            <label
+              key={opt.value}
               className={`
-                w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all
-                ${isSelected ? 'border-[#062F28] bg-[#9FE870]' : 'border-gray-300 bg-white'}
+                flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all
+                ${isSelected ? `${opt.bg} border-opacity-100` : 'border-gray-100 hover:border-gray-200 bg-white'}
               `}
             >
-              {isSelected && <div className="w-2 h-2 rounded-full bg-[#062F28]" />}
-            </div>
-            <div className="flex-1">
-              <div className={`font-bold text-sm ${opt.color}`}>{opt.label}</div>
-              <div className="text-xs text-gray-500 mt-0.5">{opt.desc}</div>
-            </div>
-            <input
-              type="radio"
-              name="role"
-              className="sr-only"
-              value={opt.value}
-              checked={isSelected}
-              onChange={() => onChange(opt.value)}
-            />
-          </label>
-        );
-      })}
+              <div
+                className={`
+                  w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all
+                  ${isSelected ? 'border-[#062F28] bg-[#9FE870]' : 'border-gray-300 bg-white'}
+                `}
+              >
+                {isSelected && <div className="w-2 h-2 rounded-full bg-[#062F28]" />}
+              </div>
+              <div className="flex-1">
+                <div className={`font-bold text-sm ${opt.color}`}>{opt.label}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{opt.desc}</div>
+              </div>
+              <input
+                type="radio"
+                name="role"
+                className="sr-only"
+                value={opt.value}
+                checked={isSelected}
+                onChange={() => onChange(opt.value)}
+              />
+            </label>
+          );
+        })}
+      </div>
 
       {isEdit && currentRoleLabel && (
         <p className="text-xs text-gray-400 pt-1">

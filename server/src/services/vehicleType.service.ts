@@ -30,6 +30,13 @@ export class VehicleTypeService {
       throw new AppError('Vehicle type not found', 404);
     }
 
+    if (data.code && data.code.toUpperCase() !== oldVehicleType.code.toUpperCase()) {
+      const existingType = await VehicleType.findOne({ code: data.code.toUpperCase() });
+      if (existingType) {
+        throw new AppError('Vehicle type code already exists', 400);
+      }
+    }
+
     const vehicleType = await VehicleType.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     if (!vehicleType) return null;
 

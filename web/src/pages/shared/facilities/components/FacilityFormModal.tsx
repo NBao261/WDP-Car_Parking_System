@@ -156,7 +156,7 @@ export function FacilityFormModal({
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -169,7 +169,7 @@ export function FacilityFormModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
@@ -190,127 +190,135 @@ export function FacilityFormModal({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 space-y-4">
-            {/* Facility Name */}
-            <FormField label="Tên tòa nhà / bãi đỗ" required icon={Building2} error={errors.name}>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => {
-                  setForm({ ...form, name: e.target.value });
-                  if (errors.name) setErrors({ ...errors, name: '' });
-                }}
-                className={getInputClass('name')}
-                placeholder="Vincom Center"
-              />
-            </FormField>
+          <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 flex flex-col justify-between">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              {/* Left Column */}
+              <div className="space-y-4">
+                {/* Facility Name */}
+                <FormField label="Tên tòa nhà / bãi đỗ" required icon={Building2} error={errors.name}>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => {
+                      setForm({ ...form, name: e.target.value });
+                      if (errors.name) setErrors({ ...errors, name: '' });
+                    }}
+                    className={getInputClass('name')}
+                    placeholder="Vincom Center"
+                  />
+                </FormField>
 
-            {/* Address */}
-            <FormField
-              label="Địa chỉ"
-              required
-              icon={MapPin}
-              iconAlign="top"
-              error={errors.address}
-            >
-              <textarea
-                rows={2}
-                value={form.address}
-                onChange={(e) => {
-                  setForm({ ...form, address: e.target.value });
-                  if (errors.address) setErrors({ ...errors, address: '' });
-                }}
-                className={getInputClass('address', 'resize-none')}
-                placeholder="72 Le Thanh Ton, District 1, HCMC"
-              />
-            </FormField>
+                {/* Address */}
+                <FormField
+                  label="Địa chỉ"
+                  required
+                  icon={MapPin}
+                  iconAlign="top"
+                  error={errors.address}
+                >
+                  <textarea
+                    rows={2}
+                    value={form.address}
+                    onChange={(e) => {
+                      setForm({ ...form, address: e.target.value });
+                      if (errors.address) setErrors({ ...errors, address: '' });
+                    }}
+                    className={getInputClass('address', 'resize-none')}
+                    placeholder="72 Le Thanh Ton, District 1, HCMC"
+                  />
+                </FormField>
 
-            {/* Total Floors */}
-            <FormField label="Tổng số tầng" required icon={Layers} error={errors.totalFloors}>
-              <input
-                type="number"
-                min={1}
-                max={50}
-                placeholder="5"
-                value={form.totalFloors}
-                onChange={(e) => {
-                  setForm({
-                    ...form,
-                    totalFloors: e.target.value === '' ? ('' as any) : parseInt(e.target.value, 10),
-                  });
-                  if (errors.totalFloors) setErrors({ ...errors, totalFloors: '' });
-                }}
-                className={getInputClass('totalFloors')}
-              />
-            </FormField>
-
-            {/* Operating Hours */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Giờ hoạt động <span className="text-red-500">*</span>
-              </label>
-              <div className="flex gap-3 items-start">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Clock
-                      size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    />
-                    <input
-                      type="time"
-                      value={form.openTime}
-                      onChange={(e) => {
-                        setForm({ ...form, openTime: e.target.value });
-                        if (errors.openTime) setErrors({ ...errors, openTime: '' });
-                      }}
-                      className={getInputClass('openTime')}
-                    />
-                  </div>
-                  {errors.openTime && (
-                    <p className="text-xs text-red-500 mt-1">{errors.openTime}</p>
-                  )}
-                </div>
-                <span className="text-gray-400 font-medium text-sm mt-2.5">đến</span>
-                <div className="flex-1">
-                  <div className="relative">
-                    <Clock
-                      size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    />
-                    <input
-                      type="time"
-                      value={form.closeTime}
-                      onChange={(e) => {
-                        setForm({ ...form, closeTime: e.target.value });
-                        if (errors.closeTime) setErrors({ ...errors, closeTime: '' });
-                      }}
-                      className={getInputClass('closeTime')}
-                    />
-                  </div>
-                  {errors.closeTime && (
-                    <p className="text-xs text-red-500 mt-1">{errors.closeTime}</p>
-                  )}
-                </div>
+                {/* Total Floors */}
+                <FormField label="Tổng số tầng" required icon={Layers} error={errors.totalFloors}>
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    placeholder="5"
+                    value={form.totalFloors}
+                    onChange={(e) => {
+                      setForm({
+                        ...form,
+                        totalFloors: e.target.value === '' ? ('' as any) : parseInt(e.target.value, 10),
+                      });
+                      if (errors.totalFloors) setErrors({ ...errors, totalFloors: '' });
+                    }}
+                    className={getInputClass('totalFloors')}
+                  />
+                </FormField>
               </div>
-            </div>
 
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mô tả</label>
-              <div className="relative">
-                <FileText size={16} className="absolute left-3 top-3 text-gray-400" />
-                <textarea
-                  rows={3}
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all resize-none"
-                  placeholder="Mô tả ngắn gọn về tòa nhà / bãi đỗ..."
-                />
+              {/* Right Column */}
+              <div className="space-y-4">
+                {/* Operating Hours */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Giờ hoạt động <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-3 items-start">
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Clock
+                          size={16}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        />
+                        <input
+                          type="time"
+                          value={form.openTime}
+                          onChange={(e) => {
+                            setForm({ ...form, openTime: e.target.value });
+                            if (errors.openTime) setErrors({ ...errors, openTime: '' });
+                          }}
+                          className={getInputClass('openTime')}
+                        />
+                      </div>
+                      {errors.openTime && (
+                        <p className="text-xs text-red-500 mt-1">{errors.openTime}</p>
+                      )}
+                    </div>
+                    <span className="text-gray-400 font-medium text-sm mt-2.5">đến</span>
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Clock
+                          size={16}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        />
+                        <input
+                          type="time"
+                          value={form.closeTime}
+                          onChange={(e) => {
+                            setForm({ ...form, closeTime: e.target.value });
+                            if (errors.closeTime) setErrors({ ...errors, closeTime: '' });
+                          }}
+                          className={getInputClass('closeTime')}
+                        />
+                      </div>
+                      {errors.closeTime && (
+                        <p className="text-xs text-red-500 mt-1">{errors.closeTime}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mô tả</label>
+                  <div className="relative">
+                    <FileText size={16} className="absolute left-3 top-3 text-gray-400" />
+                    <textarea
+                      rows={3}
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                      className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all resize-none"
+                      placeholder="Mô tả ngắn gọn về tòa nhà / bãi đỗ..."
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="pt-2 flex justify-end gap-3 border-t border-gray-100 mt-2">
+            <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 mt-6 shrink-0">
               <button
                 type="button"
                 onClick={onClose}
@@ -322,7 +330,7 @@ export function FacilityFormModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-5 py-2.5 text-sm font-bold text-white bg-[#062F28] rounded-xl hover:bg-[#062F28]/90 transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
+                className="px-5 py-2.5 text-sm font-bold text-[#062F28] bg-[#9FE870] rounded-xl hover:bg-[#9FE870]/90 transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
               >
                 {isSubmitting && <Loader2 size={16} className="animate-spin" />}
                 {isEdit ? 'Lưu Thay Đổi' : 'Tạo Cơ Sở'}

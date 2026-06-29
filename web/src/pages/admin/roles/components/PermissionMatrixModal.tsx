@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Shield, Save, RefreshCw, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -102,10 +103,10 @@ export function PermissionMatrixModal({
     resetPromise.finally(() => setIsResetting(false));
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && role && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -216,6 +217,7 @@ export function PermissionMatrixModal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

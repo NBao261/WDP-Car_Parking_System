@@ -7,7 +7,7 @@ import { pricingService, type PricingPlan } from '../../../../services/pricing.s
 import { type Facility } from '../../../../services/facility.service';
 import { type VehicleType } from '../../../../services/vehicleType.service';
 import { FEE_TYPE_LABELS, mapToUiType } from './constants';
-import { ICON_MAP } from '../../../shared/vehicles/components/constants';
+import { ICON_MAP, getVehicleColorTheme } from '../../../shared/vehicles/components/constants';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
 
 interface PlanTableProps {
@@ -163,20 +163,14 @@ export function PlanTableView({
                   </td>
                   <td className="px-4 py-4">
                     {(() => {
-                      const idx = Math.max(0, vehicleTypes.findIndex(v => v._id === vtId));
-                      const colors = [
-                        { bg: '#F3F4F6', text: '#4B5563' },
-                        { bg: '#EAF5E4', text: '#062F28' },
-                        { bg: '#9FE870', text: '#062F28' },
-                        { bg: '#062F28', text: '#9FE870' },
-                      ];
-                      const color = colors[Math.min(idx, colors.length - 1)];
+                      const vtObj = vehicleTypes.find(v => v._id === vtId);
+                      const colorTheme = getVehicleColorTheme(vtObj?.code, vtObj?.icon);
                       return (
                         <span
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[12px] font-semibold rounded-lg"
-                          style={{ background: color.bg, color: color.text }}
+                          style={{ background: colorTheme.bg, color: colorTheme.text }}
                         >
-                          <VtIcon size={14} color={color.text} strokeWidth={2} /> {vtName}
+                          <VtIcon size={14} color={colorTheme.text} strokeWidth={2} /> {vtName}
                         </span>
                       );
                     })()}
