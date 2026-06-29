@@ -79,7 +79,7 @@ export function RoleCard({ role, onConfigPerms, onDeleted }: RoleCardProps) {
               <DropdownMenu.Content
                 align="end"
                 sideOffset={4}
-                className="w-52 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-150 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
+                className="w-52 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-gray-100 py-2 z-50 font-sans animate-in fade-in zoom-in-95 duration-150 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
               >
                 <DropdownMenu.Item
                   onClick={() => onConfigPerms(role)}

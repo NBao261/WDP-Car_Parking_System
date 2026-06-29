@@ -59,7 +59,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
   const isOnFacilityStep = showFacilityStep && currentStep === facilityStepId;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -75,7 +75,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl flex flex-col"
+        className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl flex flex-col"
         style={{ maxHeight: 'min(92vh, 700px)' }}
       >
         {/* Header */}
@@ -232,7 +232,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                 type="button"
                 onClick={() => setCurrentStep((s) => (s + 1) as 1 | 2 | 3 | 4)}
                 disabled={!canGoNext()}
-                className="px-5 py-2.5 text-sm font-bold text-white bg-[#062F28] rounded-xl hover:bg-[#062F28]/90 transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 text-sm font-bold text-[#062F28] bg-[#9FE870] hover:bg-[#9FE870]/90 rounded-xl transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Tiếp theo
                 <ChevronRight size={16} />
@@ -245,7 +245,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                 className={`px-5 py-2.5 text-sm font-bold rounded-xl transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed
                   ${!isEdit && isOnFacilityStep && selectedFacilityIds.length === 0
                     ? 'bg-amber-200 hover:bg-amber-300 text-amber-900' // Cảnh báo nhẹ khi không gán
-                    : 'bg-[#062F28] hover:bg-[#062F28]/90 text-white'
+                    : 'bg-[#9FE870] hover:bg-[#9FE870]/90 text-[#062F28]'
                   }
                 `}
               >

@@ -546,7 +546,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
         style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }}
       >
         {/* Modal Panel */}
@@ -557,7 +557,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
           exit={{ opacity: 0, scale: 0.95, y: 16 }}
           transition={{ type: 'spring', stiffness: 350, damping: 30 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-[500px] bg-white rounded-[32px] shadow-[0_24px_64px_rgba(0,0,0,0.18)] flex flex-col overflow-hidden max-h-[95vh]"
+          className="w-full max-w-5xl bg-white rounded-[32px] shadow-[0_24px_64px_rgba(0,0,0,0.18)] flex flex-col overflow-hidden max-h-[95vh]"
         >
           {/* ═══ HEADER (FIXED) ═══ */}
           <div className="px-7 py-5 border-b border-gray-100 flex items-start justify-between bg-white shrink-0 z-10 relative">
@@ -601,7 +601,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
           {/* ═══ SCROLLABLE CONTENT ═══ */}
           <div className="flex-1 overflow-y-auto flex flex-col">
             {isEditing ? (
-              <div className="p-7 flex flex-col gap-5">
+              <div className="p-7 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2">
                     Mã vị trí
@@ -628,130 +628,133 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                 </div>
               </div>
             ) : (
-              <div className="flex-1 flex flex-col">
-                <div className="p-7 pb-6 bg-white shrink-0">
-                  {/* Slot Position, Status, Floor */}
-                  <div className="mb-6">
-                    {/* Row 1: Title & Status */}
-                    <div className="flex items-center justify-between mb-2.5">
-                      <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest pl-1">
-                        Vị trí đỗ xe
-                      </p>
-                      <span
-                        className="flex items-center gap-1.5 text-[12px] font-bold px-3 py-1 rounded-xl border"
-                        style={{
-                          color: curCfg.color,
-                          background: curCfg.bg,
-                          borderColor: curCfg.border,
-                        }}
-                      >
+              <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 items-stretch min-h-[400px]">
+                {/* Left Column: Slot info & Status switcher */}
+                <div className="p-7 bg-white flex flex-col justify-between">
+                  <div>
+                    {/* Slot Position, Status, Floor */}
+                    <div className="mb-6">
+                      {/* Row 1: Title & Status */}
+                      <div className="flex items-center justify-between mb-2.5">
+                        <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest pl-1">
+                          Vị trí đỗ xe
+                        </p>
                         <span
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ background: curCfg.dot }}
-                        />
-                        {curCfg.label}
-                      </span>
-                    </div>
-
-                    {/* Row 2: Box & Floor */}
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center min-w-[72px] h-[72px] px-3 bg-[#9FE870]/15 border border-[#9FE870]/30 rounded-[18px] shadow-sm">
-                        <h2 className="text-[28px] font-black text-[#062F28] tracking-tight leading-none">
-                          {displaySlot.code}
-                        </h2>
+                          className="flex items-center gap-1.5 text-[12px] font-bold px-3 py-1 rounded-xl border"
+                          style={{
+                            color: curCfg.color,
+                            background: curCfg.bg,
+                            borderColor: curCfg.border,
+                          }}
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full"
+                            style={{ background: curCfg.dot }}
+                          />
+                          {curCfg.label}
+                        </span>
                       </div>
 
-                      <div>
-                        {fetchingNames ? (
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-3.5 h-3.5 bg-gray-200 rounded-sm animate-pulse" />
-                              <div className="h-4 w-20 rounded bg-gray-200 animate-pulse" />
+                      {/* Row 2: Box & Floor */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center min-w-[72px] h-[72px] px-3 bg-[#9FE870]/15 border border-[#9FE870]/30 rounded-[18px] shadow-sm">
+                          <h2 className="text-[28px] font-black text-[#062F28] tracking-tight leading-none">
+                            {displaySlot.code}
+                          </h2>
+                        </div>
+
+                        <div>
+                          {fetchingNames ? (
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-3.5 h-3.5 bg-gray-200 rounded-sm animate-pulse" />
+                                <div className="h-4 w-20 rounded bg-gray-200 animate-pulse" />
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-3.5 h-3.5 bg-gray-200 rounded-sm animate-pulse" />
+                                <div className="h-4 w-16 rounded bg-gray-200 animate-pulse" />
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-3.5 h-3.5 bg-gray-200 rounded-sm animate-pulse" />
-                              <div className="h-4 w-16 rounded bg-gray-200 animate-pulse" />
+                          ) : facilityName || floorName ? (
+                            <div className="flex flex-col gap-1.5 text-[14px] font-medium text-gray-500">
+                              {facilityName && (
+                                <span className="inline-flex items-center gap-1.5">
+                                  <MapPin size={16} className="text-gray-400" /> {facilityName}
+                                </span>
+                              )}
+                              {floorName && (
+                                <span className="inline-flex items-center gap-1.5">
+                                  <Layers size={16} className="text-gray-400" /> Tầng: {floorName}
+                                </span>
+                              )}
                             </div>
-                          </div>
-                        ) : facilityName || floorName ? (
-                          <div className="flex flex-col gap-1.5 text-[14px] font-medium text-gray-500">
-                            {facilityName && (
-                              <span className="inline-flex items-center gap-1.5">
-                                <MapPin size={16} className="text-gray-400" /> {facilityName}
-                              </span>
-                            )}
-                            {floorName && (
-                              <span className="inline-flex items-center gap-1.5">
-                                <Layers size={16} className="text-gray-400" /> Tầng: {floorName}
-                              </span>
-                            )}
-                          </div>
-                        ) : null}
+                          ) : null}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Vehicle Types (Image 2 style) */}
-                  <div className="mb-6">
-                    <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-3">
-                      Các loại xe cho phép
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#9FE870]/15 border border-[#9FE870]/30 rounded-lg text-[#062F28]">
-                        <VtIcon size={16} strokeWidth={2.5} />
-                        <span className="text-[13px] font-bold">{vtNameStr}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status Switcher (Grid) */}
-                  {nexts.length > 0 && (
+                    {/* Vehicle Types (Image 2 style) */}
                     <div className="mb-6">
                       <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-3">
-                        Cập nhật trạng thái
+                        Các loại xe cho phép
                       </p>
-                      <div className="flex gap-3">
-                        {nexts.map((s) => {
-                          const cfg = STATUS_CFG[s];
-                          const isSelected = selected === s;
-
-                          let hoverClass = 'hover:border-gray-200 hover:bg-gray-50';
-                          let selectedClass = 'border-[#062F28] bg-[#062F28] text-white';
-
-                          if (s === 'available') {
-                            hoverClass = 'hover:border-emerald-300 hover:bg-emerald-50';
-                            selectedClass = 'border-emerald-500 bg-emerald-50 text-emerald-700';
-                          }
-                          if (s === 'maintenance') {
-                            hoverClass = 'hover:border-amber-300 hover:bg-amber-50';
-                            selectedClass = 'border-amber-500 bg-amber-50 text-amber-700';
-                          }
-                          if (s === 'locked') {
-                            hoverClass = 'hover:border-rose-300 hover:bg-rose-50';
-                            selectedClass = 'border-rose-500 bg-rose-50 text-rose-700';
-                          }
-
-                          return (
-                            <button
-                              key={s}
-                              onClick={() => setSelected(isSelected ? '' : s)}
-                              className={`flex-1 relative flex flex-col items-center justify-center py-3 rounded-[14px] border-[3px] transition-all ${
-                                isSelected
-                                  ? `${selectedClass} scale-[1.02] shadow-sm`
-                                  : `border-gray-100 bg-white ${hoverClass}`
-                              }`}
-                            >
-                              <span
-                                className={`text-[14px] font-bold ${isSelected ? '' : 'text-gray-600'}`}
-                              >
-                                {cfg.label}
-                              </span>
-                            </button>
-                          );
-                        })}
+                      <div className="flex flex-wrap gap-2">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#9FE870]/15 border border-[#9FE870]/30 rounded-lg text-[#062F28]">
+                          <VtIcon size={16} strokeWidth={2.5} />
+                          <span className="text-[13px] font-bold">{vtNameStr}</span>
+                        </div>
                       </div>
                     </div>
-                  )}
+
+                    {/* Status Switcher (Grid) */}
+                    {nexts.length > 0 && (
+                      <div className="mb-6">
+                        <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-3">
+                          Cập nhật trạng thái
+                        </p>
+                        <div className="flex gap-3">
+                          {nexts.map((s) => {
+                            const cfg = STATUS_CFG[s];
+                            const isSelected = selected === s;
+
+                            let hoverClass = 'hover:border-gray-200 hover:bg-gray-50';
+                            let selectedClass = 'border-[#062F28] bg-[#062F28] text-white';
+
+                            if (s === 'available') {
+                              hoverClass = 'hover:border-emerald-300 hover:bg-emerald-50';
+                              selectedClass = 'border-emerald-500 bg-emerald-50 text-emerald-700';
+                            }
+                            if (s === 'maintenance') {
+                              hoverClass = 'hover:border-amber-300 hover:bg-amber-50';
+                              selectedClass = 'border-amber-500 bg-amber-50 text-amber-700';
+                            }
+                            if (s === 'locked') {
+                              hoverClass = 'hover:border-rose-300 hover:bg-rose-50';
+                              selectedClass = 'border-rose-500 bg-rose-50 text-rose-700';
+                            }
+
+                            return (
+                              <button
+                                key={s}
+                                onClick={() => setSelected(isSelected ? '' : s)}
+                                className={`flex-1 relative flex flex-col items-center justify-center py-3 rounded-[14px] border-[3px] transition-all ${
+                                  isSelected
+                                    ? `${selectedClass} scale-[1.02] shadow-sm`
+                                    : `border-gray-100 bg-white ${hoverClass}`
+                                }`}
+                              >
+                                <span
+                                  className={`text-[14px] font-bold ${isSelected ? '' : 'text-gray-600'}`}
+                                >
+                                  {cfg.label}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Submit Button (Animated presence) */}
                   <AnimatePresence>
@@ -773,12 +776,12 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </div>{' '}
-                {/* End of Top Section */}
-                {/* ═══ CURRENT SESSION ═══ */}
-                <div className="bg-[#fafafa] flex-1 min-h-[300px]">
+                </div>
+
+                {/* Right Column: CURRENT SESSION */}
+                <div className="bg-[#fafafa] border-l border-gray-100 flex flex-col min-h-[300px]">
                   {fetchingSlot ? (
-                    <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400 p-8">
+                    <div className="flex flex-col items-center justify-center flex-1 gap-3 text-gray-400 p-8">
                       <Loader2 className="animate-spin" size={24} />
                       <p className="text-[13px] font-medium">Đang tải chi tiết...</p>
                     </div>
@@ -787,7 +790,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                       <SessionInfo session={session} />
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-center px-8 text-gray-400 p-8 pt-16 pb-16">
+                    <div className="flex flex-col items-center justify-center flex-1 text-center px-8 text-gray-400 p-8 pt-16 pb-16">
                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
                         <Car size={24} className="text-gray-300" />
                       </div>

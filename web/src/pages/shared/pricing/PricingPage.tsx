@@ -90,7 +90,8 @@ export default function PricingPage() {
       const scopedFacilityIds = new Set(scopedFacilities.map((f: Facility) => f._id));
       const scopedPlans = assignedFacilityIds
         ? pRes.data.filter((p: PricingPlan) => {
-          const facId = typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
+          const facId =
+            p.facilityId && typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
           return scopedFacilityIds.has(facId);
         })
         : pRes.data;
@@ -117,9 +118,11 @@ export default function PricingPage() {
     if (!selectedFacility) return vehicleTypes;
     const facPlanVtIds = new Set<string>();
     plans.forEach((p) => {
-      const pFacId = typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
+      const pFacId = p.facilityId && typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
       if (pFacId === selectedFacility._id) {
-        const vtId = typeof p.vehicleTypeId === 'object' ? p.vehicleTypeId._id : p.vehicleTypeId;
+        const vtId = p.vehicleTypeId && typeof p.vehicleTypeId === 'object'
+          ? p.vehicleTypeId._id
+          : p.vehicleTypeId;
         if (vtId) facPlanVtIds.add(vtId);
       }
     });
