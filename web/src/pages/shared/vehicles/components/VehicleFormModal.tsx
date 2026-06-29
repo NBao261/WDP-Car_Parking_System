@@ -235,7 +235,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
           </div>
 
           <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 flex flex-col space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
               {/* Left Column */}
               <div className="space-y-4">
                 {/* Icon picker */}
@@ -340,17 +340,17 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
               </div>
 
               {/* Right Column */}
-              <div className="space-y-4">
+              <div className="flex flex-col min-h-0">
                 {/* Facilities & Floors */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div className="flex flex-col flex-1 min-h-0">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 shrink-0">
                     Tòa Nhà Áp Dụng
                   </label>
 
                   {facilities.length === 0 ? (
-                    <p className="text-sm text-gray-400 italic">Không có tòa nhà khả dụng</p>
+                    <p className="text-sm text-gray-400 italic shrink-0">Không có tòa nhà khả dụng</p>
                   ) : (
-                    <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto custom-scrollbar p-1">
+                    <div className="grid grid-cols-1 gap-2 overflow-y-auto custom-scrollbar p-1 flex-1 min-h-0">
                       {facilities.map((fac) => {
                         const isSelected = selectedFacilityIds.includes(fac._id);
                         return (
