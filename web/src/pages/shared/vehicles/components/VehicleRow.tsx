@@ -11,6 +11,8 @@ interface VehicleRowProps {
   isLast?: boolean;
   index: number;
   globalIndex: number;
+  onView: () => void;
+  onDelete: () => void;
 }
 
 export function VehicleRow({ vehicle, index, globalIndex, onEdit, onView, onDelete, isLast }: VehicleRowProps) {

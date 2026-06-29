@@ -127,19 +127,19 @@ export function FloorDetailModal({
               <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-2">
                 Các loại xe cho phép
               </p>
-              {vehicleTypes.length > 0 ? (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {floor.supportedVehicles.map((v) => {
-                      const IconComp = ICON_MAP[v.name] || Car;
-                      const idx = Math.max(0, vehicleTypes.findIndex(vt => vt._id === v._id));
-                      const colors = [
-                        { bg: '#F3F4F6', text: '#4B5563' },
-                        { bg: '#EAF5E4', text: '#062F28' },
-                        { bg: '#9FE870', text: '#062F28' },
-                        { bg: '#062F28', text: '#9FE870' },
-                      ];
-                      const color = colors[Math.min(idx, colors.length - 1)];
-                      return (
+              {((floor as any).supportedVehicles?.length || 0) > 0 ? (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(floor as any).supportedVehicles.map((v: any) => {
+                    const IconComp = ICON_MAP[v.name] || Car;
+                    const idx = Math.max(0, vehicleTypes.findIndex((vt) => vt._id === v._id));
+                    const colors = [
+                      { bg: '#F3F4F6', text: '#4B5563' },
+                      { bg: '#EAF5E4', text: '#062F28' },
+                      { bg: '#9FE870', text: '#062F28' },
+                      { bg: '#062F28', text: '#9FE870' },
+                    ];
+                    const color = colors[Math.min(idx, colors.length - 1)];
+                    return (
                       <span
                         key={v._id}
                         className="px-2.5 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm"
@@ -151,8 +151,8 @@ export function FloorDetailModal({
                   })}
                 </div>
               ) : (
-                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-sm text-gray-400 italic">
-                  Không có loại xe nào được hỗ trợ
+                <div className="text-sm text-gray-500 italic mt-2">
+                  Chưa có loại xe nào được cấu hình cho tầng này.
                 </div>
               )}
             </div>

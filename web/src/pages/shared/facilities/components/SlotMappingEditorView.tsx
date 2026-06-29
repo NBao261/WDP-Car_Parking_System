@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw, Plus, GripHorizontal, Map, Car, ChevronLeft } from 'lucide-react';
@@ -8,6 +8,12 @@ import { VehicleType } from '../../../../services/vehicleType.service';
 import { SlotStatusModal } from './SlotStatusModal';
 import { SlotFormModal } from './SlotFormModal';
 import { ICON_MAP } from '../../../shared/vehicles/components/constants';
+
+interface SlotGroup {
+  name: string;
+  icon: string;
+  slots: ParkingSlot[];
+}
 
 interface SlotMappingEditorViewProps {
   floor: Floor | null;
@@ -38,6 +44,44 @@ export function SlotMappingEditorView({
 
   const filteredSlots =
     filterStatus === 'all' ? slots : slots.filter((s) => s.status === filterStatus);
+
+  // Group slots by vehicle type
+  const groupedSlots = useMemo(() => {
+    const groups: Record<string, SlotGroup> = {};
+    const ungrouped: ParkingSlot[] = [];
+
+    filteredSlots.forEach((slot) => {
+      const vtId =
+        slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object'
+          ? slot.vehicleTypeId._id
+          : (slot.vehicleTypeId as string) || '';
+
+      if (!vtId) {
+        ungrouped.push(slot);
+        return;
+      }
+
+      if (!groups[vtId]) {
+        const vtObj =
+          slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object'
+            ? slot.vehicleTypeId
+            : null;
+        const vtFromList = vehicleTypes.find((v) => v._id === vtId);
+        groups[vtId] = {
+          name: vtObj?.name || vtFromList?.name || vtMap[vtId] || vtId,
+          icon: vtObj?.icon || vtFromList?.icon || '',
+          slots: [],
+        };
+      }
+      groups[vtId].slots.push(slot);
+    });
+
+    const entries: [string, SlotGroup][] = Object.entries(groups);
+    if (ungrouped.length > 0) {
+      entries.push(['_ungrouped', { name: 'Khác', icon: '', slots: ungrouped }]);
+    }
+    return entries;
+  }, [filteredSlots, vehicleTypes, vtMap]);
 
   const filterButtons: { label: string; value: SlotStatus | 'all' }[] = [
     { label: 'Tất cả', value: 'all' },
@@ -188,38 +232,62 @@ export function SlotMappingEditorView({
                     / Khóa
                   </div>
                 </div>
-                {/* Slot grid */}
-                <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
-                  {filteredSlots.map((slot) => {
-                    let bgClass = 'bg-white border-gray-200 text-gray-500';
-                    if (slot.status === 'occupied')
-                      bgClass = 'bg-green-100 border-green-300 text-green-700';
-                    else if (slot.status === 'reserved')
-                      bgClass = 'bg-blue-100 border-blue-200 text-blue-700';
-                    else if (slot.status === 'maintenance' || slot.status === 'locked')
-                      bgClass = 'bg-red-50 border-red-200 text-red-600';
-                    const vtName =
-                      slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object'
-                        ? slot.vehicleTypeId.name
-                        : slot.vehicleTypeId
-                          ? (vtMap[slot.vehicleTypeId] ?? '')
-                          : '';
+
+                {/* Slot rows grouped by vehicle type */}
+                <div className="space-y-5">
+                  {groupedSlots.map(([vtId, group]) => {
+                    const Icon =
+                      group.icon && ICON_MAP[group.icon] ? ICON_MAP[group.icon] : Car;
                     return (
-                      <div
-                        key={slot._id}
-                        onClick={() => {
-                          if (floor.status === 'active' && isFacilityActive) setStatusSlot(slot);
-                          else
-                            toast.error(
-                              !isFacilityActive
-                                ? 'Không thể chỉnh sửa slot của tòa nhà đang bị vô hiệu hóa.'
-                                : 'Không thể chỉnh sửa slot của tầng đang bị vô hiệu hóa.'
+                      <div key={vtId}>
+                        {/* Vehicle type label */}
+                        <div className="flex items-center gap-2 mb-2.5">
+                          <div className="w-7 h-7 rounded-lg bg-[#9FE870]/20 flex items-center justify-center shrink-0">
+                            <Icon size={15} className="text-[#062F28]" />
+                          </div>
+                          <span className="text-sm font-bold text-[#062F28]">
+                            {group.name}
+                          </span>
+                          <span className="text-xs text-gray-400 font-medium">
+                            ({group.slots.length} slot)
+                          </span>
+                          <div className="flex-1 h-px bg-gray-200 ml-2" />
+                        </div>
+                        {/* Slots row */}
+                        <div className="flex flex-wrap gap-2.5 pl-9">
+                          {group.slots.map((slot) => {
+                            let bgClass = 'bg-white border-gray-200 text-gray-500';
+                            if (slot.status === 'occupied')
+                              bgClass = 'bg-green-100 border-green-300 text-green-700';
+                            else if (slot.status === 'reserved')
+                              bgClass = 'bg-blue-100 border-blue-200 text-blue-700';
+                            else if (
+                              slot.status === 'maintenance' ||
+                              slot.status === 'locked'
+                            )
+                              bgClass = 'bg-red-50 border-red-200 text-red-600';
+
+                            return (
+                              <div
+                                key={slot._id}
+                                onClick={() => {
+                                  if (floor.status === 'active' && isFacilityActive)
+                                    setStatusSlot(slot);
+                                  else
+                                    toast.error(
+                                      !isFacilityActive
+                                        ? 'Không thể chỉnh sửa slot của tòa nhà đang bị vô hiệu hóa.'
+                                        : 'Không thể chỉnh sửa slot của tầng đang bị vô hiệu hóa.'
+                                    );
+                                }}
+                                className={`w-20 h-12 rounded-lg flex items-center justify-center text-sm font-semibold ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
+                                title={`${slot.code} – ${group.name} (${slot.status})`}
+                              >
+                                {slot.code}
+                              </div>
                             );
-                        }}
-                        className={`aspect-square rounded-lg flex items-center justify-center text-xs font-semibold ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
-                        title={`${slot.code} – ${vtName} (${slot.status})`}
-                      >
-                        {slot.code}
+                          })}
+                        </div>
                       </div>
                     );
                   })}

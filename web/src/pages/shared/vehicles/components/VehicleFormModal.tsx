@@ -207,7 +207,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Biểu Tượng <span className="text-red-500">*</span>
               </label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {ICON_OPTIONS.map(({ name, label, Icon }) => {
                   const isSelected = form.icon === name;
                   return (
@@ -219,14 +219,14 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                         setForm({ ...form, icon: name });
                         setErrors((e) => ({ ...e, icon: undefined }));
                       }}
-                      className={`flex flex-col items-center justify-center gap-1.5 w-full py-3 rounded-xl border-2 transition-all ${
+                      className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl border-2 transition-all ${
                         isSelected
-                          ? 'border-[#d7ee46] bg-[#d7ee46]/15 text-[#060606] scale-105 shadow-sm'
+                          ? 'border-[#d7ee46] bg-[#d7ee46]/15 text-[#060606] shadow-sm'
                           : 'border-gray-200 text-gray-500 hover:border-[#d7ee46]/50 hover:bg-[#d7ee46]/5 hover:text-[#060606]'
                       }`}
                     >
-                      <Icon size={20} strokeWidth={1.5} />
-                      <span className="text-[10px] font-semibold leading-none truncate w-full text-center px-1">
+                      <Icon size={18} strokeWidth={1.5} className="shrink-0" />
+                      <span className="text-xs font-semibold truncate text-left">
                         {label}
                       </span>
                     </button>
@@ -328,12 +328,12 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                         setIsFacOpen(!isFacOpen);
                         setIsFloorOpen(false);
                       }}
-                      className={`w-full pl-9 pr-8 py-2 bg-white border rounded-xl text-sm transition-all cursor-pointer flex items-center justify-between shadow-sm relative z-10
+                      className={`w-full pl-9 pr-12 py-2 bg-white border rounded-xl text-sm transition-all cursor-pointer flex items-center justify-between shadow-sm relative z-10
                         ${isFacOpen ? 'border-transparent ring-2 ring-[#d7ee46]' : 'border-gray-200 hover:bg-gray-50'}`}
                     >
                       <span
                         className={
-                          selectedFacId ? 'font-medium text-gray-700' : 'text-gray-500 font-medium'
+                          selectedFacId ? 'font-medium text-gray-700 truncate' : 'text-gray-500 font-medium'
                         }
                       >
                         {selectedFacId
@@ -341,10 +341,24 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                           : 'Chọn tòa nhà'}
                       </span>
                     </div>
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none z-10">
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-1 z-20">
+                      {selectedFacId && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedFacId('');
+                            setIsFacOpen(false);
+                            setIsFloorOpen(false);
+                          }}
+                          className="text-gray-400 hover:text-red-500 p-0.5 rounded-full transition-colors"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
                       <ChevronDown
                         size={16}
-                        className={`text-gray-400 transition-transform ${isFacOpen ? 'rotate-180' : ''}`}
+                        className={`text-gray-400 pointer-events-none transition-transform ${isFacOpen ? 'rotate-180' : ''}`}
                       />
                     </div>
 
@@ -483,12 +497,16 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                           <span className="text-emerald-600 font-semibold">{fl.name}</span>
                           <button
                             type="button"
-                            onClick={() =>
+                            onClick={() => {
                               setForm((f) => ({
                                 ...f,
                                 floors: (f.floors || []).filter((id) => id !== floorId),
-                              }))
-                            }
+                              }));
+                              if (fac && selectedFacId === fac._id) {
+                                setSelectedFacId('');
+                                setIsFloorOpen(false);
+                              }
+                            }}
                             className="ml-1 text-gray-300 group-hover:text-red-500 transition-colors"
                           >
                             <X size={14} />

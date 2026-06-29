@@ -182,7 +182,6 @@ export default function VehiclesPage() {
   // Filters & Search
   const [search, setSearch] = useState('');
 
-
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -220,24 +219,11 @@ export default function VehiclesPage() {
   }, [search]);
 
   // Filter & Sort Logic
-<<<<<<< HEAD
-  const filtered = vehicles
-    .filter((v) => {
-      const matchesSearch =
-        v.name.toLowerCase().includes(search.toLowerCase()) ||
-        v.code.toLowerCase().includes(search.toLowerCase());
-      return matchesSearch;
-    })
-    .sort((a, b) => {
-      if (sortField === 'none') return 0;
-=======
   const filtered = vehicles.filter((v) => {
     const matchesSearch = v.name.toLowerCase().includes(search.toLowerCase()) || v.code.toLowerCase().includes(search.toLowerCase());
-    const matchesSize = filterSize === 'all' || v.slotSize === filterSize;
-    return matchesSearch && matchesSize;
+    return matchesSearch;
   }).sort((a, b) => {
     if (sortField === 'none') return 0;
->>>>>>> e813e64b05b9ebecb83afea132d31717d98a0a2f
 
     let aVal: any = a[sortField];
     let bVal: any = b[sortField];
@@ -502,27 +488,21 @@ export default function VehiclesPage() {
                 <th className="px-6 py-4 rounded-tl-2xl w-[5%] text-center">STT</th>
                 <th className="px-6 py-4 w-[25%]">Loại Xe</th>
                 <th className="px-6 py-4 w-[20%]">Mã Xe</th>
-<<<<<<< HEAD
-
-                <th className="px-6 py-4 w-[20%]">Ngày Tạo</th>
-=======
-                <th className="px-6 py-4 w-[20%]">Kích Thước Slot</th>
-                <th className="px-6 py-4 w-[15%]">Ngày Giờ Tạo</th>
->>>>>>> e813e64b05b9ebecb83afea132d31717d98a0a2f
+                <th className="px-6 py-4 w-[20%]">Ngày Giờ Tạo</th>
                 <th className="px-6 py-4 text-right rounded-tr-2xl w-[15%]">Thao Tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-14 text-center text-gray-400">
+                  <td colSpan={5} className="px-6 py-14 text-center text-gray-400">
                     <div className="w-6 h-6 border-2 border-[#d7ee46] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     Đang tải...
                   </td>
                 </tr>
               ) : paginatedVehicles.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-14 text-center text-gray-400">
+                  <td colSpan={5} className="px-6 py-14 text-center text-gray-400">
                     <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Package size={22} className="text-gray-300" />
                     </div>
