@@ -80,9 +80,9 @@ export function AdminAssignFacilityModal({
   const roleLabel = user.role === 'manager' ? 'Manager' : 'Staff';
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col"
+        className="bg-white rounded-2xl shadow-xl w-full max-w-5xl flex flex-col"
         style={{ maxHeight: '82vh' }}
       >
         {/* Header */}
@@ -124,7 +124,7 @@ export function AdminAssignFacilityModal({
               Chưa có tòa nhà active nào trong hệ thống.
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {facilities.map((facility) => {
                 const selected = selectedIds.includes(facility._id);
                 return (
@@ -189,7 +189,7 @@ export function AdminAssignFacilityModal({
           <button
             onClick={handleSave}
             disabled={saving || loadingFacilities}
-            className="flex-1 py-2.5 text-sm font-bold bg-[#062F28] text-white rounded-xl hover:bg-[#062F28]/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+            className="flex-1 py-2.5 text-sm font-bold bg-[#9FE870] text-[#062F28] hover:bg-[#9FE870]/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
           >
             {saving ? (
               <>

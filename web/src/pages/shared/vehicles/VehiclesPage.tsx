@@ -14,7 +14,7 @@ import {
   X,
   ArrowUpDown,
 } from 'lucide-react';
-import { vehicleTypeService, VehicleType } from '../../../services/vehicleType.service';
+import { vehicleTypeService, VehicleType, SlotSize } from '../../../services/vehicleType.service';
 import { floorService, Floor } from '../../../services/floor.service';
 import { facilityService, Facility } from '../../../services/facility.service';
 import { VehicleFormModal } from './components/VehicleFormModal';
@@ -334,7 +334,7 @@ export default function VehiclesPage() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-2xl font-bold text-[#060606]">Loại Xe</h1>
+          <h1 className="text-2xl font-bold text-[#062F28]">Loại Xe</h1>
           <p className="text-gray-500 text-sm mt-1">
             Quản lý các loại phương tiện được hỗ trợ trong hệ thống
           </p>
@@ -362,11 +362,9 @@ export default function VehiclesPage() {
             placeholder="Tìm kiếm theo tên hoặc mã xe..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:border-transparent transition-all"
+            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:border-transparent transition-all"
           />
         </div>
-
-
 
         {/* Divider for large screens */}
         <div className="h-6 w-px bg-gray-200 hidden xl:block mx-1" />
@@ -486,17 +484,17 @@ export default function VehiclesPage() {
             <thead className="bg-[#FAFAFA] text-[#6b6b6b] text-[13px] border-b border-gray-100 font-semibold uppercase tracking-wider">
               <tr>
                 <th className="px-6 py-4 rounded-tl-2xl w-[5%] text-center">STT</th>
-                <th className="px-6 py-4 w-[25%]">Loại Xe</th>
-                <th className="px-6 py-4 w-[20%]">Mã Xe</th>
+                <th className="px-6 py-4 w-[30%]">Loại Xe</th>
+                <th className="px-6 py-4 w-[25%]">Mã Xe</th>
                 <th className="px-6 py-4 w-[20%]">Ngày Giờ Tạo</th>
-                <th className="px-6 py-4 text-right rounded-tr-2xl w-[15%]">Thao Tác</th>
+                <th className="px-6 py-4 text-right rounded-tr-2xl w-[20%]">Thao Tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-14 text-center text-gray-400">
-                    <div className="w-6 h-6 border-2 border-[#d7ee46] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                    <div className="w-6 h-6 border-2 border-[#9FE870] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     Đang tải...
                   </td>
                 </tr>
@@ -591,7 +589,7 @@ export default function VehiclesPage() {
                     className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === '...'
                       ? 'text-gray-400 bg-transparent cursor-default'
                       : currentPage === p
-                        ? 'bg-[#d7ee46] text-[#060606] border border-[#c4dc32] font-bold shadow-sm'
+                        ? 'bg-[#9FE870] text-[#062F28] border border-[#9FE870]/70 font-bold shadow-sm'
                         : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                       }`}
                   >
@@ -637,7 +635,7 @@ export default function VehiclesPage() {
 
       <AnimatePresence>
         {deleteTarget && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

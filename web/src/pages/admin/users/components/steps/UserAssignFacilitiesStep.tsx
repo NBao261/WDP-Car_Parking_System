@@ -113,7 +113,7 @@ export function UserAssignFacilitiesStep({
               Chưa có tòa nhà active nào trong hệ thống.
             </p>
           ) : (
-            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
               {facilities.map((facility) => {
                 const selected = isSelected(facility._id);
                 return (

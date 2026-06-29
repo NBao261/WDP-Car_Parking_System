@@ -17,7 +17,7 @@ import {
 import { PricingPlan } from '../../../../services/pricing.service';
 import { Facility } from '../../../../services/facility.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { ICON_MAP } from '../../../shared/vehicles/components/constants';
+import { ICON_MAP, getVehicleColorTheme } from '../../../shared/vehicles/components/constants';
 import { FEE_TYPE_LABELS, mapToUiType } from './constants';
 
 interface PricingDetailModalProps {
@@ -106,7 +106,7 @@ export function PricingDetailModal({
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -120,7 +120,7 @@ export function PricingDetailModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
@@ -137,229 +137,230 @@ export function PricingDetailModal({
           </div>
 
           {/* Content */}
-          <div className="p-6 overflow-y-auto space-y-6">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5">
-                  Thông tin chung
-                </p>
-                <span
-                  style={{
-                    fontSize: 11,
-                    padding: '3px 10px',
-                    borderRadius: 20,
-                    fontWeight: 'bold',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    ...badgeStyle,
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      background: isActive ? '#82C94E' : (plan as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
-                    }}
-                  />
-                  {isActive ? 'HOẠT ĐỘNG' : (plan as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-[#ffffff] border-[1.5px] border-[#f0f0f0] flex items-center justify-center shrink-0">
-                  <DollarSign size={32} className="text-[#9FE870]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-bold text-[#062F28] mb-1.5">{plan.name}</h3>
-                  <div className="flex items-center gap-1.5 text-[13px] text-gray-500">
-                    <Calendar size={13} /> Ngày tạo:{' '}
-                    <span className="text-gray-700 font-medium">
-                      {new Date(plan.createdAt).toLocaleDateString('vi-VN')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-6">
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase mb-2 flex items-center gap-1.5">
-                  <Building2 size={14} /> Tòa nhà áp dụng
-                </p>
-                <div className="w-fit bg-gray-50/80 p-3.5 rounded-xl border border-gray-100">
-                  <p className="font-bold text-gray-800 text-[15px]">{facName}</p>
-                  {facAddress && (
-                    <p className="text-sm text-gray-800 mt-1.5 flex items-start gap-1.5">
-                      <MapPin size={14} className="mt-[3px] shrink-0 text-gray-400" />{' '}
-                      <span className="line-clamp-2">{facAddress}</span>
+          {/* Content */}
+          <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              {/* Left Column: General, Building, Vehicle Type, Price Type */}
+              <div className="space-y-6">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5">
+                      Thông tin chung
                     </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase mb-1.5 flex items-center gap-1.5">
-                    <Car size={14} /> Loại xe
-                  </p>
-                  <div className="flex items-center">
-                    {(() => {
-                      const idx = Math.max(0, vehicleTypes.findIndex(v => v._id === vtId));
-                      const colors = [
-                        { bg: '#F3F4F6', text: '#4B5563' },
-                        { bg: '#EAF5E4', text: '#062F28' },
-                        { bg: '#9FE870', text: '#062F28' },
-                        { bg: '#062F28', text: '#9FE870' },
-                      ];
-                      const color = colors[Math.min(idx, colors.length - 1)];
-                      return (
-                        <span
-                          className="px-2.5 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5"
-                          style={{ background: color.bg, color: color.text }}
-                        >
-                          <VtIcon size={14} color={color.text} strokeWidth={2} /> {vtName}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase mb-1.5 flex items-center gap-1.5">
-                    <CreditCard size={14} /> Loại giá
-                  </p>
-                  <div className="flex items-center">
                     <span
-                      className={`font-semibold px-2.5 py-1.5 rounded-lg text-[12px] ${FEE_TYPE_BADGE[uiFeeType] ?? 'bg-gray-100 text-gray-600'}`}
+                      style={{
+                        fontSize: 11,
+                        padding: '3px 10px',
+                        borderRadius: 20,
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        ...badgeStyle,
+                      }}
                     >
-                      {FEE_TYPE_LABELS[uiFeeType] ?? plan.feeType}
+                      <span
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: isActive ? '#82C94E' : (plan as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
+                        }}
+                      />
+                      {isActive ? 'HOẠT ĐỘNG' : (plan as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
                     </span>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-3">
-                <DollarSign size={14} /> Bảng giá chi tiết
-              </p>
-              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                {plan.rates.map((rate, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-4 flex justify-between items-center ${idx !== plan.rates.length - 1 ? 'border-b border-gray-100' : ''}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center">
-                        <span className="text-gray-500 font-semibold text-xs">{idx + 1}</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">
-                          {translateLabel(rate.label)}
-                          {idx === 0 &&
-                            plan.feeMethod === 'duration_based' &&
-                            plan.firstBlockHours &&
-                            plan.firstBlockHours > 1 &&
-                            ` (${plan.firstBlockHours} giờ)`}
-                        </p>
-                        {rate.startTime && rate.endTime && (
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            Thời gian: {rate.startTime} - {rate.endTime}
-                          </p>
-                        )}
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-[#ffffff] border-[1.5px] border-[#f0f0f0] flex items-center justify-center shrink-0">
+                      <DollarSign size={32} className="text-[#9FE870]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xl font-bold text-[#062F28] mb-1.5">{plan.name}</h3>
+                      <div className="flex items-center gap-1.5 text-[13px] text-gray-500">
+                        <Calendar size={13} /> Ngày tạo:{' '}
+                        <span className="text-gray-700 font-medium">
+                          {new Date(plan.createdAt).toLocaleDateString('vi-VN')}
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span className="font-bold text-[#062F28] text-[15px]">
-                        {fmt(rate.amount)}
-                      </span>
-                      <span className="text-xs text-gray-400 ml-1">
-                        /{translateUnit(rate.unit)}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase mb-2 flex items-center gap-1.5">
+                    <Building2 size={14} /> Tòa nhà áp dụng
+                  </p>
+                  <div className="w-full bg-gray-50/80 p-3.5 rounded-xl border border-gray-100">
+                    <p className="font-bold text-gray-800 text-[15px]">{facName}</p>
+                    {facAddress && (
+                      <p className="text-sm text-gray-800 mt-1.5 flex items-start gap-1.5">
+                        <MapPin size={14} className="mt-[3px] shrink-0 text-gray-400" />{' '}
+                        <span className="line-clamp-2">{facAddress}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase mb-1.5 flex items-center gap-1.5">
+                      <Car size={14} /> Loại xe
+                    </p>
+                    <div className="flex items-center">
+                      {(() => {
+                        const vtObj = vehicleTypes.find(v => v._id === vtId);
+                        const colorTheme = getVehicleColorTheme(vtObj?.code, vtObj?.icon);
+                        return (
+                          <span
+                            className="px-2.5 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5"
+                            style={{ background: colorTheme.bg, color: colorTheme.text }}
+                          >
+                            <VtIcon size={14} color={colorTheme.text} strokeWidth={2} /> {vtName}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase mb-1.5 flex items-center gap-1.5">
+                      <CreditCard size={14} /> Loại giá
+                    </p>
+                    <div className="flex items-center">
+                      <span
+                        className={`font-semibold px-2.5 py-1.5 rounded-lg text-[12px] ${FEE_TYPE_BADGE[uiFeeType] ?? 'bg-gray-100 text-gray-600'}`}
+                      >
+                        {FEE_TYPE_LABELS[uiFeeType] ?? plan.feeType}
                       </span>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {(plan.overnightFee > 0 ||
-              plan.overtimeFeePerHour > 0 ||
-              plan.lostCardFee > 0 ||
-              (plan.gracePeriodMinutes && plan.gracePeriodMinutes > 0) ||
-              (plan.maxDailyFee && plan.maxDailyFee > 0)) && (
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-3">
-                  <Info size={14} /> Phụ phí & Quy định khác
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {plan.gracePeriodMinutes ? (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
-                      <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
-                        <ShieldCheck size={16} />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-500 font-medium">Thời gian miễn phí</p>
-                        <p className="text-sm font-semibold text-[#062F28]">
-                          {plan.gracePeriodMinutes} phút đầu
-                        </p>
-                      </div>
-                    </div>
-                  ) : null}
-                  {plan.maxDailyFee ? (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
-                      <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
-                        <TrendingUp size={16} />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-500 font-medium">Phí trần tối đa</p>
-                        <p className="text-sm font-semibold text-[#062F28]">
-                          {fmt(plan.maxDailyFee)} / ngày
-                        </p>
-                      </div>
-                    </div>
-                  ) : null}
-                  {plan.overnightFee > 0 && (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
-                      <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
-                        <Moon size={16} />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-500 font-medium">Phí qua đêm</p>
-                        <p className="text-sm font-semibold text-[#062F28]">
-                          {fmt(plan.overnightFee)} / đêm
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  {plan.overtimeFeePerHour > 0 && (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
-                      <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
-                        <Clock size={16} />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-500 font-medium">Phí quá giờ</p>
-                        <p className="text-sm font-semibold text-[#062F28]">
-                          {fmt(plan.overtimeFeePerHour)} / giờ
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  {plan.lostCardFee > 0 && (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
-                      <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
-                        <CreditCard size={16} />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-500 font-medium">Phí mất thẻ</p>
-                        <p className="text-sm font-semibold text-[#062F28]">
-                          {fmt(plan.lostCardFee)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
-            )}
+
+              {/* Right Column: Detailed rates & Surcharges */}
+              <div className="space-y-6">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-3">
+                    <DollarSign size={14} /> Bảng giá chi tiết
+                  </p>
+                  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                    {plan.rates.map((rate, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-4 flex justify-between items-center ${idx !== plan.rates.length - 1 ? 'border-b border-gray-100' : ''}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center">
+                            <span className="text-gray-500 font-semibold text-xs">{idx + 1}</span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">
+                              {translateLabel(rate.label)}
+                              {idx === 0 &&
+                                plan.feeMethod === 'duration_based' &&
+                                plan.firstBlockHours &&
+                                plan.firstBlockHours > 1 &&
+                                ` (${plan.firstBlockHours} giờ)`}
+                            </p>
+                            {rate.startTime && rate.endTime && (
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                Thời gian: {rate.startTime} - {rate.endTime}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-bold text-[#062F28] text-[15px]">
+                            {fmt(rate.amount)}
+                          </span>
+                          <span className="text-xs text-gray-400 ml-1">
+                            /{translateUnit(rate.unit)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {(plan.overnightFee > 0 ||
+                  plan.overtimeFeePerHour > 0 ||
+                  plan.lostCardFee > 0 ||
+                  (plan.gracePeriodMinutes && plan.gracePeriodMinutes > 0) ||
+                  (plan.maxDailyFee && plan.maxDailyFee > 0)) && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-3">
+                      <Info size={14} /> Phụ phí & Quy định khác
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {plan.gracePeriodMinutes ? (
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                          <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
+                            <ShieldCheck size={16} />
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-gray-500 font-medium">Thời gian miễn phí</p>
+                            <p className="text-sm font-semibold text-[#062F28]">
+                              {plan.gracePeriodMinutes} phút đầu
+                            </p>
+                          </div>
+                        </div>
+                      ) : null}
+                      {plan.maxDailyFee ? (
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                          <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
+                            <TrendingUp size={16} />
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-gray-500 font-medium">Phí trần tối đa</p>
+                            <p className="text-sm font-semibold text-[#062F28]">
+                              {fmt(plan.maxDailyFee)} / ngày
+                            </p>
+                          </div>
+                        </div>
+                      ) : null}
+                      {plan.overnightFee > 0 && (
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                          <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
+                            <Moon size={16} />
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-gray-500 font-medium">Phí qua đêm</p>
+                            <p className="text-sm font-semibold text-[#062F28]">
+                              {fmt(plan.overnightFee)} / đêm
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {plan.overtimeFeePerHour > 0 && (
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                          <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
+                            <Clock size={16} />
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-gray-500 font-medium">Phí quá giờ</p>
+                            <p className="text-sm font-semibold text-[#062F28]">
+                              {fmt(plan.overtimeFeePerHour)} / giờ
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {plan.lostCardFee > 0 && (
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                          <div className="w-8 h-8 rounded-full bg-[#9FE870]/15 text-[#062F28] flex items-center justify-center shrink-0">
+                            <CreditCard size={16} />
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-gray-500 font-medium">Phí mất thẻ</p>
+                            <p className="text-sm font-semibold text-[#062F28]">
+                              {fmt(plan.lostCardFee)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Footer */}

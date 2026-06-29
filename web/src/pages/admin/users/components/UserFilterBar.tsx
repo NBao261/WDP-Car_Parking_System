@@ -1,5 +1,6 @@
 import { Search, Filter } from 'lucide-react';
 import { UserRole } from '../../../../../../shared/types';
+import { CustomDropdown } from '../../../../components/ui/CustomDropdown';
 
 interface UserFilterBarProps {
   searchTerm: string;
@@ -27,20 +28,19 @@ export function UserFilterBar({
         />
       </div>
       <div className="flex items-center gap-3">
-        <div className="relative">
-          <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <select
-            className="pl-9 pr-8 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#9FE870] appearance-none cursor-pointer"
-            value={roleFilter}
-            onChange={(e) => onRoleFilterChange(e.target.value)}
-          >
-            <option value="ALL">Tất cả vai trò</option>
-            <option value={UserRole.ADMIN}>Admin</option>
-            <option value={UserRole.MANAGER}>Manager</option>
-            <option value={UserRole.STAFF}>Staff</option>
-            <option value={UserRole.DRIVER}>Driver</option>
-          </select>
-        </div>
+        <CustomDropdown
+          value={roleFilter}
+          onChange={onRoleFilterChange}
+          options={[
+            { value: 'ALL', label: 'Tất cả vai trò' },
+            { value: UserRole.ADMIN, label: 'Admin' },
+            { value: UserRole.MANAGER, label: 'Manager' },
+            { value: UserRole.STAFF, label: 'Staff' },
+            { value: UserRole.DRIVER, label: 'Driver' },
+          ]}
+          icon={Filter}
+          width={180}
+        />
       </div>
     </div>
   );
