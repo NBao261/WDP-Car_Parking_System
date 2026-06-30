@@ -657,10 +657,37 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
 
                       {/* Row 2: Box & Floor */}
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center min-w-[72px] h-[72px] px-3 bg-[#9FE870]/15 border border-[#9FE870]/30 rounded-[18px] shadow-sm">
-                          <h2 className="text-[28px] font-black text-[#062F28] tracking-tight leading-none">
-                            {displaySlot.code}
-                          </h2>
+                        <div
+                          className="flex flex-col items-center justify-center min-w-[72px] h-[72px] px-3 rounded-[18px] shadow-sm relative overflow-hidden transition-colors"
+                          style={{
+                            background: curCfg.bg,
+                            borderColor: curCfg.border,
+                            borderWidth: 1,
+                          }}
+                        >
+                          {displaySlot.status === 'occupied' ? (
+                            <>
+                              <VtIcon
+                                size={28}
+                                style={{ color: curCfg.color }}
+                                className="opacity-90 mb-0.5"
+                                strokeWidth={1.5}
+                              />
+                              <span
+                                className="text-[11px] font-bold opacity-75"
+                                style={{ color: curCfg.color }}
+                              >
+                                {displaySlot.code}
+                              </span>
+                            </>
+                          ) : (
+                            <h2
+                              className="text-[28px] font-black tracking-tight leading-none"
+                              style={{ color: curCfg.color }}
+                            >
+                              {displaySlot.code}
+                            </h2>
+                          )}
                         </div>
 
                         <div>
