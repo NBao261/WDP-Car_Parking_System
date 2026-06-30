@@ -36,6 +36,8 @@ interface SlotGroup {
   prefix: string;
   startNumber: number | string;
   count: number | string;
+  originalPrefix?: string;
+  isSkipped?: boolean;
 }
 
 export function FloorFormModal({
@@ -60,7 +62,7 @@ export function FloorFormModal({
   // Vehicle types that have existing slots (edit mode only) — cannot be deselected
   const [lockedVehicleTypeIds, setLockedVehicleTypeIds] = useState<Set<string>>(new Set());
   // Existing slots grouped by vehicleTypeId — for display in step 2
-  const [existingSlotsMap, setExistingSlotsMap] = useState<Record<string, { codes: string[]; count: number }>>({}); 
+  const [existingSlotsMap, setExistingSlotsMap] = useState<Record<string, { codes: string[]; count: number; slots: any[] }>>({}); 
   // Number of existing slots (edit mode) — used for display in step 2
   const [existingSlotCount, setExistingSlotCount] = useState(0);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -109,15 +111,16 @@ export function FloorFormModal({
           const slots = res.data || [];
           setExistingSlotCount(slots.length);
           const vtIdsWithSlots = new Set<string>();
-          const slotsMap: Record<string, { codes: string[]; count: number }> = {};
+          const slotsMap: Record<string, { codes: string[]; count: number; slots: any[] }> = {};
           slots.forEach((slot) => {
             const vtId = typeof slot.vehicleTypeId === 'object' && slot.vehicleTypeId
               ? slot.vehicleTypeId._id
               : slot.vehicleTypeId;
             if (vtId) {
               vtIdsWithSlots.add(vtId);
-              if (!slotsMap[vtId]) slotsMap[vtId] = { codes: [], count: 0 };
+              if (!slotsMap[vtId]) slotsMap[vtId] = { codes: [], count: 0, slots: [] };
               slotsMap[vtId].codes.push(slot.code);
+              slotsMap[vtId].slots.push(slot);
               slotsMap[vtId].count++;
             }
           });
@@ -194,14 +197,21 @@ export function FloorFormModal({
       // In edit mode: auto-fill prefix & startNumber from existing slots
       let defaultPrefix = '';
       let defaultStart = 1;
-      if (isEdit && existingSlotsMap[vtId]) {
+      if (isEdit && existingSlotsMap[vtId] && existingSlotsMap[vtId].codes.length > 0) {
         const codes = existingSlotsMap[vtId].codes;
-        // Extract prefix from last code (e.g. "XM4" → prefix "XM", number 4)
-        const lastCode = codes[codes.length - 1];
-        const match = lastCode.match(/^([A-Za-z]+)(\d+)$/);
+        const firstCode = codes[0];
+        const match = firstCode.match(/^([^\d]+)/);
         if (match) {
           defaultPrefix = match[1];
-          defaultStart = parseInt(match[2], 10) + 1;
+          let maxNum = 0;
+          codes.forEach(c => {
+            const numMatch = c.match(/\d+$/);
+            if (numMatch) {
+              const num = parseInt(numMatch[0], 10);
+              if (num > maxNum) maxNum = num;
+            }
+          });
+          defaultStart = maxNum > 0 ? maxNum + 1 : 1;
         }
       }
 
@@ -212,6 +222,7 @@ export function FloorFormModal({
         prefix: defaultPrefix,
         startNumber: defaultStart,
         count: '',
+        originalPrefix: defaultPrefix,
       };
     });
     setSlotGroups(groups);
@@ -221,8 +232,8 @@ export function FloorFormModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate step 2 slot groups (only groups that have data)
-    const filledGroups = slotGroups.filter((g) => g.prefix.trim() || Number(g.count) > 0);
+    // Validate step 2 slot groups (only groups that have data and are not skipped)
+    const filledGroups = slotGroups.filter((g) => !g.isSkipped && (g.prefix.trim() || Number(g.count) > 0));
     const newErrors: Record<string, string> = {};
     filledGroups.forEach((g) => {
       const i = slotGroups.indexOf(g);
@@ -257,16 +268,31 @@ export function FloorFormModal({
         await floorService.update(floor!._id, { name, totalSlots: newTotal });
         await floorService.assignVehicleTypes(floor!._id, selectedVehicleTypes);
 
-        // Create new slots for filled groups
+        // Update existing slots if prefix changed, and create new slots for filled groups
         for (const group of filledGroups) {
-          await slotService.createBulk({
-            facilityId,
-            floorId: floor!._id,
-            vehicleType: group.vehicleTypeId,
-            prefix: group.prefix.toUpperCase(),
-            startNumber: Number(group.startNumber) || 1,
-            count: Number(group.count),
-          });
+          const newPrefix = group.prefix.toUpperCase();
+          const oldPrefix = group.originalPrefix || '';
+          
+          if (oldPrefix && oldPrefix !== newPrefix && existingSlotsMap[group.vehicleTypeId]) {
+            const slotsToUpdate = existingSlotsMap[group.vehicleTypeId].slots;
+            for (const slot of slotsToUpdate) {
+              if (slot.code.startsWith(oldPrefix)) {
+                const newCode = slot.code.replace(oldPrefix, newPrefix);
+                await slotService.update(slot._id, { code: newCode });
+              }
+            }
+          }
+
+          if (Number(group.count) > 0) {
+            await slotService.createBulk({
+              facilityId,
+              floorId: floor!._id,
+              vehicleType: group.vehicleTypeId,
+              prefix: newPrefix,
+              startNumber: Number(group.startNumber) || 1,
+              count: Number(group.count),
+            });
+          }
         }
 
         const msg = computedTotalSlots > 0
@@ -580,6 +606,7 @@ export function FloorFormModal({
 
                       <div className="space-y-3">
                         {slotGroups.map((group, index) => {
+                          if (group.isSkipped) return null;
                           const Icon =
                             group.vehicleTypeIcon && ICON_MAP[group.vehicleTypeIcon]
                               ? ICON_MAP[group.vehicleTypeIcon]
@@ -590,14 +617,26 @@ export function FloorFormModal({
                               key={group.vehicleTypeId}
                               className="p-3.5 bg-gray-50 border border-gray-200 rounded-xl space-y-3"
                             >
-                              {/* Vehicle type header (fixed, not selectable) */}
-                              <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-lg bg-[#9FE870]/20 flex items-center justify-center shrink-0">
-                                  <Icon size={15} className="text-[#062F28]" />
+                              {/* Vehicle type header */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-7 h-7 rounded-lg bg-[#9FE870]/20 flex items-center justify-center shrink-0">
+                                    <Icon size={15} className="text-[#062F28]" />
+                                  </div>
+                                  <span className="text-sm font-bold text-[#062F28]">
+                                    {group.vehicleTypeName}
+                                  </span>
                                 </div>
-                                <span className="text-sm font-bold text-[#062F28]">
-                                  {group.vehicleTypeName}
-                                </span>
+                                {isEdit && (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateSlotGroup(index, { isSkipped: true, count: '', prefix: group.originalPrefix || group.prefix })}
+                                    title="Bỏ qua loại xe này"
+                                    className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                )}
                               </div>
 
                               {/* Existing slots info (edit mode) */}
