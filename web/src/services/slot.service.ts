@@ -20,6 +20,7 @@ export interface ParkingSessionPopulated {
   staffInId: { _id: string; name: string; email: string } | string;
   staffOutId: { _id: string; name: string; email: string } | string | null;
   pricingPlanId: { _id: string; name: string } | string;
+  checkInImage?: string;
 }
 
 export interface ParkingSlot {

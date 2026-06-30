@@ -131,11 +131,14 @@ export function FloorDetailModal({
                   <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-2">
                     Các loại xe cho phép
                   </p>
-                  {vehicleTypes.length > 0 ? (
+                  {(floor.allowedVehicleTypes?.length || 0) > 0 ? (
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {floor.supportedVehicles.map((v) => {
-                          const IconComp = ICON_MAP[v.name] || Car;
-                          const idx = Math.max(0, vehicleTypes.findIndex(vt => vt._id === v._id));
+                        {(floor.allowedVehicleTypes || []).map((vId: any) => {
+                          const id = typeof vId === 'string' ? vId : vId._id;
+                          const v = typeof vId === 'string' ? vehicleTypes.find(vt => vt._id === id) : vId;
+                          if (!v) return null;
+                          const IconComp = v.icon && ICON_MAP[v.icon] ? ICON_MAP[v.icon] : Car;
+                          const idx = Math.max(0, vehicleTypes.findIndex(vt => vt._id === id));
                           const colors = [
                             { bg: '#F3F4F6', text: '#4B5563' },
                             { bg: '#EAF5E4', text: '#062F28' },
@@ -145,7 +148,7 @@ export function FloorDetailModal({
                           const color = colors[Math.min(idx, colors.length - 1)];
                           return (
                           <span
-                            key={v._id}
+                            key={id}
                             className="px-2.5 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm"
                             style={{ background: color.bg, color: color.text }}
                           >

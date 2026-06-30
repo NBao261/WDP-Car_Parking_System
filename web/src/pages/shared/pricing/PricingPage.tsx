@@ -536,11 +536,12 @@ export default function PricingPage() {
                 .filter(Boolean) as VehicleType[];
             }
 
-            return (
+              return (
               <PricingFormModal
                 plan={editingPlan}
                 facilities={facilities}
                 vehicleTypes={allowedVehicleTypes}
+                existingPlans={plans}
                 onClose={() => setModalOpen(false)}
                 onSuccess={fetchAll}
                 selectedFacilityId={selectedFacility?._id}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -322,6 +323,7 @@ export default function VehiclesPage() {
   };
 
   return (
+    <>
     <motion.div
       className="space-y-6 pb-12"
       initial="hidden"
@@ -633,48 +635,54 @@ export default function VehiclesPage() {
         allVehicles={vehicles}
       />
 
-      <AnimatePresence>
-        {deleteTarget && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setDeleteTarget(undefined)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl p-6"
-            >
-              <h2 className="text-lg font-bold text-[#060606] mb-2">Xác Nhận Xóa</h2>
-              <p className="text-sm text-gray-600 mb-6">
-                Bạn có chắc chắn muốn xóa loại xe <strong>"{deleteTarget.name}"</strong>? Hành động
-                này không thể hoàn tác.
-              </p>
-
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setDeleteTarget(undefined)}
-                  disabled={isDeleting}
-                  className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-                >
-                  Hủy
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  disabled={isDeleting}
-                  className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isDeleting && <Loader2 size={14} className="animate-spin" />} Xóa
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </motion.div>
+
+      {createPortal(
+        <AnimatePresence>
+          {deleteTarget && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setDeleteTarget(undefined)}
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl p-6"
+              >
+                <h2 className="text-lg font-bold text-[#060606] mb-2">Xác Nhận Xóa</h2>
+                <p className="text-sm text-gray-600 mb-6">
+                  Bạn có chắc chắn muốn xóa loại xe <strong>"{deleteTarget.name}"</strong>? Hành động
+                  này không thể hoàn tác.
+                </p>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setDeleteTarget(undefined)}
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDeleting && <Loader2 size={14} className="animate-spin" />} Xóa
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+    </>
   );
 }

@@ -121,18 +121,6 @@ export class PricingService {
   }
 
   static async updatePricingPlan(id: string, data: Partial<IPricingPlan>): Promise<IPricingPlan | null> {
-    // 1. Kiểm tra xem bảng giá đã từng được sử dụng chưa (đã có session trỏ tới)
-    const isUsed = await ParkingSession.exists({ pricingPlanId: id });
-    
-    if (isUsed) {
-      // Nếu đã sử dụng, không cho phép sửa các trường liên quan đến giá tiền
-      const pricingFields = ['rates', 'overnightFee', 'overtimeFeePerHour', 'lostCardFee', 'feeType', 'feeMethod', 'gracePeriodMinutes', 'maxDailyFee'];
-      const fieldsAttemptedToModify = pricingFields.filter(field => data[field as keyof IPricingPlan] !== undefined);
-      
-      if (fieldsAttemptedToModify.length > 0) {
-        throw new AppError(`Không thể sửa các thông tin giá tiền (${fieldsAttemptedToModify.join(', ')}) vì bảng giá này đã từng được áp dụng cho xe. Vui lòng tạo bảng giá mới.`, 400);
-      }
-    }
 
     // Validate time_window coverage khi cập nhật rates
     const effectiveFeeMethod = data.feeMethod || (await PricingPlan.findById(id))?.feeMethod;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   MapPin,
   Building2,
+  Lock,
 } from 'lucide-react';
 import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,6 +29,7 @@ import {
   formSchema,
   type FormValues,
   FEE_TYPE_OPTIONS,
+  FEE_TYPE_LABELS,
   mapToUiType,
   mapToBackendFeeConfig,
 } from './constants';
@@ -37,6 +39,7 @@ interface FormModalProps {
   plan?: PricingPlan;
   facilities: any[];
   vehicleTypes: any[];
+  existingPlans?: PricingPlan[];
   onClose: () => void;
   onSuccess: () => void;
   selectedFacilityId?: string;
@@ -47,6 +50,7 @@ export function PricingFormModal({
   plan,
   facilities,
   vehicleTypes,
+  existingPlans = [],
   onClose,
   onSuccess,
   selectedFacilityId,
@@ -130,6 +134,26 @@ export function PricingFormModal({
     }
   }, [currentUiFeeType, isEdit, setValue]);
 
+  // Determine if feeType should be locked based on existing plans for the selected facility
+  const lockedFeeType = useMemo(() => {
+    if (!currentFacilityId) return null;
+    const facilityPlans = existingPlans.filter((p) => {
+      const pFacId = typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
+      return pFacId === currentFacilityId && p.status === 'active';
+    });
+    if (facilityPlans.length === 0) return null;
+    // All plans in this facility must have the same feeType
+    const firstPlan = facilityPlans[0];
+    return mapToUiType(firstPlan.feeType, firstPlan.feeMethod || '');
+  }, [currentFacilityId, existingPlans]);
+
+  // Auto-set feeType when facility is selected and has existing plans
+  useEffect(() => {
+    if (lockedFeeType && !isEdit) {
+      setValue('uiFeeType', lockedFeeType as any);
+    }
+  }, [lockedFeeType, isEdit, setValue]);
+
   const onSubmit = async (data: FormValues) => {
     try {
       const { uiFeeType, ...restData } = data;
@@ -190,12 +214,11 @@ export function PricingFormModal({
         </div>
 
         {isEdit && (
-          <div className="bg-amber-50 border-b border-amber-100 px-6 py-3 flex gap-3 items-start text-amber-800 shrink-0">
-            <ShieldAlert size={16} className="shrink-0 mt-0.5 text-amber-500" />
+          <div className="bg-blue-50 border-b border-blue-100 px-6 py-3 flex gap-3 items-start text-blue-800 shrink-0">
+            <ShieldAlert size={16} className="shrink-0 mt-0.5 text-blue-500" />
             <p className="text-sm">
               <span className="font-semibold">Lưu ý: </span>
-              Nếu bảng giá này <b>đã được áp dụng</b> cho lượt xe nào, hệ thống sẽ từ chối thay đổi giá tiền.
-              Vui lòng tạo bảng giá mới thay thế.
+              Thay đổi giá sẽ <b>áp dụng cho các xe gửi sau</b>. Các xe đang gửi vẫn tính theo giá tại thời điểm check-in.
             </p>
           </div>
         )}
@@ -391,6 +414,14 @@ export function PricingFormModal({
                 <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
                   Loại hình thu phí <span className="text-red-500">*</span>
                 </label>
+                {lockedFeeType && (
+                  <div className="text-xs text-blue-700 bg-blue-50 px-3 py-2 rounded-xl border border-blue-100 mb-2 flex items-start gap-2">
+                    <Lock size={12} className="shrink-0 mt-0.5" />
+                    <span>
+                      Tòa nhà này đã có bảng giá <b>{FEE_TYPE_LABELS[lockedFeeType]}</b>. Loại hình thu phí phải thống nhất.
+                    </span>
+                  </div>
+                )}
                 <div className="flex flex-col gap-2">
                   {FEE_TYPE_OPTIONS.map(([val, label]) => (
                     <Controller
@@ -399,12 +430,14 @@ export function PricingFormModal({
                       name="uiFeeType"
                       render={({ field }) => (
                         <label
-                          className={`flex items-center gap-2.5 border rounded-xl px-4 py-2.5 cursor-pointer transition-all text-sm font-semibold ${
-                            field.value === val
-                              ? 'border-[#062F28] bg-[#9FE870]/20 text-[#062F28] ring-1 ring-[#062F28]'
+                          className={`flex items-center gap-2.5 border rounded-xl px-4 py-2.5 transition-all text-sm font-semibold ${
+                            lockedFeeType && lockedFeeType !== val
+                              ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed opacity-50'
+                              : field.value === val
+                              ? 'border-[#062F28] bg-[#9FE870]/20 text-[#062F28] ring-1 ring-[#062F28] cursor-pointer'
                               : errors.uiFeeType
-                              ? 'border-red-300 bg-white text-gray-600'
-                              : 'border-gray-200 bg-white text-gray-600 hover:border-[#9FE870]/50 hover:bg-gray-50'
+                              ? 'border-red-300 bg-white text-gray-600 cursor-pointer'
+                              : 'border-gray-200 bg-white text-gray-600 hover:border-[#9FE870]/50 hover:bg-gray-50 cursor-pointer'
                           }`}
                         >
                           <input
@@ -412,9 +445,13 @@ export function PricingFormModal({
                             className="w-4 h-4 accent-[#062F28]"
                             value={val}
                             checked={field.value === val}
+                            disabled={!!lockedFeeType && lockedFeeType !== val}
                             onChange={() => field.onChange(val)}
                           />
                           {label}
+                          {lockedFeeType && lockedFeeType === val && (
+                            <Lock size={12} className="text-blue-500 ml-auto" />
+                          )}
                         </label>
                       )}
                     />
@@ -602,7 +639,7 @@ export function PricingFormModal({
 
                     <div className="mb-3">
                       <label className="text-[10px] font-medium text-gray-400 uppercase block mb-1">
-                        Tên khung <span className="text-red-500">*</span>
+                        Tên <span className="text-red-500">*</span>
                       </label>
                       <input
                         {...register(`rates.${idx}.label`)}

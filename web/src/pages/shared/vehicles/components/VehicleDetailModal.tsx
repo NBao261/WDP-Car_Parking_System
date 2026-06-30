@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Car, Building2, Loader2 } from 'lucide-react';
 import { VehicleType } from '../../../../services/vehicleType.service';
@@ -70,12 +71,11 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle, allVehicles = [] 
     }
   }, [isOpen, vehicle]);
 
-  if (!isOpen || !vehicle) return null;
-
   const groupedFacilities = Object.values(facilitiesWithFloors);
 
-  return (
+  return createPortal(
     <AnimatePresence>
+      {isOpen && vehicle && (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0 }}
@@ -212,6 +212,8 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle, allVehicles = [] 
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 }

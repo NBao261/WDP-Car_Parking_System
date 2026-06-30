@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RefreshCw, Plus, GripHorizontal, Map, Car, ChevronLeft } from 'lucide-react';
+import { RefreshCw, Plus, GripHorizontal, Map, Car, ChevronLeft, Camera } from 'lucide-react';
 import { Floor } from '../../../../services/floor.service';
-import { ParkingSlot, SlotStatus } from '../../../../services/slot.service';
+import { ParkingSlot, SlotStatus, ParkingSessionPopulated } from '../../../../services/slot.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 import { SlotStatusModal } from './SlotStatusModal';
 import { SlotFormModal } from './SlotFormModal';
@@ -39,6 +39,15 @@ export function SlotMappingEditorView({
   const [filterStatus, setFilterStatus] = useState<SlotStatus | 'all'>('all');
   const [statusSlot, setStatusSlot] = useState<ParkingSlot | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [hoveredSlotId, setHoveredSlotId] = useState<string | null>(null);
+
+  // Helper to extract session data from a slot
+  const getSessionData = (slot: ParkingSlot): ParkingSessionPopulated | null => {
+    if (slot.status === 'occupied' && slot.currentSessionId && typeof slot.currentSessionId === 'object') {
+      return slot.currentSessionId as ParkingSessionPopulated;
+    }
+    return null;
+  };
 
   if (!floor) return null;
 
@@ -153,14 +162,6 @@ export function SlotMappingEditorView({
             >
               <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             </button>
-            {floor.status === 'active' && isFacilityActive && (
-              <button
-                onClick={() => setBulkOpen(true)}
-                className="bg-[#062F28] text-white px-5 py-2 rounded-xl font-bold hover:bg-[#062F28]/90 transition-colors flex items-center gap-2 shadow-sm text-sm"
-              >
-                <Plus size={18} className="text-[#9FE870]" /> Tạo Slot
-              </button>
-            )}
           </div>
         </div>
 
@@ -280,10 +281,50 @@ export function SlotMappingEditorView({
                                         : 'Không thể chỉnh sửa slot của tầng đang bị vô hiệu hóa.'
                                     );
                                 }}
-                                className={`w-20 h-12 rounded-lg flex items-center justify-center text-sm font-semibold ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
+                                onMouseEnter={() => setHoveredSlotId(slot._id)}
+                                onMouseLeave={() => setHoveredSlotId(null)}
+                                className={`relative w-20 h-12 rounded-lg flex items-center justify-center text-sm font-semibold ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
                                 title={`${slot.code} – ${group.name} (${slot.status})`}
                               >
                                 {slot.code}
+                                {/* Camera badge for occupied slots with image */}
+                                {(() => {
+                                  const session = getSessionData(slot);
+                                  if (session?.checkInImage) {
+                                    return (
+                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-600 rounded-full flex items-center justify-center shadow-sm">
+                                        <Camera size={9} className="text-white" />
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                                {/* Hover tooltip with vehicle image */}
+                                {hoveredSlotId === slot._id && (() => {
+                                  const session = getSessionData(slot);
+                                  if (!session) return null;
+                                  return (
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
+                                      <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-2 min-w-[160px]">
+                                        {session.checkInImage ? (
+                                          <img
+                                            src={session.checkInImage}
+                                            alt={`Xe ${session.licensePlate}`}
+                                            className="w-36 h-24 object-cover rounded-lg mb-1.5"
+                                          />
+                                        ) : (
+                                          <div className="w-36 h-24 bg-gray-100 rounded-lg mb-1.5 flex items-center justify-center">
+                                            <Car size={24} className="text-gray-300" />
+                                          </div>
+                                        )}
+                                        <p className="text-xs font-bold text-center text-[#062F28]">
+                                          {session.licensePlate || 'Không có biển số'}
+                                        </p>
+                                      </div>
+                                      <div className="w-3 h-3 bg-white border-b border-r border-gray-200 rotate-45 absolute -bottom-1.5 left-1/2 -translate-x-1/2" />
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             );
                           })}
