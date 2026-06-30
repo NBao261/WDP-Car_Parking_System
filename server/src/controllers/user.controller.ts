@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/user.service';
+import { AuditService } from '../services/audit.service';
 import { UserRole } from '../models/user.model';
 
 export class UserController {
@@ -79,8 +80,21 @@ export class UserController {
 
   static async lockUser(req: Request, res: Response, next: NextFunction) {
     try {
+      const adminId = req.user!.userId;
       const id = req.params.id as string;
       const user = await UserService.lockUser(id);
+      
+      if (user) {
+        await AuditService.log({
+          userId: adminId,
+          action: 'LOCK',
+          entity: 'User',
+          entityId: user._id.toString(),
+          changes: { status: 'LOCKED' },
+          ipAddress: req.ip
+        });
+      }
+
       res.status(200).json({ success: true, data: user });
     } catch (error) {
       next(error);
@@ -89,8 +103,21 @@ export class UserController {
 
   static async unlockUser(req: Request, res: Response, next: NextFunction) {
     try {
+      const adminId = req.user!.userId;
       const id = req.params.id as string;
       const user = await UserService.unlockUser(id);
+      
+      if (user) {
+        await AuditService.log({
+          userId: adminId,
+          action: 'UNLOCK',
+          entity: 'User',
+          entityId: user._id.toString(),
+          changes: { status: 'ACTIVE' },
+          ipAddress: req.ip
+        });
+      }
+
       res.status(200).json({ success: true, data: user });
     } catch (error) {
       next(error);
@@ -99,8 +126,19 @@ export class UserController {
 
   static async softDeleteUser(req: Request, res: Response, next: NextFunction) {
     try {
+      const adminId = req.user!.userId;
       const id = req.params.id as string;
       await UserService.softDeleteUser(id);
+      
+      await AuditService.log({
+        userId: adminId,
+        action: 'DELETE',
+        entity: 'User',
+        entityId: id,
+        changes: { deleted: true },
+        ipAddress: req.ip
+      });
+
       res.status(200).json({ success: true, message: 'User deleted successfully' });
     } catch (error) {
       next(error);

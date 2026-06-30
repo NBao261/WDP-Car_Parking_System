@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ConfigService } from '../services/config.service';
+import { AuditService } from '../services/audit.service';
 
 export class ConfigController {
   static async getAllConfigs(req: Request, res: Response, next: NextFunction) {
@@ -28,6 +29,18 @@ export class ConfigController {
       const userId = req.user!.userId;
       
       const config = await ConfigService.updateConfig(key, value, userId);
+      
+      if (config) {
+        await AuditService.log({
+          userId,
+          action: 'UPDATE',
+          entity: 'SystemConfig',
+          entityId: config._id.toString(),
+          changes: { key, newValue: value },
+          ipAddress: req.ip
+        });
+      }
+
       res.status(200).json({ success: true, data: config });
     } catch (error) {
       next(error);
