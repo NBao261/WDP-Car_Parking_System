@@ -154,7 +154,7 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
                 type={isNumber ? 'number' : isSecret && !showPassword ? 'password' : 'text'}
                 value={editValue}
                 onChange={(e) => handleChange(e.target.value)}
-                className={`w-44 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9FE870] transition-all ${isDirty ? 'border-[#9FE870] bg-[#9FE870]/5' : 'border-gray-200 bg-gray-50'
+                className={`w-64 md:w-80 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9FE870] transition-all ${isDirty ? 'border-[#9FE870] bg-[#9FE870]/5' : 'border-gray-200 bg-gray-50'
                   }`}
               />
               {isSecret && (
@@ -225,7 +225,7 @@ export default function ConfigPage() {
 
   return (
     <motion.div
-      className="space-y-6 max-w-4xl mx-auto pb-12"
+      className="w-full max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 pb-12 space-y-6"
       initial="hidden"
       animate="visible"
       variants={containerVariants}

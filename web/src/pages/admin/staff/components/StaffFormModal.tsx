@@ -19,7 +19,7 @@ import { UserRoleStep } from './steps/UserRoleStep';
 import { UserPermissionsStep } from './steps/UserPermissionsStep';
 import { UserAssignFacilitiesStep } from './steps/UserAssignFacilitiesStep';
 
-interface UserFormModalProps {
+interface StaffFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   user?: UserType;
@@ -28,7 +28,7 @@ interface UserFormModalProps {
 
 const STEP_ICONS = { 1: User, 2: Shield, 3: Key, 4: Building2 } as const;
 
-export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModalProps) {
+export function StaffFormModal({ isOpen, onClose, user, onSuccess }: StaffFormModalProps) {
   const {
     isEdit,
     currentStep,

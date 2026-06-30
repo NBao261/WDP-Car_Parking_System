@@ -7,7 +7,7 @@ const PAGE_LIMIT = 10;
 /**
  * Manages data fetching, filtering, and pagination state for the Users list page.
  */
-export function useUserList() {
+export function useCustomerList() {
   const [users, setUsers] = useState<UserType[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta>({
     total: 0,
@@ -24,7 +24,11 @@ export function useUserList() {
     setIsLoading(true);
     try {
       const params: any = { page: currentPage, limit: PAGE_LIMIT };
-      if (roleFilter !== 'ALL') params.role = roleFilter;
+      params.role = 'driver'; // Chỉ lấy khách hàng
+      
+      if (roleFilter !== 'ALL') {
+        params.status = roleFilter; // Dùng roleFilter như statusFilter tạm thời
+      }
       const response = await userService.getAllUsers(params);
       setUsers(response.data);
       setPagination(response.pagination);

@@ -5,6 +5,7 @@ import { X, Loader2, Building2, Layers, ChevronDown } from 'lucide-react';
 import {
   vehicleTypeService,
   VehicleType,
+
   SlotSize,
   CreateVehicleTypePayload,
   UpdateVehicleTypePayload,
@@ -12,6 +13,7 @@ import {
 import { facilityService, Facility } from '../../../../services/facility.service';
 import { floorService, Floor } from '../../../../services/floor.service';
 import { ICON_OPTIONS } from './constants';
+import * as Dialog from '@radix-ui/react-dialog';
 
 interface ModalProps {
   isOpen: boolean;
@@ -105,39 +107,37 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
     }
   };
 
-  const selectedFacilityIds = useMemo(() => {
-    const facIds = new Set<string>();
-    form.floors?.forEach((floorId) => {
-      const fl = floorsList.find((f) => f._id === floorId);
-      if (fl) {
-        const facId =
-          typeof fl.facilityId === 'object' ? (fl.facilityId as any)._id : fl.facilityId;
-        if (facId) facIds.add(facId);
+  const toggleFloor = (floorId: string) => {
+    setForm((f) => {
+      const floors = f.floors || [];
+      if (floors.includes(floorId)) {
+        return { ...f, floors: floors.filter((id) => id !== floorId) };
       }
+      return { ...f, floors: [...floors, floorId] };
     });
-    return Array.from(facIds);
-  }, [form.floors, floorsList]);
+  };
 
-  const toggleFacility = (facId: string) => {
-    const facilityFloors = floorsList.filter((fl) => {
-      const flFacId =
-        typeof fl.facilityId === 'object' ? (fl.facilityId as any)._id : fl.facilityId;
-      return flFacId === facId;
+  const toggleAllFloorsInFacility = (facId: string) => {
+    const facilityFloorIds = floorsList
+      .filter((fl) => {
+        const flFacId = typeof fl.facilityId === 'object' ? (fl.facilityId as any)._id : fl.facilityId;
+        return flFacId === facId;
+      })
+      .map((fl) => fl._id);
+    
+    if (facilityFloorIds.length === 0) return;
+
+    const allSelected = facilityFloorIds.every((id) => (form.floors || []).includes(id));
+
+    setForm((f) => {
+      let currentFloors = f.floors || [];
+      if (allSelected) {
+        currentFloors = currentFloors.filter((id) => !facilityFloorIds.includes(id));
+      } else {
+        currentFloors = Array.from(new Set([...currentFloors, ...facilityFloorIds]));
+      }
+      return { ...f, floors: currentFloors };
     });
-    const floorIds = facilityFloors.map((fl) => fl._id);
-    const isCurrentlySelected = selectedFacilityIds.includes(facId);
-
-    if (isCurrentlySelected) {
-      setForm((f) => ({
-        ...f,
-        floors: (f.floors || []).filter((id) => !floorIds.includes(id)),
-      }));
-    } else {
-      setForm((f) => ({
-        ...f,
-        floors: [...(f.floors || []), ...floorIds],
-      }));
-    }
   };
 
   const validate = (): boolean => {
@@ -157,6 +157,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
       if (isEdit && vehicle) {
         const payload: UpdateVehicleTypePayload = {
           name: form.name,
+          code: form.code,
           slotSize: 'medium' as SlotSize,
           description: form.description,
           icon: form.icon,
@@ -197,25 +198,27 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
   const inputOk = 'border-gray-200 focus:ring-[#d7ee46]';
   const inputErr = 'border-red-400 focus:ring-red-300 bg-red-50/30';
 
-  if (!isOpen) return null;
-
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
-        >
+    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <AnimatePresence>
+        {isOpen && (
+          <Dialog.Portal forceMount>
+            <Dialog.Overlay asChild>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+              />
+            </Dialog.Overlay>
+            <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-4 outline-none pointer-events-none">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] pointer-events-auto"
+              >
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div>
@@ -350,34 +353,70 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                   {facilities.length === 0 ? (
                     <p className="text-sm text-gray-400 italic">Không có tòa nhà khả dụng</p>
                   ) : (
-                    <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto custom-scrollbar p-1">
+                    <div className="flex flex-col gap-3 max-h-[350px] overflow-y-auto custom-scrollbar p-1">
                       {facilities.map((fac) => {
-                        const isSelected = selectedFacilityIds.includes(fac._id);
+                        const facilityFloors = floorsList.filter((fl) => {
+                          const flFacId = typeof fl.facilityId === 'object' ? (fl.facilityId as any)._id : fl.facilityId;
+                          return flFacId === fac._id;
+                        });
+                        
+                        const hasFloors = facilityFloors.length > 0;
+                        const allSelected = hasFloors && facilityFloors.every(fl => (form.floors || []).includes(fl._id));
+                        const someSelected = hasFloors && facilityFloors.some(fl => (form.floors || []).includes(fl._id));
+                        
                         return (
-                          <div
-                            key={fac._id}
-                            onClick={() => toggleFacility(fac._id)}
-                            className={`flex items-start gap-3 px-3 py-2.5 border rounded-xl cursor-pointer transition-all select-none ${isSelected
-                              ? 'border-[#9FE870] bg-[#9FE870]/10 text-[#062F28] font-bold shadow-sm'
-                              : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                              }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => { }} // handled by parent click
-                              className="w-4 h-4 mt-1 rounded text-[#062F28] border-gray-300 focus:ring-[#9FE870] accent-[#062F28] shrink-0"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <span className="block text-sm font-semibold text-gray-900 whitespace-normal break-words leading-tight">
-                                {fac.name}
-                              </span>
-                              {fac.address && (
-                                <span className="block text-xs text-gray-400 mt-1 whitespace-normal break-words leading-normal">
-                                  {fac.address}
+                          <div key={fac._id} className={`border rounded-xl p-3 transition-all ${someSelected ? 'border-[#9FE870] bg-[#9FE870]/5' : 'border-gray-200 bg-white'}`}>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex-1 pr-2">
+                                <span className="block text-sm font-bold text-gray-900">
+                                  {fac.name}
+                                </span>
+                                {fac.address && (
+                                  <span className="block text-[11px] text-gray-500 mt-0.5 truncate" title={fac.address}>
+                                    {fac.address}
+                                  </span>
+                                )}
+                              </div>
+                              {hasFloors ? (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleAllFloorsInFacility(fac._id)}
+                                  className={`text-xs px-2.5 py-1 rounded-lg transition-colors font-medium whitespace-nowrap ${allSelected ? 'bg-[#9FE870] text-[#062F28]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                >
+                                  {allSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                                </button>
+                              ) : (
+                                <span className="text-[11px] italic text-red-500 font-medium px-2 py-1 bg-red-50 rounded-md whitespace-nowrap">
+                                  Chưa cấu hình tầng
                                 </span>
                               )}
                             </div>
+                            
+                            {hasFloors && (
+                              <div className="flex flex-wrap gap-2 mt-3">
+                                {facilityFloors.map((fl) => {
+                                  const isSelected = (form.floors || []).includes(fl._id);
+                                  return (
+                                    <div
+                                      key={fl._id}
+                                      onClick={() => toggleFloor(fl._id)}
+                                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all select-none ${isSelected
+                                        ? 'border-[#9FE870] bg-[#9FE870]/20 text-[#062F28] font-bold shadow-sm'
+                                        : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => {}}
+                                        className="w-3.5 h-3.5 rounded text-[#062F28] border-gray-300 focus:ring-[#9FE870] accent-[#062F28] shrink-0 pointer-events-none"
+                                      />
+                                      <span className="whitespace-nowrap font-medium text-[13px]">{fl.name}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -419,8 +458,11 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
               </button>
             </div>
           </form>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+          </motion.div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        )}
+      </AnimatePresence>
+    </Dialog.Root>
   );
 }

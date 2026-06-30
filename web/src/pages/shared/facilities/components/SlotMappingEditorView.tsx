@@ -204,6 +204,13 @@ export function SlotMappingEditorView({
                         : slot.vehicleTypeId
                           ? (vtMap[slot.vehicleTypeId] ?? '')
                           : '';
+                    const vtId =
+                      slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object'
+                        ? (slot.vehicleTypeId as any)._id
+                        : slot.vehicleTypeId;
+                    const vt = vehicleTypes.find((v) => v._id === vtId);
+                    const SlotIcon = vt && vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : Car;
+
                     return (
                       <div
                         key={slot._id}
@@ -216,10 +223,17 @@ export function SlotMappingEditorView({
                                 : 'Không thể chỉnh sửa slot của tầng đang bị vô hiệu hóa.'
                             );
                         }}
-                        className={`aspect-square rounded-lg flex items-center justify-center text-xs font-semibold ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
+                        className={`relative aspect-square rounded-lg flex items-center justify-center font-semibold ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
                         title={`${slot.code} – ${vtName} (${slot.status})`}
                       >
-                        {slot.code}
+                        {slot.status === 'occupied' ? (
+                          <div className="flex flex-col items-center justify-center gap-1">
+                            <SlotIcon size={24} className="opacity-90" strokeWidth={1.5} />
+                            <span className="text-[10px] opacity-75 font-bold tracking-tight">{slot.code}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs">{slot.code}</span>
+                        )}
                       </div>
                     );
                   })}

@@ -1,6 +1,7 @@
 import { AlertTriangle, Loader2, X } from "lucide-react";
 import { useGlobalExceptionLogic } from "./useGlobalExceptionLogic";
 import { EXCEPTION_TYPE_LABELS, ExceptionType } from "../../../../services/exception.service";
+import { createPortal } from 'react-dom';
 
 interface GlobalExceptionPanelProps {
   coPlateCam: string;
@@ -13,7 +14,7 @@ interface GlobalExceptionPanelProps {
 export default function GlobalExceptionPanel({ coPlateCam, checkOutImage, currentSession, onClose, onExceptionCreated }: GlobalExceptionPanelProps) {
   const logic = useGlobalExceptionLogic(currentSession, coPlateCam, checkOutImage, onClose, onExceptionCreated);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] overflow-hidden">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity" onClick={onClose} />
       <div className="absolute inset-y-0 right-0 max-w-[420px] w-full bg-white shadow-[-8px_0_32px_rgba(0,0,0,0.12)] border-l border-[#e8e9e8] flex flex-col animate-in slide-in-from-right duration-300 ease-out">
@@ -96,6 +97,7 @@ export default function GlobalExceptionPanel({ coPlateCam, checkOutImage, curren
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
