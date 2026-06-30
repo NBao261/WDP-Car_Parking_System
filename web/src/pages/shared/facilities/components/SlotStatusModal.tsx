@@ -397,22 +397,22 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
       setFetchingNames(true);
       try {
         const facId =
-          typeof slot.facilityId === 'object' ? (slot.facilityId as any)._id : slot.facilityId;
-        const flrId = typeof slot.floorId === 'object' ? (slot.floorId as any)._id : slot.floorId;
+          slot.facilityId && typeof slot.facilityId === 'object' ? (slot.facilityId as any)._id : slot.facilityId;
+        const flrId = slot.floorId && typeof slot.floorId === 'object' ? (slot.floorId as any)._id : slot.floorId;
 
-        if (typeof slot.facilityId === 'object' && (slot.facilityId as any).name) {
+        if (slot.facilityId && typeof slot.facilityId === 'object' && (slot.facilityId as any).name) {
           setFacilityName((slot.facilityId as any).name);
         } else if (facId) {
           const r = await facilityService.getById(facId);
           if (r.success) setFacilityName(r.data.name);
         }
-        if (typeof slot.floorId === 'object' && (slot.floorId as any).name) {
+        if (slot.floorId && typeof slot.floorId === 'object' && (slot.floorId as any).name) {
           setFloorName((slot.floorId as any).name);
         }
         if (flrId) {
           const r = await floorService.getById(flrId);
           if (r.success) {
-            if (!(typeof slot.floorId === 'object' && (slot.floorId as any).name)) {
+            if (!(slot.floorId && typeof slot.floorId === 'object' && (slot.floorId as any).name)) {
               setFloorName(r.data.name);
             }
             const allowedIds = (r.data.allowedVehicleTypes || []).map((item: any) =>
@@ -435,7 +435,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
     if (s) {
       setEditCode(s.code);
       setEditVtId(
-        typeof s.vehicleTypeId === 'object' ? (s.vehicleTypeId as any)._id : s.vehicleTypeId
+        s.vehicleTypeId && typeof s.vehicleTypeId === 'object' ? (s.vehicleTypeId as any)._id : s.vehicleTypeId
       );
       setEditStatus(s.status);
     }
@@ -488,7 +488,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
   const handleSaveEdit = async () => {
     const hasStatusChange = editStatus !== '' && editStatus !== displaySlot.status;
     const currentVtId =
-      typeof displaySlot.vehicleTypeId === 'object'
+      displaySlot.vehicleTypeId && typeof displaySlot.vehicleTypeId === 'object'
         ? (displaySlot.vehicleTypeId as any)._id
         : displaySlot.vehicleTypeId;
     const hasInfoChange =
