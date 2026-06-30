@@ -116,18 +116,16 @@ export default function PricingPage() {
 
   const availableVehicleTypes = useMemo(() => {
     if (!selectedFacility) return vehicleTypes;
-    const facPlanVtIds = new Set<string>();
-    plans.forEach((p) => {
-      const pFacId = p.facilityId && typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
-      if (pFacId === selectedFacility._id) {
-        const vtId = p.vehicleTypeId && typeof p.vehicleTypeId === 'object'
-          ? p.vehicleTypeId._id
-          : p.vehicleTypeId;
-        if (vtId) facPlanVtIds.add(vtId);
-      }
+    // Lấy loại xe từ allowedVehicleTypes của các tầng thuộc tòa nhà
+    const facilityFloors = floors.filter((f) => f.facilityId === selectedFacility._id);
+    const vtIds = new Set<string>();
+    facilityFloors.forEach((fl) => {
+      fl.allowedVehicleTypes?.forEach((vt: any) => {
+        vtIds.add(typeof vt === 'string' ? vt : vt._id);
+      });
     });
-    return vehicleTypes.filter((vt) => facPlanVtIds.has(vt._id));
-  }, [selectedFacility, plans, vehicleTypes]);
+    return vehicleTypes.filter((vt) => vtIds.has(vt._id));
+  }, [selectedFacility, floors, vehicleTypes]);
 
   const displayed = plans.filter((p) => {
     if (filterStatus !== 'all' && p.status !== filterStatus) return false;

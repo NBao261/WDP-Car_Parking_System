@@ -39,6 +39,7 @@ export function SlotMappingEditorView({
   const [filterStatus, setFilterStatus] = useState<SlotStatus | 'all'>('all');
   const [statusSlot, setStatusSlot] = useState<ParkingSlot | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [singleSlotOpen, setSingleSlotOpen] = useState(false);
   const [hoveredSlotId, setHoveredSlotId] = useState<string | null>(null);
 
   // Helper to extract session data from a slot
@@ -133,6 +134,15 @@ export function SlotMappingEditorView({
             </h2>
             <p className="text-sm text-gray-500 mt-0.5">Nhấp vào một slot để thay đổi trạng thái</p>
           </div>
+          <div className="ml-auto flex items-center gap-2">
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${
+              slots.length >= floor.totalSlots
+                ? 'text-red-600 bg-red-50'
+                : 'text-[#062F28] bg-[#9FE870]/30'
+            }`}>
+              {slots.length} / {floor.totalSlots} slot
+            </span>
+          </div>
         </div>
 
         {/* Filters and Actions */}
@@ -155,6 +165,13 @@ export function SlotMappingEditorView({
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setBulkOpen(true)}
+              className="px-3 py-2 bg-[#062F28] text-white hover:bg-[#062F28]/90 rounded-xl transition-colors flex items-center gap-1.5 text-sm font-medium shadow-sm"
+            >
+              <Plus size={16} />
+              Thêm slot
+            </button>
             <button
               onClick={() => onRefreshSlots()}
               title="Làm mới"
@@ -333,6 +350,45 @@ export function SlotMappingEditorView({
                     );
                   })}
                 </div>
+
+                {/* Remaining slots visual */}
+                {floor.totalSlots > slots.length && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                        <Plus size={15} className="text-gray-400" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-400">
+                        Chưa phân bổ
+                      </span>
+                      <span className="text-xs text-gray-400 font-medium">
+                        ({floor.totalSlots - slots.length} slot trống)
+                      </span>
+                      <div className="flex-1 h-px bg-gray-200 ml-2" />
+                    </div>
+                    <div className="flex flex-wrap gap-2.5 pl-9">
+                      {Array.from({ length: floor.totalSlots - slots.length }).map((_, i) => (
+                        <div
+                          key={`empty-${i}`}
+                          onClick={() => {
+                            if (floor.status === 'active' && isFacilityActive)
+                              setSingleSlotOpen(true);
+                            else
+                              toast.error(
+                                !isFacilityActive
+                                  ? 'Không thể thêm slot của tòa nhà đang bị vô hiệu hóa.'
+                                  : 'Không thể thêm slot của tầng đang bị vô hiệu hóa.'
+                              );
+                          }}
+                          className={`w-20 h-12 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-200 text-gray-300 text-xs ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:border-[#9FE870] hover:text-[#9FE870] hover:bg-[#9FE870]/5' : 'cursor-not-allowed opacity-75'} transition-all`}
+                          title="Nhấp để thêm 1 slot"
+                        >
+                          <Plus size={16} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -358,9 +414,30 @@ export function SlotMappingEditorView({
             vehicleTypes={floorVehicleTypes}
             totalSlots={floor.totalSlots}
             currentSlotCount={slots.length}
+            existingSlots={slots.map(s => ({ code: s.code, vehicleTypeId: typeof s.vehicleTypeId === 'object' && s.vehicleTypeId ? s.vehicleTypeId._id : s.vehicleTypeId as string }))}
             onClose={() => setBulkOpen(false)}
             onSuccess={() => {
               setBulkOpen(false);
+              onRefreshSlots(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Single slot modal (from empty slot click) */}
+      <AnimatePresence>
+        {singleSlotOpen && floor && (
+          <SlotFormModal
+            facilityId={(floor as any).facilityId}
+            floorId={floor._id}
+            vehicleTypes={floorVehicleTypes}
+            totalSlots={floor.totalSlots}
+            currentSlotCount={slots.length}
+            singleOnly
+            existingSlots={slots.map(s => ({ code: s.code, vehicleTypeId: typeof s.vehicleTypeId === 'object' && s.vehicleTypeId ? s.vehicleTypeId._id : s.vehicleTypeId as string }))}
+            onClose={() => setSingleSlotOpen(false)}
+            onSuccess={() => {
+              setSingleSlotOpen(false);
               onRefreshSlots(true);
             }}
           />
