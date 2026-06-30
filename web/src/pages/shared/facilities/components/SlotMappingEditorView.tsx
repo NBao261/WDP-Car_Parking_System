@@ -170,7 +170,7 @@ export function SlotMappingEditorView({
               className="px-3 py-2 bg-[#062F28] text-white hover:bg-[#062F28]/90 rounded-xl transition-colors flex items-center gap-1.5 text-sm font-medium shadow-sm"
             >
               <Plus size={16} />
-              Thêm slot
+              Gán loại xe
             </button>
             <button
               onClick={() => onRefreshSlots()}
@@ -188,7 +188,7 @@ export function SlotMappingEditorView({
           <div className="w-full lg:w-44 bg-gray-50 rounded-xl border border-gray-200 shrink-0 relative min-h-[260px]">
             <div className="absolute inset-0 p-4 flex flex-col">
               <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 shrink-0">
-                Loại xe
+                Loại xe cho phép
               </h4>
               <div className="overflow-y-auto space-y-2.5 pr-1 vehicle-scrollbar h-full">
                 <style>{`
@@ -200,19 +200,50 @@ export function SlotMappingEditorView({
                 {floorVehicleTypes.length === 0 ? (
                   <p className="text-xs text-gray-400 italic">Chưa gán loại xe</p>
                 ) : (
-                  floorVehicleTypes.map((vt) => {
-                    const Icon = vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : Car;
+                  (() => {
+                    const hasSlot = (vtId: string) => slots.some((s) => {
+                      const sVtId = typeof s.vehicleTypeId === 'object' ? (s.vehicleTypeId as any)?._id : s.vehicleTypeId;
+                      return sVtId === vtId;
+                    });
+                    
+                    const assignedVTs = floorVehicleTypes.filter(vt => hasSlot(vt._id));
+                    const unassignedVTs = floorVehicleTypes.filter(vt => !hasSlot(vt._id));
+
+                    const renderVtCard = (vt: any) => {
+                      const Icon = vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : Car;
+                      return (
+                        <div
+                          key={vt._id}
+                          className="bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm flex items-center gap-2 text-gray-700 hover:shadow-sm transition-shadow cursor-grab shrink-0"
+                        >
+                          <GripHorizontal size={13} className="opacity-40 shrink-0" />
+                          <Icon size={16} className="text-gray-500 shrink-0" />
+                          <span className="truncate">{vt.name}</span>
+                        </div>
+                      );
+                    };
+
                     return (
-                      <div
-                        key={vt._id}
-                        className="bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm flex items-center gap-2 text-gray-700 hover:shadow-sm transition-shadow cursor-grab shrink-0"
-                      >
-                        <GripHorizontal size={13} className="opacity-40 shrink-0" />
-                        <Icon size={16} className="text-gray-500 shrink-0" />
-                        <span className="truncate">{vt.name}</span>
-                      </div>
+                      <>
+                        {unassignedVTs.length > 0 && (
+                          <div className={assignedVTs.length > 0 ? "mb-4" : ""}>
+                            <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Chưa gán slot</h5>
+                            <div className="space-y-2.5">
+                              {unassignedVTs.map(renderVtCard)}
+                            </div>
+                          </div>
+                        )}
+                        {assignedVTs.length > 0 && (
+                          <div>
+                            <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Đã gán slot</h5>
+                            <div className="space-y-2.5">
+                              {assignedVTs.map(renderVtCard)}
+                            </div>
+                          </div>
+                        )}
+                      </>
                     );
-                  })
+                  })()
                 )}
               </div>
             </div>
@@ -414,7 +445,7 @@ export function SlotMappingEditorView({
             vehicleTypes={floorVehicleTypes}
             totalSlots={floor.totalSlots}
             currentSlotCount={slots.length}
-            existingSlots={slots.map(s => ({ code: s.code, vehicleTypeId: typeof s.vehicleTypeId === 'object' && s.vehicleTypeId ? s.vehicleTypeId._id : s.vehicleTypeId as string }))}
+            existingSlots={slots.map(s => ({ _id: s._id, code: s.code, vehicleTypeId: typeof s.vehicleTypeId === 'object' && s.vehicleTypeId ? s.vehicleTypeId._id : s.vehicleTypeId as string }))}
             onClose={() => setBulkOpen(false)}
             onSuccess={() => {
               setBulkOpen(false);
@@ -434,7 +465,7 @@ export function SlotMappingEditorView({
             totalSlots={floor.totalSlots}
             currentSlotCount={slots.length}
             singleOnly
-            existingSlots={slots.map(s => ({ code: s.code, vehicleTypeId: typeof s.vehicleTypeId === 'object' && s.vehicleTypeId ? s.vehicleTypeId._id : s.vehicleTypeId as string }))}
+            existingSlots={slots.map(s => ({ _id: s._id, code: s.code, vehicleTypeId: typeof s.vehicleTypeId === 'object' && s.vehicleTypeId ? s.vehicleTypeId._id : s.vehicleTypeId as string }))}
             onClose={() => setSingleSlotOpen(false)}
             onSuccess={() => {
               setSingleSlotOpen(false);

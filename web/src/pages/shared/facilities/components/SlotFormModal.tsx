@@ -14,7 +14,7 @@ interface SlotFormModalProps {
   totalSlots?: number;
   currentSlotCount?: number;
   singleOnly?: boolean;
-  existingSlots?: { code: string; vehicleTypeId: string }[];
+  existingSlots?: { _id: string; code: string; vehicleTypeId: string }[];
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -34,6 +34,29 @@ export function SlotFormModal({
   const [loading, setLoading] = useState(false);
   const [vehicleType, setVehicleType] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [originalPrefix, setOriginalPrefix] = useState<string>('');
+
+  useEffect(() => {
+    if (!vehicleType || mode !== 'bulk') {
+      setOriginalPrefix('');
+      return;
+    }
+    const vtSlots = existingSlots.filter(s => s.vehicleTypeId === vehicleType);
+    if (vtSlots.length > 0) {
+      const match = vtSlots[0].code.match(/^([A-Za-z]+)/);
+      if (match) {
+        setPrefix(match[1]);
+        setOriginalPrefix(match[1]);
+        let maxNum = 0;
+        vtSlots.forEach(s => {
+          const numPart = s.code.replace(match[1], '');
+          const num = parseInt(numPart, 10);
+          if (!isNaN(num) && num > maxNum) maxNum = num;
+        });
+        setStartNumber(maxNum + 1);
+      }
+    }
+  }, [vehicleType, mode, existingSlots]);
 
   useEffect(() => {
     if (
@@ -102,11 +125,21 @@ export function SlotFormModal({
       } else {
         const numStart = Number(startNumber);
         const numCount = Number(count);
+        const newPrefix = prefix.toUpperCase();
+
+        if (originalPrefix && originalPrefix !== newPrefix) {
+          const vtSlots = existingSlots.filter(s => s.vehicleTypeId === vehicleType && s.code.startsWith(originalPrefix));
+          for (const slot of vtSlots) {
+            const newCode = slot.code.replace(originalPrefix, newPrefix);
+            await slotService.update(slot._id, { code: newCode });
+          }
+        }
+
         const res = await slotService.createBulk({
           facilityId,
           floorId,
           vehicleType,
-          prefix,
+          prefix: newPrefix,
           startNumber: numStart,
           count: numCount,
         });
@@ -144,9 +177,7 @@ export function SlotFormModal({
 
         <div className="p-6 overflow-y-auto flex-1 flex flex-col justify-between">
           <div className="space-y-4">
-            {/* Left Column: Mode selection & inputs */}
             <div className="space-y-4">
-              {/* Tabs */}
               {!singleOnly && (
               <div className="flex bg-gray-100 p-1 rounded-xl mb-2 mt-2">
                 <button
@@ -170,7 +201,6 @@ export function SlotFormModal({
               </div>
               )}
 
-              {/* Capacity indicator */}
               {totalSlots !== undefined && currentSlotCount !== undefined && (
                 <div className={`flex items-center gap-2 text-sm font-medium ${
                   currentSlotCount >= totalSlots ? 'text-red-600' : (totalSlots - currentSlotCount) <= 5 ? 'text-amber-600' : 'text-[#062F28]'
