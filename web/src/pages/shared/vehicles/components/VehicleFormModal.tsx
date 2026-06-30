@@ -5,6 +5,7 @@ import { X, Loader2, Building2, Layers, ChevronDown } from 'lucide-react';
 import {
   vehicleTypeService,
   VehicleType,
+
   SlotSize,
   CreateVehicleTypePayload,
   UpdateVehicleTypePayload,
@@ -12,6 +13,7 @@ import {
 import { facilityService, Facility } from '../../../../services/facility.service';
 import { floorService, Floor } from '../../../../services/floor.service';
 import { ICON_OPTIONS } from './constants';
+import * as Dialog from '@radix-ui/react-dialog';
 
 interface ModalProps {
   isOpen: boolean;
@@ -196,25 +198,27 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
   const inputOk = 'border-gray-200 focus:ring-[#d7ee46]';
   const inputErr = 'border-red-400 focus:ring-red-300 bg-red-50/30';
 
-  if (!isOpen) return null;
-
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
-        >
+    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <AnimatePresence>
+        {isOpen && (
+          <Dialog.Portal forceMount>
+            <Dialog.Overlay asChild>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+              />
+            </Dialog.Overlay>
+            <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-4 outline-none pointer-events-none">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] pointer-events-auto"
+              >
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div>
@@ -454,8 +458,11 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
               </button>
             </div>
           </form>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+          </motion.div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        )}
+      </AnimatePresence>
+    </Dialog.Root>
   );
 }
