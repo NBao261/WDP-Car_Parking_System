@@ -1,43 +1,56 @@
-import {
-  LayoutDashboard,
-  Users,
-  Map,
-  Wallet,
-  Settings,
-  ScrollText,
-  ArrowRight,
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React from 'react';
 import { useAuthStore } from '../../../store';
+import { motion } from 'framer-motion';
+import { RefreshCw, LayoutDashboard, Calendar } from 'lucide-react';
+import { useDashboard } from './hooks/useDashboard';
+import { DashboardCards } from './components/DashboardCards';
+import { DashboardCharts } from './components/DashboardCharts';
+import { Skeleton } from '../../../components/ui/Skeleton';
 
-const quickLinks = [
-  {
-    path: '/admin/users',
-    label: 'Người dùng & Vai trò',
-    icon: Users,
-    desc: 'Quản lý tài khoản Manager & Staff',
-  },
-  { path: '/admin/facilities', label: 'Cơ sở vật chất', icon: Map, desc: 'Quản lý bãi xe, tầng, slot' },
-  {
-    path: '/admin/billing',
-    label: 'Bảng giá & Doanh thu',
-    icon: Wallet,
-    desc: 'Bảng giá & doanh thu',
-  },
-  { path: '/admin/config', label: 'Cấu hình hệ thống', icon: Settings, desc: 'Cấu hình hệ thống' },
-  { path: '/admin/logs', label: 'Nhật ký hoạt động', icon: ScrollText, desc: 'Nhật ký hoạt động' },
-];
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { type: "spring" as const, stiffness: 300, damping: 24 }
+  }
+};
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
+  const {
+    isLoading,
+    trafficData,
+    revenueData,
+    occupancyData,
+    fetchData,
+  } = useDashboard();
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 space-y-8 pb-12"
+    >
+      {/* Header Section */}
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#062F28]">Tổng quan hệ thống</h1>
-          <p className="text-gray-500 text-sm">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-[#062F28] flex items-center justify-center shadow-lg shadow-[#062F28]/20">
+              <LayoutDashboard className="text-white" size={20} />
+            </div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Tổng quan hệ thống</h1>
+          </div>
+          <p className="text-gray-500 text-sm md:text-base max-w-2xl">
             Xin chào, <span className="font-semibold text-[#062F28]">{user?.name}</span> —{' '}
             {new Date().toLocaleDateString('vi-VN', {
               weekday: 'long',
@@ -47,55 +60,52 @@ export default function DashboardPage() {
             })}
           </p>
         </div>
-      </div>
 
-      {/* Quick nav cards */}
-      <div>
-        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">
-          Chức năng quản trị
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {quickLinks.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-start gap-4 hover:shadow-md hover:border-[#9FE870] transition-all duration-200 group"
-            >
-              <div className="w-12 h-12 rounded-xl bg-gray-50 group-hover:bg-[#9FE870]/20 flex items-center justify-center shrink-0 transition-colors">
-                <item.icon
-                  size={22}
-                  className="text-[#062F28] group-hover:text-[#062F28] transition-colors"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-[#062F28] mb-0.5">{item.label}</p>
-                <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
-              </div>
-              <ArrowRight
-                size={16}
-                className="text-gray-300 group-hover:text-[#062F28] shrink-0 mt-1 transition-colors"
-              />
-            </Link>
-          ))}
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm text-sm flex-1 sm:flex-none">
+            <Calendar size={16} className="text-gray-400 mr-2" />
+            <span className="text-gray-600 font-medium">7 ngày qua</span>
+          </div>
+          
+          <button
+            onClick={fetchData}
+            disabled={isLoading}
+            className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
+          </button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Coming soon banner */}
-      <div className="bg-[#062F28] rounded-2xl p-6 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-            <LayoutDashboard size={24} className="text-[#9FE870]" />
+      {isLoading ? (
+        <motion.div variants={itemVariants} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-32 rounded-2xl" />
+            ))}
           </div>
-          <div>
-            <p className="font-bold">Dashboard tổng quan đang được phát triển</p>
-            <p className="text-white/60 text-sm">Biểu đồ, KPI và báo cáo thời gian thực sẽ sớm ra mắt.</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+             <Skeleton className="h-[400px] rounded-2xl" />
+             <Skeleton className="h-[400px] rounded-2xl" />
           </div>
-        </div>
-        <span className="inline-flex items-center gap-2 bg-[#9FE870]/20 text-[#9FE870] text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border border-[#9FE870]/30 shrink-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#9FE870] animate-pulse" />
-          Sắp ra mắt
-        </span>
-      </div>
-    </div>
+        </motion.div>
+      ) : (
+        <>
+          <motion.div variants={itemVariants}>
+            <DashboardCards 
+              trafficData={trafficData} 
+              revenueData={revenueData} 
+              occupancyData={occupancyData} 
+            />
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <DashboardCharts 
+              trafficData={trafficData}
+              revenueData={revenueData}
+            />
+          </motion.div>
+        </>
+      )}
+    </motion.div>
   );
 }
