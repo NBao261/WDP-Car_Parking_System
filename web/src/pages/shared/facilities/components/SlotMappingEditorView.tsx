@@ -8,7 +8,6 @@ import { VehicleType } from '../../../../services/vehicleType.service';
 import { SlotStatusModal } from './SlotStatusModal';
 import { SlotFormModal } from './SlotFormModal';
 import { ICON_MAP } from '../../../shared/vehicles/components/constants';
-import { Car } from 'lucide-react';
 
 interface SlotMappingEditorViewProps {
   floor: Floor | null;
