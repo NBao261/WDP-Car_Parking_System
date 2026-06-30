@@ -17,22 +17,23 @@ import { RoleIcon } from '../../../../components/ui/RoleIcon';
 import { StatusBadge } from '../../../../components/ui/StatusBadge';
 import { useUserActions } from '../hooks/useUserActions';
 
-interface UserTableProps {
+interface StaffTableProps {
   users: UserType[];
   isLoading: boolean;
   onEdit: (user: UserType) => void;
   onRefresh: () => void;
   onAssignFacility: (user: UserType) => void;
+  indexOffset?: number;
 }
 
-export function UserTable({
+export function StaffTable({
   users,
   isLoading,
   onEdit,
   onRefresh,
   onAssignFacility,
   indexOffset = 0,
-}: UserTableProps) {
+}: StaffTableProps) {
   const {
     confirmState,
     isActionLoading,
@@ -92,7 +93,7 @@ export function UserTable({
                         </div>
                         <div>
                           <Link
-                            to={`/admin/users/${user._id}`}
+                            to={`/admin/staff/${user._id}`}
                             className="font-semibold text-[#062F28] hover:text-[#062F28]/80 hover:underline transition-colors"
                           >
                             {user.name}

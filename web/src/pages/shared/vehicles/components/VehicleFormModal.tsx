@@ -6,6 +6,7 @@ import { X, Loader2, Building2, Layers, ChevronDown } from 'lucide-react';
 import {
   vehicleTypeService,
   VehicleType,
+
   SlotSize,
   CreateVehicleTypePayload,
   UpdateVehicleTypePayload,
@@ -13,6 +14,7 @@ import {
 import { facilityService, Facility } from '../../../../services/facility.service';
 import { floorService, Floor } from '../../../../services/floor.service';
 import { ICON_OPTIONS } from './constants';
+import * as Dialog from '@radix-ui/react-dialog';
 
 interface ModalProps {
   isOpen: boolean;
@@ -111,6 +113,39 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
       })
     : [];
 
+  const toggleFloor = (floorId: string) => {
+    setForm((f) => {
+      const floors = f.floors || [];
+      if (floors.includes(floorId)) {
+        return { ...f, floors: floors.filter((id) => id !== floorId) };
+      }
+      return { ...f, floors: [...floors, floorId] };
+    });
+  };
+
+  const toggleAllFloorsInFacility = (facId: string) => {
+    const facilityFloorIds = floorsList
+      .filter((fl) => {
+        const flFacId = typeof fl.facilityId === 'object' ? (fl.facilityId as any)._id : fl.facilityId;
+        return flFacId === facId;
+      })
+      .map((fl) => fl._id);
+    
+    if (facilityFloorIds.length === 0) return;
+
+    const allSelected = facilityFloorIds.every((id) => (form.floors || []).includes(id));
+
+    setForm((f) => {
+      let currentFloors = f.floors || [];
+      if (allSelected) {
+        currentFloors = currentFloors.filter((id) => !facilityFloorIds.includes(id));
+      } else {
+        currentFloors = Array.from(new Set([...currentFloors, ...facilityFloorIds]));
+      }
+      return { ...f, floors: currentFloors };
+    });
+  };
+
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
     if (!form.name.trim()) newErrors.name = 'Vui lòng nhập tên loại xe';
@@ -130,6 +165,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
         const payload: UpdateVehicleTypePayload = {
           name: form.name,
           slotSize: form.slotSize,
+          code: form.code,
           description: form.description,
           icon: form.icon,
           requiresPlate: form.requiresPlate,
@@ -181,7 +217,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
@@ -515,7 +551,159 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                       );
                     })}
                   </div>
-                ) : null}
+                  {errors.icon && (
+                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                      <span>⚠</span> {errors.icon}
+                    </p>
+                  )}
+                </div>
+
+                {/* Name */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Tên Loại Xe <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setName(e.target.value)}
+                    className={`${inputBase} ${errors.name ? inputErr : inputOk}`}
+                    placeholder="Xe máy, Ô tô, Xe đạp"
+                  />
+                  {errors.name && (
+                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                      <span>⚠</span> {errors.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* Code */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Mã Loại Xe <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.code}
+                    onChange={(e) => setCode(e.target.value)}
+                    className={`${inputBase} ${errors.code ? inputErr : inputOk} uppercase`}
+                    placeholder="MOTORBIKE, CAR, BICYCLE"
+                  />
+                  {errors.code && (
+                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                      <span>⚠</span> {errors.code}
+                    </p>
+                  )}
+                </div>
+
+                {/* Requires Plate Toggle */}
+                <div>
+                  <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700">Yêu cầu Biển số</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {form.requiresPlate !== false
+                          ? 'Loại xe này cần quét biển số khi vào/ra'
+                          : 'Xe không cần biển số (VD: xe đạp) — dùng ảnh đối chiếu'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, requiresPlate: !f.requiresPlate }))}
+                      className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${form.requiresPlate !== false ? 'bg-[#9FE870]' : 'bg-gray-300'
+                        }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${form.requiresPlate !== false ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-4">
+                {/* Facilities & Floors */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Tòa Nhà Áp Dụng
+                  </label>
+
+                  {facilities.length === 0 ? (
+                    <p className="text-sm text-gray-400 italic">Không có tòa nhà khả dụng</p>
+                  ) : (
+                    <div className="flex flex-col gap-3 max-h-[350px] overflow-y-auto custom-scrollbar p-1">
+                      {facilities.map((fac) => {
+                        const facilityFloors = floorsList.filter((fl) => {
+                          const flFacId = typeof fl.facilityId === 'object' ? (fl.facilityId as any)._id : fl.facilityId;
+                          return flFacId === fac._id;
+                        });
+                        
+                        const hasFloors = facilityFloors.length > 0;
+                        const allSelected = hasFloors && facilityFloors.every(fl => (form.floors || []).includes(fl._id));
+                        const someSelected = hasFloors && facilityFloors.some(fl => (form.floors || []).includes(fl._id));
+                        
+                        return (
+                          <div key={fac._id} className={`border rounded-xl p-3 transition-all ${someSelected ? 'border-[#9FE870] bg-[#9FE870]/5' : 'border-gray-200 bg-white'}`}>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex-1 pr-2">
+                                <span className="block text-sm font-bold text-gray-900">
+                                  {fac.name}
+                                </span>
+                                {fac.address && (
+                                  <span className="block text-[11px] text-gray-500 mt-0.5 truncate" title={fac.address}>
+                                    {fac.address}
+                                  </span>
+                                )}
+                              </div>
+                              {hasFloors ? (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleAllFloorsInFacility(fac._id)}
+                                  className={`text-xs px-2.5 py-1 rounded-lg transition-colors font-medium whitespace-nowrap ${allSelected ? 'bg-[#9FE870] text-[#062F28]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                >
+                                  {allSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                                </button>
+                              ) : (
+                                <span className="text-[11px] italic text-red-500 font-medium px-2 py-1 bg-red-50 rounded-md whitespace-nowrap">
+                                  Chưa cấu hình tầng
+                                </span>
+                              )}
+                            </div>
+                            
+                            {hasFloors && (
+                              <div className="flex flex-wrap gap-2 mt-3">
+                                {facilityFloors.map((fl) => {
+                                  const isSelected = (form.floors || []).includes(fl._id);
+                                  return (
+                                    <div
+                                      key={fl._id}
+                                      onClick={() => toggleFloor(fl._id)}
+                                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all select-none ${isSelected
+                                        ? 'border-[#9FE870] bg-[#9FE870]/20 text-[#062F28] font-bold shadow-sm'
+                                        : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => {}}
+                                        className="w-3.5 h-3.5 rounded text-[#062F28] border-gray-300 focus:ring-[#9FE870] accent-[#062F28] shrink-0 pointer-events-none"
+                                      />
+                                      <span className="whitespace-nowrap font-medium text-[13px]">{fl.name}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
 

@@ -15,6 +15,7 @@ import {
   X,
   ArrowUpDown,
 } from 'lucide-react';
+import * as Dialog from '@radix-ui/react-dialog';
 import { vehicleTypeService, VehicleType, SlotSize } from '../../../services/vehicleType.service';
 import { floorService, Floor } from '../../../services/floor.service';
 import { facilityService, Facility } from '../../../services/facility.service';
@@ -634,6 +635,8 @@ export default function VehiclesPage() {
         vehicle={selected}
         allVehicles={vehicles}
       />
+
+
 
     </motion.div>
 

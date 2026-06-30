@@ -397,22 +397,22 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
       setFetchingNames(true);
       try {
         const facId =
-          typeof slot.facilityId === 'object' ? (slot.facilityId as any)._id : slot.facilityId;
-        const flrId = typeof slot.floorId === 'object' ? (slot.floorId as any)._id : slot.floorId;
+          slot.facilityId && typeof slot.facilityId === 'object' ? (slot.facilityId as any)._id : slot.facilityId;
+        const flrId = slot.floorId && typeof slot.floorId === 'object' ? (slot.floorId as any)._id : slot.floorId;
 
-        if (typeof slot.facilityId === 'object' && (slot.facilityId as any).name) {
+        if (slot.facilityId && typeof slot.facilityId === 'object' && (slot.facilityId as any).name) {
           setFacilityName((slot.facilityId as any).name);
         } else if (facId) {
           const r = await facilityService.getById(facId);
           if (r.success) setFacilityName(r.data.name);
         }
-        if (typeof slot.floorId === 'object' && (slot.floorId as any).name) {
+        if (slot.floorId && typeof slot.floorId === 'object' && (slot.floorId as any).name) {
           setFloorName((slot.floorId as any).name);
         }
         if (flrId) {
           const r = await floorService.getById(flrId);
           if (r.success) {
-            if (!(typeof slot.floorId === 'object' && (slot.floorId as any).name)) {
+            if (!(slot.floorId && typeof slot.floorId === 'object' && (slot.floorId as any).name)) {
               setFloorName(r.data.name);
             }
             const allowedIds = (r.data.allowedVehicleTypes || []).map((item: any) =>
@@ -435,7 +435,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
     if (s) {
       setEditCode(s.code);
       setEditVtId(
-        typeof s.vehicleTypeId === 'object' ? (s.vehicleTypeId as any)._id : s.vehicleTypeId
+        s.vehicleTypeId && typeof s.vehicleTypeId === 'object' ? (s.vehicleTypeId as any)._id : s.vehicleTypeId
       );
       setEditStatus(s.status);
     }
@@ -488,7 +488,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
   const handleSaveEdit = async () => {
     const hasStatusChange = editStatus !== '' && editStatus !== displaySlot.status;
     const currentVtId =
-      typeof displaySlot.vehicleTypeId === 'object'
+      displaySlot.vehicleTypeId && typeof displaySlot.vehicleTypeId === 'object'
         ? (displaySlot.vehicleTypeId as any)._id
         : displaySlot.vehicleTypeId;
     const hasInfoChange =
@@ -657,10 +657,37 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
 
                       {/* Row 2: Box & Floor */}
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center min-w-[72px] h-[72px] px-3 bg-[#9FE870]/15 border border-[#9FE870]/30 rounded-[18px] shadow-sm">
-                          <h2 className="text-[28px] font-black text-[#062F28] tracking-tight leading-none">
-                            {displaySlot.code}
-                          </h2>
+                        <div
+                          className="flex flex-col items-center justify-center min-w-[72px] h-[72px] px-3 rounded-[18px] shadow-sm relative overflow-hidden transition-colors"
+                          style={{
+                            background: curCfg.bg,
+                            borderColor: curCfg.border,
+                            borderWidth: 1,
+                          }}
+                        >
+                          {displaySlot.status === 'occupied' ? (
+                            <>
+                              <VtIcon
+                                size={28}
+                                style={{ color: curCfg.color }}
+                                className="opacity-90 mb-0.5"
+                                strokeWidth={1.5}
+                              />
+                              <span
+                                className="text-[11px] font-bold opacity-75"
+                                style={{ color: curCfg.color }}
+                              >
+                                {displaySlot.code}
+                              </span>
+                            </>
+                          ) : (
+                            <h2
+                              className="text-[28px] font-black tracking-tight leading-none"
+                              style={{ color: curCfg.color }}
+                            >
+                              {displaySlot.code}
+                            </h2>
+                          )}
                         </div>
 
                         <div>

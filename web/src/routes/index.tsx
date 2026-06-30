@@ -15,9 +15,11 @@ import DashboardPage from '../pages/admin/dashboard/DashboardPage';
 
 const BillingPage = lazy(() => import('../pages/admin/billing/BillingPage'));
 const ConfigPage = lazy(() => import('../pages/admin/config/ConfigPage'));
-const UsersPage = lazy(() => import('../pages/admin/users/UsersPage'));
-const UserDetailPage = lazy(() => import('../pages/admin/users/UserDetailPage'));
+const StaffPage = lazy(() => import('../pages/admin/staff/StaffPage'));
+const StaffDetailPage = lazy(() => import('../pages/admin/staff/StaffDetailPage'));
+const CustomersPage = lazy(() => import('../pages/admin/customers/CustomersPage'));
 const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
+const LogsPage = lazy(() => import('../pages/admin/logs/LogsPage'));
 
 // ── Manager / Staff / Driver Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
@@ -131,21 +133,36 @@ export const router = createBrowserRouter([
                   </S>
                 ),
               },
-              // { path: 'logs', element: <S><LogsPage /></S> },
-              // FR-18: User Management
               {
-                path: 'users',
+                path: 'logs',
                 element: (
                   <S>
-                    <UsersPage />
+                    <LogsPage />
+                  </S>
+                ),
+              },
+              // FR-18: User Management
+              {
+                path: 'staff',
+                element: (
+                  <S>
+                    <StaffPage />
                   </S>
                 ),
               },
               {
-                path: 'users/:id',
+                path: 'staff/:id',
                 element: (
                   <S>
-                    <UserDetailPage />
+                    <StaffDetailPage />
+                  </S>
+                ),
+              },
+              {
+                path: 'customers',
+                element: (
+                  <S>
+                    <CustomersPage />
                   </S>
                 ),
               },

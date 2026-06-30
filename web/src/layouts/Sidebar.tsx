@@ -12,6 +12,7 @@ import {
   LogOut,
   ScanLine,
   Shield,
+  Briefcase,
   type LucideIcon,
   AlertTriangle,
 } from 'lucide-react';
@@ -33,7 +34,8 @@ const NAV_ITEMS: NavItem[] = [
 
   { path: '/admin/pricing', label: 'Bảng Giá', icon: Wallet, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
   { path: '/admin/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
-  { path: '/admin/users', label: 'Người Dùng', icon: Users, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
+  { path: '/admin/staff', label: 'Nhân Sự', icon: Briefcase, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
+  { path: '/admin/customers', label: 'Khách Hàng', icon: Users, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
   { path: '/admin/roles', label: 'Phân Quyền', icon: Shield, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
   { path: '/admin/config', label: 'Cấu Hình Hệ Thống', icon: Settings, roles: [UserRole.ADMIN], category: 'TÙY CHỈNH' },
   { path: '/admin/logs', label: 'Lịch Sử Hoạt Động', icon: ScrollText, roles: [UserRole.ADMIN], category: 'TÙY CHỈNH' },

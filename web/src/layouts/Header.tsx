@@ -57,7 +57,11 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                 const isLast = index === pathnames.length - 1;
                 const to = `/${pathnames.slice(0, index + 1).join('/')}`;
                 // Capitalize and format value
-                const title = value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, ' ');
+                let title = value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, ' ');
+                // If the path segment is a MongoDB ObjectId, show "Chi tiết" instead
+                if (/^[a-fA-F0-9]{24}$/.test(value)) {
+                  title = 'Chi tiết';
+                }
 
                 return (
                   <React.Fragment key={to}>
