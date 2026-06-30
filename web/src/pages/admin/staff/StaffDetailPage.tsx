@@ -168,6 +168,70 @@ export default function StaffDetailPage() {
 
   if (!user) return null;
 
+  const renderSecurityCard = () => (
+    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-6">
+      <h3 className="text-[15px] font-bold text-[#062F28] mb-4 flex items-center gap-2">
+        <Lock size={18} className="text-[#9FE870]" />
+        Bảo mật & Quản lý
+      </h3>
+
+      <div className="space-y-4">
+        <div className="p-3 bg-gray-50 rounded-xl">
+          <div className="text-xs text-gray-500 mb-1">Đăng nhập lần cuối</div>
+          <div className="text-sm font-semibold text-gray-900">
+            {user.lastLogin
+              ? format(new Date(user.lastLogin), 'dd/MM/yyyy HH:mm:ss')
+              : 'Chưa từng đăng nhập'}
+          </div>
+        </div>
+
+        <button
+          onClick={handleResetPassword}
+          disabled={isActionLoading}
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 font-medium text-sm transition-all shadow-sm active:scale-95 disabled:opacity-50"
+        >
+          {isActionLoading ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <KeyRound size={16} />
+          )}
+          Đặt lại mật khẩu
+        </button>
+
+        {user.status === 'locked' ? (
+          <button
+            onClick={handleToggleLock}
+            disabled={isActionLoading}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl hover:bg-emerald-100 font-medium text-sm transition-all shadow-sm active:scale-95 disabled:opacity-50"
+          >
+            {isActionLoading ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Unlock size={16} />
+            )}
+            Mở khóa tài khoản
+          </button>
+        ) : (
+          <button
+            onClick={handleToggleLock}
+            disabled={isActionLoading || user.role === UserRole.ADMIN}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-red-50 border border-red-100 text-red-700 rounded-xl hover:bg-red-100 font-medium text-sm transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isActionLoading ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Lock size={16} />
+            )}
+            Khóa tài khoản
+          </button>
+        )}
+        {user.role === UserRole.ADMIN && (
+          <p className="text-xs text-red-500 text-center">Không thể khóa tài khoản Admin</p>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <motion.div
       variants={containerVariants}
@@ -189,7 +253,7 @@ export default function StaffDetailPage() {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 ${user.role === UserRole.ADMIN ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-6`}>
         {/* Cột trái: Thông tin cá nhân & Bảo mật */}
         <motion.div variants={itemVariants} className="space-y-6">
           {/* Profile Card */}
@@ -249,73 +313,15 @@ export default function StaffDetailPage() {
           </div>
 
           {/* Security Card */}
-          <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-6">
-            <h3 className="text-[15px] font-bold text-[#062F28] mb-4 flex items-center gap-2">
-              <Lock size={18} className="text-[#9FE870]" />
-              Bảo mật & Quản lý
-            </h3>
-
-            <div className="space-y-4">
-              <div className="p-3 bg-gray-50 rounded-xl">
-                <div className="text-xs text-gray-500 mb-1">Đăng nhập lần cuối</div>
-                <div className="text-sm font-semibold text-gray-900">
-                  {user.lastLogin
-                    ? format(new Date(user.lastLogin), 'dd/MM/yyyy HH:mm:ss')
-                    : 'Chưa từng đăng nhập'}
-                </div>
-              </div>
-
-              <button
-                onClick={handleResetPassword}
-                disabled={isActionLoading}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 font-medium text-sm transition-all shadow-sm active:scale-95 disabled:opacity-50"
-              >
-                {isActionLoading ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <KeyRound size={16} />
-                )}
-                Đặt lại mật khẩu
-              </button>
-
-              {user.status === 'locked' ? (
-                <button
-                  onClick={handleToggleLock}
-                  disabled={isActionLoading}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl hover:bg-emerald-100 font-medium text-sm transition-all shadow-sm active:scale-95 disabled:opacity-50"
-                >
-                  {isActionLoading ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Unlock size={16} />
-                  )}
-                  Mở khóa tài khoản
-                </button>
-              ) : (
-                <button
-                  onClick={handleToggleLock}
-                  disabled={isActionLoading || user.role === UserRole.ADMIN}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-red-50 border border-red-100 text-red-700 rounded-xl hover:bg-red-100 font-medium text-sm transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isActionLoading ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Lock size={16} />
-                  )}
-                  Khóa tài khoản
-                </button>
-              )}
-              {user.role === UserRole.ADMIN && (
-                <p className="text-xs text-red-500 text-center">Không thể khóa tài khoản Admin</p>
-              )}
-            </div>
-          </div>
+          {user.role !== UserRole.ADMIN && renderSecurityCard()}
         </motion.div>
 
         {/* Cột phải: Công việc & Phân quyền */}
-        <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
+        <motion.div variants={itemVariants} className={`${user.role === UserRole.ADMIN ? '' : 'lg:col-span-2'} space-y-6`}>
+          {user.role === UserRole.ADMIN && renderSecurityCard()}
           {/* Work Assignments */}
-          <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
+          {(user.role === UserRole.MANAGER || user.role === UserRole.STAFF) && (
+            <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
               <div>
                 <h3 className="text-[15px] font-bold text-[#062F28]">Phân công khu vực (Bãi đỗ)</h3>
@@ -368,6 +374,7 @@ export default function StaffDetailPage() {
               )}
             </div>
           </div>
+          )}
 
           {/* RBAC Permissions */}
           <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
