@@ -33,11 +33,14 @@ export class PublicService {
   static async getAvailableSlots(facilityId: string) {
     // Aggregation to count available slots by vehicle type
     const availableSlots = await ParkingSlot.aggregate([
-      { $match: { facilityId: new mongoose.Types.ObjectId(facilityId), status: 'available' } },
+      { $match: { facilityId: new mongoose.Types.ObjectId(facilityId), isDeleted: false } },
       {
         $group: {
           _id: '$vehicleTypeId',
-          count: { $sum: 1 },
+          totalCount: { $sum: 1 },
+          availableCount: {
+            $sum: { $cond: [{ $eq: ['$status', 'available'] }, 1, 0] }
+          }
         },
       },
       {
@@ -55,7 +58,8 @@ export class PublicService {
           vehicleTypeId: '$_id',
           vehicleTypeCode: '$vehicleTypeInfo.code',
           vehicleTypeName: '$vehicleTypeInfo.name',
-          availableCount: '$count',
+          totalCount: 1,
+          availableCount: 1,
         }
       }
     ]);

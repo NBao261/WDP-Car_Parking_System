@@ -75,11 +75,8 @@ export function useReservation(facilityId?: string) {
         setPlans(pricingRes.data || []);
         setAvailableSlots(slotsRes.data || []);
 
-        if (pricingRes.data && pricingRes.data.length > 0) {
-          const firstPlan = pricingRes.data[0];
-          setVehicleTypeId(
-            (firstPlan.vehicleTypeId as any)?._id || (firstPlan.vehicleTypeId as any)?.id || ''
-          );
+        if (slotsRes.data && slotsRes.data.length > 0) {
+          setVehicleTypeId(slotsRes.data[0].vehicleTypeId);
         }
 
         const baseDate = new Date(Date.now() + offset);
@@ -112,8 +109,9 @@ export function useReservation(facilityId?: string) {
   const isFormValid = useMemo(() => {
     // Đảm bảo đếm ký tự thực (không tính khoảng trắng/gạch ngang) >= 5
     const cleanPlate = licensePlate.replace(/[^A-Z0-9]/g, '');
-    return Boolean(vehicleTypeId && cleanPlate.length >= 5 && isTimeValid());
-  }, [vehicleTypeId, licensePlate, timeMode, customTime]);
+    const hasActivePlan = plans.some((p) => (p.vehicleTypeId as any)?._id === vehicleTypeId);
+    return Boolean(vehicleTypeId && hasActivePlan && cleanPlate.length >= 5 && isTimeValid());
+  }, [vehicleTypeId, licensePlate, timeMode, customTime, plans]);
 
   const handleSubmit = async () => {
     if (!isFormValid || !facilityId) {
@@ -138,9 +136,13 @@ export function useReservation(facilityId?: string) {
     }
   };
 
-  const uniqueVehicleTypes = Array.from(
-    new Map(plans.map((p) => [(p.vehicleTypeId as any)?._id, p.vehicleTypeId as any])).values()
-  ).filter(Boolean);
+  const uniqueVehicleTypes = useMemo(() => {
+    return availableSlots.map((s) => ({
+      _id: s.vehicleTypeId,
+      name: s.vehicleTypeName,
+      code: s.vehicleTypeCode,
+    }));
+  }, [availableSlots]);
   const activePlan = plans.find((p) => (p.vehicleTypeId as any)?._id === vehicleTypeId);
 
   const currentAvailableCount = useMemo(() => {

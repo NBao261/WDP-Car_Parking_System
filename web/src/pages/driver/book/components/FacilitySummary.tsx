@@ -126,7 +126,7 @@ export const FacilitySummary: React.FC<FacilitySummaryProps> = ({
       </div>
 
       <AnimatePresence mode="wait">
-        {activePlan && (
+        {activePlan ? (
           <motion.div
             key={activePlan._id}
             initial={{ opacity: 0, y: 10 }}
@@ -157,6 +157,21 @@ export const FacilitySummary: React.FC<FacilitySummaryProps> = ({
                 {activePlan.maxDailyFee?.toLocaleString('vi-VN') || 0}đ
               </span>
             </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="no-plan"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-red-50 border border-red-200 rounded-2xl p-5 shadow-sm flex flex-col gap-2"
+          >
+            <h3 className="text-red-700 font-bold flex items-center gap-2">
+              <Receipt size={18} /> Chưa có bảng giá
+            </h3>
+            <p className="text-red-600/80 text-sm font-medium">
+              Tòa nhà hiện chưa thiết lập bảng giá cho loại phương tiện này. Xin vui lòng chọn loại xe khác hoặc liên hệ Ban quản lý.
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
