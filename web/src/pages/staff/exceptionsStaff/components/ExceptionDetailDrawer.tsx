@@ -4,6 +4,7 @@ import { useExceptionDetailLogic } from "./useExceptionDetailLogic";
 import { ExceptionInfoBlocks } from "./ExceptionDetailInfoBlocks";
 import { ExceptionDetailResolveForm } from "./ExceptionDetailResolveForm";
 import { ExceptionDetailReviewBlocks } from "./ExceptionDetailReviewBlocks";
+import { createPortal } from 'react-dom';
 
 interface ExceptionDetailDrawerProps {
   selectedException: ExceptionData | null;
@@ -49,7 +50,7 @@ export default function ExceptionDetailDrawer({ selectedException, onClose, onCo
   const canResolve = selectedException.status === "NEW" || selectedException.status === "PROCESSING";
   const parkingLocation = `${selectedException.facilityName} - ${selectedException.floorName} - ${selectedException.slotCode}`;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[60] overflow-hidden">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute inset-y-0 right-0 max-w-[800px] w-[90vw] bg-white shadow-[-8px_0_32px_rgba(0,0,0,0.12)] border-l border-[#e8e9e8] flex flex-col animate-in slide-in-from-right duration-300 ease-out">
@@ -92,6 +93,7 @@ export default function ExceptionDetailDrawer({ selectedException, onClose, onCo
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

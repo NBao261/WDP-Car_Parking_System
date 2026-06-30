@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { userService } from '../../../../services/user.service';
 import { User, AssignedFacility } from '../../../../types/user.types';
 import { toast } from 'sonner';
+import { createPortal } from 'react-dom';
 
 interface AssignModalProps {
   staff: User;
@@ -43,7 +44,7 @@ export function AssignFacilityModal({
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div
         className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col"
@@ -127,6 +128,7 @@ export function AssignFacilityModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

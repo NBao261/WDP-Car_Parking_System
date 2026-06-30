@@ -1,9 +1,10 @@
 import { X } from 'lucide-react';
 import { calculateDuration, getActiveBadgeClasses } from './TableSessionsUtils';
+import { createPortal } from 'react-dom';
 
 export function TableSessionsDetailModal({ selectedSession, setSelectedSession }: any) {
   if (!selectedSession) return null;
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
         <div className="flex items-start justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
@@ -29,6 +30,7 @@ export function TableSessionsDetailModal({ selectedSession, setSelectedSession }
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
