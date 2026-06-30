@@ -49,7 +49,7 @@ export function FloorDetailModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
@@ -68,8 +68,8 @@ export function FloorDetailModal({
           {/* Content */}
           {/* Content */}
           <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              {/* Left Column: General & Allowed vehicles */}
+            <div className="flex flex-col gap-6 items-stretch">
+              {/* General & Allowed vehicles */}
               <div className="space-y-6">
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -165,34 +165,45 @@ export function FloorDetailModal({
                 </div>
               </div>
 
-              {/* Right Column: Capacity Stats */}
+              {/* Capacity Stats */}
               <div className="space-y-6">
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-2">
                     Thống kê sức chứa
                   </p>
-                  <div className="flex items-center justify-between border border-gray-100 rounded-xl p-3 bg-white shadow-sm">
-                    <div className="text-center flex-1">
+                  <div className="flex items-center justify-between border border-gray-100 rounded-xl p-3 bg-white shadow-sm flex-wrap gap-y-4">
+                    <div className="text-center flex-[1_1_25%]">
+                      <div className="text-xl tabular-nums font-semibold text-[#062F28]">
+                        {floor.totalSlots || 0}
+                      </div>
+                      <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Sức chứa</div>
+                    </div>
+                    <div className="w-px h-8 bg-gray-100 hidden sm:block" />
+                    <div className="text-center flex-[1_1_25%]">
                       <div className="text-xl tabular-nums font-semibold text-[#062F28]">
                         {stats?.total ?? 0}
                       </div>
-                      <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Tổng slot</div>
+                      <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Đã tạo</div>
                     </div>
-                    <div className="w-px h-8 bg-gray-100" />
-                    <div className="text-center flex-1">
+                    <div className="w-px h-8 bg-gray-100 hidden sm:block" />
+                    <div className="text-center flex-[1_1_25%]">
                       <div className="text-xl tabular-nums font-semibold text-[#062F28]">
                         {stats?.occupied ?? 0}
                       </div>
                       <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Đang dùng</div>
                     </div>
-                    <div className="w-px h-8 bg-gray-100" />
-                    <div className="text-center flex-1">
-                      <div
-                        className={`text-xl tabular-nums font-semibold ${getBarTextColor(stats?.fillRate ?? 0)}`}
-                      >
-                        {stats?.fillRate ?? 0}%
-                      </div>
-                      <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Lấp đầy</div>
+                    
+                    <div className="w-full mt-2 pt-3 border-t border-gray-100 text-center flex items-center justify-center gap-2">
+                      <span className="text-[13px] text-[#7B7B7B] font-medium">Tỷ lệ lấp đầy:</span>
+                      <span className={`text-[15px] font-bold ${getBarTextColor(
+                          floor.totalSlots 
+                            ? Math.round(((stats?.occupied ?? 0) / floor.totalSlots) * 100) 
+                            : 0
+                        )}`}>
+                        {floor.totalSlots 
+                          ? Math.round(((stats?.occupied ?? 0) / floor.totalSlots) * 100) 
+                          : 0}%
+                      </span>
                     </div>
                   </div>
                 </div>
