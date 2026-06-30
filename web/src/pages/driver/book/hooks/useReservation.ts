@@ -75,7 +75,10 @@ export function useReservation(facilityId?: string) {
         setPlans(pricingRes.data || []);
         setAvailableSlots(slotsRes.data || []);
 
-        if (slotsRes.data && slotsRes.data.length > 0) {
+        const validPlan = pricingRes.data?.find((p: any) => p.vehicleTypeId?._id || p.vehicleTypeId?.id);
+        if (validPlan) {
+          setVehicleTypeId(validPlan.vehicleTypeId._id || validPlan.vehicleTypeId.id);
+        } else if (slotsRes.data && slotsRes.data.length > 0) {
           setVehicleTypeId(slotsRes.data[0].vehicleTypeId);
         }
 
@@ -137,12 +140,27 @@ export function useReservation(facilityId?: string) {
   };
 
   const uniqueVehicleTypes = useMemo(() => {
-    return availableSlots.map((s) => ({
-      _id: s.vehicleTypeId,
-      name: s.vehicleTypeName,
-      code: s.vehicleTypeCode,
-    }));
-  }, [availableSlots]);
+    const typesMap = new Map();
+    // 1. From active plans
+    plans.forEach((p) => {
+      const v = p.vehicleTypeId as any;
+      if (v && (v._id || v.id)) {
+        const id = v._id || v.id;
+        typesMap.set(id, { _id: id, name: v.name || 'Unknown', code: v.code || '' });
+      }
+    });
+    // 2. From available slots
+    availableSlots.forEach((s) => {
+      if (s.vehicleTypeId) {
+        typesMap.set(s.vehicleTypeId, {
+          _id: s.vehicleTypeId,
+          name: s.vehicleTypeName,
+          code: s.vehicleTypeCode,
+        });
+      }
+    });
+    return Array.from(typesMap.values());
+  }, [plans, availableSlots]);
   const activePlan = plans.find((p) => (p.vehicleTypeId as any)?._id === vehicleTypeId);
 
   const currentAvailableCount = useMemo(() => {
