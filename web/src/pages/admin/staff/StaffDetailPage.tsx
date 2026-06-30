@@ -1,6 +1,6 @@
 import { UnderDevelopment } from '../../../components/UnderDevelopment';
 
-export default function UserDetailPage() {
+export default function StaffDetailPage() {
   return (
     <UnderDevelopment
       featureName="Chi tiết Tài khoản"

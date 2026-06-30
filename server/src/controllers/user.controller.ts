@@ -52,7 +52,11 @@ export class UserController {
       if (req.user?.role === UserRole.MANAGER) {
         filters.role = UserRole.STAFF;
       } else if (role) {
-        filters.role = role;
+        if (typeof role === 'string' && role.includes(',')) {
+          filters.role = { $in: role.split(',') };
+        } else {
+          filters.role = role;
+        }
       }
 
       if (status) filters.status = status;
