@@ -5,6 +5,7 @@ import { User as UserType } from '../../../../types/user.types';
 import { CustomerFilterBar } from './components/CustomerFilterBar';
 import { CustomerTable } from './components/CustomerTable';
 import { CustomerFormModal } from './components/CustomerFormModal';
+import { CustomerDetailModal } from './components/CustomerDetailModal';
 import { useCustomerList } from './hooks/useCustomerList';
 import { Pagination } from '../../../components/ui/Pagination';
 
@@ -39,9 +40,17 @@ export default function CustomersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserType | undefined>();
 
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedDetailUser, setSelectedDetailUser] = useState<UserType | null>(null);
+
   const handleCreateUser = () => {
     setSelectedUser(undefined);
     setIsModalOpen(true);
+  };
+
+  const handleViewDetail = (user: UserType) => {
+    setSelectedDetailUser(user);
+    setIsDetailModalOpen(true);
   };
 
   const handleEditUser = (user: UserType) => {
@@ -92,6 +101,7 @@ export default function CustomersPage() {
           users={users}
           isLoading={isLoading}
           onEdit={handleEditUser}
+          onViewDetail={handleViewDetail}
           onRefresh={fetchUsers}
           indexOffset={(currentPage - 1) * PAGE_LIMIT}
         />
@@ -140,7 +150,7 @@ export default function CustomersPage() {
               onClick={fetchUsers}
               className="bg-white text-black px-6 py-3 rounded-full text-[14px] font-medium hover:bg-gray-50 flex-1 flex justify-center items-center gap-2 shadow-sm transition-colors"
             >
-              Làm mới 
+              Làm mới
               <div className="w-4 h-4 rounded-full bg-[#9FE870] flex items-center justify-center">
                 <ArrowDown size={10} className="text-[#062F28]" strokeWidth={3} />
               </div>
@@ -170,7 +180,8 @@ export default function CustomersPage() {
               </div>
               <div className="text-lg font-extrabold text-[#062F28] mb-1">Thêm / Sửa nhanh</div>
               <p className="text-[#6b6b6b] text-[11px] leading-relaxed font-semibold">
-                Dễ dàng thêm mới khách hàng, thay đổi thông tin liên lạc và đặt lại mật khẩu bảo mật.
+                Dễ dàng thêm mới khách hàng, thay đổi thông tin liên lạc và đặt lại mật khẩu bảo
+                mật.
               </p>
             </div>
 
@@ -191,12 +202,19 @@ export default function CustomersPage() {
         </div>
       </motion.div>
 
-      {/* User Form Modal */}
       <CustomerFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         user={selectedUser}
         onSuccess={fetchUsers}
+      />
+
+      {/* Customer Detail Modal */}
+      <CustomerDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        user={selectedDetailUser}
+        onRefresh={fetchUsers}
       />
     </motion.div>
   );

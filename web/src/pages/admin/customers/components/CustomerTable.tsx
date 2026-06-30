@@ -1,16 +1,7 @@
 import { motion } from 'framer-motion';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import {
-  MoreVertical,
-  Search,
-  Edit,
-  Lock,
-  Unlock,
-  KeyRound,
-  Trash2,
-  Building2,
-} from 'lucide-react';
+import { MoreVertical, Search, Edit, Lock, Unlock, KeyRound, Trash2, User } from 'lucide-react';
 import { User as UserType } from '../../../../types/user.types';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
 import { RoleIcon } from '../../../../components/ui/RoleIcon';
@@ -21,6 +12,7 @@ interface CustomerTableProps {
   users: UserType[];
   isLoading: boolean;
   onEdit: (user: UserType) => void;
+  onViewDetail: (user: UserType) => void;
   onRefresh: () => void;
   indexOffset?: number;
 }
@@ -29,6 +21,7 @@ export function CustomerTable({
   users,
   isLoading,
   onEdit,
+  onViewDetail,
   onRefresh,
   indexOffset = 0,
 }: CustomerTableProps) {
@@ -80,7 +73,10 @@ export function CustomerTable({
                 </tr>
               ) : (
                 users.map((user, idx) => (
-                  <motion.tr key={user._id} className="hover:bg-[#9FE870]/10 transition-colors group">
+                  <motion.tr
+                    key={user._id}
+                    className="hover:bg-[#9FE870]/10 transition-colors group"
+                  >
                     <td className="px-6 py-4 text-[#6b6b6b] text-[13px] text-center font-medium">
                       {indexOffset + idx + 1}
                     </td>
@@ -90,9 +86,12 @@ export function CustomerTable({
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-semibold text-[#062F28]">
+                          <button
+                            onClick={() => onViewDetail(user)}
+                            className="font-semibold text-[#062F28] hover:text-[#062F28]/80 hover:underline transition-colors outline-none"
+                          >
                             {user.name}
-                          </div>
+                          </button>
                           <div className="text-gray-500 text-xs mt-0.5">{user.email}</div>
                         </div>
                       </div>
@@ -128,6 +127,12 @@ export function CustomerTable({
                             sideOffset={4}
                             className="w-48 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-gray-100 py-2 z-50 font-sans animate-in fade-in zoom-in-95 duration-150 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
                           >
+                            <DropdownMenu.Item
+                              onClick={() => onViewDetail(user)}
+                              className="w-full text-left px-4 py-2 text-sm text-[#062F28] hover:bg-[#9FE870]/20 flex items-center gap-2 cursor-pointer outline-none focus:bg-[#9FE870]/20 transition-colors"
+                            >
+                              <User size={16} /> Xem chi tiết
+                            </DropdownMenu.Item>
                             <DropdownMenu.Item
                               onClick={() => onEdit(user)}
                               className="w-full text-left px-4 py-2 text-sm text-[#062F28] hover:bg-[#9FE870]/20 flex items-center gap-2 cursor-pointer outline-none focus:bg-[#9FE870]/20 transition-colors"
