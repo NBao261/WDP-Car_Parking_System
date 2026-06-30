@@ -43,6 +43,7 @@ export interface CreateVehicleTypePayload {
 
 export interface UpdateVehicleTypePayload {
   name?: string;
+  code?: string;
   slotSize?: SlotSize;
   description?: string;
   icon?: string;

@@ -155,6 +155,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
       if (isEdit && vehicle) {
         const payload: UpdateVehicleTypePayload = {
           name: form.name,
+          code: form.code,
           slotSize: 'medium' as SlotSize,
           description: form.description,
           icon: form.icon,
