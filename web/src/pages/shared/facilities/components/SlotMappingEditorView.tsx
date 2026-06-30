@@ -204,7 +204,10 @@ export function SlotMappingEditorView({
                         : slot.vehicleTypeId
                           ? (vtMap[slot.vehicleTypeId] ?? '')
                           : '';
-                    const vtId = typeof slot.vehicleTypeId === 'object' ? (slot.vehicleTypeId as any)._id : slot.vehicleTypeId;
+                    const vtId =
+                      slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object'
+                        ? (slot.vehicleTypeId as any)._id
+                        : slot.vehicleTypeId;
                     const vt = vehicleTypes.find((v) => v._id === vtId);
                     const SlotIcon = vt && vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : Car;
 
