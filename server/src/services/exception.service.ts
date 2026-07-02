@@ -186,9 +186,18 @@ export class ExceptionService {
       if (!data.newLicensePlate) {
         throw new AppError('Vui lòng cung cấp biển số mới khi xử lý ngoại lệ sai biển số', 400);
       }
-      // Cập nhật lại biển số đúng + mở khoá session
+      // Cập nhật lại biển số đúng
       session.licensePlate = data.newLicensePlate.toUpperCase();
-      session.status = SessionStatus.ACTIVE;
+
+      // Chỉ mở khóa session khi không còn ngoại lệ nào khác chưa xử lý
+      const unresolvedAfterPlate = await Exception.countDocuments({
+        sessionId: session._id,
+        _id: { $ne: exception._id },
+        status: ExceptionStatus.NEW,
+      });
+      if (unresolvedAfterPlate === 0) {
+        session.status = SessionStatus.ACTIVE;
+      }
       await session.save();
     }
     else if (exception.type === ExceptionType.WRONG_ZONE) {
@@ -223,7 +232,16 @@ export class ExceptionService {
       // Cập nhật session (giữ nguyên mọi thông tin, chỉ đổi slot + floor + mở khoá)
       session.slotId = newSlot._id as mongoose.Types.ObjectId;
       session.floorId = newSlot.floorId;
-      session.status = SessionStatus.ACTIVE; // Mở khoá session sau khi đã có chỗ mới
+
+      // Chỉ mở khóa session khi không còn ngoại lệ nào khác chưa xử lý
+      const unresolvedAfterZone = await Exception.countDocuments({
+        sessionId: session._id,
+        _id: { $ne: exception._id },
+        status: ExceptionStatus.NEW,
+      });
+      if (unresolvedAfterZone === 0) {
+        session.status = SessionStatus.ACTIVE;
+      }
       await session.save();
 
       // Cập nhật slot mới -> Occupied (xoá ghi chú cũ nếu có)
@@ -251,8 +269,15 @@ export class ExceptionService {
       }
     }
     else if (exception.type === ExceptionType.LOST_CARD) {
-      // Mở khoá session khi exception lost card được resolve → cho phép checkout
-      session.status = SessionStatus.ACTIVE;
+      // Chỉ mở khóa session khi không còn ngoại lệ nào khác chưa xử lý
+      const unresolvedAfterCard = await Exception.countDocuments({
+        sessionId: session._id,
+        _id: { $ne: exception._id },
+        status: ExceptionStatus.NEW,
+      });
+      if (unresolvedAfterCard === 0) {
+        session.status = SessionStatus.ACTIVE;
+      }
       await session.save();
     }
 
