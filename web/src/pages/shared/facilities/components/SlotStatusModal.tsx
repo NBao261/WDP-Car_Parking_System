@@ -18,6 +18,7 @@ import {
   Banknote,
   Edit2,
   ChevronDown,
+  Tag,
 } from 'lucide-react';
 import {
   slotService,
@@ -211,6 +212,20 @@ function idFromField(field: any): string | null {
   return null;
 }
 
+function fmtPricingType(field: any): string {
+  if (!field || typeof field !== 'object') return 'Mặc định';
+  switch (field.feeMethod) {
+    case 'flat_rate':
+      return 'Theo lượt';
+    case 'duration_based':
+      return 'Theo giờ';
+    case 'time_window':
+      return 'Theo khung giờ';
+    default:
+      return field.name || 'Mặc định';
+  }
+}
+
 // ── InfoItem (Grid based) ─────────────────────────────────
 
 function InfoItem({
@@ -239,6 +254,16 @@ function InfoItem({
 }
 
 // ── SessionInfo ───────────────────────────────────────────
+
+const SERVER_URL = import.meta.env.VITE_API_BASE_URL
+  ? import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '')
+  : 'http://localhost:5000';
+
+function getImageUrl(url?: string) {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  return `${SERVER_URL}${url}`;
+}
 
 function SessionInfo({ session }: { session: ParkingSessionPopulated }) {
   const ssCfg = SESSION_STATUS_CFG[session.status] ?? SESSION_STATUS_CFG.active;
@@ -278,7 +303,7 @@ function SessionInfo({ session }: { session: ParkingSessionPopulated }) {
         })
         .catch(() => {});
     }
-  }, [session]);
+  }, [session, isActive]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -288,7 +313,7 @@ function SessionInfo({ session }: { session: ParkingSessionPopulated }) {
           <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest pl-1 mb-1.5">
             Biển số xe
           </p>
-          <p className="text-3xl font-black text-[#062F28] tracking-widest uppercase">
+          <p className="text-3xl font-black text-[#059669] tracking-widest uppercase">
             {session.licensePlate}
           </p>
         </div>
@@ -302,7 +327,7 @@ function SessionInfo({ session }: { session: ParkingSessionPopulated }) {
       </div>
 
       {/* Grid details */}
-      <div className="grid grid-cols-2 gap-x-6 gap-y-6 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+      <div className="grid grid-cols-2 gap-x-5 gap-y-5 bg-white p-5 rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
         <InfoItem icon={User} label="NV vào" value={staffInName} />
         <InfoItem
           icon={CreditCard}
@@ -317,6 +342,7 @@ function SessionInfo({ session }: { session: ParkingSessionPopulated }) {
         <InfoItem icon={DoorOpen} label="Cổng" value={`${session.gateIn || 'Cổng A'}`} />
         <InfoItem icon={LogIn} label="Giờ vào" value={fmtDateTime(session.checkInTime)} />
 
+        <InfoItem icon={Tag} label="Loại giá" value={fmtPricingType(session.pricingPlanId)} />
         <InfoItem
           icon={Clock}
           label="Thời gian"
@@ -557,7 +583,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
           exit={{ opacity: 0, scale: 0.95, y: 16 }}
           transition={{ type: 'spring', stiffness: 350, damping: 30 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-5xl bg-white rounded-[32px] shadow-[0_24px_64px_rgba(0,0,0,0.18)] flex flex-col overflow-hidden max-h-[95vh]"
+          className="w-full max-w-5xl h-[800px] max-h-[95vh] bg-white rounded-[32px] shadow-[0_24px_64px_rgba(0,0,0,0.18)] flex flex-col overflow-hidden"
         >
           {/* ═══ HEADER (FIXED) ═══ */}
           <div className="px-7 py-5 border-b border-gray-100 flex items-start justify-between bg-white shrink-0 z-10 relative">
@@ -598,8 +624,8 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
               </button>
             </div>
           </div>
-          {/* ═══ SCROLLABLE CONTENT ═══ */}
-          <div className="flex-1 overflow-y-auto flex flex-col">
+          {/* ═══ CONTENT ═══ */}
+          <div className="flex-1 flex flex-col overflow-hidden">
             {isEditing ? (
               <div className="p-7 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -628,196 +654,205 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                 </div>
               </div>
             ) : (
-              <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 items-stretch min-h-[400px]">
-                {/* Left Column: Slot info & Status switcher */}
-                <div className="p-7 bg-white flex flex-col justify-between">
-                  <div>
-                    {/* Slot Position, Status, Floor */}
-                    <div className="mb-6">
-                      {/* Row 1: Title & Status */}
-                      <div className="flex items-center justify-between mb-2.5">
-                        <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest pl-1">
-                          Vị trí đỗ xe
-                        </p>
-                        <span
-                          className="flex items-center gap-1.5 text-[12px] font-bold px-3 py-1 rounded-xl border"
-                          style={{
-                            color: curCfg.color,
-                            background: curCfg.bg,
-                            borderColor: curCfg.border,
-                          }}
-                        >
+              <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 items-stretch overflow-hidden">
+                {/* Left Column: All Info (Slot & Session) */}
+                <div className="bg-white flex flex-col border-r border-gray-100 overflow-y-auto">
+                  <div className="flex-1 p-6 flex flex-col gap-5">
+                    {/* --- Slot Info Section (Top) --- */}
+                    <div>
+                      {/* Slot Position, Status, Floor */}
+                      <div className="mb-5">
+                        {/* Row 1: Title & Status */}
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest pl-1">
+                            Vị trí đỗ xe
+                          </p>
                           <span
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ background: curCfg.dot }}
-                          />
-                          {curCfg.label}
-                        </span>
-                      </div>
+                            className="flex items-center gap-1.5 text-[12px] font-bold px-3 py-1 rounded-xl border"
+                            style={{
+                              color: curCfg.color,
+                              background: curCfg.bg,
+                              borderColor: curCfg.border,
+                            }}
+                          >
+                            <span
+                              className="w-1.5 h-1.5 rounded-full"
+                              style={{ background: curCfg.dot }}
+                            />
+                            {curCfg.label}
+                          </span>
+                        </div>
 
-                      {/* Row 2: Box & Floor */}
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="flex flex-col items-center justify-center min-w-[72px] h-[72px] px-3 rounded-[18px] shadow-sm relative overflow-hidden transition-colors"
-                          style={{
-                            background: curCfg.bg,
-                            borderColor: curCfg.border,
-                            borderWidth: 1,
-                          }}
-                        >
-                          {displaySlot.status === 'occupied' ? (
-                            <>
-                              <VtIcon
-                                size={28}
-                                style={{ color: curCfg.color }}
-                                className="opacity-90 mb-0.5"
-                                strokeWidth={1.5}
-                              />
-                              <span
-                                className="text-[11px] font-bold opacity-75"
+                        {/* Row 2: Box & Floor */}
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="flex flex-col items-center justify-center min-w-[72px] h-[72px] px-3 rounded-[18px] shadow-sm relative overflow-hidden transition-colors"
+                            style={{
+                              background: curCfg.bg,
+                              borderColor: curCfg.border,
+                              borderWidth: 1,
+                            }}
+                          >
+                            {displaySlot.status === 'occupied' ? (
+                              <>
+                                <VtIcon
+                                  size={28}
+                                  style={{ color: curCfg.color }}
+                                  className="opacity-90 mb-0.5"
+                                  strokeWidth={1.5}
+                                />
+                                <span
+                                  className="text-[11px] font-bold opacity-75"
+                                  style={{ color: curCfg.color }}
+                                >
+                                  {displaySlot.code}
+                                </span>
+                              </>
+                            ) : (
+                              <h2
+                                className="text-[28px] font-black tracking-tight leading-none"
                                 style={{ color: curCfg.color }}
                               >
                                 {displaySlot.code}
-                              </span>
-                            </>
-                          ) : (
-                            <h2
-                              className="text-[28px] font-black tracking-tight leading-none"
-                              style={{ color: curCfg.color }}
-                            >
-                              {displaySlot.code}
-                            </h2>
-                          )}
-                        </div>
+                              </h2>
+                            )}
+                          </div>
 
-                        <div>
-                          {fetchingNames ? (
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-3.5 h-3.5 bg-gray-200 rounded-sm animate-pulse" />
-                                <div className="h-4 w-20 rounded bg-gray-200 animate-pulse" />
+                          <div>
+                            {fetchingNames ? (
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3.5 h-3.5 bg-gray-200 rounded-sm animate-pulse" />
+                                  <div className="h-4 w-20 rounded bg-gray-200 animate-pulse" />
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3.5 h-3.5 bg-gray-200 rounded-sm animate-pulse" />
+                                  <div className="h-4 w-16 rounded bg-gray-200 animate-pulse" />
+                                </div>
                               </div>
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-3.5 h-3.5 bg-gray-200 rounded-sm animate-pulse" />
-                                <div className="h-4 w-16 rounded bg-gray-200 animate-pulse" />
+                            ) : facilityName || floorName ? (
+                              <div className="flex flex-col gap-1.5 text-[14px] font-medium text-gray-500">
+                                {facilityName && (
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <MapPin size={16} className="text-gray-400" /> {facilityName}
+                                  </span>
+                                )}
+                                {floorName && (
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <Layers size={16} className="text-gray-400" /> Tầng: {floorName}
+                                  </span>
+                                )}
                               </div>
-                            </div>
-                          ) : facilityName || floorName ? (
-                            <div className="flex flex-col gap-1.5 text-[14px] font-medium text-gray-500">
-                              {facilityName && (
-                                <span className="inline-flex items-center gap-1.5">
-                                  <MapPin size={16} className="text-gray-400" /> {facilityName}
-                                </span>
-                              )}
-                              {floorName && (
-                                <span className="inline-flex items-center gap-1.5">
-                                  <Layers size={16} className="text-gray-400" /> Tầng: {floorName}
-                                </span>
-                              )}
-                            </div>
-                          ) : null}
+                            ) : null}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Vehicle Types (Image 2 style) */}
-                    <div className="mb-6">
-                      <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-3">
-                        Các loại xe cho phép
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#9FE870]/15 border border-[#9FE870]/30 rounded-lg text-[#062F28]">
-                          <VtIcon size={16} strokeWidth={2.5} />
-                          <span className="text-[13px] font-bold">{vtNameStr}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Status Switcher (Grid) */}
-                    {nexts.length > 0 && (
-                      <div className="mb-6">
-                        <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-3">
-                          Cập nhật trạng thái
+                      {/* Vehicle Types (Image 2 style) */}
+                      <div className="mb-5">
+                        <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2.5">
+                          Các loại xe cho phép
                         </p>
-                        <div className="flex gap-3">
-                          {nexts.map((s) => {
-                            const cfg = STATUS_CFG[s];
-                            const isSelected = selected === s;
-
-                            let hoverClass = 'hover:border-gray-200 hover:bg-gray-50';
-                            let selectedClass = 'border-[#062F28] bg-[#062F28] text-white';
-
-                            if (s === 'available') {
-                              hoverClass = 'hover:border-emerald-300 hover:bg-emerald-50';
-                              selectedClass = 'border-emerald-500 bg-emerald-50 text-emerald-700';
-                            }
-                            if (s === 'maintenance') {
-                              hoverClass = 'hover:border-amber-300 hover:bg-amber-50';
-                              selectedClass = 'border-amber-500 bg-amber-50 text-amber-700';
-                            }
-                            if (s === 'locked') {
-                              hoverClass = 'hover:border-rose-300 hover:bg-rose-50';
-                              selectedClass = 'border-rose-500 bg-rose-50 text-rose-700';
-                            }
-
-                            return (
-                              <button
-                                key={s}
-                                onClick={() => setSelected(isSelected ? '' : s)}
-                                className={`flex-1 relative flex flex-col items-center justify-center py-3 rounded-[14px] border-[3px] transition-all ${
-                                  isSelected
-                                    ? `${selectedClass} scale-[1.02] shadow-sm`
-                                    : `border-gray-100 bg-white ${hoverClass}`
-                                }`}
-                              >
-                                <span
-                                  className={`text-[14px] font-bold ${isSelected ? '' : 'text-gray-600'}`}
-                                >
-                                  {cfg.label}
-                                </span>
-                              </button>
-                            );
-                          })}
+                        <div className="flex flex-wrap gap-2">
+                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#9FE870]/15 border border-[#9FE870]/30 rounded-lg text-[#062F28]">
+                            <VtIcon size={16} strokeWidth={2.5} />
+                            <span className="text-[13px] font-bold">{vtNameStr}</span>
+                          </div>
                         </div>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Submit Button (Animated presence) */}
-                  <AnimatePresence>
-                    {selected && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                        animate={{ height: 'auto', opacity: 1, marginTop: 16 }}
-                        exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                        className="overflow-hidden flex flex-col gap-3 p-1 -m-1"
-                      >
-                        <button
-                          disabled={loading}
-                          onClick={handleSubmit}
-                          className="w-full h-[52px] bg-[#062F28] text-white font-extrabold text-sm rounded-[16px] shadow-sm hover:bg-[#062F28]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-                        >
-                          {loading && <Loader2 size={16} className="animate-spin" />}
-                          Cập nhật trạng thái
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                      {/* Status Switcher (Grid) */}
+                      {nexts.length > 0 && (
+                        <div className="mb-5">
+                          <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest mb-2.5">
+                            Cập nhật trạng thái
+                          </p>
+                          <div className="flex gap-3">
+                            {nexts.map((s) => {
+                              const cfg = STATUS_CFG[s];
+                              const isSelected = selected === s;
+
+                              let hoverClass = 'hover:border-gray-200 hover:bg-gray-50';
+                              let selectedClass = 'border-[#062F28] bg-[#062F28] text-white';
+
+                              if (s === 'available') {
+                                hoverClass = 'hover:border-emerald-300 hover:bg-emerald-50';
+                                selectedClass = 'border-emerald-500 bg-emerald-50 text-emerald-700';
+                              }
+                              if (s === 'maintenance') {
+                                hoverClass = 'hover:border-amber-300 hover:bg-amber-50';
+                                selectedClass = 'border-amber-500 bg-amber-50 text-amber-700';
+                              }
+                              if (s === 'locked') {
+                                hoverClass = 'hover:border-rose-300 hover:bg-rose-50';
+                                selectedClass = 'border-rose-500 bg-rose-50 text-rose-700';
+                              }
+
+                              return (
+                                <button
+                                  key={s}
+                                  onClick={() => setSelected(isSelected ? '' : s)}
+                                  className={`flex-1 relative flex flex-col items-center justify-center py-3 rounded-[14px] border-[3px] transition-all ${
+                                    isSelected
+                                      ? `${selectedClass} scale-[1.02] shadow-sm`
+                                      : `border-gray-100 bg-white ${hoverClass}`
+                                  }`}
+                                >
+                                  <span
+                                    className={`text-[14px] font-bold ${isSelected ? '' : 'text-gray-600'}`}
+                                  >
+                                    {cfg.label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Submit Button (Animated presence) */}
+                      <AnimatePresence>
+                        {selected && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                            animate={{ height: 'auto', opacity: 1, marginTop: 16 }}
+                            exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                            className="overflow-hidden flex flex-col gap-3 p-1 -m-1"
+                          >
+                            <button
+                              disabled={loading}
+                              onClick={handleSubmit}
+                              className="w-full h-[52px] bg-[#062F28] text-white font-extrabold text-sm rounded-[16px] shadow-sm hover:bg-[#062F28]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                            >
+                              {loading && <Loader2 size={16} className="animate-spin" />}
+                              Cập nhật trạng thái
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* --- Divider --- */}
+                    {session && <hr className="border-gray-100 my-1" />}
+
+                    {/* --- Session Info Section (Bottom) --- */}
+                    {fetchingSlot ? (
+                      <div className="flex flex-col items-center justify-center py-8 gap-3 text-gray-400">
+                        <Loader2 className="animate-spin" size={24} />
+                        <p className="text-[13px] font-medium">Đang tải chi tiết...</p>
+                      </div>
+                    ) : session ? (
+                      <div>
+                        <SessionInfo session={session} />
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
 
-                {/* Right Column: CURRENT SESSION */}
-                <div className="bg-[#fafafa] border-l border-gray-100 flex flex-col min-h-[300px]">
-                  {fetchingSlot ? (
-                    <div className="flex flex-col items-center justify-center flex-1 gap-3 text-gray-400 p-8">
-                      <Loader2 className="animate-spin" size={24} />
-                      <p className="text-[13px] font-medium">Đang tải chi tiết...</p>
-                    </div>
-                  ) : session ? (
-                    <div className="p-7">
-                      <SessionInfo session={session} />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center flex-1 text-center px-8 text-gray-400 p-8 pt-16 pb-16">
+                {/* Right Column: Image */}
+                <div className="bg-[#fafafa] flex flex-col items-center p-7 relative overflow-hidden">
+                  {!session ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
                         <Car size={24} className="text-gray-300" />
                       </div>
@@ -825,6 +860,29 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                         Vị trí đang trống
                       </p>
                       <p className="text-[13px]">Chưa có xe nào đang đỗ tại đây.</p>
+                    </div>
+                  ) : session.checkInImage ? (
+                    <div className="w-full h-full flex flex-col gap-3">
+                      <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest w-full text-left pl-1 shrink-0">
+                        Hình ảnh xe lúc vào
+                      </p>
+                      <div className="w-full flex-1 rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-200/60 p-2 flex items-center justify-center">
+                        <img 
+                          src={getImageUrl(session.checkInImage) || ''} 
+                          alt="Hình ảnh xe lúc vào" 
+                          className="w-full h-full object-contain rounded-xl"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-center text-gray-400">
+                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                        <Car size={24} className="text-gray-300" />
+                      </div>
+                      <p className="text-[14px] font-medium text-gray-500 mb-1">
+                        Không có hình ảnh
+                      </p>
+                      <p className="text-[13px]">Phiên này không có ảnh chụp xe.</p>
                     </div>
                   )}
                 </div>

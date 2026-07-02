@@ -19,7 +19,7 @@ export interface ParkingSessionPopulated {
   floorId: { _id: string; name: string } | string;
   staffInId: { _id: string; name: string; email: string } | string;
   staffOutId: { _id: string; name: string; email: string } | string | null;
-  pricingPlanId: { _id: string; name: string } | string;
+  pricingPlanId: { _id: string; name: string; feeMethod?: string } | string;
   checkInImage?: string;
 }
 

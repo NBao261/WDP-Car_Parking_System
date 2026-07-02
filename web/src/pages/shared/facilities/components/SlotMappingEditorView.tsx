@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw, Plus, GripHorizontal, Map, Car, ChevronLeft, Camera } from 'lucide-react';
@@ -8,6 +9,16 @@ import { VehicleType } from '../../../../services/vehicleType.service';
 import { SlotStatusModal } from './SlotStatusModal';
 import { SlotFormModal } from './SlotFormModal';
 import { ICON_MAP } from '../../../shared/vehicles/components/constants';
+
+const SERVER_URL = import.meta.env.VITE_API_BASE_URL
+  ? import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '')
+  : 'http://localhost:5000';
+
+function getImageUrl(url?: string) {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  return `${SERVER_URL}${url}`;
+}
 
 interface SlotGroup {
   name: string;
@@ -40,7 +51,7 @@ export function SlotMappingEditorView({
   const [statusSlot, setStatusSlot] = useState<ParkingSlot | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [singleSlotOpen, setSingleSlotOpen] = useState(false);
-  const [hoveredSlotId, setHoveredSlotId] = useState<string | null>(null);
+  const [hoveredSlotInfo, setHoveredSlotInfo] = useState<{ id: string; rect: DOMRect } | null>(null);
 
   // Helper to extract session data from a slot
   const getSessionData = (slot: ParkingSlot): ParkingSessionPopulated | null => {
@@ -329,8 +340,8 @@ export function SlotMappingEditorView({
                                         : 'Không thể chỉnh sửa slot của tầng đang bị vô hiệu hóa.'
                                     );
                                 }}
-                                onMouseEnter={() => setHoveredSlotId(slot._id)}
-                                onMouseLeave={() => setHoveredSlotId(null)}
+                                onMouseEnter={(e) => setHoveredSlotInfo({ id: slot._id, rect: e.currentTarget.getBoundingClientRect() })}
+                                onMouseLeave={() => setHoveredSlotInfo(null)}
                                 className={`relative w-20 h-12 rounded-lg flex items-center justify-center text-sm font-semibold ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
                                 title={`${slot.code} – ${group.name} (${slot.status})`}
                               >
@@ -346,32 +357,6 @@ export function SlotMappingEditorView({
                                     );
                                   }
                                   return null;
-                                })()}
-                                {/* Hover tooltip with vehicle image */}
-                                {hoveredSlotId === slot._id && (() => {
-                                  const session = getSessionData(slot);
-                                  if (!session) return null;
-                                  return (
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
-                                      <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-2 min-w-[160px]">
-                                        {session.checkInImage ? (
-                                          <img
-                                            src={session.checkInImage}
-                                            alt={`Xe ${session.licensePlate}`}
-                                            className="w-36 h-24 object-cover rounded-lg mb-1.5"
-                                          />
-                                        ) : (
-                                          <div className="w-36 h-24 bg-gray-100 rounded-lg mb-1.5 flex items-center justify-center">
-                                            <Car size={24} className="text-gray-300" />
-                                          </div>
-                                        )}
-                                        <p className="text-xs font-bold text-center text-[#062F28]">
-                                          {session.licensePlate || 'Không có biển số'}
-                                        </p>
-                                      </div>
-                                      <div className="w-3 h-3 bg-white border-b border-r border-gray-200 rotate-45 absolute -bottom-1.5 left-1/2 -translate-x-1/2" />
-                                    </div>
-                                  );
                                 })()}
                               </div>
                             );
@@ -474,6 +459,44 @@ export function SlotMappingEditorView({
           />
         )}
       </AnimatePresence>
+
+      {/* Portal Tooltip to escape overflow-hidden container */}
+      {hoveredSlotInfo && (() => {
+        const slot = slots.find((s) => s._id === hoveredSlotInfo.id);
+        if (!slot) return null;
+        const session = getSessionData(slot);
+        if (!session) return null;
+
+        return createPortal(
+          <div
+            className="fixed z-[9999] pointer-events-none"
+            style={{
+              top: hoveredSlotInfo.rect.top - 8,
+              left: hoveredSlotInfo.rect.left + hoveredSlotInfo.rect.width / 2,
+              transform: 'translate(-50%, -100%)',
+            }}
+          >
+            <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-2 min-w-[160px]">
+              {session.checkInImage ? (
+                <img
+                  src={getImageUrl(session.checkInImage) || ''}
+                  alt={`Xe ${session.licensePlate}`}
+                  className="w-36 h-24 object-cover rounded-lg mb-1.5"
+                />
+              ) : (
+                <div className="w-36 h-24 bg-gray-100 rounded-lg mb-1.5 flex items-center justify-center">
+                  <Car size={24} className="text-gray-300" />
+                </div>
+              )}
+              <p className="text-xs font-bold text-center text-[#062F28]">
+                {session.licensePlate || 'Không có biển số'}
+              </p>
+            </div>
+            <div className="w-3 h-3 bg-white border-b border-r border-gray-200 rotate-45 absolute -bottom-1.5 left-1/2 -translate-x-1/2" />
+          </div>,
+          document.body
+        );
+      })()}
     </>
   );
 }
