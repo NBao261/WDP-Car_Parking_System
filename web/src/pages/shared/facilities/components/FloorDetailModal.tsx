@@ -30,8 +30,10 @@ export function FloorDetailModal({
 
   const isActive = floor.status === 'active';
   const badgeStyle = isActive
-    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5' }
-    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2' };
+    ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
+    : (floor as any).status === 'maintenance'
+      ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
+      : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
   return createPortal(
     <AnimatePresence>
@@ -93,10 +95,10 @@ export function FloorDetailModal({
                           width: 6,
                           height: 6,
                           borderRadius: '50%',
-                          background: isActive ? '#10b981' : '#9b9e9b',
+                          background: isActive ? '#82C94E' : (floor as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
                         }}
                       />
-                      {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
+                      {isActive ? 'HOẠT ĐỘNG' : (floor as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
                     </span>
                   </div>
                   <div className="flex items-center gap-4">

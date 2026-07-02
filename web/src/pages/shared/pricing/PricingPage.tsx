@@ -554,6 +554,7 @@ export default function PricingPage() {
             plan={viewingPlan}
             facilities={facilities}
             vehicleTypes={vehicleTypes}
+            allPlans={plans}
           />
         )}
       </AnimatePresence>

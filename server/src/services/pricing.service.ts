@@ -122,6 +122,27 @@ export class PricingService {
 
   static async updatePricingPlan(id: string, data: Partial<IPricingPlan>): Promise<IPricingPlan | null> {
 
+    // ── Chặn sửa giá khi có session active đang dùng bảng giá này ──
+    const pricingAffectingFields: (keyof IPricingPlan)[] = [
+      'rates', 'feeType', 'feeMethod', 'overnightFee', 'overtimeFeePerHour',
+      'firstBlockHours', 'maxDailyFee', 'gracePeriodMinutes', 'lostCardFee',
+    ];
+    const isModifyingPricing = pricingAffectingFields.some(field => field in data);
+
+    if (isModifyingPricing) {
+      const activeSessionCount = await ParkingSession.countDocuments({
+        pricingPlanId: id,
+        status: { $in: ['active', 'exception'] },
+      });
+
+      if (activeSessionCount > 0) {
+        throw new AppError(
+          `Không thể chỉnh sửa thông tin giá vì hiện có ${activeSessionCount} lượt gửi xe đang sử dụng bảng giá này. Vui lòng đợi tất cả xe ra bãi hoặc tạo bảng giá mới.`,
+          400
+        );
+      }
+    }
+
     // Validate time_window coverage khi cập nhật rates
     const effectiveFeeMethod = data.feeMethod || (await PricingPlan.findById(id))?.feeMethod;
     if (effectiveFeeMethod === FeeMethod.TIME_WINDOW && data.rates) {
@@ -207,5 +228,16 @@ export class PricingService {
       .populate('vehicleTypeId facilityId');
     const total = await PricingPlan.countDocuments(filters);
     return { pricingPlans, total };
+  }
+
+  /**
+   * Kiểm tra số lượt gửi xe đang active sử dụng bảng giá này
+   */
+  static async getActiveSessionCount(pricingPlanId: string): Promise<number> {
+    const count = await ParkingSession.countDocuments({
+      pricingPlanId,
+      status: { $in: ['active', 'exception'] },
+    });
+    return count;
   }
 }

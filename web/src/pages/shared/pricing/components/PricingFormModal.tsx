@@ -117,6 +117,18 @@ export function PricingFormModal({
   const currentFacilityId = useWatch({ control, name: 'facilityId' });
   const currentFacility = facilities.find((f) => f._id === currentFacilityId);
 
+  // Kiểm tra số lượt gửi xe đang dùng bảng giá này
+  const [activeSessionCount, setActiveSessionCount] = useState(0);
+  const hasActiveSessions = isEdit && activeSessionCount > 0;
+
+  useEffect(() => {
+    if (isEdit && plan?._id) {
+      pricingService.getActiveSessionCount(plan._id)
+        .then(res => setActiveSessionCount(res.data.activeSessionCount))
+        .catch(() => setActiveSessionCount(0));
+    }
+  }, [isEdit, plan?._id]);
+
   // Tự động điều chỉnh rates khi thay đổi loại hình thu phí
   useEffect(() => {
     if (isEdit) return;
@@ -213,12 +225,26 @@ export function PricingFormModal({
           </button>
         </div>
 
-        {isEdit && (
+        {isEdit && hasActiveSessions && (
+          <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex gap-3 items-start text-amber-800 shrink-0">
+            <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-500" />
+            <div className="text-sm">
+              <p className="font-semibold">
+                Hiện có {activeSessionCount} lượt gửi xe đang sử dụng bảng giá này
+              </p>
+              <p className="mt-0.5 text-amber-700">
+                Không thể chỉnh sửa thông tin giá khi còn xe đang gửi. Bạn chỉ có thể đổi tên bảng giá. Vui lòng đợi tất cả xe ra bãi hoặc tạo bảng giá mới.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {isEdit && !hasActiveSessions && (
           <div className="bg-blue-50 border-b border-blue-100 px-6 py-3 flex gap-3 items-start text-blue-800 shrink-0">
             <ShieldAlert size={16} className="shrink-0 mt-0.5 text-blue-500" />
             <p className="text-sm">
               <span className="font-semibold">Lưu ý: </span>
-              Thay đổi giá sẽ <b>áp dụng cho các xe gửi sau</b>. Các xe đang gửi vẫn tính theo giá tại thời điểm check-in.
+              Hiện không có xe nào đang sử dụng bảng giá này. Bạn có thể tự do chỉnh sửa.
             </p>
           </div>
         )}
@@ -445,7 +471,7 @@ export function PricingFormModal({
                             className="w-4 h-4 accent-[#062F28]"
                             value={val}
                             checked={field.value === val}
-                            disabled={!!lockedFeeType && lockedFeeType !== val}
+                            disabled={(!!lockedFeeType && lockedFeeType !== val) || hasActiveSessions}
                             onChange={() => field.onChange(val)}
                           />
                           {label}
@@ -478,6 +504,7 @@ export function PricingFormModal({
                       type="number" min="0" max="60"
                       className={getInputCls(!!errors.gracePeriodMinutes)}
                       placeholder="0"
+                      disabled={hasActiveSessions}
                     />
                     <p className="text-[10px] text-gray-400 mt-1">X phút đầu miễn phí</p>
                     {errors.gracePeriodMinutes && <p className={errCls}>{errors.gracePeriodMinutes.message}</p>}
@@ -493,6 +520,7 @@ export function PricingFormModal({
                       type="number" min="0"
                       className={getInputCls(!!errors.lostCardFee)}
                       placeholder="50000"
+                      disabled={hasActiveSessions}
                     />
                     {errors.lostCardFee && <p className={errCls}>{errors.lostCardFee.message}</p>}
                   </div>
@@ -508,6 +536,7 @@ export function PricingFormModal({
                         type="number" min="1"
                         className={getInputCls(!!errors.firstBlockHours)}
                         placeholder="1"
+                        disabled={hasActiveSessions}
                       />
                       <p className="text-[10px] text-gray-400 mt-1">Số giờ cho giá bậc 1</p>
                       {errors.firstBlockHours && <p className={errCls}>{errors.firstBlockHours.message}</p>}
@@ -525,6 +554,7 @@ export function PricingFormModal({
                         type="number" min="0"
                         className={getInputCls(!!errors.maxDailyFee)}
                         placeholder="0"
+                        disabled={hasActiveSessions}
                       />
                       <p className="text-[10px] text-gray-400 mt-1">0 = Không giới hạn</p>
                       {errors.maxDailyFee && <p className={errCls}>{errors.maxDailyFee.message}</p>}
@@ -542,6 +572,7 @@ export function PricingFormModal({
                         type="number" min="0"
                         className={getInputCls(!!errors.overnightFee)}
                         placeholder="0"
+                        disabled={hasActiveSessions}
                       />
                       {errors.overnightFee && <p className={errCls}>{errors.overnightFee.message}</p>}
                     </div>
@@ -558,6 +589,7 @@ export function PricingFormModal({
                         type="number" min="0"
                         className={getInputCls(!!errors.overtimeFeePerHour)}
                         placeholder="0"
+                        disabled={hasActiveSessions}
                       />
                       <p className="text-[10px] text-gray-400 mt-1">
                         {currentUiFeeType === 'hourly' ? 'Khi đỗ quá 24h' : 'Ngoài khung hoạt động'}
@@ -587,7 +619,8 @@ export function PricingFormModal({
                   <button
                     type="button"
                     onClick={() => append({ label: '', amount: 0, unit: 'giờ', startTime: '', endTime: '' })}
-                    className="text-xs font-bold text-[#062F28] hover:bg-[#9FE870]/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors border border-[#9FE870]/40"
+                    disabled={hasActiveSessions}
+                    className={`text-xs font-bold text-[#062F28] hover:bg-[#9FE870]/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors border border-[#9FE870]/40 ${hasActiveSessions ? 'opacity-50 pointer-events-none' : ''}`}
                   >
                     <Plus size={13} /> Thêm Khung Giờ
                   </button>
@@ -625,13 +658,13 @@ export function PricingFormModal({
                       <div className="flex items-center gap-2 mb-3">
                         <div className="flex-1">
                           <label className="text-[10px] font-medium text-gray-400 uppercase block mb-1">Từ giờ <span className="text-red-500">*</span></label>
-                          <input type="time" {...register(`rates.${idx}.startTime`)} className={getInputCls(!!errors.rates?.[idx]?.startTime, 'py-1.5')} />
+                          <input type="time" {...register(`rates.${idx}.startTime`)} disabled={hasActiveSessions} className={getInputCls(!!errors.rates?.[idx]?.startTime, 'py-1.5')} />
                           {errors.rates?.[idx]?.startTime && <p className={errCls}>{errors.rates[idx]!.startTime!.message}</p>}
                         </div>
                         <span className="text-gray-300 mt-4">–</span>
                         <div className="flex-1">
                           <label className="text-[10px] font-medium text-gray-400 uppercase block mb-1">Đến giờ <span className="text-red-500">*</span></label>
-                          <input type="time" {...register(`rates.${idx}.endTime`)} className={getInputCls(!!errors.rates?.[idx]?.endTime, 'py-1.5')} />
+                          <input type="time" {...register(`rates.${idx}.endTime`)} disabled={hasActiveSessions} className={getInputCls(!!errors.rates?.[idx]?.endTime, 'py-1.5')} />
                           {errors.rates?.[idx]?.endTime && <p className={errCls}>{errors.rates[idx]!.endTime!.message}</p>}
                         </div>
                       </div>
@@ -649,6 +682,7 @@ export function PricingFormModal({
                             : currentUiFeeType === 'per_turn' ? 'Mỗi lượt' : 'Khung giờ'
                         }
                         className={getInputCls(!!errors.rates?.[idx]?.label, 'py-1.5 font-medium')}
+                        disabled={hasActiveSessions}
                       />
                       {errors.rates?.[idx]?.label && <p className={errCls}>{errors.rates[idx]!.label!.message}</p>}
                     </div>
@@ -661,6 +695,7 @@ export function PricingFormModal({
                         <input
                           {...register(`rates.${idx}.amount`)}
                           type="number" min="0" placeholder="0"
+                          disabled={hasActiveSessions}
                           className={getInputCls(!!errors.rates?.[idx]?.amount, 'py-1.5 font-bold text-[#062F28]')}
                         />
                       </div>

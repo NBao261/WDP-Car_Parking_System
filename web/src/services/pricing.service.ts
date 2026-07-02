@@ -101,4 +101,8 @@ export const pricingService = {
   delete: async (id: string): Promise<{ success: boolean }> => {
     return apiClient.delete(`/pricing/${id}`);
   },
+
+  getActiveSessionCount: async (id: string): Promise<{ success: boolean; data: { activeSessionCount: number } }> => {
+    return apiClient.get(`/pricing/${id}/active-sessions`);
+  },
 };

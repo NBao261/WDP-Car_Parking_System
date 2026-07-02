@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Edit, PowerOff, CheckCircle2, Trash2, Car, MoreVertical } from 'lucide-react';
+import { Edit, PowerOff, CheckCircle2, Trash2, Car, MoreVertical, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { pricingService, type PricingPlan } from '../../../../services/pricing.service';
@@ -32,6 +32,7 @@ export function PlanTableView({
 }: PlanTableProps) {
   const [loading, setLoading] = useState(false);
   const [deletePlan, setDeletePlan] = useState<PricingPlan | null>(null);
+  const [sessionCounts, setSessionCounts] = useState<Record<string, number>>({});
   const [menuState, setMenuState] = useState<{ id: string; top: number; right: number } | null>(
     null
   );
@@ -63,6 +64,40 @@ export function PlanTableView({
       window.removeEventListener('scroll', handleScroll, true);
     };
   }, [menuState]);
+
+  // Fetch active session counts for all plans
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        plans.map(async (p) => {
+          try {
+            const res = await pricingService.getActiveSessionCount(p._id);
+            counts[p._id] = res.data.activeSessionCount;
+          } catch {
+            counts[p._id] = 0;
+          }
+        })
+      );
+      setSessionCounts(counts);
+    };
+    if (plans.length > 0) fetchCounts();
+  }, [plans]);
+
+  // Xác định bảng giá MỚI NHẤT active cho mỗi nhóm facility+vehicleType
+  const newestActivePlanIds = useMemo(() => {
+    const groups: Record<string, PricingPlan> = {};
+    plans.forEach(p => {
+      if (p.status !== 'active') return;
+      const facId = typeof p.facilityId === 'object' ? (p.facilityId as any)._id : p.facilityId;
+      const vtId = typeof p.vehicleTypeId === 'object' ? (p.vehicleTypeId as any)._id : p.vehicleTypeId;
+      const key = `${facId}__${vtId}`;
+      if (!groups[key] || new Date(p.createdAt) > new Date(groups[key].createdAt)) {
+        groups[key] = p;
+      }
+    });
+    return new Set(Object.values(groups).map(p => p._id));
+  }, [plans]);
 
   const toggle = async (plan: PricingPlan, s: 'active' | 'inactive') => {
     setLoading(true);
@@ -224,11 +259,56 @@ export function PlanTableView({
                     </div>
                   </td>
                   <td className="px-4 py-4 text-center">
-                    <span
-                      className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-[rgba(159,232,112,0.15)] text-[#82C94E]' : (plan as any).status === 'maintenance' ? 'bg-[rgba(250,204,21,0.15)] text-[#EAB308]' : 'bg-gray-100 text-[#6b6b6b]'}`}
-                    >
-                      {isActive ? 'HOẠT ĐỘNG' : (plan as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
-                    </span>
+                    {(() => {
+                      const sessCount = sessionCounts[plan._id] ?? 0;
+                      const isNewest = newestActivePlanIds.has(plan._id);
+                      const isLegacy = isActive && !isNewest;
+
+                      if (isLegacy) {
+                        return (
+                          <div className="flex flex-col items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 border border-amber-200/60 shadow-sm">
+                              <Clock size={12} className="text-amber-500" />
+                              GIÁ CŨ
+                            </span>
+                            {sessCount > 0 && (
+                              <span className="text-[10px] font-medium text-amber-600">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-1 align-middle" />
+                                {sessCount} xe · chờ ra bãi
+                              </span>
+                            )}
+                            {sessCount === 0 && (
+                              <span className="text-[10px] text-gray-400 italic">Tự vô hiệu hóa</span>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      if (isActive) {
+                        return (
+                          <div className="flex flex-col items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gradient-to-r from-[#f0fce4] to-[#e6f9d4] text-[#4a8c1c] border border-[#c2e89a]/60 shadow-sm">
+                              <CheckCircle2 size={12} />
+                              ĐANG ÁP DỤNG
+                            </span>
+                            {sessCount > 0 && (
+                              <span className="text-[10px] font-medium text-[#4a8c1c]">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#82C94E] animate-pulse mr-1 align-middle" />
+                                {sessCount} xe đang gửi
+                              </span>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      // Inactive
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gray-50 text-gray-400 border border-gray-200/60">
+                          <PowerOff size={12} />
+                          VÔ HIỆU HÓA
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-4 text-right">
                     <div

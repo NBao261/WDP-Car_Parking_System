@@ -1,3 +1,4 @@
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import {
@@ -13,8 +14,10 @@ import {
   CreditCard,
   TrendingUp,
   Info,
+  CheckCircle2,
+  PowerOff,
 } from 'lucide-react';
-import { PricingPlan } from '../../../../services/pricing.service';
+import { pricingService, PricingPlan } from '../../../../services/pricing.service';
 import { Facility } from '../../../../services/facility.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 import { ICON_MAP, getVehicleColorTheme } from '../../../shared/vehicles/components/constants';
@@ -26,6 +29,7 @@ interface PricingDetailModalProps {
   plan?: PricingPlan;
   facilities: Facility[];
   vehicleTypes: VehicleType[];
+  allPlans?: PricingPlan[];
 }
 
 export function PricingDetailModal({
@@ -34,15 +38,39 @@ export function PricingDetailModal({
   plan,
   facilities,
   vehicleTypes,
+  allPlans = [],
 }: PricingDetailModalProps) {
   if (!isOpen || !plan) return null;
 
   const isActive = plan.status === 'active';
-  const badgeStyle = isActive
-    ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
-    : (plan as any).status === 'maintenance'
-      ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
-      : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
+
+  // Fetch active session count
+  const [sessCount, setSessCount] = useState(0);
+  useEffect(() => {
+    if (isOpen && plan?._id) {
+      pricingService.getActiveSessionCount(plan._id)
+        .then(res => setSessCount(res.data.activeSessionCount))
+        .catch(() => setSessCount(0));
+    }
+  }, [isOpen, plan?._id]);
+
+  // Determine if this is the newest active plan for its facility+vehicleType
+  const isNewest = useMemo(() => {
+    if (!isActive) return false;
+    const facId = typeof plan.facilityId === 'object' ? (plan.facilityId as any)._id : plan.facilityId;
+    const vtId = typeof plan.vehicleTypeId === 'object' ? (plan.vehicleTypeId as any)._id : plan.vehicleTypeId;
+    const siblings = allPlans.filter(p => {
+      if (p.status !== 'active') return false;
+      const pFac = typeof p.facilityId === 'object' ? (p.facilityId as any)._id : p.facilityId;
+      const pVt = typeof p.vehicleTypeId === 'object' ? (p.vehicleTypeId as any)._id : p.vehicleTypeId;
+      return pFac === facId && pVt === vtId;
+    });
+    if (siblings.length <= 1) return true;
+    const newest = siblings.reduce((a, b) => new Date(a.createdAt) > new Date(b.createdAt) ? a : b);
+    return newest._id === plan._id;
+  }, [plan, allPlans, isActive]);
+
+  const isLegacy = isActive && !isNewest;
 
   const vtId =
     typeof plan.vehicleTypeId === 'object' ? plan.vehicleTypeId?._id : plan.vehicleTypeId;
@@ -147,28 +175,46 @@ export function PricingDetailModal({
                     <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5">
                       Thông tin chung
                     </p>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        padding: '3px 10px',
-                        borderRadius: 20,
-                        fontWeight: 'bold',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 5,
-                        ...badgeStyle,
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
-                          background: isActive ? '#82C94E' : (plan as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
-                        }}
-                      />
-                      {isActive ? 'HOẠT ĐỘNG' : (plan as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
-                    </span>
+                    {(() => {
+                      if (isLegacy) {
+                        return (
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 border border-amber-200/60 shadow-sm">
+                              <Clock size={12} className="text-amber-500" />
+                              GIÁ CŨ
+                            </span>
+                            {sessCount > 0 && (
+                              <span className="text-[11px] font-medium text-amber-600">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-1 align-middle" />
+                                {sessCount} xe · chờ ra bãi
+                              </span>
+                            )}
+                          </div>
+                        );
+                      }
+                      if (isActive) {
+                        return (
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gradient-to-r from-[#f0fce4] to-[#e6f9d4] text-[#4a8c1c] border border-[#c2e89a]/60 shadow-sm">
+                              <CheckCircle2 size={12} />
+                              ĐANG ÁP DỤNG
+                            </span>
+                            {sessCount > 0 && (
+                              <span className="text-[11px] font-medium text-[#4a8c1c]">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#82C94E] animate-pulse mr-1 align-middle" />
+                                {sessCount} xe đang gửi
+                              </span>
+                            )}
+                          </div>
+                        );
+                      }
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gray-50 text-gray-400 border border-gray-200/60">
+                          <PowerOff size={12} />
+                          VÔ HIỆU HÓA
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-2xl bg-[#ffffff] border-[1.5px] border-[#f0f0f0] flex items-center justify-center shrink-0">

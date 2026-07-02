@@ -227,13 +227,13 @@ export class SessionService {
       }
     }
 
-    // 4. Tìm bảng giá active
+    // 4. Tìm bảng giá active (lấy bảng giá mới nhất nếu có nhiều active)
     const pricingPlan = await PricingPlan.findOne({
       facilityId: data.facilityId,
       vehicleTypeId: data.vehicleTypeId,
       status: 'active',
       isDeleted: false,
-    });
+    }).sort({ createdAt: -1 });
 
     if (!pricingPlan) {
       throw new AppError('Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này', 400);
@@ -1018,11 +1018,51 @@ export class SessionService {
       // 🔥 Background Upload: Đẩy cả ảnh checkIn và checkOut lên Cloudinary
       UploadService.processCompletedSessionImages(session._id.toString()).catch(console.error);
 
+      // 🔄 Auto-deactivate bảng giá cũ khi không còn xe nào sử dụng
+      this.autoDeactivateOldPricingPlan(session.pricingPlanId.toString(), session.facilityId.toString(), session.vehicleTypeId.toString()).catch(console.error);
+
       return populatedSession!;
     } catch (error) {
       await sessionMongoose.abortTransaction();
       sessionMongoose.endSession();
       throw error;
+    }
+  }
+
+  /**
+   * Auto-deactivate bảng giá cũ khi không còn session active nào sử dụng.
+   * Chỉ deactivate nếu có bảng giá MỚI HƠN đang active cho cùng facility+vehicleType.
+   */
+  private static async autoDeactivateOldPricingPlan(
+    pricingPlanId: string,
+    facilityId: string,
+    vehicleTypeId: string
+  ): Promise<void> {
+    // Kiểm tra còn session active nào dùng plan này không
+    const remainingSessions = await ParkingSession.countDocuments({
+      pricingPlanId,
+      status: { $in: ['active', 'exception'] },
+    });
+
+    if (remainingSessions > 0) return; // Vẫn còn xe → không làm gì
+
+    // Kiểm tra có bảng giá KHÁC active và MỚI HƠN cho cùng facility+vehicleType
+    const currentPlan = await PricingPlan.findById(pricingPlanId);
+    if (!currentPlan || currentPlan.status !== 'active') return;
+
+    const newerActivePlan = await PricingPlan.findOne({
+      facilityId,
+      vehicleTypeId,
+      status: 'active',
+      isDeleted: false,
+      _id: { $ne: pricingPlanId },
+      createdAt: { $gt: currentPlan.createdAt },
+    });
+
+    if (newerActivePlan) {
+      // Có bảng giá mới hơn → vô hiệu hóa bảng cũ
+      await PricingPlan.findByIdAndUpdate(pricingPlanId, { status: 'inactive' });
+      console.log(`[AUTO] Đã vô hiệu hóa bảng giá cũ "${currentPlan.name}" (${pricingPlanId}) — không còn xe sử dụng.`);
     }
   }
 }
