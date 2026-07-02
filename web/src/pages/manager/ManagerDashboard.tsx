@@ -165,19 +165,20 @@ export default function ManagerDashboard() {
     try {
       setExporting(true);
       toast.info(`Đang xuất báo cáo tổng hợp ra ${format === 'pdf' ? 'PDF' : 'Excel'}...`);
-      const { startDate, endDate } = getDateRange(timeFilter);
+      const { startDate, endDate, groupBy } = getDateRange(timeFilter);
       const facilityId = facilityFilter !== 'all' ? facilityFilter : undefined;
       const blob = await reportService.exportReport({
-        reportType: 'revenue',
+        reportType: 'comprehensive',
         format,
         startDate,
         endDate,
+        groupBy,
         facilityId,
       });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `manager_report_${Date.now()}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+      link.download = `bao_cao_tong_hop_${Date.now()}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
