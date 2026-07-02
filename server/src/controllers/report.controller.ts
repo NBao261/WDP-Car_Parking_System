@@ -213,8 +213,8 @@ export class ReportController {
     try {
       const { reportType, format, facilityId, ...otherFilters } = req.query;
       
-      if (!reportType || !['traffic', 'revenue', 'occupancy', 'peak-hours'].includes(reportType as string)) {
-        throw new AppError('Loại báo cáo không hợp lệ (traffic, revenue, occupancy, peak-hours)', 400);
+      if (!reportType || !['traffic', 'revenue', 'occupancy', 'peak-hours', 'comprehensive'].includes(reportType as string)) {
+        throw new AppError('Loại báo cáo không hợp lệ (traffic, revenue, occupancy, peak-hours, comprehensive)', 400);
       }
       if (!format || !['excel', 'pdf'].includes(format as string)) {
         throw new AppError('Định dạng xuất không hợp lệ (excel, pdf)', 400);
@@ -224,23 +224,42 @@ export class ReportController {
       const scope = await ReportController.resolveManagerFacilityScope(req, facilityId as string);
       const filters = { ...otherFilters, ...scope };
 
-      let data;
-      switch (reportType) {
-        case 'traffic': 
-          data = await ReportService.getTrafficReport(filters); 
-          break;
-        case 'revenue': 
-          data = await ReportService.getRevenueReport(filters); 
-          break;
-        case 'occupancy': 
-          data = await ReportService.getOccupancyReport(filters); 
-          break;
-        case 'peak-hours': 
-          data = await ReportService.getPeakHoursReport(filters); 
-          break;
-      }
+      let buffer: Buffer;
 
-      const buffer = await ExportService.generateReport(reportType as string, format as string, data);
+      if (reportType === 'comprehensive') {
+        // Xuất báo cáo tổng hợp: gọi cả 4 loại song song
+        const [trafficData, revenueData, occupancyData, peakHoursData] = await Promise.all([
+          ReportService.getTrafficReport(filters),
+          ReportService.getRevenueReport(filters),
+          ReportService.getOccupancyReport(filters),
+          ReportService.getPeakHoursReport(filters),
+        ]);
+
+        buffer = await ExportService.generateComprehensiveReport(format as string, {
+          revenue: revenueData,
+          traffic: trafficData,
+          occupancy: occupancyData,
+          peakHours: peakHoursData,
+        });
+      } else {
+        // Xuất từng loại riêng lẻ (giữ nguyên logic cũ)
+        let data;
+        switch (reportType) {
+          case 'traffic': 
+            data = await ReportService.getTrafficReport(filters); 
+            break;
+          case 'revenue': 
+            data = await ReportService.getRevenueReport(filters); 
+            break;
+          case 'occupancy': 
+            data = await ReportService.getOccupancyReport(filters); 
+            break;
+          case 'peak-hours': 
+            data = await ReportService.getPeakHoursReport(filters); 
+            break;
+        }
+        buffer = await ExportService.generateReport(reportType as string, format as string, data);
+      }
 
       const contentType = format === 'excel' 
         ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
