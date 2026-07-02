@@ -162,7 +162,7 @@ export const reportService = {
   },
 
   exportReport: async (params: {
-    reportType: 'traffic' | 'revenue' | 'occupancy' | 'peak-hours';
+    reportType: 'traffic' | 'revenue' | 'occupancy' | 'peak-hours' | 'comprehensive';
     format: 'excel' | 'pdf';
     facilityId?: string;
     startDate?: string;
