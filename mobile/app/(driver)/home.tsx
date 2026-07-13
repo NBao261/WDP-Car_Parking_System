@@ -15,31 +15,45 @@ import {
   FlatList,
   ScrollView,
 } from "react-native";
-import Constants, { ExecutionEnvironment } from 'expo-constants';
+import Constants, { ExecutionEnvironment } from "expo-constants";
 
 let MapView: any;
 let Marker: any;
 let PROVIDER_GOOGLE: any;
-import type { Region } from 'react-native-maps';
+import type { Region } from "react-native-maps";
 
-const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+const isExpoGo =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 if (!isExpoGo) {
   try {
-    const Maps = require('react-native-maps');
+    const Maps = require("react-native-maps");
     MapView = Maps.default;
     Marker = Maps.Marker;
     PROVIDER_GOOGLE = Maps.PROVIDER_GOOGLE;
   } catch (e) {
-    console.warn('Failed to load react-native-maps', e);
+    console.warn("Failed to load react-native-maps", e);
   }
 }
 
 if (!MapView) {
   MapView = ({ children, style, ...props }: any) => (
-    <View style={[style, { backgroundColor: '#e8f5e9', alignItems: 'center', justifyContent: 'center' }]}>
-      <Text style={{ color: '#666', fontSize: 14 }}>Bản đồ không khả dụng trong Expo Go</Text>
-      <Text style={{ color: '#999', fontSize: 12, marginTop: 4 }}>Sử dụng Development Build để xem bản đồ</Text>
+    <View
+      style={[
+        style,
+        {
+          backgroundColor: "#e8f5e9",
+          alignItems: "center",
+          justifyContent: "center",
+        },
+      ]}
+    >
+      <Text style={{ color: "#666", fontSize: 14 }}>
+        Bản đồ không khả dụng trong Expo Go
+      </Text>
+      <Text style={{ color: "#999", fontSize: 12, marginTop: 4 }}>
+        Sử dụng Development Build để xem bản đồ
+      </Text>
     </View>
   );
   Marker = View;
@@ -658,7 +672,7 @@ export default function HomeScreen() {
         showsMyLocationButton={false}
         showsCompass={false}
         onPress={onMapPress}
-        onRegionChangeComplete={(region) => {
+        onRegionChangeComplete={(region: Region) => {
           currentRegionRef.current = region;
         }}
         mapPadding={{ top: 80, right: 0, bottom: 0, left: 0 }}
