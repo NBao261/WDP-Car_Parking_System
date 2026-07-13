@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import {
@@ -6,7 +6,6 @@ import {
   DollarSign,
   Building2,
   MapPin,
-  Clock,
   Calendar,
   Car,
   ShieldCheck,
@@ -16,6 +15,7 @@ import {
   Info,
   CheckCircle2,
   PowerOff,
+  Clock,
 } from 'lucide-react';
 import { pricingService, PricingPlan } from '../../../../services/pricing.service';
 import { Facility } from '../../../../services/facility.service';
@@ -29,7 +29,6 @@ interface PricingDetailModalProps {
   plan?: PricingPlan;
   facilities: Facility[];
   vehicleTypes: VehicleType[];
-  allPlans?: PricingPlan[];
 }
 
 export function PricingDetailModal({
@@ -38,7 +37,6 @@ export function PricingDetailModal({
   plan,
   facilities,
   vehicleTypes,
-  allPlans = [],
 }: PricingDetailModalProps) {
   if (!isOpen || !plan) return null;
 
@@ -53,24 +51,6 @@ export function PricingDetailModal({
         .catch(() => setSessCount(0));
     }
   }, [isOpen, plan?._id]);
-
-  // Determine if this is the newest active plan for its facility+vehicleType
-  const isNewest = useMemo(() => {
-    if (!isActive) return false;
-    const facId = typeof plan.facilityId === 'object' ? (plan.facilityId as any)._id : plan.facilityId;
-    const vtId = typeof plan.vehicleTypeId === 'object' ? (plan.vehicleTypeId as any)._id : plan.vehicleTypeId;
-    const siblings = allPlans.filter(p => {
-      if (p.status !== 'active') return false;
-      const pFac = typeof p.facilityId === 'object' ? (p.facilityId as any)._id : p.facilityId;
-      const pVt = typeof p.vehicleTypeId === 'object' ? (p.vehicleTypeId as any)._id : p.vehicleTypeId;
-      return pFac === facId && pVt === vtId;
-    });
-    if (siblings.length <= 1) return true;
-    const newest = siblings.reduce((a, b) => new Date(a.createdAt) > new Date(b.createdAt) ? a : b);
-    return newest._id === plan._id;
-  }, [plan, allPlans, isActive]);
-
-  const isLegacy = isActive && !isNewest;
 
   const vtId =
     typeof plan.vehicleTypeId === 'object' ? plan.vehicleTypeId?._id : plan.vehicleTypeId;
@@ -176,22 +156,6 @@ export function PricingDetailModal({
                       Thông tin chung
                     </p>
                     {(() => {
-                      if (isLegacy) {
-                        return (
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 border border-amber-200/60 shadow-sm">
-                              <Clock size={12} className="text-amber-500" />
-                              GIÁ CŨ
-                            </span>
-                            {sessCount > 0 && (
-                              <span className="text-[11px] font-medium text-amber-600">
-                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-1 align-middle" />
-                                {sessCount} xe · chờ ra bãi
-                              </span>
-                            )}
-                          </div>
-                        );
-                      }
                       if (isActive) {
                         return (
                           <div className="flex items-center gap-2">
@@ -209,10 +173,18 @@ export function PricingDetailModal({
                         );
                       }
                       return (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gray-50 text-gray-400 border border-gray-200/60">
-                          <PowerOff size={12} />
-                          VÔ HIỆU HÓA
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gray-50 text-gray-400 border border-gray-200/60">
+                            <PowerOff size={12} />
+                            VÔ HIỆU HÓA
+                          </span>
+                          {sessCount > 0 && (
+                            <span className="text-[11px] font-medium text-amber-600">
+                              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-1 align-middle" />
+                              {sessCount} xe · giá cũ
+                            </span>
+                          )}
+                        </div>
                       );
                     })()}
                   </div>
