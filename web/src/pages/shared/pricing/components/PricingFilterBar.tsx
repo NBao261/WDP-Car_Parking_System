@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, X, Search, ArrowUpDown } from 'lucide-react';
+import { ChevronDown, X, Search } from 'lucide-react';
 import { Facility } from '../../../../services/facility.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 
@@ -51,9 +51,9 @@ function DropFilter({
           display: 'flex',
           alignItems: 'center',
           padding: '0 26px 0 12px',
-          border: isOpen || active ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
-          boxShadow: isOpen ? '0 0 0 3px rgba(204,226,66,0.2)' : 'none',
-          color: active ? '#060606' : '#6b6e6b',
+          border: isOpen || active ? '1.5px solid #9FE870' : '1.5px solid #e2e3e2',
+          boxShadow: isOpen ? '0 0 0 3px rgba(159, 232, 112, 0.2)' : 'none',
+          color: active ? '#062F28' : '#6b6e6b',
           fontWeight: active ? 600 : 400,
           transition: 'all 0.2s ease',
           userSelect: 'none',
@@ -116,8 +116,8 @@ function DropFilter({
                 padding: '10px 14px',
                 fontSize: 14,
                 cursor: 'pointer',
-                color: value === o.value ? '#060606' : '#4a4a4a',
-                background: value === o.value ? '#f8fce2' : '#ffffff',
+                color: value === o.value ? '#062F28' : '#4a4a4a',
+                background: value === o.value ? '#f0fce4' : '#ffffff',
                 fontWeight: value === o.value ? 500 : 400,
                 display: 'flex',
                 alignItems: 'center',
@@ -157,10 +157,6 @@ interface PricingFilterBarProps {
   vehicleTypes: VehicleType[];
   filterFeeType: string;
   setFilterFeeType: (v: string) => void;
-  sortPrice: string;
-  setSortPrice: (v: string) => void;
-  sortDate: string;
-  setSortDate: (v: string) => void;
 }
 
 export function PricingFilterBar({
@@ -177,19 +173,13 @@ export function PricingFilterBar({
   vehicleTypes,
   filterFeeType,
   setFilterFeeType,
-  sortPrice,
-  setSortPrice,
-  sortDate,
-  setSortDate,
 }: PricingFilterBarProps) {
   const hasActiveFilters =
     filterStatus !== 'all' ||
     (!hideFacilityFilter && filterFacility !== 'all') ||
     search !== '' ||
     filterVehicleType !== 'all' ||
-    filterFeeType !== 'all' ||
-    sortPrice !== 'default' ||
-    sortDate !== 'default';
+    filterFeeType !== 'all';
 
   const clearFilters = () => {
     setFilterStatus('all');
@@ -197,8 +187,6 @@ export function PricingFilterBar({
     setSearch('');
     setFilterVehicleType('all');
     setFilterFeeType('all');
-    setSortPrice('default');
-    setSortDate('default');
   };
 
   return (
@@ -211,7 +199,7 @@ export function PricingFilterBar({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Tìm tên bảng giá..."
-          className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:border-transparent transition-all"
+          className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:border-transparent transition-all"
         />
       </div>
 
@@ -259,33 +247,6 @@ export function PricingFilterBar({
           ]}
         />
       )}
-
-      <>
-        <div className="h-6 w-px bg-gray-200 hidden lg:block mx-1" />
-        <span className="text-sm text-gray-500 font-medium shrink-0">Sắp xếp:</span>
-        <DropFilter
-          width={125}
-          value={sortPrice}
-          onChange={setSortPrice}
-          icon={ArrowUpDown}
-          options={[
-            { value: 'default', label: 'Đơn giá' },
-            { value: 'price_desc', label: 'Giá giảm dần' },
-            { value: 'price_asc', label: 'Giá tăng dần' },
-          ]}
-        />
-        <DropFilter
-          width={120}
-          value={sortDate}
-          onChange={setSortDate}
-          icon={ArrowUpDown}
-          options={[
-            { value: 'default', label: 'Ngày tạo' },
-            { value: 'created_desc', label: 'Mới nhất' },
-            { value: 'created_asc', label: 'Cũ nhất' },
-          ]}
-        />
-      </>
 
       {hasActiveFilters && (
         <button

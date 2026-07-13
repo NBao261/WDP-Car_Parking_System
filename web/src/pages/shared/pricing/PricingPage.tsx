@@ -46,6 +46,8 @@ export default function PricingPage() {
   const [planSearch, setPlanSearch] = useState('');
   const [planFilterVehicleType, setPlanFilterVehicleType] = useState('all');
   const [planFilterFeeType, setPlanFilterFeeType] = useState('all');
+  const [planSortName, setPlanSortName] = useState('default');
+  const [planSortVehicle, setPlanSortVehicle] = useState('default');
   const [planSortPrice, setPlanSortPrice] = useState('default');
   const [planSortDate, setPlanSortDate] = useState('default');
 
@@ -66,6 +68,8 @@ export default function PricingPage() {
     planSearch,
     planFilterVehicleType,
     planFilterFeeType,
+    planSortName,
+    planSortVehicle,
     planSortPrice,
     planSortDate,
     facilitySearch,
@@ -162,6 +166,16 @@ export default function PricingPage() {
   });
 
   const sortedPlans = [...displayed].sort((a, b) => {
+    if (planSortName !== 'default') {
+      const cmp = a.name.localeCompare(b.name, 'vi');
+      return planSortName === 'name_asc' ? cmp : -cmp;
+    }
+    if (planSortVehicle !== 'default') {
+      const vtNameA = typeof a.vehicleTypeId === 'object' ? a.vehicleTypeId?.name || '' : (vehicleTypes.find(v => v._id === a.vehicleTypeId)?.name || '');
+      const vtNameB = typeof b.vehicleTypeId === 'object' ? b.vehicleTypeId?.name || '' : (vehicleTypes.find(v => v._id === b.vehicleTypeId)?.name || '');
+      const cmp = vtNameA.localeCompare(vtNameB, 'vi');
+      return planSortVehicle === 'vt_asc' ? cmp : -cmp;
+    }
     if (planSortPrice !== 'default') {
       const priceA = a.rates && a.rates.length > 0 ? a.rates[0].amount : 0;
       const priceB = b.rates && b.rates.length > 0 ? b.rates[0].amount : 0;
@@ -269,7 +283,7 @@ export default function PricingPage() {
               setEditingPlan(undefined);
               setModalOpen(true);
             }}
-            className="bg-black text-white font-bold px-5 py-2.5 rounded-xl hover:bg-black/80 transition-colors flex items-center gap-2 shadow-sm"
+            className="bg-[#062F28] text-white font-bold px-5 py-2.5 rounded-xl hover:bg-[#062F28]/80 transition-colors flex items-center gap-2 shadow-sm"
           >
             <Plus size={20} /> Thêm Bảng Giá
           </button>
@@ -291,10 +305,6 @@ export default function PricingPage() {
           vehicleTypes={availableVehicleTypes}
           filterFeeType={planFilterFeeType}
           setFilterFeeType={setPlanFilterFeeType}
-          sortPrice={planSortPrice}
-          setSortPrice={setPlanSortPrice}
-          sortDate={planSortDate}
-          setSortDate={setPlanSortDate}
         />
       )}
 
@@ -480,7 +490,7 @@ export default function PricingPage() {
               setEditingPlan(undefined);
               setModalOpen(true);
             }}
-            className="mt-4 bg-black text-white font-bold px-5 py-2.5 rounded-xl hover:bg-black/80 transition-colors inline-flex items-center gap-2 shadow-sm"
+            className="mt-4 bg-[#062F28] text-white font-bold px-5 py-2.5 rounded-xl hover:bg-[#062F28]/80 transition-colors inline-flex items-center gap-2 shadow-sm"
           >
             <Plus size={16} /> Tạo bảng giá đầu tiên
           </button>
@@ -502,6 +512,14 @@ export default function PricingPage() {
             onRefresh={fetchAll}
             currentPage={currentPage}
             itemsPerPage={pageLimit}
+            sortName={planSortName}
+            setSortName={setPlanSortName}
+            sortVehicle={planSortVehicle}
+            setSortVehicle={setPlanSortVehicle}
+            sortPrice={planSortPrice}
+            setSortPrice={setPlanSortPrice}
+            sortDate={planSortDate}
+            setSortDate={setPlanSortDate}
           />
 
           <PricingPagination
@@ -554,7 +572,6 @@ export default function PricingPage() {
             plan={viewingPlan}
             facilities={facilities}
             vehicleTypes={vehicleTypes}
-            allPlans={plans}
           />
         )}
       </AnimatePresence>

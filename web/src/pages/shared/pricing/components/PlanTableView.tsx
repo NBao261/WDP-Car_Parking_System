@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Edit, PowerOff, CheckCircle2, Trash2, Car, MoreVertical, Clock } from 'lucide-react';
+import { Edit, PowerOff, CheckCircle2, Trash2, Car, MoreVertical, ArrowUpDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { pricingService, type PricingPlan } from '../../../../services/pricing.service';
@@ -19,6 +19,14 @@ interface PlanTableProps {
   onRefresh: () => void;
   currentPage?: number;
   itemsPerPage?: number;
+  sortName: string;
+  setSortName: (v: string) => void;
+  sortVehicle: string;
+  setSortVehicle: (v: string) => void;
+  sortPrice: string;
+  setSortPrice: (v: string) => void;
+  sortDate: string;
+  setSortDate: (v: string) => void;
 }
 
 export function PlanTableView({
@@ -29,7 +37,21 @@ export function PlanTableView({
   onRefresh,
   currentPage = 1,
   itemsPerPage = 10,
+  sortName,
+  setSortName,
+  sortVehicle,
+  setSortVehicle,
+  sortPrice,
+  setSortPrice,
+  sortDate,
+  setSortDate,
 }: PlanTableProps) {
+  const resetSorts = (...except: string[]) => {
+    if (!except.includes('name')) setSortName('default');
+    if (!except.includes('vehicle')) setSortVehicle('default');
+    if (!except.includes('price')) setSortPrice('default');
+    if (!except.includes('date')) setSortDate('default');
+  };
   const [loading, setLoading] = useState(false);
   const [deletePlan, setDeletePlan] = useState<PricingPlan | null>(null);
   const [sessionCounts, setSessionCounts] = useState<Record<string, number>>({});
@@ -84,20 +106,6 @@ export function PlanTableView({
     if (plans.length > 0) fetchCounts();
   }, [plans]);
 
-  // Xác định bảng giá MỚI NHẤT active cho mỗi nhóm facility+vehicleType
-  const newestActivePlanIds = useMemo(() => {
-    const groups: Record<string, PricingPlan> = {};
-    plans.forEach(p => {
-      if (p.status !== 'active') return;
-      const facId = typeof p.facilityId === 'object' ? (p.facilityId as any)._id : p.facilityId;
-      const vtId = typeof p.vehicleTypeId === 'object' ? (p.vehicleTypeId as any)._id : p.vehicleTypeId;
-      const key = `${facId}__${vtId}`;
-      if (!groups[key] || new Date(p.createdAt) > new Date(groups[key].createdAt)) {
-        groups[key] = p;
-      }
-    });
-    return new Set(Object.values(groups).map(p => p._id));
-  }, [plans]);
 
   const toggle = async (plan: PricingPlan, s: 'active' | 'inactive') => {
     setLoading(true);
@@ -147,18 +155,82 @@ export function PlanTableView({
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col relative">
-      <div className="w-full overflow-x-auto min-h-[160px]">
+      <div className="w-full min-h-[160px]">
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-[#f5f5f5] text-[#6b6b6b] text-[11px] uppercase font-semibold border-b border-[#e8e9e8]">
+          <thead className="bg-[#f5f5f5] text-[#6b6b6b] text-[13px] border-b border-[#e8e9e8] font-semibold uppercase tracking-wider">
             <tr>
-              <th className="px-4 py-3 text-center w-[50px] rounded-tl-2xl">STT</th>
-              <th className="px-4 py-3">Tên bảng giá</th>
-              <th className="px-4 py-3">Loại xe</th>
-              <th className="px-4 py-3">Loại giá</th>
-              <th className="px-4 py-3">Đơn giá cơ bản</th>
-              <th className="px-4 py-3">Phụ phí</th>
-              <th className="px-4 py-3 text-center">Trạng thái</th>
-              <th className="px-4 py-3 text-right rounded-tr-2xl">Thao tác</th>
+              <th className="px-3 py-4 text-center rounded-tl-2xl">STT</th>
+              <th
+                className="px-4 py-4 cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                onClick={() => {
+                  resetSorts('name');
+                  if (sortName === 'default') setSortName('name_asc');
+                  else if (sortName === 'name_asc') setSortName('name_desc');
+                  else setSortName('default');
+                }}
+              >
+                <span className="flex items-center gap-1.5">
+                  Tên bảng giá
+                  <ArrowUpDown size={13} className={sortName !== 'default' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  {sortName !== 'default' && (
+                    <span className="text-[10px] text-[#9FE870] font-bold">{sortName === 'name_asc' ? 'A-Z' : 'Z-A'}</span>
+                  )}
+                </span>
+              </th>
+              <th
+                className="px-4 py-4 cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                onClick={() => {
+                  resetSorts('vehicle');
+                  if (sortVehicle === 'default') setSortVehicle('vt_asc');
+                  else if (sortVehicle === 'vt_asc') setSortVehicle('vt_desc');
+                  else setSortVehicle('default');
+                }}
+              >
+                <span className="flex items-center gap-1.5">
+                  Loại xe
+                  <ArrowUpDown size={13} className={sortVehicle !== 'default' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  {sortVehicle !== 'default' && (
+                    <span className="text-[10px] text-[#9FE870] font-bold">{sortVehicle === 'vt_asc' ? 'A-Z' : 'Z-A'}</span>
+                  )}
+                </span>
+              </th>
+              <th className="px-4 py-4">Loại giá</th>
+              <th
+                className="px-4 py-4 cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                onClick={() => {
+                  resetSorts('price');
+                  if (sortPrice === 'default') setSortPrice('price_desc');
+                  else if (sortPrice === 'price_desc') setSortPrice('price_asc');
+                  else setSortPrice('default');
+                }}
+              >
+                <span className="flex items-center gap-1.5">
+                  Đơn giá cơ bản
+                  <ArrowUpDown size={13} className={sortPrice !== 'default' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  {sortPrice !== 'default' && (
+                    <span className="text-[10px] text-[#9FE870] font-bold">{sortPrice === 'price_desc' ? '↓ Cao' : '↑ Thấp'}</span>
+                  )}
+                </span>
+              </th>
+              <th className="px-4 py-4">Phụ phí</th>
+              <th className="px-4 py-4 text-center">Trạng thái</th>
+              <th
+                className="px-4 py-4 text-right rounded-tr-2xl cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                onClick={() => {
+                  resetSorts('date');
+                  if (sortDate === 'default') setSortDate('created_desc');
+                  else if (sortDate === 'created_desc') setSortDate('created_asc');
+                  else setSortDate('default');
+                }}
+              >
+                <span className="flex items-center justify-end gap-1.5">
+                  Thao tác
+                  <ArrowUpDown size={13} className={sortDate !== 'default' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  {sortDate !== 'default' && (
+                    <span className="text-[10px] text-[#9FE870] font-bold">{sortDate === 'created_desc' ? '↓ Mới' : '↑ Cũ'}</span>
+                  )}
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -187,11 +259,11 @@ export function PlanTableView({
                   onClick={() => onViewDetail(plan)}
                   className={`hover:bg-[#9FE870]/10 transition-colors cursor-pointer border-b border-gray-50 last:border-0 ${!isActive ? 'opacity-75 bg-gray-50/50' : ''}`}
                 >
-                  <td className="px-4 py-4 text-[#6b6b6b] text-[13px] text-center font-medium truncate">
+                  <td className="px-4 py-4 text-[#6b6b6b] text-sm text-center font-medium truncate">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </td>
                   <td
-                    className="px-4 py-4 font-bold text-[14px] text-[#062F28] max-w-[200px] truncate"
+                    className="px-4 py-4 font-bold text-[15px] text-[#062F28] max-w-[200px] truncate"
                     title={plan.name}
                   >
                     {plan.name}
@@ -202,7 +274,7 @@ export function PlanTableView({
                       const colorTheme = getVehicleColorTheme(vtObj?.code, vtObj?.icon);
                       return (
                         <span
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[12px] font-semibold rounded-lg"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 text-[13px] font-semibold rounded-lg"
                           style={{ background: colorTheme.bg, color: colorTheme.text }}
                         >
                           <VtIcon size={14} color={colorTheme.text} strokeWidth={2} /> {vtName}
@@ -211,17 +283,17 @@ export function PlanTableView({
                     })()}
                   </td>
                   <td className="px-4 py-4">
-                    <span className="text-[#6b6b6b] text-[13px] font-medium">
+                    <span className="text-[#6b6b6b] text-sm font-medium">
                       {FEE_TYPE_LABELS[uiFeeType] ?? plan.feeType}
                     </span>
                   </td>
                   <td className="px-4 py-4">
                     {baseRate ? (
                       <div className="whitespace-nowrap">
-                        <span className="font-bold text-[#062F28] text-[14px]">
+                        <span className="font-bold text-[#062F28] text-[15px]">
                           {fmt(baseRate.amount)}
                         </span>
-                        <span className="text-[#6b6b6b] text-[12px] ml-1">
+                        <span className="text-[#6b6b6b] text-[13px] ml-1">
                           /{translateUnit(baseRate.unit)}
                         </span>
                       </div>
@@ -229,7 +301,7 @@ export function PlanTableView({
                       <span className="text-gray-400">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-4 text-[12px] text-[#6b6b6b]">
+                  <td className="px-4 py-4 text-[13px] text-[#6b6b6b]">
                     <div className="flex flex-col gap-0.5 whitespace-nowrap">
                       {plan.overnightFee > 0 && (
                         <span>
@@ -261,28 +333,6 @@ export function PlanTableView({
                   <td className="px-4 py-4 text-center">
                     {(() => {
                       const sessCount = sessionCounts[plan._id] ?? 0;
-                      const isNewest = newestActivePlanIds.has(plan._id);
-                      const isLegacy = isActive && !isNewest;
-
-                      if (isLegacy) {
-                        return (
-                          <div className="flex flex-col items-center gap-1.5">
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 border border-amber-200/60 shadow-sm">
-                              <Clock size={12} className="text-amber-500" />
-                              GIÁ CŨ
-                            </span>
-                            {sessCount > 0 && (
-                              <span className="text-[10px] font-medium text-amber-600">
-                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-1 align-middle" />
-                                {sessCount} xe · chờ ra bãi
-                              </span>
-                            )}
-                            {sessCount === 0 && (
-                              <span className="text-[10px] text-gray-400 italic">Tự vô hiệu hóa</span>
-                            )}
-                          </div>
-                        );
-                      }
 
                       if (isActive) {
                         return (
@@ -303,10 +353,18 @@ export function PlanTableView({
 
                       // Inactive
                       return (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gray-50 text-gray-400 border border-gray-200/60">
-                          <PowerOff size={12} />
-                          VÔ HIỆU HÓA
-                        </span>
+                        <div className="flex flex-col items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gray-50 text-gray-400 border border-gray-200/60">
+                            <PowerOff size={12} />
+                            VÔ HIỆU HÓA
+                          </span>
+                          {sessCount > 0 && (
+                            <span className="text-[10px] font-medium text-amber-600">
+                              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-1 align-middle" />
+                              {sessCount} xe · giá cũ
+                            </span>
+                          )}
+                        </div>
                       );
                     })()}
                   </td>
