@@ -10,6 +10,11 @@ export interface Facility {
   closeTime: string;
   description: string;
   images: string[];
+  // GeoJSON Point — coordinates: [longitude, latitude]
+  location?: {
+    type: string;
+    coordinates: [number, number]; // [lng, lat]
+  };
   status: 'active' | 'inactive';
   isDeleted: boolean;
   createdAt: string;
@@ -39,6 +44,8 @@ export interface CreateFacilityPayload {
   openTime: string;
   closeTime: string;
   description?: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface UpdateFacilityPayload {
@@ -49,6 +56,8 @@ export interface UpdateFacilityPayload {
   closeTime?: string;
   description?: string;
   status?: 'active' | 'inactive';
+  latitude?: number;
+  longitude?: number;
 }
 
 export const facilityService = {
