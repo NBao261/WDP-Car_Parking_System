@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, DollarSign, Building2, MapPin, ArrowLeft, FileText, Clock } from 'lucide-react';
+import { Plus, DollarSign, Building2, MapPin, ArrowLeft, FileText, Clock, Layers } from 'lucide-react';
 
 import { facilityService, type Facility } from '../../../services/facility.service';
 import { floorService, type Floor } from '../../../services/floor.service';
@@ -369,14 +369,13 @@ export default function PricingPage() {
                   }}
                 >
                   <div className="px-5 pt-4 pb-3">
-                    <div className="flex gap-3 mb-4">
+                               <div className="flex items-start gap-4 mb-3">
                       {/* Icon */}
                       <div
-                        className="self-center"
                         style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 12,
+                          width: 56,
+                          height: 56,
+                          borderRadius: 16,
                           background: '#ffffff',
                           border: '1.5px solid #f0f0f0',
                           display: 'flex',
@@ -387,55 +386,60 @@ export default function PricingPage() {
                       >
                         <Building2 size={24} style={{ color: '#9FE870' }} />
                       </div>
-                      {/* Text */}
+                      
+                      {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
                           <h3
                             className="text-[15px] font-bold text-[#062F28] truncate"
                             title={fac.name}
                           >
                             {fac.name}
                           </h3>
-                        </div>
-                        <div
-                          className="flex flex-col gap-1 mt-1.5 min-w-0"
-                          style={{ color: '#7B7B7B' }}
-                        >
-                          <div className="flex items-center gap-1.5 text-[13px]">
-                            <MapPin size={12} className="shrink-0" />
-                            <span className="truncate uppercase tracking-wide" title={fac.address}>
-                              {fac.address}
+                          <div className="flex-shrink-0">
+                            <span
+                              style={{
+                                fontSize: 10,
+                                padding: '3px 10px',
+                                borderRadius: 20,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 5,
+                                ...badgeStyle,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: 6,
+                                  height: 6,
+                                  borderRadius: '50%',
+                                  background: isActive ? '#82C94E' : (fac as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
+                                }}
+                              />
+                              {isActive ? 'HOẠT ĐỘNG' : (fac as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-[14px] text-gray-500 font-medium">
-                            <Clock size={15} className="text-gray-400" /> Thời gian hoạt động: {fac.openTime} - {fac.closeTime}
-                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[13px] text-[#7B7B7B]">
+                          <MapPin size={12} className="shrink-0" />
+                          <span className="truncate uppercase tracking-wide" title={fac.address}>
+                            {fac.address}
+                          </span>
                         </div>
                       </div>
-                      {/* Badge */}
-                      <div className="flex-shrink-0">
-                        <span
-                          style={{
-                            fontSize: 10,
-                            padding: '3px 10px',
-                            borderRadius: 20,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 5,
-                            ...badgeStyle,
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: '50%',
-                              background: isActive ? '#82C94E' : (fac as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
-                            }}
-                          />
-                          {isActive ? 'HOẠT ĐỘNG' : (fac as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
+                    </div>
+
+                    {/* Meta row */}
+                    <div className="flex items-center gap-4 text-[13px] text-gray-500 font-medium mb-4">
+                      <span className="flex items-center gap-1.5">
+                        <Layers size={13} className="text-gray-400 shrink-0" /> {fac.totalFloors || 0} tầng
+                      </span>
+                      <span className="flex items-center gap-1.5 min-w-0">
+                        <Clock size={13} className="text-gray-400 shrink-0" />
+                        <span className="truncate" title={`Thời gian hoạt động: ${fac.openTime} - ${fac.closeTime}`}>
+                          Thời gian hoạt động: {fac.openTime} - {fac.closeTime}
                         </span>
-                      </div>
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2">
