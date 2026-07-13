@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Car,
-  TrendingUp,
-  ParkingSquare,
   Clock,
   Download,
   Loader2,
-  ChevronDown,
   FileSpreadsheet,
+  ArrowUpRight,
+  ArrowDownRight,
 } from 'lucide-react';
 import { userService } from '../../services/user.service';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -20,11 +18,14 @@ import {
   OccupancyReportData,
   PeakHoursReportData,
 } from '../../services/report.service';
+import { vehicleTypeService, VehicleType } from '../../services/vehicleType.service';
 import { toast } from 'sonner';
 
 import { FacilityListWidget } from './components/FacilityListWidget';
-import { DashboardCharts } from './components/DashboardCharts';
-import { OccupancyDonutWidget } from './components/OccupancyDonutWidget';
+import { TrafficChartWidget } from './components/DashboardCharts';
+import { TabbedInsightWidget } from './components/TabbedInsightWidget';
+import { OccupancyHorizontalBar } from './components/OccupancyHorizontalBar';
+import { AuditLogWidget } from './components/AuditLogWidget';
 import { AIChatWidget } from './components/AIChatWidget';
 import { CustomDropdown } from '../../components/ui/CustomDropdown';
 
@@ -67,38 +68,16 @@ const TIME_LABELS: Record<string, string> = {
   year: 'Năm nay',
 };
 
-/* ── Quick Stat Card ─────────────────────────────────────── */
-
-interface StatCardProps {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  iconBg: string;
-  loading: boolean;
-}
-
-function StatCard({ label, value, icon, iconBg, loading }: StatCardProps) {
-  return (
-    <div className="group bg-white rounded-2xl border border-[#e5e7eb] p-5 flex items-center gap-4 relative overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
-      {/* tonal circle decoration */}
-      <div className={`absolute -right-3 -top-3 w-14 h-14 rounded-full opacity-20 ${iconBg}`} />
-      <div
-        className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 z-10 ${iconBg}`}
-      >
-        {icon}
-      </div>
-      <div className="z-10 min-w-0">
-        <p className="text-[13px] text-[#6b7280] font-medium truncate">{label}</p>
-        <p className="text-[36px] leading-tight font-bold text-[#1a1a1a] tracking-tight">
-          {loading ? (
-            <Loader2 size={20} className="animate-spin mt-2" style={{ color: '#d7ee46' }} />
-          ) : (
-            value
-          )}
-        </p>
-      </div>
-    </div>
-  );
+/**
+ * Auto-scale font size so any VND value from 1.000 to 1.000.000.000 fits in one card.
+ * Returns a font size class string.
+ */
+function getRevenueFontSize(value: number): string {
+  const formatted = value.toLocaleString('vi-VN');
+  const len = formatted.length; // e.g. "1.000.000.000" = 13 chars
+  if (len <= 7) return 'text-[32px] xl:text-[36px]'; // up to 1.000.000
+  if (len <= 11) return 'text-[26px] xl:text-[30px]'; // up to 100.000.000
+  return 'text-[22px] xl:text-[26px]'; // 1.000.000.000+
 }
 
 /* ── Main Dashboard ──────────────────────────────────────── */
@@ -115,6 +94,7 @@ export default function ManagerDashboard() {
   const [revenueData, setRevenueData] = useState<RevenueReportData | null>(null);
   const [occupancyData, setOccupancyData] = useState<OccupancyReportData | null>(null);
   const [peakHoursData, setPeakHoursData] = useState<PeakHoursReportData | null>(null);
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -135,16 +115,18 @@ export default function ManagerDashboard() {
     const { startDate, endDate, groupBy } = getDateRange(timeFilter);
     const facilityId = facilityFilter !== 'all' ? facilityFilter : undefined;
     try {
-      const [trafficRes, revenueRes, occupancyRes, peakRes] = await Promise.allSettled([
+      const [trafficRes, revenueRes, occupancyRes, peakRes, vehicleTypesRes] = await Promise.allSettled([
         reportService.getTrafficReport({ startDate, endDate, groupBy, facilityId }),
         reportService.getRevenueReport({ startDate, endDate, groupBy, facilityId }),
         reportService.getOccupancyReport({ facilityId }),
         reportService.getPeakHoursReport({ startDate, endDate, facilityId }),
+        vehicleTypeService.getAll({ limit: 100 }),
       ]);
       setTrafficData(trafficRes.status === 'fulfilled' ? trafficRes.value.data : null);
       setRevenueData(revenueRes.status === 'fulfilled' ? revenueRes.value.data : null);
       setOccupancyData(occupancyRes.status === 'fulfilled' ? occupancyRes.value.data : null);
       setPeakHoursData(peakRes.status === 'fulfilled' ? peakRes.value.data : null);
+      setVehicleTypes(vehicleTypesRes.status === 'fulfilled' ? vehicleTypesRes.value.data : []);
     } catch (err) {
       console.error('Failed to fetch dashboard data', err);
     } finally {
@@ -192,17 +174,18 @@ export default function ManagerDashboard() {
   };
 
   /* ── Computed values ── */
-  const totalTraffic = trafficData
-    ? (trafficData.summary.totalCheckIn + trafficData.summary.totalCheckOut).toLocaleString('vi-VN')
-    : '--';
-  const totalRevenue = revenueData
-    ? revenueData.summary.grandTotal.toLocaleString('vi-VN') + 'đ'
-    : '--';
-  const occupancyRate = occupancyData ? occupancyData.summary.overallOccupancyRate + '%' : '--';
-  // Lấy số xe đang đỗ thực tế từ occupancy (real-time) thay vì ước tính từ traffic
-  const currentlyParked = occupancyData
-    ? occupancyData.summary.totalOccupied.toLocaleString('vi-VN')
-    : '--';
+  const totalCheckIn = trafficData?.summary.totalCheckIn ?? 0;
+  const totalCheckOut = trafficData?.summary.totalCheckOut ?? 0;
+  const grandTotal = revenueData?.summary.grandTotal ?? 0;
+  const occupancyRate = occupancyData?.summary.overallOccupancyRate ?? 0;
+
+  // Lấy số xe đang đỗ thực tế từ occupancy (real-time)
+  const currentlyParked = occupancyData?.summary.totalOccupied ?? 0;
+
+  let occupancyStatus = 'Trống';
+  if (occupancyRate > 90) occupancyStatus = 'Quá tải';
+  else if (occupancyRate > 70) occupancyStatus = 'Khá đông';
+  else if (occupancyRate > 40) occupancyStatus = 'Bình thường';
 
   /* ── Render ── */
   return (
@@ -249,7 +232,7 @@ export default function ManagerDashboard() {
             <button
               onClick={() => handleExport('pdf')}
               disabled={exporting || loading}
-              className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[#d7ee46] text-[#060606] border-none text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[#a6e676] text-[#132c20] border-none text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {exporting ? <Loader2 size={17} className="animate-spin" /> : <Download size={17} />}
               PDF
@@ -258,60 +241,161 @@ export default function ManagerDashboard() {
         </div>
       </header>
 
-      {/* ═══ CONTENT ═══ */}
+      {/* ═══ CONTENT — 4 ROWS ═══ */}
       <div className="space-y-4">
-        {/* ── Quick Stats Row ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <StatCard
-            label="Lượt ra/vào"
-            value={totalTraffic}
-            icon={<Car size={22} className="text-[#060606]" />}
-            iconBg="bg-[#d7ee46]"
-            loading={loading}
-          />
-          <StatCard
-            label="Doanh thu"
-            value={totalRevenue}
-            icon={<TrendingUp size={22} className="text-white" />}
-            iconBg="bg-[#22c55e]"
-            loading={loading}
-          />
-          <StatCard
-            label="Tỷ lệ lấp đầy"
-            value={occupancyRate}
-            icon={<ParkingSquare size={22} className="text-white" />}
-            iconBg="bg-[#3b82f6]"
-            loading={loading}
-          />
-          <StatCard
-            label="Xe đang gửi"
-            value={currentlyParked}
-            icon={<Clock size={22} className="text-white" />}
-            iconBg="bg-[#f97316]"
-            loading={loading}
-          />
+
+        {/* ━━━ ROW 1: KPI Cards ━━━ */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Card 1: Tổng doanh thu (green gradient) */}
+          <div className="md:col-span-1 relative overflow-hidden bg-gradient-to-br from-[#9ee671] to-[#72d645] rounded-xl p-5 text-black flex flex-col justify-between h-[160px] shadow-sm">
+            {/* Background minimal organic crescents */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <svg viewBox="0 0 400 160" preserveAspectRatio="none" className="w-full h-full">
+                {/* Right huge crescents */}
+                <path
+                  d="M 120 160 Q 280 -20 440 160 Q 280 40 120 160 Z"
+                  fill="rgba(255,255,255,0.2)"
+                />
+                <path
+                  d="M 150 160 Q 280 -40 410 160 Q 280 20 150 160 Z"
+                  fill="rgba(255,255,255,0.1)"
+                />
+                
+                {/* Left crescents */}
+                <path
+                  d="M -20 160 Q 80 40 180 160 Q 80 90 -20 160 Z"
+                  fill="rgba(255,255,255,0.15)"
+                />
+                <path
+                  d="M -40 160 Q 60 20 160 160 Q 60 70 -40 160 Z"
+                  fill="rgba(255,255,255,0.05)"
+                />
+              </svg>
+            </div>
+
+            <div className="relative z-10">
+              <div className="text-[14px] font-medium text-[#1a2e22]/80">Tổng doanh thu</div>
+            </div>
+
+            <div className="relative z-10">
+              <div className="flex items-baseline gap-1.5 text-[#0a1a12]">
+                <div className={`font-bold leading-none tracking-tight tabular-nums ${loading ? '' : getRevenueFontSize(grandTotal)}`}>
+                  {loading ? (
+                    <Loader2 size={28} className="animate-spin" />
+                  ) : (
+                    grandTotal.toLocaleString('vi-VN')
+                  )}
+                </div>
+                {!loading && grandTotal > 0 && (
+                  <div className="text-[14px] font-medium opacity-70">đ</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Activity Stats (Vào / Ra / Đang gửi) */}
+          <div className="md:col-span-2 bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col h-[160px] overflow-hidden">
+            <div className="text-[14px] font-bold text-gray-900 mb-3">Thống kê hoạt động</div>
+            <div className="flex gap-3 flex-1 min-h-0">
+              {/* Check-in */}
+              <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-md bg-[#f0f9eb] border border-gray-100 shadow-sm flex items-center justify-center text-[#72d645]">
+                    <ArrowDownRight size={14} />
+                  </div>
+                  <span className="text-[12px] text-gray-500 font-medium">Xe vào</span>
+                </div>
+                <div className="text-[24px] font-bold text-gray-900 leading-none tabular-nums truncate">
+                  {loading ? <Loader2 size={20} className="animate-spin" /> : totalCheckIn.toLocaleString('vi-VN')}
+                </div>
+              </div>
+
+              {/* Check-out */}
+              <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-md bg-[#f0f9eb] border border-gray-100 shadow-sm flex items-center justify-center text-[#72d645]">
+                    <ArrowUpRight size={14} />
+                  </div>
+                  <span className="text-[12px] text-gray-500 font-medium">Xe ra</span>
+                </div>
+                <div className="text-[24px] font-bold text-gray-900 leading-none tabular-nums truncate">
+                  {loading ? <Loader2 size={20} className="animate-spin" /> : totalCheckOut.toLocaleString('vi-VN')}
+                </div>
+              </div>
+
+              {/* Currently parked */}
+              <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-md bg-[#f0f9eb] border border-gray-100 shadow-sm flex items-center justify-center text-[#72d645]">
+                    <Clock size={14} />
+                  </div>
+                  <span className="text-[12px] text-gray-500 font-medium">Đang gửi</span>
+                </div>
+                <div className="text-[24px] font-bold text-gray-900 leading-none tabular-nums truncate">
+                  {loading ? <Loader2 size={20} className="animate-spin" /> : currentlyParked.toLocaleString('vi-VN')}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Tỷ lệ lấp đầy */}
+          <div className="md:col-span-1 bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between h-[160px] overflow-hidden">
+            <div className="text-[14px] font-bold text-gray-900">Tỷ lệ lấp đầy</div>
+
+            <div>
+              <div className="text-[12px] text-gray-400 font-medium mb-1">Trạng thái bãi đỗ</div>
+              <div className="flex justify-between items-end mb-3">
+                <div className="text-[22px] font-bold text-[#0a2012] tracking-tight truncate">
+                  {loading ? <Loader2 size={20} className="animate-spin" /> : occupancyStatus}
+                </div>
+                <div className="text-[24px] font-semibold text-gray-700 tabular-nums">
+                  {loading ? '' : `${occupancyRate}%`}
+                </div>
+              </div>
+
+              <div className="flex h-4 rounded-md overflow-hidden bg-[#a6e676] opacity-90">
+                <div
+                  className="bg-[#132c20] h-full transition-all duration-500"
+                  style={{ width: loading ? '0%' : `${occupancyRate}%` }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* ── Main Grid: 2/3 + 1/3 ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left 2/3 */}
-          <div className="lg:col-span-2">
-            <DashboardCharts
-              trafficData={trafficData}
+        {/* ━━━ ROW 2: Visual Insights ━━━ */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-7">
+            <TrafficChartWidget trafficData={trafficData} peakHoursData={peakHoursData} loading={loading} />
+          </div>
+          <div className="lg:col-span-5">
+            <TabbedInsightWidget
+              vehicleTypes={vehicleTypes}
               revenueData={revenueData}
-              peakHoursData={peakHoursData}
               occupancyData={occupancyData}
+              facilityFilter={facilityFilter}
               loading={loading}
             />
           </div>
+        </div>
 
-          {/* Right 1/3 */}
-          <div className="flex flex-col gap-4">
-            <OccupancyDonutWidget occupancyData={occupancyData} />
-            <div className="flex-1 min-h-0">
-              <FacilityListWidget managerFacilities={managerFacilities} staffList={staffList} />
-            </div>
+        {/* ━━━ ROW 3: Operational Details ━━━ */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-6">
+            <FacilityListWidget
+              managerFacilities={managerFacilities}
+              staffList={staffList}
+              revenueData={revenueData}
+            />
           </div>
+          <div className="lg:col-span-6">
+            <OccupancyHorizontalBar occupancyData={occupancyData} loading={loading} />
+          </div>
+        </div>
+
+        {/* ━━━ ROW 4: Audit Logs ━━━ */}
+        <div className="pb-8">
+          <AuditLogWidget />
         </div>
       </div>
 

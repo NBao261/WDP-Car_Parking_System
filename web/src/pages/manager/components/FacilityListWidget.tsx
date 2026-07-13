@@ -1,103 +1,155 @@
-import { Building2, Users } from 'lucide-react';
+import { Building2, Users, ArrowUpDown } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, AssignedFacility } from '../../../types/user.types';
+import { RevenueReportData } from '../../../services/report.service';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '../../../components/ui/table';
 
 interface FacilityListWidgetProps {
   managerFacilities: AssignedFacility[];
   staffList: User[];
+  revenueData: RevenueReportData | null;
 }
 
-export function FacilityListWidget({ managerFacilities, staffList }: FacilityListWidgetProps) {
+export function FacilityListWidget({ managerFacilities, staffList, revenueData }: FacilityListWidgetProps) {
   const navigate = useNavigate();
+  const [sortAsc, setSortAsc] = useState(false);
 
   // Preload FacilitiesPage khi hover để giảm delay khi click
   const preloadFacilities = () => {
     import('../../shared/facilities/FacilitiesPage');
   };
 
+  // Build facility data with revenue
+  const facilityRows = useMemo(() => {
+    const rows = managerFacilities.map((facility) => {
+      const staffCount = staffList.filter((s) =>
+        s.assignedFacilities?.some(
+          (f: any) => (typeof f === 'string' ? f : (f as AssignedFacility)._id) === facility._id
+        )
+      ).length;
+
+      // Try to compute revenue for this facility from byTimePeriod
+      // Since revenue API doesn't break down by facility in byTimePeriod,
+      // we use a simple heuristic: if there's only one facility, use grandTotal
+      // Otherwise, show '--'
+      let revenue = 0;
+      if (revenueData && managerFacilities.length === 1) {
+        revenue = revenueData.summary.grandTotal;
+      }
+
+      return {
+        ...facility,
+        staffCount,
+        revenue,
+      };
+    });
+
+    // Sort by revenue (descending by default)
+    return rows.sort((a, b) => (sortAsc ? a.revenue - b.revenue : b.revenue - a.revenue));
+  }, [managerFacilities, staffList, revenueData, sortAsc]);
+
   return (
     <div
-      className="bg-white rounded-2xl border border-[#e5e7eb] p-5 h-full flex flex-col"
+      className="bg-white rounded-xl border border-gray-100 shadow-sm h-[400px] flex flex-col overflow-hidden"
       onMouseEnter={preloadFacilities}
     >
-      <h2 className="text-[14px] font-semibold text-[#1a1a1a] mb-3">Danh sách tòa nhà bạn quản lý ({managerFacilities.length})</h2>
-
-      <div className="overflow-y-auto -mr-2 pr-2 facility-list-scroll max-h-[180px]">
-        {managerFacilities.length === 0 ? (
-          <div className="text-center text-[#6b7280] py-8">
-            <Building2 className="w-6 h-6 mx-auto mb-1 text-[#d7ee46]" />
-            <p className="text-[13px]">Chưa có tòa nhà nào.</p>
-          </div>
-        ) : (
-          <div className="space-y-0">
-            {managerFacilities.map((facility, idx) => {
-              const staffCount = staffList.filter((s) =>
-                s.assignedFacilities?.some(
-                  (f: any) =>
-                    (typeof f === 'string' ? f : (f as AssignedFacility)._id) === facility._id
-                )
-              ).length;
-
-              return (
-                <div key={facility._id}>
-                  <div
-                    className="flex items-center justify-between py-3 px-2 rounded-lg group cursor-pointer transition-all duration-150 hover:bg-[#f9f9f7] hover:border-l-2 hover:border-l-[#d7ee46] hover:pl-3"
-                    onClick={() => navigate('/manager/facilities', { state: { selectedFacilityId: facility._id } })}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: 'rgba(204,226,66,0.15)' }}
-                      >
-                        <Building2 size={14} style={{ color: '#4a7c20' }} />
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="text-[14px] font-bold text-[#1a1a1a] truncate">
-                          {facility.name}
-                        </h3>
-                        <p className="text-[12px] text-[#6b7280]">
-                          {facility.openTime} – {facility.closeTime}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="flex items-center gap-1 text-[12px] text-[#6b7280]">
-                        <Users size={12} />
-                        <span>{staffCount}</span>
-                      </div>
-                      <span
-                        className={`text-[9px] font-bold px-2 py-0.5 rounded-[6px] uppercase tracking-wider ${
-                          facility.status === 'active'
-                            ? 'bg-[#d7ee46] text-[#060606]'
-                            : 'bg-[#f3f4f6] text-[#9ca3af]'
-                        }`}
-                      >
-                        {facility.status === 'active' ? 'Hoạt động' : 'Ngừng'}
-                      </span>
-                    </div>
-                  </div>
-                  {idx < managerFacilities.length - 1 && (
-                    <div className="border-b border-[#f0f0f0] mx-2" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+      <div className="px-5 pt-5 pb-3 flex-shrink-0">
+        <h2 className="text-[16px] font-bold text-gray-900">
+          Danh sách tòa nhà ({managerFacilities.length})
+        </h2>
+        <p className="text-[12px] text-gray-400 mt-0.5">Sắp xếp theo doanh thu</p>
       </div>
 
-      <style>{`
-        .facility-list-scroll::-webkit-scrollbar {
-          width: 4px;
-        }
-        .facility-list-scroll::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .facility-list-scroll::-webkit-scrollbar-thumb {
-          background-color: #e5e7eb;
-          border-radius: 10px;
-        }
-      `}</style>
+      <div className="flex-1 overflow-auto px-3 min-h-0">
+        {managerFacilities.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full gap-2">
+            <Building2 className="w-6 h-6 text-[#86cd3d]" />
+            <p className="text-[13px] text-gray-400">Chưa có tòa nhà nào</p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-[12px] py-2 px-3 w-[40px]">#</TableHead>
+                <TableHead className="text-[12px] py-2 px-3">Tòa nhà</TableHead>
+                <TableHead className="text-[12px] py-2 px-3 text-center">NV</TableHead>
+                <TableHead className="text-[12px] py-2 px-3 text-center">Trạng thái</TableHead>
+                <TableHead className="text-[12px] py-2 px-3 text-right">
+                  <button
+                    onClick={() => setSortAsc(!sortAsc)}
+                    className="inline-flex items-center gap-1 hover:text-gray-900 transition-colors"
+                  >
+                    Doanh thu
+                    <ArrowUpDown size={12} />
+                  </button>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {facilityRows.map((facility, idx) => (
+                <TableRow
+                  key={facility._id}
+                  className="cursor-pointer group"
+                  onClick={() =>
+                    navigate('/manager/facilities', { state: { selectedFacilityId: facility._id } })
+                  }
+                >
+                  <TableCell className="text-[12px] py-2.5 px-3 text-gray-400 tabular-nums">
+                    {idx + 1}
+                  </TableCell>
+                  <TableCell className="text-[12px] py-2.5 px-3">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ background: 'rgba(134,205,61,0.15)' }}
+                      >
+                        <Building2 size={13} style={{ color: '#0a2012' }} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-gray-800 truncate max-w-[140px]">
+                          {facility.name}
+                        </div>
+                        <div className="text-[11px] text-gray-400">
+                          {facility.openTime} – {facility.closeTime}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-[12px] py-2.5 px-3 text-center">
+                    <div className="flex items-center justify-center gap-1 text-gray-500">
+                      <Users size={12} />
+                      <span className="tabular-nums">{facility.staffCount}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-[12px] py-2.5 px-3 text-center">
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${facility.status === 'active'
+                          ? 'bg-[#86cd3d]/15 text-[#3d6b11]'
+                          : 'bg-gray-100 text-gray-400'
+                        }`}
+                    >
+                      {facility.status === 'active' ? 'Hoạt động' : 'Ngừng'}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-[12px] py-2.5 px-3 text-right font-semibold text-gray-800 tabular-nums whitespace-nowrap">
+                    {facility.revenue > 0
+                      ? `${facility.revenue.toLocaleString('vi-VN')} đ`
+                      : '--'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
     </div>
   );
 }
