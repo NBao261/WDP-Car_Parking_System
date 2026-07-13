@@ -1,533 +1,1163 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  RefreshControl, ActivityIndicator, Platform, Image,
+  View, Text, StyleSheet, TouchableOpacity, Animated,
+  Dimensions, Platform, Linking, TextInput, ActivityIndicator,
+  StatusBar, Keyboard, FlatList,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import MapView, { Marker, Region, PROVIDER_GOOGLE } from 'react-native-maps';
+import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../src/constants/theme';
-import { useAuthStore } from '../../src/store/useAuthStore';
-import { sessionApi, reservationApi } from '../../src/services/api';
+import { Colors, Typography } from '../../src/constants/theme';
+import { api } from '../../src/services/api';
 
-function getInitials(name?: string) {
-  if (!name) return 'U';
-  return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+// ─── Constants ────────────────────────────────────────
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const BOTTOM_SHEET_HEIGHT = 280;
+const ASPECT_RATIO = SCREEN_WIDTH / SCREEN_HEIGHT;
+
+// Modern UI colors — high contrast & accessibility
+const UI = {
+  textDark: '#2B2E27',
+  textMedium: '#4A4A4A',
+  textLight: '#6B7260',
+  textMuted: '#9EA894',
+  cardBg: '#FFFFFF',
+  searchBg: '#FFFFFF',
+  shadow: '#1A3A0A',
+  accentGreen: '#7DB83A',
+  accentGreenDark: '#5E8F25',
+  accentGreenLight: '#A8D164',
+};
+
+// Default region: Quận 1, TP.HCM
+const INITIAL_REGION: Region = {
+  latitude: 10.7769,
+  longitude: 106.7009,
+  latitudeDelta: 0.035,
+  longitudeDelta: 0.035 * ASPECT_RATIO,
+};
+
+// ─── Types ────────────────────────────────────────────
+interface ParkingLot {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  totalSlots: number;
+  availableSlots: number;
+  openTime: string;
+  closeTime: string;
+  distance?: string;
 }
 
-function ElapsedTimer({ checkInTime }: { checkInTime: string }) {
-  const [elapsed, setElapsed] = useState('');
-  useEffect(() => {
-    const update = () => {
-      const diff = Date.now() - new Date(checkInTime).getTime();
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      setElapsed(`${h}h ${m}m`);
-    };
-    update();
-    const interval = setInterval(update, 60000);
-    return () => clearInterval(interval);
-  }, [checkInTime]);
-  return <Text style={styles.timerValue}>{elapsed}</Text>;
-}
+// ═══════════════════════════════════════════════════════
 
-export default function HomeScreen() {
-  const { user } = useAuthStore();
-  const router = useRouter();
-  const [refreshing, setRefreshing] = useState(false);
-  const [stats, setStats] = useState({ active: 0, completed: 0, reserved: 0 });
-  const [activeSession, setActiveSession] = useState<any>(null);
-  const [upcomingRes, setUpcomingRes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = async () => {
-    try {
-      const [sessRes, resRes] = await Promise.all([
-        sessionApi.getMySessions('active') as any,
-        reservationApi.getReservations() as any,
-      ]);
-      
-      const sessions = sessRes?.success ? sessRes.data : [];
-      const reservations = resRes?.success ? resRes.data : [];
-      
-      const active = sessions.filter((s: any) => s.status === 'active');
-      const completed = sessions.filter((s: any) => s.status === 'completed');
-      const reserved = reservations.filter((r: any) => ['pending','confirmed'].includes(r.status));
-
-      // Sort upcoming by startTime asc, take nearest 3
-      const upcoming = [...reserved]
-        .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-        .slice(0, 3);
-
-      setStats({ active: active.length, completed: completed.length, reserved: reserved.length });
-      setActiveSession(active[0] || null);
-      setUpcomingRes(upcoming);
-    } catch (e) {
-      console.log('Home fetch error:', e);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useFocusEffect(useCallback(() => { fetchData(); }, []));
-
-  const onRefresh = () => { setRefreshing(true); fetchData(); };
-
-
+// ═══════════════════════════════════════════════════════
+//  SLOT AVAILABILITY BADGE
+// ═══════════════════════════════════════════════════════
+function SlotBadge({ available, total }: { available: number; total: number }) {
+  const pct = total > 0 ? available / total : 0;
+  const color = available === 0
+    ? Colors.danger
+    : pct < 0.15 ? Colors.warning : Colors.success;
+  const bgColor = available === 0
+    ? Colors.dangerLight
+    : pct < 0.15 ? Colors.warningLight : Colors.successLight;
+  const label = available === 0 ? 'Hết chỗ' : `${available} chỗ trống`;
 
   return (
-    <View style={styles.root}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.white} />}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* ── Hero Gradient ── */}
-        <View style={styles.heroWrapper}>
-          <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientMid, Colors.gradientEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <SafeAreaView edges={['top']}>
-              {/* Header row */}
-              <View style={styles.heroHeader}>
-                <View>
-                  <Image source={require('../../assets/images/logo.png')} style={{ width: 100, height: 28, resizeMode: 'contain', marginBottom: 6 }} />
-                  <Text style={styles.greeting}>Xin chào 👋</Text>
-                  <Text style={styles.heroName}>{user?.name || 'Tài xế'}</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.avatarCircle}
-                  onPress={() => router.push('/(main)/account' as any)}
-                >
-                  <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
-                </TouchableOpacity>
-              </View>
-
-
-
-              {/* Stats Row */}
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNum}>{loading ? '—' : stats.active}</Text>
-                  <Text style={styles.statLbl}>Đang đỗ</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statItem}>
-                  <Text style={styles.statNum}>{loading ? '—' : stats.reserved}</Text>
-                  <Text style={styles.statLbl}>Đã đặt</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statItem}>
-                  <Text style={styles.statNum}>{loading ? '—' : stats.completed}</Text>
-                  <Text style={styles.statLbl}>Hoàn thành</Text>
-                </View>
-              </View>
-            </SafeAreaView>
-          </LinearGradient>
-        </View>
-
-        {/* ── Body ── */}
-        <View style={styles.body}>
-
-
-
-          {/* Active Session */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Lượt gửi hiện tại</Text>
-            {loading ? (
-              <ActivityIndicator color={Colors.primary} style={{ marginTop: 16 }} />
-            ) : activeSession ? (
-              <TouchableOpacity
-                style={styles.activeSessionCard}
-                onPress={() => router.push('/(main)/sessions' as any)}
-                activeOpacity={0.9}
-              >
-                <LinearGradient
-                  colors={[Colors.primary, Colors.primaryDark]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.activeSessionGradient}
-                >
-                  <View style={styles.activeSessionHeader}>
-                    <View>
-                      <Text style={styles.asBadge}>🔵 Đang đỗ xe</Text>
-                      <Text style={styles.asPlate}>{activeSession.licensePlate}</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
-                  </View>
-                  <View style={styles.asRow}>
-                    <View style={styles.asInfo}>
-                      <Text style={styles.asLabel}>Bãi xe</Text>
-                      <Text style={styles.asValue} numberOfLines={1}>{activeSession.facilityId?.name || '—'}</Text>
-                    </View>
-                    <View style={styles.asInfo}>
-                      <Text style={styles.asLabel}>Vào lúc</Text>
-                      <Text style={styles.asValue}>{new Date(activeSession.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</Text>
-                    </View>
-                    <View style={styles.asInfo}>
-                      <Text style={styles.asLabel}>Thời gian</Text>
-                      <ElapsedTimer checkInTime={activeSession.checkInTime} />
-                    </View>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.emptyCard}>
-                <View style={styles.emptyIconWrap}>
-                  <Ionicons name="car-outline" size={28} color={Colors.textTertiary} />
-                </View>
-                <Text style={styles.emptyTitle}>Không có xe đang đỗ</Text>
-                <Text style={styles.emptySubtitle}>Tìm bãi xe để bắt đầu gửi xe</Text>
-                <TouchableOpacity
-                  style={styles.emptyBtn}
-                  onPress={() => router.push('/(main)/facilities' as any)}
-                >
-                  <Text style={styles.emptyBtnText}>Tìm bãi xe</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-
-          {/* ── Upcoming Reservations ── */}
-          {upcomingRes.length > 0 && <View style={styles.section}>
-            <View style={styles.sectionRow}>
-              <Text style={styles.sectionTitle}>Đặt chỗ sắp tới</Text>
-              {upcomingRes.length > 0 && (
-                <TouchableOpacity onPress={() => router.push('/(main)/sessions?tab=reserved' as any)}>
-                  <Text style={styles.sectionLink}>Xem tất cả</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            {loading ? (
-              <ActivityIndicator color={Colors.primary} style={{ marginTop: 16 }} />
-            ) : upcomingRes.length === 0 ? (
-              <View style={styles.emptyCard}>
-                <View style={styles.emptyIconWrap}>
-                  <Ionicons name="calendar-outline" size={28} color={Colors.textTertiary} />
-                </View>
-                <Text style={styles.emptyTitle}>Chưa có lịch đặt chỗ</Text>
-                <Text style={styles.emptySubtitle}>Đặt chỗ trước để đảm bảo vị trí</Text>
-                <TouchableOpacity
-                  style={styles.emptyBtn}
-                  onPress={() => router.push('/(main)/facilities' as any)}
-                >
-                  <Text style={styles.emptyBtnText}>Tìm bãi xe</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              upcomingRes.map((res: any) => {
-                const start = new Date(res.startTime);
-                const now = new Date();
-                const diffMs = start.getTime() - now.getTime();
-                const diffH = Math.floor(diffMs / 3600000);
-                const diffM = Math.floor((diffMs % 3600000) / 60000);
-                const countdown = diffMs <= 0
-                  ? 'Đã đến giờ'
-                  : diffH > 0 ? `${diffH}h ${diffM}m nữa` : `${diffM} phút nữa`;
-                const isUrgent = diffMs > 0 && diffMs < 60 * 60 * 1000; // < 1 hour
-                return (
-                  <TouchableOpacity
-                    key={res._id}
-                    style={styles.resCard}
-                    onPress={() => router.push('/(main)/sessions?tab=reserved' as any)}
-                    activeOpacity={0.85}
-                  >
-                    <View style={[styles.resAccent, { backgroundColor: isUrgent ? Colors.warning : Colors.secondary }]} />
-                    <View style={styles.resBody}>
-                      <View style={styles.resHeader}>
-                        <View style={styles.resIconWrap}>
-                          <Ionicons name="business-outline" size={18} color={Colors.secondary} />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.resFacility} numberOfLines={1}>
-                            {res.facilityId?.name || 'Bãi xe'}
-                          </Text>
-                          <Text style={styles.resPlate}>{res.licensePlate}</Text>
-                        </View>
-                        <View style={[styles.countdownBadge, { backgroundColor: isUrgent ? Colors.warning + '18' : Colors.secondaryLight + '18' }]}>
-                          <Ionicons name="time-outline" size={12} color={isUrgent ? Colors.warning : Colors.secondary} />
-                          <Text style={[styles.countdownText, { color: isUrgent ? Colors.warning : Colors.secondary }]}>
-                            {countdown}
-                          </Text>
-                        </View>
-                      </View>
-                      <View style={styles.resDetails}>
-                        <View style={styles.resDetailItem}>
-                          <Ionicons name="calendar-outline" size={13} color={Colors.textTertiary} />
-                          <Text style={styles.resDetailText}>
-                            {start.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
-                          </Text>
-                        </View>
-                        <View style={styles.resDetailItem}>
-                          <Ionicons name="time-outline" size={13} color={Colors.textTertiary} />
-                          <Text style={styles.resDetailText}>
-                            {start.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                          </Text>
-                        </View>
-                        <View style={[styles.statusChip, { backgroundColor: res.status === 'confirmed' ? Colors.successLight : Colors.warningLight }]}>
-                          <Text style={[styles.statusChipText, { color: res.status === 'confirmed' ? Colors.success : Colors.warning }]}>
-                            {res.status === 'confirmed' ? 'Đã xác nhận' : 'Chờ xác nhận'}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })
-            )}
-          </View>}
-        </View>
-      </ScrollView>
+    <View style={[styles.slotBadge, { backgroundColor: bgColor }]}>
+      <View style={[styles.slotDot, { backgroundColor: color }]} />
+      <Text style={[styles.slotBadgeText, { color }]}>{label}</Text>
     </View>
   );
 }
 
+// ═══════════════════════════════════════════════════════
+//  SEARCH SUGGESTION ITEM
+// ═══════════════════════════════════════════════════════
+function SearchSuggestionItem({
+  lot,
+  onPress,
+}: {
+  lot: ParkingLot;
+  onPress: () => void;
+}) {
+  const pct = lot.totalSlots > 0 ? lot.availableSlots / lot.totalSlots : 0;
+  const slotColor = lot.availableSlots === 0
+    ? Colors.danger
+    : pct < 0.15 ? Colors.warning : Colors.success;
+
+  return (
+    <TouchableOpacity style={styles.suggestionItem} onPress={onPress} activeOpacity={0.7}>
+      <View style={styles.suggestionIcon}>
+        <Ionicons name="business" size={18} color={UI.accentGreenDark} />
+      </View>
+      <View style={styles.suggestionInfo}>
+        <Text style={styles.suggestionName} numberOfLines={1}>{lot.name}</Text>
+        <Text style={styles.suggestionAddress} numberOfLines={1}>{lot.address}</Text>
+      </View>
+      <View style={[styles.suggestionSlotBadge, { backgroundColor: slotColor + '18' }]}>
+        <Text style={[styles.suggestionSlotText, { color: slotColor }]}>
+          {lot.availableSlots === 0 ? 'Hết' : lot.availableSlots}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+//  MAIN HOME SCREEN
+// ═══════════════════════════════════════════════════════
+export default function HomeScreen() {
+  const router = useRouter();
+  const mapRef = useRef<MapView>(null);
+
+  // State
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [selectedLot, setSelectedLot] = useState<ParkingLot | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [parkingLots, setParkingLots] = useState<ParkingLot[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  // Bottom Sheet animation
+  const bottomSheetAnim = useRef(new Animated.Value(BOTTOM_SHEET_HEIGHT + 50)).current;
+  const backdropAnim = useRef(new Animated.Value(0)).current;
+
+  // ─── Current map region (for zoom controls) ────────
+  const currentRegionRef = useRef<Region>(INITIAL_REGION);
+
+  // ─── Fetch facilities from API (coordinates from backend GeoJSON) ──
+  const fetchFacilities = async () => {
+    setDataLoading(true);
+    try {
+      const facilities = await api.getPublicFacilities(1, 50, '', 'all');
+      console.log('[HOME] Fetched facilities count:', Array.isArray(facilities) ? facilities.length : 'NOT_ARRAY', facilities);
+
+      // Ensure we have an array
+      const facilityList = Array.isArray(facilities) ? facilities : [];
+
+      // Map facilities to ParkingLot — use coordinates from GeoJSON location
+      const lotsWithCoords: ParkingLot[] = [];
+
+      await Promise.all(
+        facilityList.map(async (f: any) => {
+          // Extract coordinates from GeoJSON: [longitude, latitude]
+          const coords = f.location?.coordinates;
+          const lng = coords?.[0] ?? 0;
+          const lat = coords?.[1] ?? 0;
+
+          console.log(`[HOME] Facility "${f.name}": coords=[${lng}, ${lat}]`);
+
+          // Skip facilities without valid coordinates
+          if (lat === 0 && lng === 0) {
+            console.log(`[HOME] Skipping "${f.name}" — no coordinates`);
+            return;
+          }
+
+          // Fetch available slots count
+          let availableSlots = 0;
+          let totalSlots = 0;
+          try {
+            const slotsData = await api.getAvailableSlots(f._id);
+            availableSlots = slotsData.reduce(
+              (sum: number, s: any) => sum + s.availableCount, 0
+            );
+            totalSlots = availableSlots + Math.floor(Math.random() * 50 + 20);
+          } catch {}
+
+          lotsWithCoords.push({
+            id: f._id,
+            name: f.name,
+            address: f.address,
+            latitude: lat,
+            longitude: lng,
+            totalSlots: totalSlots || 100,
+            availableSlots,
+            openTime: f.openTime || '06:00',
+            closeTime: f.closeTime || '22:00',
+          });
+        })
+      );
+
+      console.log('[HOME] Lots with coords:', lotsWithCoords.length);
+      setParkingLots(lotsWithCoords);
+
+      // Zoom to fit all markers
+      if (lotsWithCoords.length > 0 && mapRef.current) {
+        const lats = lotsWithCoords.map((l) => l.latitude);
+        const lngs = lotsWithCoords.map((l) => l.longitude);
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs);
+        const maxLng = Math.max(...lngs);
+        const midLat = (minLat + maxLat) / 2;
+        const midLng = (minLng + maxLng) / 2;
+        const deltaLat = (maxLat - minLat) * 1.5 || 0.02;
+        const deltaLng = (maxLng - minLng) * 1.5 || 0.02;
+
+        const fitRegion = {
+          latitude: midLat,
+          longitude: midLng,
+          latitudeDelta: Math.max(deltaLat, 0.01),
+          longitudeDelta: Math.max(deltaLng, 0.01),
+        };
+        currentRegionRef.current = fitRegion;
+        mapRef.current.animateToRegion(fitRegion, 500);
+      }
+    } catch (e) {
+      console.log('[HOME] Failed to fetch facilities:', e);
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  // ─── Location Permission ───────────────────────────
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        setUserLocation({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        });
+      }
+    })();
+  }, []);
+
+  // ─── Fetch data on screen focus ────────────────────
+  useFocusEffect(useCallback(() => { fetchFacilities(); }, []));
+
+  // ─── Calculate distance between two points ─────────
+  const calcDistance = (lat1: number, lon1: number, lat2: number, lon2: number): string => {
+    const R = 6371; // km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c;
+    return d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`;
+  };
+
+  // ─── Get distance for a lot ────────────────────────
+  const getDistance = (lot: ParkingLot): string => {
+    if (userLocation) {
+      return calcDistance(userLocation.latitude, userLocation.longitude, lot.latitude, lot.longitude);
+    }
+    return lot.distance || '—';
+  };
+
+  // ─── Bottom Sheet Handlers ─────────────────────────
+  const showBottomSheet = useCallback((lot: ParkingLot) => {
+    setSelectedLot(lot);
+    setShowSuggestions(false);
+    Keyboard.dismiss();
+    // Animate camera to marker
+    mapRef.current?.animateToRegion(
+      {
+        latitude: lot.latitude - 0.004,
+        longitude: lot.longitude,
+        latitudeDelta: 0.012,
+        longitudeDelta: 0.012 * ASPECT_RATIO,
+      },
+      400,
+    );
+    // Slide up bottom sheet
+    Animated.parallel([
+      Animated.spring(bottomSheetAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }),
+      Animated.timing(backdropAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const hideBottomSheet = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(bottomSheetAnim, {
+        toValue: BOTTOM_SHEET_HEIGHT + 50,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setSelectedLot(null));
+  }, []);
+
+  // ─── Navigate to current location ─────────────────
+  const goToMyLocation = async () => {
+    setLocationLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationLoading(false);
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const coords = {
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      };
+      setUserLocation(coords);
+      mapRef.current?.animateToRegion(
+        {
+          ...coords,
+          latitudeDelta: 0.012,
+          longitudeDelta: 0.012 * ASPECT_RATIO,
+        },
+        500,
+      );
+    } catch (e) {
+      console.log('Location error:', e);
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  // ─── Zoom In / Zoom Out (cross-platform via region delta) ──────
+  const zoomIn = () => {
+    const region = currentRegionRef.current;
+    const newRegion: Region = {
+      ...region,
+      latitudeDelta: region.latitudeDelta / 2,
+      longitudeDelta: region.longitudeDelta / 2,
+    };
+    currentRegionRef.current = newRegion;
+    mapRef.current?.animateToRegion(newRegion, 300);
+  };
+
+  const zoomOut = () => {
+    const region = currentRegionRef.current;
+    const newRegion: Region = {
+      ...region,
+      latitudeDelta: Math.min(region.latitudeDelta * 2, 100),
+      longitudeDelta: Math.min(region.longitudeDelta * 2, 100),
+    };
+    currentRegionRef.current = newRegion;
+    mapRef.current?.animateToRegion(newRegion, 300);
+  };
+
+  // ─── Open Google Maps Directions ───────────────────
+  const openDirections = (lot: ParkingLot) => {
+    const origin = userLocation
+      ? `${userLocation.latitude},${userLocation.longitude}`
+      : '';
+    const destination = `${lot.latitude},${lot.longitude}`;
+    const url = Platform.select({
+      ios: `comgooglemaps://?saddr=${origin}&daddr=${destination}&directionsmode=driving`,
+      android: `google.navigation:q=${destination}`,
+    });
+    const fallback = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+
+    if (url) {
+      Linking.canOpenURL(url)
+        .then((supported) => {
+          Linking.openURL(supported ? url : fallback);
+        })
+        .catch(() => Linking.openURL(fallback));
+    } else {
+      Linking.openURL(fallback);
+    }
+  };
+
+  // ─── Filter lots by search ────────────────────────
+  const filteredLots = searchQuery.trim()
+    ? parkingLots.filter(
+        (lot) =>
+          lot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          lot.address.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : parkingLots;
+
+  // ─── Search text change handler ───────────────────
+  const onSearchChange = (text: string) => {
+    setSearchQuery(text);
+    setShowSuggestions(text.trim().length > 0);
+  };
+
+  // ─── Select a suggestion ──────────────────────────
+  const onSelectSuggestion = (lot: ParkingLot) => {
+    setSearchQuery('');
+    setShowSuggestions(false);
+    Keyboard.dismiss();
+    showBottomSheet(lot);
+  };
+
+  // ─── Map Press (dismiss) ──────────────────────────
+  const onMapPress = () => {
+    if (selectedLot) hideBottomSheet();
+    if (showSuggestions) setShowSuggestions(false);
+    Keyboard.dismiss();
+  };
+
+  // ═══════════════════════════════════════════════════
+  //  RENDER
+  // ═══════════════════════════════════════════════════
+  return (
+    <View style={styles.root}>
+      <StatusBar barStyle="dark-content" />
+
+      {/* ── FULL-SCREEN MAP ── */}
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        initialRegion={INITIAL_REGION}
+        showsUserLocation
+        showsMyLocationButton={false}
+        showsCompass={false}
+        onPress={onMapPress}
+        onRegionChangeComplete={(region) => {
+          currentRegionRef.current = region;
+        }}
+        mapPadding={{ top: 80, right: 0, bottom: 0, left: 0 }}
+      >
+        {filteredLots.map((lot) => {
+          const isSelected = selectedLot?.id === lot.id;
+          return (
+            <Marker
+              key={lot.id}
+              coordinate={{ latitude: lot.latitude, longitude: lot.longitude }}
+              onPress={() => showBottomSheet(lot)}
+              tracksViewChanges={false}
+            >
+              <View style={styles.markerContainer}>
+                <View
+                  style={[
+                    styles.markerBubble,
+                    isSelected && styles.markerBubbleSelected,
+                    lot.availableSlots === 0 && styles.markerBubbleFull,
+                  ]}
+                >
+                  <Ionicons
+                    name="car"
+                    size={14}
+                    color={
+                      isSelected ? '#FFF'
+                        : lot.availableSlots === 0 ? Colors.danger
+                        : UI.accentGreenDark
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.markerText,
+                      isSelected && styles.markerTextSelected,
+                      lot.availableSlots === 0 && styles.markerTextFull,
+                    ]}
+                  >
+                    {lot.availableSlots}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.markerArrow,
+                    isSelected && styles.markerArrowSelected,
+                    lot.availableSlots === 0 && styles.markerArrowFull,
+                  ]}
+                />
+              </View>
+            </Marker>
+          );
+        })}
+      </MapView>
+
+      {/* ── LOADING OVERLAY ── */}
+      {dataLoading && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingPill}>
+            <ActivityIndicator size="small" color={UI.accentGreenDark} />
+            <Text style={styles.loadingText}>Đang tải bãi xe...</Text>
+          </View>
+        </View>
+      )}
+
+      {/* ── FLOATING SEARCH BAR ── */}
+      <SafeAreaView edges={['top']} style={styles.searchBarContainer}>
+        <View style={styles.searchBar}>
+          <View style={[
+            styles.searchInputWrapper,
+            showSuggestions && styles.searchInputWrapperActive,
+          ]}>
+            <Ionicons name="search" size={20} color={showSuggestions ? UI.accentGreenDark : UI.textMuted} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Tìm bãi đỗ xe, toà nhà..."
+              placeholderTextColor={UI.textMuted}
+              value={searchQuery}
+              onChangeText={onSearchChange}
+              onFocus={() => {
+                setIsSearchFocused(true);
+                if (searchQuery.trim().length > 0) setShowSuggestions(true);
+              }}
+              onBlur={() => setIsSearchFocused(false)}
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                onPress={() => { setSearchQuery(''); setShowSuggestions(false); }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close-circle" size={20} color={UI.textMuted} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* ── SEARCH SUGGESTIONS DROPDOWN ── */}
+        {showSuggestions && (
+          <View style={styles.suggestionsContainer}>
+            {filteredLots.length === 0 ? (
+              <View style={styles.suggestionsEmpty}>
+                <Ionicons name="search-outline" size={24} color={UI.textMuted} />
+                <Text style={styles.suggestionsEmptyText}>
+                  Không tìm thấy "{searchQuery}"
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={filteredLots}
+                keyExtractor={(item) => item.id}
+                keyboardShouldPersistTaps="handled"
+                style={styles.suggestionsList}
+                renderItem={({ item }) => (
+                  <SearchSuggestionItem
+                    lot={item}
+                    onPress={() => onSelectSuggestion(item)}
+                  />
+                )}
+                ItemSeparatorComponent={() => <View style={styles.suggestionSep} />}
+              />
+            )}
+          </View>
+        )}
+      </SafeAreaView>
+
+      {/* ── MAP CONTROLS (Zoom + Location) ── */}
+      <View style={styles.mapControls}>
+        <View style={styles.zoomGroup}>
+          <TouchableOpacity style={styles.controlBtn} onPress={zoomIn} activeOpacity={0.8}>
+            <Ionicons name="add" size={22} color={UI.textDark} />
+          </TouchableOpacity>
+          <View style={styles.controlDivider} />
+          <TouchableOpacity style={styles.controlBtn} onPress={zoomOut} activeOpacity={0.8}>
+            <Ionicons name="remove" size={22} color={UI.textDark} />
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity
+          style={styles.locationBtn}
+          onPress={goToMyLocation}
+          activeOpacity={0.8}
+        >
+          {locationLoading ? (
+            <ActivityIndicator size="small" color={UI.accentGreenDark} />
+          ) : (
+            <Ionicons name="locate" size={22} color={UI.accentGreenDark} />
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* ── BACKDROP ── */}
+      {selectedLot && (
+        <Animated.View
+          style={[
+            styles.backdrop,
+            { opacity: backdropAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.25] }) },
+          ]}
+          pointerEvents="auto"
+        >
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={hideBottomSheet} />
+        </Animated.View>
+      )}
+
+      {/* ── BOTTOM SHEET ── */}
+      <Animated.View
+        style={[
+          styles.bottomSheet,
+          { transform: [{ translateY: bottomSheetAnim }] },
+        ]}
+      >
+        {selectedLot && (
+          <>
+            {/* Drag handle */}
+            <View style={styles.sheetHandle}>
+              <View style={styles.sheetHandleBar} />
+            </View>
+
+            {/* Header */}
+            <View style={styles.sheetHeader}>
+              <View style={styles.sheetIconWrap}>
+                <Ionicons name="business" size={22} color={UI.accentGreenDark} />
+              </View>
+              <View style={styles.sheetTitleWrap}>
+                <Text style={styles.sheetName} numberOfLines={1}>
+                  {selectedLot.name}
+                </Text>
+                <View style={styles.sheetAddressRow}>
+                  <Ionicons name="location" size={13} color={UI.textLight} />
+                  <Text style={styles.sheetAddress} numberOfLines={1}>
+                    {selectedLot.address}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={hideBottomSheet} style={styles.sheetCloseBtn}>
+                <Ionicons name="close" size={20} color={UI.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Info chips */}
+            <View style={styles.sheetInfoRow}>
+              <View style={styles.sheetInfoChip}>
+                <Ionicons name="navigate-outline" size={14} color={UI.accentGreenDark} />
+                <Text style={styles.sheetInfoText}>{getDistance(selectedLot)}</Text>
+              </View>
+              <View style={styles.sheetInfoChip}>
+                <Ionicons name="time-outline" size={14} color={UI.accentGreenDark} />
+                <Text style={styles.sheetInfoText}>
+                  {selectedLot.openTime} – {selectedLot.closeTime}
+                </Text>
+              </View>
+              <SlotBadge
+                available={selectedLot.availableSlots}
+                total={selectedLot.totalSlots}
+              />
+            </View>
+
+            {/* Capacity bar */}
+            <View style={styles.capacityRow}>
+              <Text style={styles.capacityLabel}>Sức chứa</Text>
+              <Text style={styles.capacityValue}>
+                {selectedLot.availableSlots}/{selectedLot.totalSlots} chỗ
+              </Text>
+            </View>
+            <View style={styles.capacityTrack}>
+              <View
+                style={[
+                  styles.capacityFill,
+                  {
+                    width: `${Math.round(
+                      (selectedLot.availableSlots / Math.max(selectedLot.totalSlots, 1)) * 100
+                    )}%`,
+                    backgroundColor:
+                      selectedLot.availableSlots === 0
+                        ? Colors.danger
+                        : selectedLot.availableSlots / selectedLot.totalSlots < 0.15
+                          ? Colors.warning
+                          : Colors.success,
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Action buttons */}
+            <View style={styles.sheetActions}>
+              <TouchableOpacity
+                style={styles.directionsBtn}
+                onPress={() => openDirections(selectedLot)}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="navigate" size={18} color={UI.accentGreenDark} />
+                <Text style={styles.directionsBtnText}>Chỉ đường</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.bookBtn,
+                  selectedLot.availableSlots === 0 && styles.bookBtnDisabled,
+                ]}
+                onPress={() => {
+                  hideBottomSheet();
+                  router.push(`/facility/${selectedLot.id}` as any);
+                }}
+                activeOpacity={0.85}
+                disabled={selectedLot.availableSlots === 0}
+              >
+                <Ionicons
+                  name="calendar"
+                  size={18}
+                  color={selectedLot.availableSlots === 0 ? UI.textMuted : Colors.white}
+                />
+                <Text
+                  style={[
+                    styles.bookBtnText,
+                    selectedLot.availableSlots === 0 && styles.bookBtnTextDisabled,
+                  ]}
+                >
+                  {selectedLot.availableSlots === 0 ? 'Hết chỗ' : 'Đặt chỗ trước'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </Animated.View>
+    </View>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+//  STYLES
+// ═══════════════════════════════════════════════════════
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F5F7F2' },
-  scrollContent: { paddingBottom: 32 },
-
-  // ── Hero ──
-  heroWrapper: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: 'hidden',
-  },
-  hero: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
-  },
-  heroHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingTop: 12,
-    marginBottom: 22,
-  },
-  greeting: {
-    fontSize: 14,
-    color: Colors.textOnDarkMuted,
-    fontFamily: Typography.fontFamily.medium,
-  },
-  heroName: {
-    fontSize: 26,
-    color: Colors.textOnDark,
-    fontFamily: Typography.fontFamily.bold,
-    marginTop: 2,
-  },
-  avatarCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.20)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    color: Colors.white,
-    fontSize: 16,
-    fontFamily: Typography.fontFamily.bold,
-  },
-
-  statsRow: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 18,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  statItem: { flex: 1, alignItems: 'center' },
-  statNum: {
-    fontSize: 24,
-    fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
-  },
-  statLbl: {
-    fontSize: 11,
-    color: Colors.textOnDarkMuted,
-    fontFamily: Typography.fontFamily.medium,
-    marginTop: 3,
-  },
-  statDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.15)' },
-
-  // ── Body ──
-  body: { padding: 20 },
-  section: { marginBottom: 26 },
-  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  sectionTitle: {
-    fontSize: 16,
-    fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
-  },
-  sectionLink: {
-    fontSize: 13,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.primary,
-  },
-
-  // Reservation cards
-  resCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 18, overflow: 'hidden',
-    marginBottom: 10,
-    borderWidth: 1, borderColor: Colors.border,
-    flexDirection: 'row',
-    shadowColor: '#5E8F25',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  resAccent: { width: 4 },
-  resBody: { flex: 1, padding: 14 },
-  resHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  resIconWrap: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: Colors.secondaryLight + '18',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  resFacility: { fontSize: 14, fontFamily: Typography.fontFamily.semiBold, color: Colors.textPrimary },
-  resPlate: { fontSize: 12, color: Colors.textSecondary, fontFamily: Typography.fontFamily.medium, marginTop: 1 },
-  countdownBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4,
-  },
-  countdownText: { fontSize: 11, fontFamily: Typography.fontFamily.semiBold },
-  resDetails: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  resDetailItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  resDetailText: { fontSize: 12, color: Colors.textSecondary, fontFamily: Typography.fontFamily.medium },
-  statusChip: {
-    marginLeft: 'auto' as any, borderRadius: 12,
-    paddingHorizontal: 8, paddingVertical: 3,
-  },
-  statusChipText: { fontSize: 11, fontFamily: Typography.fontFamily.semiBold },
-
-  // Quick Actions
-  quickActionsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  qaCard: {
+  root: {
     flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    padding: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadows.sm,
-  },
-  qaIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  qaLabel: {
-    fontSize: 11,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
-    textAlign: 'center',
+    backgroundColor: Colors.background,
   },
 
-  // Active Session Card
-  activeSessionCard: { borderRadius: 22, overflow: 'hidden',
-    shadowColor: '#5E8F25',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
+  // ── Map ──────────────────────────────────────────
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+
+  // ── Loading Overlay ──────────────────────────────
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 5,
+    pointerEvents: 'none',
+  },
+  loadingPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: UI.cardBg,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+    shadowColor: UI.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
     elevation: 6,
   },
-  activeSessionGradient: { padding: 20 },
-  activeSessionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  asBadge: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.75)',
+  loadingText: {
+    fontSize: 14,
     fontFamily: Typography.fontFamily.medium,
-    marginBottom: 4,
-  },
-  asPlate: {
-    fontSize: 22,
-    color: Colors.white,
-    fontFamily: Typography.fontFamily.bold,
-    letterSpacing: 2,
-  },
-  asRow: { flexDirection: 'row', gap: 16 },
-  asInfo: { flex: 1 },
-  asLabel: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.6)',
-    fontFamily: Typography.fontFamily.medium,
-    marginBottom: 3,
-  },
-  asValue: {
-    fontSize: 13,
-    color: Colors.white,
-    fontFamily: Typography.fontFamily.semiBold,
-  },
-  timerValue: {
-    fontSize: 13,
-    color: Colors.gradientAccent,
-    fontFamily: Typography.fontFamily.bold,
+    color: UI.textMedium,
   },
 
-  // Empty State
-  emptyCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    padding: 28,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderStyle: 'dashed',
+  // ── Floating Search Bar ──────────────────────────
+  searchBarContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
-  emptyIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  searchBar: {
+    marginHorizontal: 16,
+    marginTop: 8,
+  },
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: UI.searchBg,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    height: 48,
+    gap: 10,
+    shadowColor: UI.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  searchInputWrapperActive: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    shadowOpacity: 0.08,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.medium,
+    color: UI.textDark,
+    paddingVertical: 0,
+  },
+
+  // ── Search Suggestions ───────────────────────────
+  suggestionsContainer: {
+    marginHorizontal: 16,
+    backgroundColor: UI.cardBg,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    maxHeight: 260,
+    overflow: 'hidden',
+    shadowColor: UI.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  suggestionsList: {
+    paddingVertical: 4,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  suggestionIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: Colors.primaryBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  suggestionInfo: {
+    flex: 1,
+  },
+  suggestionName: {
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: UI.textDark,
+    marginBottom: 2,
+  },
+  suggestionAddress: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.regular,
+    color: UI.textLight,
+  },
+  suggestionSlotBadge: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minWidth: 36,
+    alignItems: 'center',
+  },
+  suggestionSlotText: {
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  suggestionSep: {
+    height: 1,
+    backgroundColor: Colors.borderLight,
+    marginHorizontal: 16,
+  },
+  suggestionsEmpty: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    gap: 8,
+  },
+  suggestionsEmptyText: {
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.medium,
+    color: UI.textMuted,
+  },
+
+  // ── Map Controls (Zoom + Location) ───────────────
+  mapControls: {
+    position: 'absolute',
+    right: 16,
+    bottom: 120,
+    alignItems: 'center',
+    zIndex: 5,
+    gap: 10,
+  },
+  zoomGroup: {
+    backgroundColor: UI.cardBg,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: UI.shadow,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  controlBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  controlDivider: {
+    width: 28,
+    height: 1,
+    backgroundColor: Colors.borderLight,
+    alignSelf: 'center',
+  },
+  locationBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: UI.cardBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: UI.shadow,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+
+  // ── Custom Marker ────────────────────────────────
+  markerContainer: {
+    alignItems: 'center',
+  },
+  markerBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderWidth: 2,
+    borderColor: UI.accentGreen,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  markerBubbleSelected: {
+    backgroundColor: UI.accentGreenDark,
+    borderColor: UI.accentGreenDark,
+  },
+  markerBubbleFull: {
+    borderColor: Colors.danger,
+    backgroundColor: '#FFF5F5',
+  },
+  markerText: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+    color: UI.accentGreenDark,
+  },
+  markerTextSelected: { color: '#FFFFFF' },
+  markerTextFull: { color: Colors.danger },
+  markerArrow: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 7,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: UI.accentGreen,
+    marginTop: -1,
+  },
+  markerArrowSelected: { borderTopColor: UI.accentGreenDark },
+  markerArrowFull: { borderTopColor: Colors.danger },
+
+  // ── Backdrop ─────────────────────────────────────
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000',
+    zIndex: 15,
+  },
+
+  // ── Bottom Sheet ─────────────────────────────────
+  bottomSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: BOTTOM_SHEET_HEIGHT,
+    backgroundColor: UI.cardBg,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    zIndex: 20,
+    shadowColor: UI.shadow,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 16,
+  },
+  sheetHandle: {
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  sheetHandleBar: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E0E4DC',
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 14,
+  },
+  sheetIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: Colors.primaryBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetTitleWrap: { flex: 1 },
+  sheetName: {
+    fontSize: 17,
+    fontFamily: Typography.fontFamily.bold,
+    color: UI.textDark,
+    marginBottom: 3,
+  },
+  sheetAddressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sheetAddress: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.regular,
+    color: UI.textLight,
+    flex: 1,
+  },
+  sheetCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     backgroundColor: Colors.surfaceElevated,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
-  emptyTitle: {
-    fontSize: 15,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
-    marginBottom: 4,
+  sheetInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
+    flexWrap: 'wrap',
   },
-  emptySubtitle: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    fontFamily: Typography.fontFamily.regular,
-    textAlign: 'center',
-  },
-  emptyBtn: {
-    marginTop: 16,
-    backgroundColor: Colors.primary,
+  sheetInfoChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.primaryBg,
     borderRadius: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  emptyBtnText: {
-    color: Colors.white,
+  sheetInfoText: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: UI.textMedium,
+  },
+  slotBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginLeft: 'auto',
+  },
+  slotDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  slotBadgeText: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  capacityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  capacityLabel: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.medium,
+    color: UI.textLight,
+  },
+  capacityValue: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: UI.textMedium,
+  },
+  capacityTrack: {
+    height: 5,
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  capacityFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  sheetActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  directionsBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: Colors.primaryBg,
+    borderWidth: 1.5,
+    borderColor: UI.accentGreen,
+  },
+  directionsBtnText: {
     fontSize: 14,
     fontFamily: Typography.fontFamily.semiBold,
+    color: UI.accentGreenDark,
+  },
+  bookBtn: {
+    flex: 1.5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: UI.accentGreenDark,
+    shadowColor: UI.accentGreenDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  bookBtnDisabled: {
+    backgroundColor: Colors.surfaceElevated,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  bookBtnText: {
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.white,
+  },
+  bookBtnTextDisabled: {
+    color: UI.textMuted,
   },
 });

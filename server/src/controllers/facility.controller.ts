@@ -4,7 +4,33 @@ import { FacilityService } from '../services/facility.service';
 export class FacilityController {
   static async createFacility(req: Request, res: Response, next: NextFunction) {
     try {
-      const facility = await FacilityService.createFacility(req.body);
+      const { latitude, longitude, ...rest } = req.body;
+      console.log('[FACILITY_CREATE] req.body keys:', Object.keys(req.body));
+      console.log('[FACILITY_CREATE] latitude:', latitude, 'longitude:', longitude, 'types:', typeof latitude, typeof longitude);
+
+      // Map lat/lng từ request → GeoJSON Point
+      // Nếu thiếu lat/lng → dùng [0, 0] mặc định (admin sẽ update sau)
+      const hasValidCoords =
+        typeof latitude === 'number' && typeof longitude === 'number' &&
+        !isNaN(latitude) && !isNaN(longitude);
+
+      const data = {
+        ...rest,
+        location: {
+          type: 'Point' as const,
+          coordinates: hasValidCoords
+            ? [longitude, latitude] as [number, number]
+            : [0, 0] as [number, number],
+        },
+      };
+
+      if (!hasValidCoords) {
+        console.warn('[FACILITY_CREATE] ⚠️  No valid coordinates — using default [0, 0]');
+      } else {
+        console.log('[FACILITY_CREATE] ✅ location:', JSON.stringify(data.location));
+      }
+
+      const facility = await FacilityService.createFacility(data);
       res.status(201).json({ success: true, data: facility });
     } catch (error) {
       next(error);
@@ -14,7 +40,16 @@ export class FacilityController {
   static async updateFacility(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;
-      const facility = await FacilityService.updateFacility(id, req.body);
+      const { latitude, longitude, ...rest } = req.body;
+      // Nếu có lat/lng trong request → cập nhật GeoJSON location
+      const data: any = { ...rest };
+      if (latitude !== undefined && longitude !== undefined) {
+        data.location = {
+          type: 'Point',
+          coordinates: [longitude, latitude],
+        };
+      }
+      const facility = await FacilityService.updateFacility(id, data);
       res.status(200).json({ success: true, data: facility });
     } catch (error) {
       next(error);

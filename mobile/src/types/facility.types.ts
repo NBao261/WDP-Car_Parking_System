@@ -7,6 +7,11 @@ export interface Facility {
   closeTime: string;  // HH:mm
   description?: string;
   images?: string[];
+  // GeoJSON Point — coordinates: [longitude, latitude]
+  location?: {
+    type: string;
+    coordinates: [number, number]; // [lng, lat]
+  };
   status: 'active' | 'inactive';
   // Virtual field added by mobile after fetching available-slots
   availableSlots?: number | null;
