@@ -95,7 +95,7 @@ export default function FacilitiesPage() {
                   setEditingFacility(undefined);
                   setIsFacilityModalOpen(true);
                 }}
-                className="bg-black text-white px-5 py-2.5 rounded-xl font-bold hover:bg-black/80 transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
+                className="bg-[#062F28] text-white px-5 py-2.5 rounded-xl font-bold hover:bg-[#062F28]/80 transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
               >
                 <Plus size={20} /> Thêm Tòa Nhà
               </button>

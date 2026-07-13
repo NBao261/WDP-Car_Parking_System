@@ -1,6 +1,6 @@
 export { User, UserRole, UserStatus } from './user.model';
 export { ParkingFacility, FacilityStatus } from './parkingFacility.model';
-export { VehicleType, SlotSize } from './vehicleType.model';
+export { VehicleType } from './vehicleType.model';
 export { Floor } from './floor.model';
 export { ParkingSlot, SlotStatus } from './parkingSlot.model';
 export { PricingPlan, FeeType } from './pricingPlan.model';

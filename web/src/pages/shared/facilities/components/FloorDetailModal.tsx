@@ -30,8 +30,10 @@ export function FloorDetailModal({
 
   const isActive = floor.status === 'active';
   const badgeStyle = isActive
-    ? { background: '#ECFDF5', color: '#047857', border: '1px solid #D1FAE5' }
-    : { background: '#f0f1f0', color: '#6b6e6b', border: '1px solid #e2e3e2' };
+    ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
+    : (floor as any).status === 'maintenance'
+      ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
+      : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
   return createPortal(
     <AnimatePresence>
@@ -49,7 +51,7 @@ export function FloorDetailModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
@@ -68,8 +70,8 @@ export function FloorDetailModal({
           {/* Content */}
           {/* Content */}
           <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              {/* Left Column: General & Allowed vehicles */}
+            <div className="flex flex-col gap-6 items-stretch">
+              {/* General & Allowed vehicles */}
               <div className="space-y-6">
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -93,10 +95,10 @@ export function FloorDetailModal({
                           width: 6,
                           height: 6,
                           borderRadius: '50%',
-                          background: isActive ? '#10b981' : '#9b9e9b',
+                          background: isActive ? '#82C94E' : (floor as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
                         }}
                       />
-                      {isActive ? 'HOẠT ĐỘNG' : 'ĐÃ VÔ HIỆU HÓA'}
+                      {isActive ? 'HOẠT ĐỘNG' : (floor as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
                     </span>
                   </div>
                   <div className="flex items-center gap-4">
@@ -131,11 +133,14 @@ export function FloorDetailModal({
                   <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-2">
                     Các loại xe cho phép
                   </p>
-                  {vehicleTypes.length > 0 ? (
+                  {(floor.allowedVehicleTypes?.length || 0) > 0 ? (
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {floor.supportedVehicles.map((v) => {
-                          const IconComp = ICON_MAP[v.name] || Car;
-                          const idx = Math.max(0, vehicleTypes.findIndex(vt => vt._id === v._id));
+                        {(floor.allowedVehicleTypes || []).map((vId: any) => {
+                          const id = typeof vId === 'string' ? vId : vId._id;
+                          const v = typeof vId === 'string' ? vehicleTypes.find(vt => vt._id === id) : vId;
+                          if (!v) return null;
+                          const IconComp = v.icon && ICON_MAP[v.icon] ? ICON_MAP[v.icon] : Car;
+                          const idx = Math.max(0, vehicleTypes.findIndex(vt => vt._id === id));
                           const colors = [
                             { bg: '#F3F4F6', text: '#4B5563' },
                             { bg: '#EAF5E4', text: '#062F28' },
@@ -145,7 +150,7 @@ export function FloorDetailModal({
                           const color = colors[Math.min(idx, colors.length - 1)];
                           return (
                           <span
-                            key={v._id}
+                            key={id}
                             className="px-2.5 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm"
                             style={{ background: color.bg, color: color.text }}
                           >
@@ -162,34 +167,45 @@ export function FloorDetailModal({
                 </div>
               </div>
 
-              {/* Right Column: Capacity Stats */}
+              {/* Capacity Stats */}
               <div className="space-y-6">
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-2">
                     Thống kê sức chứa
                   </p>
-                  <div className="flex items-center justify-between border border-gray-100 rounded-xl p-3 bg-white shadow-sm">
-                    <div className="text-center flex-1">
+                  <div className="flex items-center justify-between border border-gray-100 rounded-xl p-3 bg-white shadow-sm flex-wrap gap-y-4">
+                    <div className="text-center flex-[1_1_25%]">
+                      <div className="text-xl tabular-nums font-semibold text-[#062F28]">
+                        {floor.totalSlots || 0}
+                      </div>
+                      <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Sức chứa</div>
+                    </div>
+                    <div className="w-px h-8 bg-gray-100 hidden sm:block" />
+                    <div className="text-center flex-[1_1_25%]">
                       <div className="text-xl tabular-nums font-semibold text-[#062F28]">
                         {stats?.total ?? 0}
                       </div>
-                      <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Tổng slot</div>
+                      <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Đã tạo</div>
                     </div>
-                    <div className="w-px h-8 bg-gray-100" />
-                    <div className="text-center flex-1">
+                    <div className="w-px h-8 bg-gray-100 hidden sm:block" />
+                    <div className="text-center flex-[1_1_25%]">
                       <div className="text-xl tabular-nums font-semibold text-[#062F28]">
                         {stats?.occupied ?? 0}
                       </div>
                       <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Đang dùng</div>
                     </div>
-                    <div className="w-px h-8 bg-gray-100" />
-                    <div className="text-center flex-1">
-                      <div
-                        className={`text-xl tabular-nums font-semibold ${getBarTextColor(stats?.fillRate ?? 0)}`}
-                      >
-                        {stats?.fillRate ?? 0}%
-                      </div>
-                      <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Lấp đầy</div>
+                    
+                    <div className="w-full mt-2 pt-3 border-t border-gray-100 text-center flex items-center justify-center gap-2">
+                      <span className="text-[13px] text-[#7B7B7B] font-medium">Tỷ lệ lấp đầy:</span>
+                      <span className={`text-[15px] font-bold ${getBarTextColor(
+                          floor.totalSlots 
+                            ? Math.round(((stats?.occupied ?? 0) / floor.totalSlots) * 100) 
+                            : 0
+                        )}`}>
+                        {floor.totalSlots 
+                          ? Math.round(((stats?.occupied ?? 0) / floor.totalSlots) * 100) 
+                          : 0}%
+                      </span>
                     </div>
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -9,13 +10,12 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  ChevronDown,
   Loader2,
   X,
   ArrowUpDown,
 } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { vehicleTypeService, VehicleType, SlotSize } from '../../../services/vehicleType.service';
+import { vehicleTypeService, VehicleType } from '../../../services/vehicleType.service';
 import { floorService, Floor } from '../../../services/floor.service';
 import { facilityService, Facility } from '../../../services/facility.service';
 import { VehicleFormModal } from './components/VehicleFormModal';
@@ -23,145 +23,6 @@ import { VehicleRow } from './components/VehicleRow';
 import { VehicleDetailModal } from './components/VehicleDetailModal';
 import React from 'react';
 
-const inputBase: React.CSSProperties = {
-  height: 40,
-  background: '#ffffff',
-  border: '1.5px solid #e2e3e2',
-  borderRadius: 10,
-  fontSize: 14,
-  outline: 'none',
-  cursor: 'pointer',
-};
-
-function DropFilter({
-  value,
-  onChange,
-  options,
-  width = 180,
-  icon: Icon,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-  width?: number | string;
-  icon?: React.ElementType;
-}) {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-  const active = value !== 'all' && value !== 'none';
-
-  React.useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const selectedOption = options.find((o) => o.value === value) || options[0];
-
-  return (
-    <div className="relative" style={{ width, flexShrink: 0 }} ref={dropdownRef}>
-      <div
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          ...inputBase,
-          display: 'flex',
-          alignItems: 'center',
-          padding: Icon ? '0 32px 0 32px' : '0 32px 0 14px',
-          border: isOpen || active ? '1.5px solid #9FE870' : '1.5px solid #e2e3e2',
-          boxShadow: isOpen ? '0 0 0 3px rgba(159,232,112,0.2)' : 'none',
-          color: active ? '#060606' : '#6b6e6b',
-          fontWeight: active ? 600 : 400,
-          transition: 'all 0.2s ease',
-          userSelect: 'none',
-        }}
-      >
-        {Icon && <Icon size={14} style={{ position: 'absolute', left: 12, color: '#9ca3af' }} />}
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {selectedOption?.label}
-        </span>
-      </div>
-
-      <ChevronDown
-        size={15}
-        style={{
-          position: 'absolute',
-          right: 12,
-          top: '50%',
-          transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`,
-          color: '#6b6e6b',
-          pointerEvents: 'none',
-          transition: 'transform 0.2s ease',
-        }}
-      />
-
-      {isOpen && (
-        <div
-          className="custom-scrollbar"
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 4px)',
-            left: 0,
-            right: 0,
-            background: '#ffffff',
-            border: '1px solid #e2e3e2',
-            borderRadius: 12,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-            zIndex: 50,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            maxHeight: 280,
-            animation: 'fadeIn 0.15s ease-out',
-          }}
-        >
-          <style>
-            {`
-              @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(-4px); }
-                to { opacity: 1; transform: translateY(0); }
-              }
-            `}
-          </style>
-          {options.map((o) => (
-            <div
-              key={o.value}
-              onClick={() => {
-                onChange(o.value);
-                setIsOpen(false);
-              }}
-              style={{
-                padding: '10px 14px',
-                fontSize: 14,
-                cursor: 'pointer',
-                color: value === o.value ? '#060606' : '#4a4a4a',
-                background: value === o.value ? '#f8fce2' : '#ffffff',
-                fontWeight: value === o.value ? 500 : 400,
-                display: 'flex',
-                alignItems: 'center',
-                transition: 'background 0.15s ease, color 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (value !== o.value) {
-                  e.currentTarget.style.background = '#f5f5f5';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (value !== o.value) {
-                  e.currentTarget.style.background = '#ffffff';
-                }
-              }}
-            >
-              {o.label}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -323,6 +184,7 @@ export default function VehiclesPage() {
   };
 
   return (
+    <>
     <motion.div
       className="space-y-6 pb-12"
       initial="hidden"
@@ -343,20 +205,19 @@ export default function VehiclesPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleAdd}
-            className="bg-black text-white hover:bg-black/80 px-5 py-2.5 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-sm"
+            className="bg-[#062F28] text-white hover:bg-[#062F28]/80 px-5 py-2.5 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-sm"
           >
             <Plus size={20} /> Thêm Loại Xe
           </button>
         </div>
       </motion.div>
 
-      {/* Search & Filter */}
+      {/* Search */}
       <motion.div
         variants={itemVariants}
-        className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap items-center gap-3"
+        className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3"
       >
-        {/* Search input */}
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -366,113 +227,6 @@ export default function VehiclesPage() {
             className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:border-transparent transition-all"
           />
         </div>
-
-        {/* Divider for large screens */}
-        <div className="h-6 w-px bg-gray-200 hidden xl:block mx-1" />
-
-        {/* Sorting Label */}
-        <span className="text-sm text-gray-500 font-medium shrink-0">Sắp xếp:</span>
-
-        {/* Sort: Name */}
-        <div className="relative w-auto sm:w-36 shrink-0">
-          <DropFilter
-            width="100%"
-            value={sortField === 'name' ? sortDir : 'none'}
-            onChange={(v) => {
-              if (v === 'none') {
-                setSortField('createdAt');
-                setSortDir('desc');
-              } else {
-                setSortField('name');
-                setSortDir(v as 'asc' | 'desc');
-              }
-            }}
-            icon={ArrowUpDown}
-            options={[
-              { value: 'none', label: 'Loại xe' },
-              { value: 'asc', label: 'Loại xe (A-Z)' },
-              { value: 'desc', label: 'Loại xe (Z-A)' },
-            ]}
-          />
-        </div>
-
-        {/* Sort: Code */}
-        <div className="relative w-auto sm:w-36 shrink-0">
-          <DropFilter
-            width="100%"
-            value={sortField === 'code' ? sortDir : 'none'}
-            onChange={(v) => {
-              if (v === 'none') {
-                setSortField('createdAt');
-                setSortDir('desc');
-              } else {
-                setSortField('code');
-                setSortDir(v as 'asc' | 'desc');
-              }
-            }}
-            icon={ArrowUpDown}
-            options={[
-              { value: 'none', label: 'Mã xe' },
-              { value: 'asc', label: 'Mã xe (A-Z)' },
-              { value: 'desc', label: 'Mã xe (Z-A)' },
-            ]}
-          />
-        </div>
-
-        {/* Sort: CreatedAt */}
-        <div className="relative w-auto sm:w-36 shrink-0">
-          <DropFilter
-            width="100%"
-            value={sortField === 'createdAt' ? sortDir : 'none'}
-            onChange={(v) => {
-              if (v === 'none') {
-                setSortField('createdAt');
-                setSortDir('desc');
-              } else {
-                setSortField('createdAt');
-                setSortDir(v as 'asc' | 'desc');
-              }
-            }}
-            icon={ArrowUpDown}
-            options={[
-              { value: 'none', label: 'Ngày tạo' },
-              { value: 'desc', label: 'Mới nhất' },
-              { value: 'asc', label: 'Cũ nhất' },
-            ]}
-          />
-        </div>
-
-        {/* Clear Filters Button */}
-        {(search || sortField !== 'createdAt' || sortDir !== 'desc') && (
-          <button
-            onClick={() => {
-              setSearch('');
-              setSortField('createdAt');
-              setSortDir('desc');
-            }}
-            style={{
-              height: 40,
-              padding: '0 16px',
-              borderRadius: 10,
-              border: 'none',
-              background: '#fff1f1',
-              color: '#d32f2f',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              transition: 'background 0.2s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#fce4e4')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#fff1f1')}
-            className="shrink-0"
-          >
-            <X size={15} />
-            Bỏ lọc
-          </button>
-        )}
       </motion.div>
 
       {/* Table */}
@@ -485,9 +239,54 @@ export default function VehiclesPage() {
             <thead className="bg-[#FAFAFA] text-[#6b6b6b] text-[13px] border-b border-gray-100 font-semibold uppercase tracking-wider">
               <tr>
                 <th className="px-6 py-4 rounded-tl-2xl w-[5%] text-center">STT</th>
-                <th className="px-6 py-4 w-[30%]">Loại Xe</th>
-                <th className="px-6 py-4 w-[25%]">Mã Xe</th>
-                <th className="px-6 py-4 w-[20%]">Ngày Giờ Tạo</th>
+                <th
+                  className="px-6 py-4 w-[30%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                  onClick={() => {
+                    if (sortField !== 'name') { setSortField('name'); setSortDir('asc'); }
+                    else if (sortDir === 'asc') setSortDir('desc');
+                    else { setSortField('createdAt'); setSortDir('desc'); }
+                  }}
+                >
+                  <span className="flex items-center gap-1.5">
+                    Loại Xe
+                    <ArrowUpDown size={14} className={sortField === 'name' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    {sortField === 'name' && (
+                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                    )}
+                  </span>
+                </th>
+                <th
+                  className="px-6 py-4 w-[25%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                  onClick={() => {
+                    if (sortField !== 'code') { setSortField('code'); setSortDir('asc'); }
+                    else if (sortDir === 'asc') setSortDir('desc');
+                    else { setSortField('createdAt'); setSortDir('desc'); }
+                  }}
+                >
+                  <span className="flex items-center gap-1.5">
+                    Mã Xe
+                    <ArrowUpDown size={14} className={sortField === 'code' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    {sortField === 'code' && (
+                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                    )}
+                  </span>
+                </th>
+                <th
+                  className="px-6 py-4 w-[20%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                  onClick={() => {
+                    if (sortField !== 'createdAt') { setSortField('createdAt'); setSortDir('desc'); }
+                    else if (sortDir === 'desc') setSortDir('asc');
+                    else { setSortField('createdAt'); setSortDir('desc'); }
+                  }}
+                >
+                  <span className="flex items-center gap-1.5">
+                    Ngày Giờ Tạo
+                    <ArrowUpDown size={14} className={sortField === 'createdAt' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    {sortField === 'createdAt' && (
+                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
+                    )}
+                  </span>
+                </th>
                 <th className="px-6 py-4 text-right rounded-tr-2xl w-[20%]">Thao Tác</th>
               </tr>
             </thead>
@@ -634,54 +433,56 @@ export default function VehiclesPage() {
         allVehicles={vehicles}
       />
 
-      <Dialog.Root open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(undefined)}>
+
+
+    </motion.div>
+
+      {createPortal(
         <AnimatePresence>
           {deleteTarget && (
-            <Dialog.Portal forceMount>
-              <Dialog.Overlay asChild>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
-                />
-              </Dialog.Overlay>
-              <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-4 outline-none pointer-events-none">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                  className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 pointer-events-auto"
-                >
-                  <h2 className="text-lg font-bold text-[#060606] mb-2">Xác Nhận Xóa</h2>
-                  <p className="text-sm text-gray-600 mb-6">
-                    Bạn có chắc chắn muốn xóa loại xe <strong>"{deleteTarget.name}"</strong>? Hành động
-                    này không thể hoàn tác.
-                  </p>
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setDeleteTarget(undefined)}
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl p-6"
+              >
+                <h2 className="text-lg font-bold text-[#060606] mb-2">Xác Nhận Xóa</h2>
+                <p className="text-sm text-gray-600 mb-6">
+                  Bạn có chắc chắn muốn xóa loại xe <strong>"{deleteTarget.name}"</strong>? Hành động
+                  này không thể hoàn tác.
+                </p>
 
-                  <div className="flex justify-end gap-3">
-                    <Dialog.Close asChild>
-                      <button
-                        disabled={isDeleting}
-                        className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-                      >
-                        Hủy
-                      </button>
-                    </Dialog.Close>
-                    <button
-                      onClick={confirmDelete}
-                      disabled={isDeleting}
-                      className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isDeleting && <Loader2 size={14} className="animate-spin" />} Xóa
-                    </button>
-                  </div>
-                </motion.div>
-              </Dialog.Content>
-            </Dialog.Portal>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setDeleteTarget(undefined)}
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDeleting && <Loader2 size={14} className="animate-spin" />} Xóa
+                  </button>
+                </div>
+              </motion.div>
+            </div>
           )}
-        </AnimatePresence>
-      </Dialog.Root>
-    </motion.div>
+        </AnimatePresence>,
+        document.body
+      )}
+
+    </>
   );
 }

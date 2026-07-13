@@ -66,4 +66,14 @@ export class PricingController {
       next(error);
     }
   }
+
+  static async getActiveSessionCount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = req.params.id as string;
+      const count = await PricingService.getActiveSessionCount(id);
+      res.status(200).json({ success: true, data: { activeSessionCount: count } });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
