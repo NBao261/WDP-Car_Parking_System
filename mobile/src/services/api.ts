@@ -61,14 +61,20 @@ export const sessionApi = {
     return apiClient.get(`/sessions/${sessionId}/fee`);
   },
   checkIn: (data: { facilityId: string; vehicleTypeId: string; licensePlate: string; gateIn?: string; checkInImage?: string }) => {
-    return apiClient.post('/sessions/check-in', data);
+    return apiClient.post('/sessions/check-in', {
+      ...data,
+      gateIn: data.gateIn || "Mobile Gate",
+    });
   }
 };
 
 // Payment API
 export const paymentApi = {
   cashCheckout: (data: { sessionId: string; gateOut?: string; checkOutImage?: string }) => {
-    return apiClient.post('/payments/cash-checkout', data);
+    return apiClient.post('/payments/cash-checkout', {
+      ...data,
+      gateOut: data.gateOut || "Mobile Gate",
+    });
   }
 };
 
