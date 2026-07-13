@@ -4,7 +4,9 @@ import { logger } from '../config/logger';
 
 export const connectDatabase = async (): Promise<void> => {
   try {
-    await mongoose.connect(env.MONGODB_URI);
+    await mongoose.connect(env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+    });
     logger.info(`📦 MongoDB connected: ${env.MONGODB_URI}`);
   } catch (error) {
     logger.error('❌ MongoDB connection error:', error);

@@ -19,7 +19,7 @@ const StaffPage = lazy(() => import('../pages/admin/staff/StaffPage'));
 const StaffDetailPage = lazy(() => import('../pages/admin/staff/StaffDetailPage'));
 const CustomersPage = lazy(() => import('../pages/admin/customers/CustomersPage'));
 const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
-const LogsPage = lazy(() => import('../pages/admin/logs/LogsPage'));
+// const LogsPage = lazy(() => import('../pages/admin/logs/LogsPage'));
 
 // ── Manager / Staff / Driver Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
@@ -133,14 +133,14 @@ export const router = createBrowserRouter([
                   </S>
                 ),
               },
-              {
-                path: 'logs',
-                element: (
-                  <S>
-                    <LogsPage />
-                  </S>
-                ),
-              },
+              // {
+              //   path: 'logs',
+              //   element: (
+              //     <S>
+              //       <LogsPage />
+              //     </S>
+              //   ),
+              // },
               // FR-18: User Management
               {
                 path: 'staff',
