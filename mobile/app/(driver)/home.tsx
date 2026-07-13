@@ -252,7 +252,7 @@ function SearchSuggestionItem({
 // ═══════════════════════════════════════════════════════
 export default function HomeScreen() {
   const router = useRouter();
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
 
   // State
   const [userLocation, setUserLocation] = useState<{
