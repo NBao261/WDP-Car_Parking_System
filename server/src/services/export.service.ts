@@ -55,6 +55,13 @@ interface PeakHoursReportData {
   hourlyDistribution?: PeakHourRow[];
 }
 
+interface ComprehensiveReportData {
+  revenue: RevenueReportData;
+  traffic: TrafficReportData;
+  occupancy: OccupancyReportData;
+  peakHours: PeakHoursReportData;
+}
+
 type ReportData = RevenueReportData | TrafficReportData | OccupancyReportData | PeakHoursReportData;
 
 // ── Export Service ──────────────────────────────────────────────────────
@@ -67,6 +74,167 @@ export class ExportService {
       return this.generatePdf(reportType, data);
     }
     throw new Error('Unsupported format');
+  }
+
+  /**
+   * Xuất báo cáo tổng hợp gộp 4 loại vào 1 file (Excel: 5 sheets, PDF: 5 sections)
+   */
+  static async generateComprehensiveReport(format: string, data: ComprehensiveReportData): Promise<Buffer> {
+    if (format === 'excel') {
+      return this.generateComprehensiveExcel(data);
+    } else if (format === 'pdf') {
+      return this.generateComprehensivePdf(data);
+    }
+    throw new Error('Unsupported format');
+  }
+
+  // ── Comprehensive Excel (5 sheets) ──
+
+  private static async generateComprehensiveExcel(data: ComprehensiveReportData): Promise<Buffer> {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Smart Parking System';
+
+    // Helper: style header row
+    const styleHeader = (sheet: ExcelJS.Worksheet) => {
+      const headerRow = sheet.getRow(1);
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A1A2E' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      });
+      headerRow.height = 28;
+    };
+
+    // Sheet 1: Doanh Thu theo thời gian
+    const revenueSheet = workbook.addWorksheet('Doanh Thu');
+    revenueSheet.columns = [
+      { header: 'Thời gian', key: 'label', width: 20 },
+      { header: 'Tổng doanh thu (VNĐ)', key: 'totalRevenue', width: 22 },
+      { header: 'Số giao dịch', key: 'transactionCount', width: 15 },
+      { header: 'Trung bình/Giao dịch', key: 'avgRevenue', width: 22 },
+    ];
+    data.revenue?.byTimePeriod?.forEach((row: any) => revenueSheet.addRow(row));
+    styleHeader(revenueSheet);
+
+    // Sheet 2: Doanh Thu theo hình thức thanh toán
+    const methodSheet = workbook.addWorksheet('Theo Hình Thức TT');
+    methodSheet.columns = [
+      { header: 'Phương thức', key: 'method', width: 20 },
+      { header: 'Tổng doanh thu (VNĐ)', key: 'totalRevenue', width: 22 },
+      { header: 'Số giao dịch', key: 'count', width: 15 },
+    ];
+    data.revenue?.byMethod?.forEach((row: any) => methodSheet.addRow(row));
+    styleHeader(methodSheet);
+
+    // Sheet 3: Lượt Xe Vào Ra
+    const trafficSheet = workbook.addWorksheet('Lượt Xe Vào Ra');
+    trafficSheet.columns = [
+      { header: 'Thời gian', key: 'label', width: 20 },
+      { header: 'Xe vào', key: 'checkIn', width: 15 },
+      { header: 'Xe ra', key: 'checkOut', width: 15 },
+    ];
+    data.traffic?.data?.forEach((row: any) => trafficSheet.addRow(row));
+    styleHeader(trafficSheet);
+
+    // Sheet 4: Tỷ Lệ Lấp Đầy
+    const occupancySheet = workbook.addWorksheet('Tỷ Lệ Lấp Đầy');
+    occupancySheet.columns = [
+      { header: 'Bãi xe', key: 'facilityName', width: 25 },
+      { header: 'Tầng', key: 'floorName', width: 20 },
+      { header: 'Tổng slot', key: 'total', width: 12 },
+      { header: 'Đang dùng', key: 'occupied', width: 12 },
+      { header: 'Đã đặt', key: 'reserved', width: 12 },
+      { header: 'Trống', key: 'available', width: 12 },
+      { header: 'Tỷ lệ lấp đầy (%)', key: 'occupancyRate', width: 20 },
+    ];
+    data.occupancy?.floors?.forEach((row: any) => occupancySheet.addRow(row));
+    styleHeader(occupancySheet);
+
+    // Sheet 5: Khung Giờ Cao Điểm
+    const peakSheet = workbook.addWorksheet('Khung Giờ Cao Điểm');
+    peakSheet.columns = [
+      { header: 'Khung giờ', key: 'label', width: 22 },
+      { header: 'Xe vào', key: 'checkIn', width: 12 },
+      { header: 'Xe ra', key: 'checkOut', width: 12 },
+      { header: 'Tổng hoạt động', key: 'totalActivity', width: 18 },
+    ];
+    data.peakHours?.hourlyDistribution?.forEach((row: any) => peakSheet.addRow(row));
+    styleHeader(peakSheet);
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer as ArrayBuffer);
+  }
+
+  // ── Comprehensive PDF (5 sections) ──
+
+  private static async generateComprehensivePdf(data: ComprehensiveReportData): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 30, size: 'A4' });
+      const buffers: Buffer[] = [];
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
+
+      doc.font('Helvetica-Bold').fontSize(18).text('BAO CAO TONG HOP', { align: 'center' });
+      doc.font('Helvetica').fontSize(10).text(`Ngay xuat: ${new Date().toLocaleDateString('vi-VN')}`, { align: 'center' });
+      doc.moveDown(1.5);
+
+      // Section 1: Doanh Thu
+      if (data.revenue?.byTimePeriod && data.revenue.byTimePeriod.length > 0) {
+        const table1 = {
+          title: "1. DOANH THU THEO THOI GIAN",
+          headers: ["Thoi gian", "Tong doanh thu", "Giao dich", "Trung binh"],
+          rows: data.revenue.byTimePeriod.map((r: any) => [r.label, String(r.totalRevenue), String(r.transactionCount), String(r.avgRevenue)])
+        };
+        doc.table(table1, { width: 500 });
+        doc.moveDown();
+      }
+
+      // Section 2: Theo Hình Thức TT
+      if (data.revenue?.byMethod && data.revenue.byMethod.length > 0) {
+        const table2 = {
+          title: "2. DOANH THU THEO HINH THUC THANH TOAN",
+          headers: ["Phuong thuc", "Tong doanh thu", "So giao dich"],
+          rows: data.revenue.byMethod.map((r: any) => [r.method, String(r.totalRevenue), String(r.count)])
+        };
+        doc.table(table2, { width: 500 });
+        doc.moveDown();
+      }
+
+      // Section 3: Lượt Xe
+      if (data.traffic?.data && data.traffic.data.length > 0) {
+        const table3 = {
+          title: "3. LUOT XE VAO RA",
+          headers: ["Thoi gian", "Xe vao", "Xe ra"],
+          rows: data.traffic.data.map((r: any) => [r.label, String(r.checkIn), String(r.checkOut)])
+        };
+        doc.table(table3, { width: 500 });
+        doc.moveDown();
+      }
+
+      // Section 4: Tỷ Lệ Lấp Đầy
+      if (data.occupancy?.floors && data.occupancy.floors.length > 0) {
+        const table4 = {
+          title: "4. TY LE LAP DAY",
+          headers: ["Bai xe", "Tang", "Tong", "Dang dung", "Trong", "Ty le (%)"],
+          rows: data.occupancy.floors.map((r: any) => [r.facilityName, r.floorName, String(r.total), String(r.occupied), String(r.available), String(r.occupancyRate)])
+        };
+        doc.table(table4, { width: 500 });
+        doc.moveDown();
+      }
+
+      // Section 5: Khung Giờ Cao Điểm
+      if (data.peakHours?.hourlyDistribution && data.peakHours.hourlyDistribution.length > 0) {
+        const table5 = {
+          title: "5. KHUNG GIO CAO DIEM",
+          headers: ["Gio", "Xe vao", "Xe ra", "Tong"],
+          rows: data.peakHours.hourlyDistribution.map((r: any) => [r.label, String(r.checkIn), String(r.checkOut), String(r.totalActivity)])
+        };
+        doc.table(table5, { width: 500 });
+      }
+
+      doc.end();
+    });
   }
 
   private static async generateExcel(reportType: string, data: any): Promise<Buffer> {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, DollarSign, Building2, MapPin, ArrowLeft, FileText, Clock } from 'lucide-react';
+import { Plus, DollarSign, Building2, MapPin, ArrowLeft, FileText, Clock, Layers } from 'lucide-react';
 
 import { facilityService, type Facility } from '../../../services/facility.service';
 import { floorService, type Floor } from '../../../services/floor.service';
@@ -46,6 +46,8 @@ export default function PricingPage() {
   const [planSearch, setPlanSearch] = useState('');
   const [planFilterVehicleType, setPlanFilterVehicleType] = useState('all');
   const [planFilterFeeType, setPlanFilterFeeType] = useState('all');
+  const [planSortName, setPlanSortName] = useState('default');
+  const [planSortVehicle, setPlanSortVehicle] = useState('default');
   const [planSortPrice, setPlanSortPrice] = useState('default');
   const [planSortDate, setPlanSortDate] = useState('default');
 
@@ -66,6 +68,8 @@ export default function PricingPage() {
     planSearch,
     planFilterVehicleType,
     planFilterFeeType,
+    planSortName,
+    planSortVehicle,
     planSortPrice,
     planSortDate,
     facilitySearch,
@@ -116,18 +120,16 @@ export default function PricingPage() {
 
   const availableVehicleTypes = useMemo(() => {
     if (!selectedFacility) return vehicleTypes;
-    const facPlanVtIds = new Set<string>();
-    plans.forEach((p) => {
-      const pFacId = p.facilityId && typeof p.facilityId === 'object' ? p.facilityId._id : p.facilityId;
-      if (pFacId === selectedFacility._id) {
-        const vtId = p.vehicleTypeId && typeof p.vehicleTypeId === 'object'
-          ? p.vehicleTypeId._id
-          : p.vehicleTypeId;
-        if (vtId) facPlanVtIds.add(vtId);
-      }
+    // Lấy loại xe từ allowedVehicleTypes của các tầng thuộc tòa nhà
+    const facilityFloors = floors.filter((f) => f.facilityId === selectedFacility._id);
+    const vtIds = new Set<string>();
+    facilityFloors.forEach((fl) => {
+      fl.allowedVehicleTypes?.forEach((vt: any) => {
+        vtIds.add(typeof vt === 'string' ? vt : vt._id);
+      });
     });
-    return vehicleTypes.filter((vt) => facPlanVtIds.has(vt._id));
-  }, [selectedFacility, plans, vehicleTypes]);
+    return vehicleTypes.filter((vt) => vtIds.has(vt._id));
+  }, [selectedFacility, floors, vehicleTypes]);
 
   const displayed = plans.filter((p) => {
     if (filterStatus !== 'all' && p.status !== filterStatus) return false;
@@ -164,6 +166,16 @@ export default function PricingPage() {
   });
 
   const sortedPlans = [...displayed].sort((a, b) => {
+    if (planSortName !== 'default') {
+      const cmp = a.name.localeCompare(b.name, 'vi');
+      return planSortName === 'name_asc' ? cmp : -cmp;
+    }
+    if (planSortVehicle !== 'default') {
+      const vtNameA = typeof a.vehicleTypeId === 'object' ? a.vehicleTypeId?.name || '' : (vehicleTypes.find(v => v._id === a.vehicleTypeId)?.name || '');
+      const vtNameB = typeof b.vehicleTypeId === 'object' ? b.vehicleTypeId?.name || '' : (vehicleTypes.find(v => v._id === b.vehicleTypeId)?.name || '');
+      const cmp = vtNameA.localeCompare(vtNameB, 'vi');
+      return planSortVehicle === 'vt_asc' ? cmp : -cmp;
+    }
     if (planSortPrice !== 'default') {
       const priceA = a.rates && a.rates.length > 0 ? a.rates[0].amount : 0;
       const priceB = b.rates && b.rates.length > 0 ? b.rates[0].amount : 0;
@@ -271,7 +283,7 @@ export default function PricingPage() {
               setEditingPlan(undefined);
               setModalOpen(true);
             }}
-            className="bg-black text-white font-bold px-5 py-2.5 rounded-xl hover:bg-black/80 transition-colors flex items-center gap-2 shadow-sm"
+            className="bg-[#062F28] text-white font-bold px-5 py-2.5 rounded-xl hover:bg-[#062F28]/80 transition-colors flex items-center gap-2 shadow-sm"
           >
             <Plus size={20} /> Thêm Bảng Giá
           </button>
@@ -293,10 +305,6 @@ export default function PricingPage() {
           vehicleTypes={availableVehicleTypes}
           filterFeeType={planFilterFeeType}
           setFilterFeeType={setPlanFilterFeeType}
-          sortPrice={planSortPrice}
-          setSortPrice={setPlanSortPrice}
-          sortDate={planSortDate}
-          setSortDate={setPlanSortDate}
         />
       )}
 
@@ -361,14 +369,13 @@ export default function PricingPage() {
                   }}
                 >
                   <div className="px-5 pt-4 pb-3">
-                    <div className="flex gap-3 mb-4">
+                               <div className="flex items-start gap-4 mb-3">
                       {/* Icon */}
                       <div
-                        className="self-center"
                         style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 12,
+                          width: 56,
+                          height: 56,
+                          borderRadius: 16,
                           background: '#ffffff',
                           border: '1.5px solid #f0f0f0',
                           display: 'flex',
@@ -379,55 +386,60 @@ export default function PricingPage() {
                       >
                         <Building2 size={24} style={{ color: '#9FE870' }} />
                       </div>
-                      {/* Text */}
+                      
+                      {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
                           <h3
                             className="text-[15px] font-bold text-[#062F28] truncate"
                             title={fac.name}
                           >
                             {fac.name}
                           </h3>
-                        </div>
-                        <div
-                          className="flex flex-col gap-1 mt-1.5 min-w-0"
-                          style={{ color: '#7B7B7B' }}
-                        >
-                          <div className="flex items-center gap-1.5 text-[13px]">
-                            <MapPin size={12} className="shrink-0" />
-                            <span className="truncate uppercase tracking-wide" title={fac.address}>
-                              {fac.address}
+                          <div className="flex-shrink-0">
+                            <span
+                              style={{
+                                fontSize: 10,
+                                padding: '3px 10px',
+                                borderRadius: 20,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 5,
+                                ...badgeStyle,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: 6,
+                                  height: 6,
+                                  borderRadius: '50%',
+                                  background: isActive ? '#82C94E' : (fac as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
+                                }}
+                              />
+                              {isActive ? 'HOẠT ĐỘNG' : (fac as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-[14px] text-gray-500 font-medium">
-                            <Clock size={15} className="text-gray-400" /> Thời gian hoạt động: {fac.openTime} - {fac.closeTime}
-                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[13px] text-[#7B7B7B]">
+                          <MapPin size={12} className="shrink-0" />
+                          <span className="truncate uppercase tracking-wide" title={fac.address}>
+                            {fac.address}
+                          </span>
                         </div>
                       </div>
-                      {/* Badge */}
-                      <div className="flex-shrink-0">
-                        <span
-                          style={{
-                            fontSize: 10,
-                            padding: '3px 10px',
-                            borderRadius: 20,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 5,
-                            ...badgeStyle,
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: '50%',
-                              background: isActive ? '#82C94E' : (fac as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
-                            }}
-                          />
-                          {isActive ? 'HOẠT ĐỘNG' : (fac as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
+                    </div>
+
+                    {/* Meta row */}
+                    <div className="flex items-center gap-4 text-[13px] text-gray-500 font-medium mb-4">
+                      <span className="flex items-center gap-1.5">
+                        <Layers size={13} className="text-gray-400 shrink-0" /> {fac.totalFloors || 0} tầng
+                      </span>
+                      <span className="flex items-center gap-1.5 min-w-0">
+                        <Clock size={13} className="text-gray-400 shrink-0" />
+                        <span className="truncate" title={`Thời gian hoạt động: ${fac.openTime} - ${fac.closeTime}`}>
+                          Thời gian hoạt động: {fac.openTime} - {fac.closeTime}
                         </span>
-                      </div>
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -482,7 +494,7 @@ export default function PricingPage() {
               setEditingPlan(undefined);
               setModalOpen(true);
             }}
-            className="mt-4 bg-black text-white font-bold px-5 py-2.5 rounded-xl hover:bg-black/80 transition-colors inline-flex items-center gap-2 shadow-sm"
+            className="mt-4 bg-[#062F28] text-white font-bold px-5 py-2.5 rounded-xl hover:bg-[#062F28]/80 transition-colors inline-flex items-center gap-2 shadow-sm"
           >
             <Plus size={16} /> Tạo bảng giá đầu tiên
           </button>
@@ -504,6 +516,14 @@ export default function PricingPage() {
             onRefresh={fetchAll}
             currentPage={currentPage}
             itemsPerPage={pageLimit}
+            sortName={planSortName}
+            setSortName={setPlanSortName}
+            sortVehicle={planSortVehicle}
+            setSortVehicle={setPlanSortVehicle}
+            sortPrice={planSortPrice}
+            setSortPrice={setPlanSortPrice}
+            sortDate={planSortDate}
+            setSortDate={setPlanSortDate}
           />
 
           <PricingPagination
@@ -536,11 +556,12 @@ export default function PricingPage() {
                 .filter(Boolean) as VehicleType[];
             }
 
-            return (
+              return (
               <PricingFormModal
                 plan={editingPlan}
                 facilities={facilities}
                 vehicleTypes={allowedVehicleTypes}
+                existingPlans={plans}
                 onClose={() => setModalOpen(false)}
                 onSuccess={fetchAll}
                 selectedFacilityId={selectedFacility?._id}

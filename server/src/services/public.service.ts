@@ -26,7 +26,7 @@ export class PublicService {
   }
 
   static async getPublicPricing(facilityId: string) {
-    const pricingPlans = await PricingPlan.find({ facilityId, status: 'active' }).populate('vehicleTypeId', 'name code slotSize icon');
+    const pricingPlans = await PricingPlan.find({ facilityId, status: 'active' }).populate('vehicleTypeId', 'name code icon');
     return pricingPlans;
   }
 

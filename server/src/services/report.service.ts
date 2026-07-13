@@ -773,7 +773,6 @@ export class ReportService {
           vehicleTypeId: '$_id.vehicleTypeId',
           vehicleTypeName: '$vehicleType.name',
           vehicleTypeCode: '$vehicleType.code',
-          slotSize: '$vehicleType.slotSize',
           facilityId: '$_id.facilityId',
           facilityName: '$facility.name',
           total: 1,
@@ -827,10 +826,8 @@ export class ReportService {
           ? Math.round(((cell.occupied + cell.reserved) / cell.total) * 10000) / 100
           : 0;
 
-      // O* theo MFD [P2] — phụ thuộc kích thước xe
-      const optimalOccupancy =
-        ReportService.MFD_OPTIMAL_OCCUPANCY[cell.slotSize] ||
-        ReportService.MFD_DEFAULT_OPTIMAL;
+      // O* theo MFD [P2] — dùng ngưỡng mặc định
+      const optimalOccupancy = ReportService.MFD_DEFAULT_OPTIMAL;
 
       // Phân loại chế độ vận hành MFD
       const operatingRegime = ReportService.classifyMFDRegime(effectiveOccupancy, optimalOccupancy);
@@ -848,7 +845,7 @@ export class ReportService {
         vehicleTypeId: cell.vehicleTypeId,
         vehicleTypeName: cell.vehicleTypeName,
         vehicleTypeCode: cell.vehicleTypeCode,
-        slotSize: cell.slotSize,
+
         facilityId: cell.facilityId,
         facilityName: cell.facilityName,
         // Slot counts

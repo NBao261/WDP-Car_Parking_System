@@ -3,7 +3,7 @@ import { SlotController } from '../controllers/slot.controller';
 import { verifyToken, checkRole, checkPermission } from '../middlewares/auth.middleware';
 import { UserRole } from '../models/user.model';
 import { validate } from '../middlewares/validate.middleware';
-import { createSlotSchema, createBulkSlotsSchema, updateSlotStatusSchema } from '../validations/slot.validation';
+import { createSlotSchema, createBulkSlotsSchema, updateSlotSchema, updateSlotStatusSchema } from '../validations/slot.validation';
 import { objectIdParamSchema, floorIdParamSchema } from '../validations/common.validation';
 import { PERMISSIONS } from '../config/permissions';
 
@@ -22,5 +22,8 @@ router.delete('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(ob
 
 // Cập nhật trạng thái slot (SRS 3.2: Admin, Manager full; Staff giới hạn)
 router.patch('/:id/status', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), validate(updateSlotStatusSchema), checkPermission(PERMISSIONS.SLOT_UPDATE_STATUS), SlotController.updateSlotStatus);
+
+// Cập nhật thông tin slot (code, vehicleTypeId)
+router.patch('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(updateSlotSchema), checkPermission(PERMISSIONS.SLOT_UPDATE_STATUS), SlotController.updateSlot);
 
 export default router;

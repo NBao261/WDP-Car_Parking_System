@@ -49,61 +49,78 @@ export const formSchema = z
     }),
     rates: z.array(rateSchema).min(1, 'Cần ít nhất 1 mức giá'),
     overnightFee: z.preprocess(
-      (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
+      (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
       z
-        .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+        .number({ invalid_type_error: 'Bắt buộc' })
         .min(0, 'Không được nhập số âm')
+        .optional()
     ),
     overtimeFeePerHour: z.preprocess(
-      (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
+      (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
       z
-        .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+        .number({ invalid_type_error: 'Bắt buộc' })
         .min(0, 'Không được nhập số âm')
+        .optional()
     ),
     lostCardFee: z.preprocess(
-      (val) => (val === '' || val === null || val === undefined ? 50000 : Number(val)),
+      (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
       z
-        .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+        .number({ invalid_type_error: 'Bắt buộc' })
         .min(0, 'Không được nhập số âm')
+        .optional()
     ),
     gracePeriodMinutes: z.preprocess(
-      (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
+      (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
       z
-        .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+        .number({ invalid_type_error: 'Bắt buộc' })
         .min(0, 'Không được nhập số âm')
         .max(60, 'Tối đa 60 phút')
+        .optional()
     ),
     maxDailyFee: z.preprocess(
-      (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
+      (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
       z
-        .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+        .number({ invalid_type_error: 'Bắt buộc' })
         .min(0, 'Không được nhập số âm')
+        .optional()
     ),
     firstBlockHours: z.preprocess(
-      (val) => (val === '' || val === null || val === undefined ? 1 : Number(val)),
+      (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
       z
-        .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
+        .number({ invalid_type_error: 'Bắt buộc' })
         .min(1, 'Tối thiểu 1 giờ')
+        .optional()
     ),
   })
   .superRefine((data, ctx) => {
     if (data.uiFeeType === 'time_window') {
       data.rates.forEach((rate, index) => {
         if (!rate.startTime) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'Bắt buộc',
-            path: ['rates', index, 'startTime'],
-          });
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bắt buộc', path: ['rates', index, 'startTime'] });
         }
         if (!rate.endTime) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'Bắt buộc',
-            path: ['rates', index, 'endTime'],
-          });
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bắt buộc', path: ['rates', index, 'endTime'] });
         }
       });
+    }
+
+    if (data.gracePeriodMinutes === undefined) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bắt buộc', path: ['gracePeriodMinutes'] });
+    }
+    if (data.lostCardFee === undefined) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bắt buộc', path: ['lostCardFee'] });
+    }
+
+    if (data.uiFeeType === 'hourly') {
+      if (data.firstBlockHours === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bắt buộc', path: ['firstBlockHours'] });
+      if (data.maxDailyFee === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bắt buộc', path: ['maxDailyFee'] });
+      if (data.overnightFee === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bắt buộc', path: ['overnightFee'] });
+      if (data.overtimeFeePerHour === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bắt buộc', path: ['overtimeFeePerHour'] });
+    } else if (data.uiFeeType === 'per_turn') {
+      if (data.overnightFee === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bắt buộc', path: ['overnightFee'] });
+    } else if (data.uiFeeType === 'time_window') {
+      if (data.maxDailyFee === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bắt buộc', path: ['maxDailyFee'] });
+      if (data.overtimeFeePerHour === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bắt buộc', path: ['overtimeFeePerHour'] });
     }
   });
 

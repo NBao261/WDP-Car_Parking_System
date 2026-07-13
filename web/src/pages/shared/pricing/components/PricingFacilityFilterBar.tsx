@@ -59,9 +59,9 @@ function DropFilter({
           display: 'flex',
           alignItems: 'center',
           padding: '0 32px 0 14px',
-          border: isOpen || active ? '1.5px solid #cce242' : '1.5px solid #e2e3e2',
-          boxShadow: isOpen ? '0 0 0 3px rgba(204,226,66,0.2)' : 'none',
-          color: active ? '#060606' : '#6b6e6b',
+          border: isOpen || active ? '1.5px solid #9FE870' : '1.5px solid #e2e3e2',
+          boxShadow: isOpen ? '0 0 0 3px rgba(159, 232, 112, 0.2)' : 'none',
+          color: active ? '#062F28' : '#6b6e6b',
           fontWeight: active ? 600 : 400,
           transition: 'all 0.2s ease',
           userSelect: 'none',
@@ -137,8 +137,8 @@ function DropFilter({
                 padding: '10px 14px',
                 fontSize: 14,
                 cursor: 'pointer',
-                color: value === o.value ? '#060606' : '#4a4a4a',
-                background: value === o.value ? '#f8fce2' : '#ffffff',
+                color: value === o.value ? '#062F28' : '#4a4a4a',
+                background: value === o.value ? '#f0fce4' : '#ffffff',
                 fontWeight: value === o.value ? 500 : 400,
                 display: 'flex',
                 alignItems: 'center',
@@ -205,7 +205,7 @@ export function PricingFacilityFilterBar({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Tìm tòa nhà, địa chỉ..."
-          className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d7ee46] focus:border-transparent transition-all"
+          className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:border-transparent transition-all"
         />
       </div>
 
@@ -273,7 +273,7 @@ export function PricingFacilityFilterBar({
                 borderRadius: 10,
                 border: 'none',
                 cursor: 'pointer',
-                background: viewMode === mode ? '#000000' : '#f0f1f0',
+                background: viewMode === mode ? '#062F28' : '#f0f1f0',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

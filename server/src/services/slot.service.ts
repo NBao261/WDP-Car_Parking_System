@@ -86,6 +86,34 @@ export class SlotService {
   }
 
 
+  static async updateSlot(id: string, data: { code?: string; vehicleTypeId?: string }): Promise<IParkingSlot> {
+    const slot = await ParkingSlot.findById(id);
+    if (!slot) {
+      throw new AppError('Slot not found', 404);
+    }
+
+    if (data.code) {
+      // Check for duplicate code in same facility
+      const existing = await ParkingSlot.findOne({
+        code: data.code,
+        facilityId: slot.facilityId,
+        _id: { $ne: id },
+        isDeleted: false,
+      });
+      if (existing) {
+        throw new AppError(`Mã slot "${data.code}" đã tồn tại trong cơ sở này`, 400);
+      }
+      slot.code = data.code;
+    }
+
+    if (data.vehicleTypeId) {
+      slot.vehicleTypeId = data.vehicleTypeId as any;
+    }
+
+    await slot.save();
+    return slot;
+  }
+
   static async updateSlotStatus(id: string, status: string, reason?: string, userRole?: string): Promise<IParkingSlot | null> {
     const slot = await ParkingSlot.findById(id);
     if (!slot) {
@@ -131,7 +159,12 @@ export class SlotService {
   }
 
   static async getSlotById(id: string): Promise<IParkingSlot | null> {
-    const slot = await ParkingSlot.findById(id).populate('vehicleTypeId').populate('currentSessionId');
+    const slot = await ParkingSlot.findById(id)
+      .populate('vehicleTypeId')
+      .populate({
+        path: 'currentSessionId',
+        populate: { path: 'pricingPlanId' }
+      });
     if (!slot) {
       throw new AppError('Slot not found', 404);
     }
@@ -139,6 +172,12 @@ export class SlotService {
   }
 
   static async getSlotsByFloor(floorId: string): Promise<IParkingSlot[]> {
-    return ParkingSlot.find({ floorId, isDeleted: false }).populate('vehicleTypeId').populate('currentSessionId').sort({ code: 1 });
+    return ParkingSlot.find({ floorId, isDeleted: false })
+      .populate('vehicleTypeId')
+      .populate({
+        path: 'currentSessionId',
+        populate: { path: 'pricingPlanId' }
+      })
+      .sort({ code: 1 });
   }
 }

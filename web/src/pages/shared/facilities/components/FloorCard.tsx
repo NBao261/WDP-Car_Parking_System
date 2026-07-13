@@ -201,67 +201,32 @@ export const FloorCard = React.memo(function FloorCard({
       onClick={() => onView(floor)}
     >
       {/* Header */}
-      <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-3 relative">
-        <div className="flex gap-3 min-w-0">
-          {/* Icon */}
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 12,
-              background: '#ffffff',
-              border: '1.5px solid #f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <Layers size={24} style={{ color: '#9FE870' }} />
-          </div>
-          {/* Text */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
+      <div className="px-5 pt-4 pb-3 relative">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex gap-3 min-w-0">
+            {/* Icon */}
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: '#ffffff',
+                border: '1.5px solid #f0f0f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Layers size={24} style={{ color: '#9FE870' }} />
+            </div>
+            {/* Name */}
+            <div className="flex-1 min-w-0 flex items-center">
               <h3 className="text-[15px] font-bold text-[#062F28] truncate" title={floor.name}>
                 {floor.name}
               </h3>
             </div>
-            <div
-              className="flex flex-nowrap gap-1.5 overflow-x-auto pb-1 -mb-1 mt-1"
-              style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-            >
-              <style>{`
-                .vehicle-pills::-webkit-scrollbar { display: none; }
-              `}</style>
-              {vtNames.length === 0 ? (
-                <span className="text-[13px] text-gray-400 italic">Không có loại xe</span>
-              ) : (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {vtNames.map((name, i) => {
-                    const vtIndex = vehicleTypes.findIndex((v) => v.name === name);
-                    const idx = Math.max(0, vtIndex);
-                    const colors = [
-                      { bg: '#F3F4F6', text: '#4B5563' },
-                      { bg: '#EAF5E4', text: '#062F28' },
-                      { bg: '#9FE870', text: '#062F28' },
-                      { bg: '#062F28', text: '#9FE870' },
-                    ];
-                    const color = colors[Math.min(idx, colors.length - 1)];
-                    return (
-                      <span
-                        key={i}
-                        className="px-2 py-0.5 rounded text-[11px] font-medium"
-                        style={{ background: color.bg, color: color.text }}
-                      >
-                        {name}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </div>
-        </div>
 
         {/* Badge & Action Menu */}
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -372,6 +337,35 @@ export const FloorCard = React.memo(function FloorCard({
             </div>
           )}
         </div>
+        </div>
+
+        {/* Vehicle type pills - separate row */}
+        <div className="flex flex-wrap gap-1.5 mt-1 pl-[60px]">
+          {vtNames.length === 0 ? (
+            <span className="text-[11px] text-gray-400 italic">Không có loại xe</span>
+          ) : (
+            vtNames.map((name, i) => {
+              const vtIndex = vehicleTypes.findIndex((v) => v.name === name);
+              const idx = Math.max(0, vtIndex);
+              const colors = [
+                { bg: '#F3F4F6', text: '#4B5563' },
+                { bg: '#EAF5E4', text: '#062F28' },
+                { bg: '#9FE870', text: '#062F28' },
+                { bg: '#062F28', text: '#9FE870' },
+              ];
+              const color = colors[Math.min(idx, colors.length - 1)];
+              return (
+                <span
+                  key={i}
+                  className="px-2 py-0.5 rounded text-[11px] font-medium"
+                  style={{ background: color.bg, color: color.text }}
+                >
+                  {name}
+                </span>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* 3 Stats Box */}
@@ -474,7 +468,7 @@ export function FloorGrid({
         {isFacilityActive && (
           <button
             onClick={onAddFloor}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors bg-black text-white hover:bg-black/80"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors bg-[#062F28] text-white hover:bg-[#062F28]/80"
           >
             <Plus size={20} /> Thêm Tầng
           </button>
