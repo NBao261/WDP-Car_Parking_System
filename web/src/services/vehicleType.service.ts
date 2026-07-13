@@ -1,12 +1,12 @@
 import { apiClient } from './api';
 
-export type SlotSize = 'small' | 'medium' | 'large';
+
 
 export interface VehicleType {
   _id: string;
   name: string;
   code: string;
-  slotSize: SlotSize;
+
   description: string;
   icon: string;
   requiresPlate: boolean;
@@ -34,7 +34,7 @@ export interface VehicleTypeListResponse {
 export interface CreateVehicleTypePayload {
   name: string;
   code: string;
-  slotSize: SlotSize;
+
   description?: string;
   icon?: string;
   requiresPlate?: boolean;
@@ -44,7 +44,7 @@ export interface CreateVehicleTypePayload {
 export interface UpdateVehicleTypePayload {
   name?: string;
   code?: string;
-  slotSize?: SlotSize;
+
   description?: string;
   icon?: string;
   requiresPlate?: boolean;

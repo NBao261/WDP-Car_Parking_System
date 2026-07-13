@@ -6,8 +6,6 @@ import { X, Loader2, Building2, Layers, ChevronDown } from 'lucide-react';
 import {
   vehicleTypeService,
   VehicleType,
-
-  SlotSize,
   CreateVehicleTypePayload,
   UpdateVehicleTypePayload,
 } from '../../../../services/vehicleType.service';
@@ -35,7 +33,6 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
   const [form, setForm] = useState<CreateVehicleTypePayload>({
     name: '',
     code: '',
-    slotSize: 'medium' as SlotSize,
     description: '',
     icon: '',
     requiresPlate: true,
@@ -58,7 +55,6 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
         setForm({
           name: vehicle.name,
           code: vehicle.code,
-          slotSize: vehicle.slotSize,
           description: vehicle.description || '',
           icon: vehicle.icon || '',
           requiresPlate: vehicle.requiresPlate !== false,
@@ -68,7 +64,6 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
         setForm({
           name: '',
           code: '',
-          slotSize: 'medium' as SlotSize,
           description: '',
           icon: '',
           requiresPlate: true,
@@ -164,7 +159,6 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
       if (isEdit && vehicle) {
         const payload: UpdateVehicleTypePayload = {
           name: form.name,
-          slotSize: form.slotSize,
           code: form.code,
           description: form.description,
           icon: form.icon,
@@ -217,7 +211,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">

@@ -4,11 +4,51 @@ import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
 import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { AppError } from '../middlewares/error.middleware';
 
+/**
+ * Chuẩn hóa tên: bỏ dấu tiếng Việt, lowercase, trim khoảng trắng thừa.
+ * VD: "Xe Máy" → "xe may", "  ô   tô  " → "o to"
+ */
+function normalizeName(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export class VehicleTypeService {
+  /**
+   * Kiểm tra tên loại xe trùng lặp (bỏ dấu tiếng Việt).
+   * @param name Tên cần kiểm tra
+   * @param excludeId ID loại xe cần loại trừ (khi cập nhật)
+   */
+  private static async checkDuplicateName(name: string, excludeId?: string): Promise<void> {
+    const normalized = normalizeName(name);
+    const allTypes = await VehicleType.find({ isDeleted: false });
+    const duplicate = allTypes.find(vt => {
+      if (excludeId && vt._id.toString() === excludeId) return false;
+      return normalizeName(vt.name) === normalized;
+    });
+    if (duplicate) {
+      throw new AppError(
+        `Tên loại xe "${name}" đã tồn tại (trùng với "${duplicate.name}"). Vui lòng chọn tên khác.`,
+        400
+      );
+    }
+  }
+
   static async createVehicleType(data: Partial<IVehicleType>): Promise<IVehicleType> {
     const existingType = await VehicleType.findOne({ code: data.code });
     if (existingType) {
       throw new AppError('Vehicle type code already exists', 400);
+    }
+
+    // Kiểm tra tên trùng (bỏ dấu)
+    if (data.name) {
+      await this.checkDuplicateName(data.name);
     }
 
     const newType = new VehicleType(data);
@@ -35,6 +75,11 @@ export class VehicleTypeService {
       if (existingType) {
         throw new AppError('Vehicle type code already exists', 400);
       }
+    }
+
+    // Kiểm tra tên trùng (bỏ dấu), loại trừ chính nó
+    if (data.name && data.name !== oldVehicleType.name) {
+      await this.checkDuplicateName(data.name, id);
     }
 
     const vehicleType = await VehicleType.findByIdAndUpdate(id, data, { new: true, runValidators: true });

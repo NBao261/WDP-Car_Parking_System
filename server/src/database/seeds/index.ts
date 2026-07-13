@@ -5,7 +5,7 @@ import { logger } from '../../config/logger';
 // Import Models
 import { User, UserRole, UserStatus } from '../../models/user.model';
 import { ParkingFacility, FacilityStatus } from '../../models/parkingFacility.model';
-import { VehicleType, SlotSize } from '../../models/vehicleType.model';
+import { VehicleType } from '../../models/vehicleType.model';
 import { Floor } from '../../models/floor.model';
 import { ParkingSlot, SlotStatus } from '../../models/parkingSlot.model';
 import { PricingPlan, FeeType, FeeMethod } from '../../models/pricingPlan.model';
@@ -143,7 +143,6 @@ const seed = async () => {
         _id: '683f1a2b3c4d5e6f7a8b9c01',
         name: 'Xe Máy',
         code: 'MOTO',
-        slotSize: SlotSize.SMALL,
         description: 'Xe máy, xe máy điện 2 bánh',
         icon: '🏍️',
       },
@@ -151,14 +150,12 @@ const seed = async () => {
         _id: '683f1a2b3c4d5e6f7a8b9c02',
         name: 'Ô tô 4-5 chỗ',
         code: 'CAR4',
-        slotSize: SlotSize.MEDIUM,
         description: 'Xe con 4 đến 5 chỗ (sedan, hatchback, SUV nhỏ)',
         icon: '🚗',
       },
       {
         name: 'Ô tô 7+ chỗ',
         code: 'CAR7',
-        slotSize: SlotSize.LARGE,
         description: 'Xe 7 chỗ trở lên (MPV, SUV lớn, pickup)',
         icon: '🚙',
       },
@@ -166,7 +163,6 @@ const seed = async () => {
         _id: '683f1a2b3c4d5e6f7a8b9c03',
         name: 'Xe Đạp',
         code: 'BIKE',
-        slotSize: SlotSize.SMALL,
         description: 'Xe đạp, xe đạp điện',
         icon: '🚲',
         requiresPlate: false,
@@ -174,7 +170,6 @@ const seed = async () => {
       {
         name: 'Xe Tải nhẹ',
         code: 'TRUCK',
-        slotSize: SlotSize.LARGE,
         description: 'Xe tải nhẹ dưới 2.5 tấn',
         icon: '🚛',
       },

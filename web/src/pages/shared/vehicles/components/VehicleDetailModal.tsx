@@ -90,7 +90,7 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle, allVehicles = [] 
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
         >
           <div className="px-6 py-4 border-b border-gray-100 flex items-start justify-between bg-gray-50/50 shrink-0">
             <div>
@@ -106,8 +106,6 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle, allVehicles = [] 
           </div>
 
                 <div className="p-6 overflow-y-auto flex-1 flex flex-col space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    <div className="space-y-4">
                       <div className="flex items-center gap-4">
                         {(() => {
                           if (!vehicle) return null;
@@ -133,7 +131,7 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle, allVehicles = [] 
                           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                             Ngày Giờ Tạo
                           </p>
-                          <span className="text-sm font-medium text-[#062F28]">
+                          <span className="text-sm font-bold text-[#A0E870]">
                             {vehicle ? `${new Date(vehicle.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} ${new Date(vehicle.createdAt).toLocaleDateString('vi-VN')}` : '-'}
                           </span>
                         </div>
@@ -147,33 +145,26 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle, allVehicles = [] 
                           </span>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-4">
                       <div>
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                           Tòa nhà & Tầng liên kết
                         </p>
                         {isLoadingLinks ? (
                           <div className="flex items-center gap-2 text-sm text-gray-500 italic">
-                            <Loader2 size={14} className="animate-spin" /> Đang tải dữ liệu liên kết...
+                            <Loader2 size={14} className="animate-spin" /> Đang tải...
                           </div>
                         ) : groupedFacilities.length > 0 ? (
-                          <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
+                          <div className="rounded-xl border border-gray-100 divide-y divide-gray-100 overflow-hidden">
                             {groupedFacilities.map((fac) => (
-                              <div
-                                key={fac.id}
-                                className="flex flex-col gap-2 p-3.5 bg-[#9FE870]/10 rounded-xl border border-[#9FE870]/20"
-                              >
-                                <div className="flex items-center gap-1.5 text-[#062F28] font-bold text-sm">
-                                  <Building2 size={16} />
-                                  {fac.name}
-                                </div>
-                                <div className="flex flex-wrap gap-2 pl-5">
+                              <div key={fac.id} className="flex items-center gap-3 px-4 py-3 bg-white">
+                                <Building2 size={15} className="text-gray-400 shrink-0" />
+                                <span className="text-sm font-semibold text-[#062F28] shrink-0">{fac.name}</span>
+                                <div className="flex flex-wrap gap-1.5 ml-auto">
                                   {fac.floors.map((fl) => (
                                     <span
                                       key={fl.id}
-                                      className="inline-flex items-center px-2.5 py-1 bg-white text-gray-700 rounded-md text-xs font-semibold border border-gray-200 shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                                      className="px-2 py-0.5 bg-[#9FE870]/20 text-[#062F28] rounded-md text-[12px] font-bold"
                                     >
                                       {fl.name}
                                     </span>
@@ -183,11 +174,9 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle, allVehicles = [] 
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-gray-400 italic">Chưa liên kết tòa nhà/tầng nào.</p>
+                          <p className="text-sm text-gray-400 italic">Chưa liên kết tòa nhà / tầng nào.</p>
                         )}
                       </div>
-                    </div>
-                  </div>
 
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
