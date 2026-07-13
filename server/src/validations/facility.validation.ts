@@ -14,6 +14,9 @@ export const createFacilitySchema = z.object({
       .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
     description: z.string().optional(),
     images: z.array(z.string()).optional(),
+    // ── Toạ độ bản đồ (optional — controller xử lý fallback [0,0]) ──
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
   }),
 });
 
@@ -33,5 +36,8 @@ export const updateFacilitySchema = z.object({
     description: z.string().optional(),
     images: z.array(z.string()).optional(),
     status: z.nativeEnum(FacilityStatus).optional(),
+    // ── Toạ độ (optional khi update) ────────────────────
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
   }),
 });
