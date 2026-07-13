@@ -51,6 +51,45 @@ export const sessionApi = {
   getMySessions: (status?: 'active' | 'completed') => {
     return apiClient.get('/sessions/my-sessions', { params: { status } });
   },
+  getActiveSessions: (params?: { facilityId?: string }) => {
+    return apiClient.get('/sessions/active', { params });
+  },
+  searchSession: (licensePlate: string) => {
+    return apiClient.get('/sessions/search', { params: { licensePlate } });
+  },
+  calculateFee: (sessionId: string) => {
+    return apiClient.get(`/sessions/${sessionId}/fee`);
+  },
+  checkIn: (data: { facilityId: string; vehicleTypeId: string; licensePlate: string; gateIn?: string; checkInImage?: string }) => {
+    return apiClient.post('/sessions/check-in', data);
+  }
+};
+
+// Payment API
+export const paymentApi = {
+  cashCheckout: (data: { sessionId: string; gateOut?: string; checkOutImage?: string }) => {
+    return apiClient.post('/payments/cash-checkout', data);
+  }
+};
+
+// ALPR API
+export const alprApi = {
+  scanPlate: async (formData: FormData): Promise<{ success: boolean; message: string; data: any }> => {
+    const token = await SecureStore.getItemAsync(TOKEN_KEY);
+    const response = await fetch(`${API_URL}/alpr/scan`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+        // Do NOT set Content-Type here, let fetch generate the boundary
+      },
+      body: formData
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw errData;
+    }
+    return response.json();
+  }
 };
 
 // Reservation API
@@ -80,6 +119,26 @@ export const feedbackApi = {
   },
   getFeedbacks: (params?: { page?: number; limit?: number; status?: string; type?: string }) => {
     return apiClient.get('/feedbacks', { params });
+  }
+};
+
+// Exception API
+export const exceptionApi = {
+  getExceptions: (params?: any) => {
+    return apiClient.get('/exceptions', { params });
+  },
+  createException: (data: { 
+    type: string; 
+    description?: string; 
+    facilityId: string;
+    expectedPlate?: string;
+    actualPlate?: string;
+    checkInImage?: string;
+    checkOutImage?: string;
+    sessionId?: string;
+    cardCode?: string;
+  }) => {
+    return apiClient.post('/exceptions', data);
   }
 };
 

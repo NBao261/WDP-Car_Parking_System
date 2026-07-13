@@ -10,6 +10,7 @@ interface User {
   email: string;
   phone: string;
   role: UserRole;
+  assignedFacilities?: string[];
 }
 
 interface AuthState {
@@ -24,6 +25,8 @@ interface AuthState {
   checkAuth: () => Promise<void>;
   fetchProfile: () => Promise<void>;
   setUser: (user: User) => void;
+  selectedFacilityId: string | null;
+  setSelectedFacilityId: (id: string | null) => void;
 }
 
 // ─── Store ────────────────────────────────────────────
@@ -31,6 +34,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  selectedFacilityId: null,
+
+  setSelectedFacilityId: (id) => set({ selectedFacilityId: id }),
 
   login: async (email, password) => {
     const response: any = await apiClient.post('/auth/login', { email, password });
