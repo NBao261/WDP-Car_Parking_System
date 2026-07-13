@@ -107,8 +107,9 @@ export class PricingService {
       validateTimeWindowCoverage(data.rates, facility.openTime, facility.closeTime);
     }
 
-    // If the new plan is set to active, deactivate existing active plans for the same facility and vehicle type
-    if (data.status === 'active') {
+    // Deactivate existing active plans for same facility+vehicleType
+    // (status defaults to 'active' in schema, so deactivate unless explicitly creating as inactive)
+    if (data.status !== 'inactive') {
       await PricingPlan.updateMany(
         { facilityId: data.facilityId, vehicleTypeId: data.vehicleTypeId, status: 'active' },
         { status: 'inactive' }
