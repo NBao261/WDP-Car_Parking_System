@@ -21,6 +21,16 @@ export class SlotController {
     }
   }
 
+  static async updateSlot(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = req.params.id as string;
+      const slot = await SlotService.updateSlot(id, req.body);
+      res.status(200).json({ success: true, data: slot });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async updateSlotStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;

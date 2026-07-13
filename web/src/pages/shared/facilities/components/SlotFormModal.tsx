@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { X, Loader2, Check, Car, Search } from 'lucide-react';
+import { X, Loader2, Check, Car } from 'lucide-react';
 import { ICON_MAP } from '../../../shared/vehicles/components/constants';
 import { slotService } from '../../../../services/slot.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
@@ -11,8 +11,10 @@ interface SlotFormModalProps {
   facilityId: string;
   floorId: string;
   vehicleTypes: VehicleType[];
-  totalSlots: number;
-  currentSlotCount: number;
+  totalSlots?: number;
+  currentSlotCount?: number;
+  singleOnly?: boolean;
+  existingSlots?: { _id: string; code: string; vehicleTypeId: string }[];
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -23,6 +25,8 @@ export function SlotFormModal({
   vehicleTypes,
   totalSlots,
   currentSlotCount,
+  singleOnly = false,
+  existingSlots = [],
   onClose,
   onSuccess,
 }: SlotFormModalProps) {
@@ -30,6 +34,29 @@ export function SlotFormModal({
   const [loading, setLoading] = useState(false);
   const [vehicleType, setVehicleType] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [originalPrefix, setOriginalPrefix] = useState<string>('');
+
+  useEffect(() => {
+    if (!vehicleType || mode !== 'bulk') {
+      setOriginalPrefix('');
+      return;
+    }
+    const vtSlots = existingSlots.filter(s => s.vehicleTypeId === vehicleType);
+    if (vtSlots.length > 0) {
+      const match = vtSlots[0].code.match(/^([A-Za-z]+)/);
+      if (match) {
+        setPrefix(match[1]);
+        setOriginalPrefix(match[1]);
+        let maxNum = 0;
+        vtSlots.forEach(s => {
+          const numPart = s.code.replace(match[1], '');
+          const num = parseInt(numPart, 10);
+          if (!isNaN(num) && num > maxNum) maxNum = num;
+        });
+        setStartNumber(maxNum + 1);
+      }
+    }
+  }, [vehicleType, mode, existingSlots]);
 
   useEffect(() => {
     if (
@@ -48,13 +75,20 @@ export function SlotFormModal({
   const [prefix, setPrefix] = useState('');
   const [startNumber, setStartNumber] = useState<number | string>('');
   const [count, setCount] = useState<number | string>('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const filteredTypes = vehicleTypes.filter((vt) =>
-    vt.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
-  const remainingSlots = Math.max(0, totalSlots - currentSlotCount);
-  const isFull = remainingSlots === 0;
+  // Compute slot info per vehicle type from existing slots
+  const vtSlotInfo = useMemo(() => {
+    const map: Record<string, { codes: string[]; count: number }> = {};
+    existingSlots.forEach((s) => {
+      const vtId = s.vehicleTypeId;
+      if (!map[vtId]) map[vtId] = { codes: [], count: 0 };
+      map[vtId].codes.push(s.code);
+      map[vtId].count++;
+    });
+    // Sort codes naturally
+    Object.values(map).forEach((g) => g.codes.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })));
+    return map;
+  }, [existingSlots]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -66,8 +100,6 @@ export function SlotFormModal({
       if (!prefix.trim()) newErrors.prefix = 'Vui lòng nhập tiền tố';
       if (!startNumber) newErrors.startNumber = 'Vui lòng nhập số bắt đầu';
       if (!count) newErrors.count = 'Vui lòng nhập số lượng';
-      else if (Number(count) > remainingSlots)
-        newErrors.count = `Chỉ còn ${remainingSlots} slot trống. Vui lòng giảm số lượng.`;
     }
 
     setErrors(newErrors);
@@ -76,10 +108,6 @@ export function SlotFormModal({
 
   const handleSubmit = async () => {
     if (!validate()) return;
-    if (isFull) {
-      toast.error(`Tầng đã đạt giới hạn ${totalSlots} slots`);
-      return;
-    }
     setLoading(true);
     try {
       if (mode === 'single') {
@@ -97,11 +125,21 @@ export function SlotFormModal({
       } else {
         const numStart = Number(startNumber);
         const numCount = Number(count);
+        const newPrefix = prefix.toUpperCase();
+
+        if (originalPrefix && originalPrefix !== newPrefix) {
+          const vtSlots = existingSlots.filter(s => s.vehicleTypeId === vehicleType && s.code.startsWith(originalPrefix));
+          for (const slot of vtSlots) {
+            const newCode = slot.code.replace(originalPrefix, newPrefix);
+            await slotService.update(slot._id, { code: newCode });
+          }
+        }
+
         const res = await slotService.createBulk({
           facilityId,
           floorId,
           vehicleType,
-          prefix,
+          prefix: newPrefix,
           startNumber: numStart,
           count: numCount,
         });
@@ -122,12 +160,12 @@ export function SlotFormModal({
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
       >
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
           <div>
-            <h2 className="text-lg font-bold text-[#062F28]">Tạo Slot</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Thêm slot mới cho tầng hiện tại</p>
+            <h2 className="text-lg font-bold text-[#062F28]">Gán Xe</h2>
+            <p className="text-xs text-gray-500 mt-0.5">{singleOnly ? 'Gán loại xe cho slot trống' : 'Gán xe cho các slot mới'}</p>
           </div>
           <button
             onClick={onClose}
@@ -138,10 +176,9 @@ export function SlotFormModal({
         </div>
 
         <div className="p-6 overflow-y-auto flex-1 flex flex-col justify-between">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            {/* Left Column: Mode selection & inputs */}
+          <div className="space-y-4">
             <div className="space-y-4">
-              {/* Tabs */}
+              {!singleOnly && (
               <div className="flex bg-gray-100 p-1 rounded-xl mb-2 mt-2">
                 <button
                   onClick={() => {
@@ -150,7 +187,7 @@ export function SlotFormModal({
                   }}
                   className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors ${mode === 'single' ? 'bg-[#9FE870] shadow-sm text-[#062F28]' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  Tạo 1 Slot
+                  Gán 1 Slot
                 </button>
                 <button
                   onClick={() => {
@@ -159,22 +196,22 @@ export function SlotFormModal({
                   }}
                   className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors ${mode === 'bulk' ? 'bg-[#9FE870] shadow-sm text-[#062F28]' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  Tạo Nhiều Slot
+                  Gán Nhiều Slot
                 </button>
               </div>
+              )}
 
-              {/* Capacity indicator */}
-              <div
-                className={`flex items-center gap-2 text-sm mb-4 font-medium ${
-                  isFull ? 'text-red-600' : remainingSlots <= 5 ? 'text-amber-600' : 'text-[#062F28]'
-                }`}
-              >
-                <span>Sức chứa tầng:</span>
-                <span className="font-semibold">
-                  {currentSlotCount} / {totalSlots} slots{' '}
-                  {isFull ? '— Đã đầy' : `(còn ${remainingSlots})`}
-                </span>
-              </div>
+              {totalSlots !== undefined && currentSlotCount !== undefined && (
+                <div className={`flex items-center gap-2 text-sm font-medium ${
+                  currentSlotCount >= totalSlots ? 'text-red-600' : (totalSlots - currentSlotCount) <= 5 ? 'text-amber-600' : 'text-[#062F28]'
+                }`}>
+                  <span>Sức chứa tầng:</span>
+                  <span className="font-semibold">
+                    {currentSlotCount} / {totalSlots} slot{' '}
+                    {currentSlotCount >= totalSlots ? '— Đã đầy' : `(còn ${totalSlots - currentSlotCount})`}
+                  </span>
+                </div>
+              )}
 
               {mode === 'single' ? (
                 <div className="mb-4">
@@ -238,17 +275,12 @@ export function SlotFormModal({
                       <input
                         type="number"
                         min={1}
-                        max={remainingSlots}
+                        max={999}
                         placeholder="10"
                         value={count}
                         onChange={(e) => {
                           const val = e.target.value;
-                          if (val === '') {
-                            setCount('');
-                          } else {
-                            const num = Number(val);
-                            setCount(num > remainingSlots ? remainingSlots : num);
-                          }
+                            setCount(val === '' ? '' : Number(val));
                           if (errors.count) setErrors({ ...errors, count: '' });
                         }}
                         className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${
@@ -275,25 +307,12 @@ export function SlotFormModal({
               )}
             </div>
 
-            {/* Right Column: Vehicle Type Search & Selection */}
+            {/* Vehicle Type Selection */}
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-semibold text-gray-700 block mb-2">
                   Loại Xe <span className="text-red-500">*</span>
                 </label>
-
-                <div className="relative mb-3">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search size={14} className="text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Tìm kiếm loại xe..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all"
-                  />
-                </div>
 
                 {vehicleTypes.length === 0 ? (
                   <p className="text-xs text-red-500 bg-red-50 p-3 rounded-xl border border-red-100">
@@ -301,10 +320,11 @@ export function SlotFormModal({
                     tầng trước.
                   </p>
                 ) : (
-                  <div className="flex flex-wrap gap-2 p-1 max-h-40 overflow-y-auto">
-                    {filteredTypes.map((vt) => {
+                  <div className="flex flex-col gap-2">
+                    {vehicleTypes.map((vt) => {
                       const isSelected = vehicleType === vt._id;
                       const Icon = vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : Car;
+                      const info = vtSlotInfo[vt._id];
                       return (
                         <button
                           key={vt._id}
@@ -313,23 +333,25 @@ export function SlotFormModal({
                             setVehicleType(vt._id);
                             if (errors.vehicleType) setErrors({ ...errors, vehicleType: '' });
                           }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${
+                          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all w-full text-left ${
                             isSelected
-                              ? 'bg-[#9FE870] text-[#062F28] border-[#9FE870] scale-[1.03]'
+                              ? 'bg-[#9FE870] text-[#062F28] border-[#9FE870] scale-[1.01]'
                               : 'bg-white text-gray-600 border-gray-200 hover:border-[#9FE870]'
                           }`}
                         >
-                          <Icon size={16} />
-                          {vt.name}
-                          {isSelected && <Check size={13} />}
+                          <Icon size={16} className="shrink-0" />
+                          <span className="flex-1">
+                            {vt.name}
+                            {info && (
+                              <span className={`text-xs font-normal ml-2 ${isSelected ? 'text-[#062F28]/60' : 'text-gray-400'}`}>
+                                Hiện tại có: <span className="font-bold">{info.codes[0]} - {info.codes[info.codes.length - 1]}</span>
+                              </span>
+                            )}
+                          </span>
+                          {isSelected && <Check size={14} className="shrink-0" />}
                         </button>
                       );
                     })}
-                    {filteredTypes.length === 0 && (
-                      <p className="text-xs text-gray-400 py-2 w-full">
-                        Không tìm thấy loại xe phù hợp với "{searchQuery}".
-                      </p>
-                    )}
                   </div>
                 )}
                 {errors.vehicleType && (
@@ -348,12 +370,12 @@ export function SlotFormModal({
               Hủy
             </button>
             <button
-              disabled={loading || isFull || (mode === 'bulk' && Number(count) > remainingSlots)}
+              disabled={loading}
               onClick={handleSubmit}
               className="px-5 py-2.5 text-sm font-bold text-[#062F28] bg-[#9FE870] rounded-xl hover:bg-[#062F28]/90 transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
-              {mode === 'single' ? 'Tạo Slot' : 'Tạo Nhiều Slot'}
+              {mode === 'single' ? 'Gán Xe' : 'Gán Nhiều Slot'}
             </button>
           </div>
         </div>

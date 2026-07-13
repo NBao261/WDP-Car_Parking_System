@@ -1,15 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export enum SlotSize {
-  SMALL = 'small',
-  MEDIUM = 'medium',
-  LARGE = 'large',
-}
-
 export interface IVehicleType extends Document {
   name: string;
   code: string;
-  slotSize: SlotSize;
   description: string;
   icon: string;
   requiresPlate: boolean;
@@ -23,7 +16,6 @@ const vehicleTypeSchema = new Schema<IVehicleType>(
   {
     name: { type: String, required: true, trim: true },
     code: { type: String, required: true, unique: true, uppercase: true, trim: true },
-    slotSize: { type: String, enum: Object.values(SlotSize), required: true },
     description: { type: String, default: '' },
     icon: { type: String, default: '' },
     requiresPlate: { type: Boolean, default: true },

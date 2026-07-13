@@ -227,13 +227,13 @@ export class SessionService {
       }
     }
 
-    // 4. Tìm bảng giá active
+    // 4. Tìm bảng giá active (lấy bảng giá mới nhất nếu có nhiều active)
     const pricingPlan = await PricingPlan.findOne({
       facilityId: data.facilityId,
       vehicleTypeId: data.vehicleTypeId,
       status: 'active',
       isDeleted: false,
-    });
+    }).sort({ createdAt: -1 });
 
     if (!pricingPlan) {
       throw new AppError('Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này', 400);
@@ -1018,6 +1018,8 @@ export class SessionService {
       // 🔥 Background Upload: Đẩy cả ảnh checkIn và checkOut lên Cloudinary
       UploadService.processCompletedSessionImages(session._id.toString()).catch(console.error);
 
+
+
       return populatedSession!;
     } catch (error) {
       await sessionMongoose.abortTransaction();
@@ -1025,4 +1027,5 @@ export class SessionService {
       throw error;
     }
   }
+
 }

@@ -1,12 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { X, Loader2, Building2, Layers, ChevronDown } from 'lucide-react';
 import {
   vehicleTypeService,
   VehicleType,
-
-  SlotSize,
   CreateVehicleTypePayload,
   UpdateVehicleTypePayload,
 } from '../../../../services/vehicleType.service';
@@ -25,12 +24,13 @@ interface ModalProps {
 interface FormErrors {
   name?: string;
   code?: string;
+
   icon?: string;
 }
 
 export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalProps) {
   const isEdit = !!vehicle;
-  const [form, setForm] = useState<Omit<CreateVehicleTypePayload, 'slotSize'>>({
+  const [form, setForm] = useState<CreateVehicleTypePayload>({
     name: '',
     code: '',
     description: '',
@@ -41,8 +41,11 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [floorsList, setFloorsList] = useState<Floor[]>([]);
   const [, setIsLoadingFacilities] = useState(false);
+  const [selectedFacId, setSelectedFacId] = useState<string>('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFacOpen, setIsFacOpen] = useState(false);
+  const [isFloorOpen, setIsFloorOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -77,28 +80,18 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
         facilityService.getAll({ limit: 1000 }),
         floorService.getAll({ limit: 1000 }),
       ]);
+      setFacilities(facRes.data);
       setFloorsList(floorRes.data);
 
       if (vehicle) {
-        const initialFacIds = new Set<string>();
-        vehicle.floors?.forEach((fl) => {
-          const facId = typeof fl.facilityId === 'object' ? (fl.facilityId as any)._id : fl.facilityId;
-          if (facId) {
-            initialFacIds.add(facId);
-          }
-        });
-
-        // Sắp xếp các tòa nhà đã gán lên đầu danh sách
-        const sortedFacs = [...facRes.data].sort((a, b) => {
-          const aSel = initialFacIds.has(a._id);
-          const bSel = initialFacIds.has(b._id);
-          if (aSel && !bSel) return -1;
-          if (!aSel && bSel) return 1;
-          return 0;
-        });
-        setFacilities(sortedFacs);
-      } else {
-        setFacilities(facRes.data);
+        const linkedFloorIds = floorRes.data
+          .filter((fl: Floor) =>
+            fl.allowedVehicleTypes.some(
+              (vt: any) => (typeof vt === 'string' ? vt : vt._id) === vehicle._id
+            )
+          )
+          .map((fl: Floor) => fl._id);
+        setForm((f) => ({ ...f, floors: linkedFloorIds }));
       }
     } catch (err) {
       toast.error('Lỗi khi tải danh sách tòa nhà');
@@ -106,6 +99,14 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
       setIsLoadingFacilities(false);
     }
   };
+
+  const availableFloors = selectedFacId
+    ? floorsList.filter((fl) => {
+        const flFacId =
+          typeof fl.facilityId === 'object' ? (fl.facilityId as any)._id : fl.facilityId;
+        return flFacId === selectedFacId;
+      })
+    : [];
 
   const toggleFloor = (floorId: string) => {
     setForm((f) => {
@@ -144,6 +145,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
     const newErrors: FormErrors = {};
     if (!form.name.trim()) newErrors.name = 'Vui lòng nhập tên loại xe';
     if (!isEdit && !form.code.trim()) newErrors.code = 'Vui lòng nhập mã loại xe';
+
     if (!form.icon) newErrors.icon = 'Vui lòng chọn biểu tượng';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -158,7 +160,6 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
         const payload: UpdateVehicleTypePayload = {
           name: form.name,
           code: form.code,
-          slotSize: 'medium' as SlotSize,
           description: form.description,
           icon: form.icon,
           requiresPlate: form.requiresPlate,
@@ -167,11 +168,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
         await vehicleTypeService.update(vehicle._id, payload);
         toast.success('Cập nhật loại xe thành công');
       } else {
-        const payload: CreateVehicleTypePayload = {
-          ...form,
-          slotSize: 'medium' as SlotSize,
-        };
-        await vehicleTypeService.create(payload);
+        await vehicleTypeService.create(form);
         toast.success('Tạo loại xe mới thành công');
       }
       onSuccess();
@@ -195,30 +192,27 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
 
   const inputBase =
     'w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:bg-white transition-all';
-  const inputOk = 'border-gray-200 focus:ring-[#d7ee46]';
+  const inputOk = 'border-gray-200 focus:ring-[#9FE870]';
   const inputErr = 'border-red-400 focus:ring-red-300 bg-red-50/30';
 
-  return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AnimatePresence>
-        {isOpen && (
-          <Dialog.Portal forceMount>
-            <Dialog.Overlay asChild>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
-              />
-            </Dialog.Overlay>
-            <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-4 outline-none pointer-events-none">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] pointer-events-auto"
-              >
+  return createPortal(
+    <AnimatePresence>
+      {isOpen && (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          className="relative w-full max-w-xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+        >
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div>
@@ -237,192 +231,321 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 flex flex-col space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              {/* Left Column */}
-              <div className="space-y-4">
-                {/* Icon picker */}
+          <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 space-y-4">
+            {/* Icon picker */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Biểu Tượng <span className="text-red-500">*</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {ICON_OPTIONS.map(({ name, label, Icon }) => {
+                  const isSelected = form.icon === name;
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      title={label}
+                      onClick={() => {
+                        setForm({ ...form, icon: name });
+                        setErrors((e) => ({ ...e, icon: undefined }));
+                      }}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all ${
+                        isSelected
+                          ? 'border-[#9FE870] bg-[#9FE870]/15 text-[#062F28] shadow-sm'
+                          : 'border-gray-200 text-gray-500 hover:border-[#9FE870]/50 hover:bg-[#9FE870]/5 hover:text-[#062F28]'
+                      }`}
+                    >
+                      <Icon size={18} strokeWidth={1.5} className="shrink-0" />
+                      <span className="text-xs font-semibold whitespace-nowrap">
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {errors.icon && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <span>⚠</span> {errors.icon}
+                </p>
+              )}
+            </div>
+
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Tên Loại Xe <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setName(e.target.value)}
+                className={`${inputBase} ${errors.name ? inputErr : inputOk}`}
+                placeholder="Xe máy, Ô tô, Xe đạp"
+              />
+              {errors.name && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <span>⚠</span> {errors.name}
+                </p>
+              )}
+            </div>
+
+            {/* Code */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Mã Loại Xe <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                disabled={isEdit}
+                value={form.code}
+                onChange={(e) => setCode(e.target.value)}
+                className={`${inputBase} ${errors.code ? inputErr : inputOk} disabled:opacity-60 disabled:cursor-not-allowed uppercase`}
+                placeholder="MOTORBIKE, CAR, BICYCLE"
+              />
+              {errors.code && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <span>⚠</span> {errors.code}
+                </p>
+              )}
+              {!isEdit && !errors.code && (
+                <p className="text-xs text-gray-400 mt-1">Mã không thể thay đổi sau khi tạo</p>
+              )}
+            </div>
+
+
+            {/* Requires Plate Toggle */}
+            <div>
+              <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Biểu Tượng <span className="text-red-500">*</span>
-                  </label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {ICON_OPTIONS.map(({ name, label, Icon }) => {
-                      const isSelected = form.icon === name;
-                      return (
+                  <p className="text-sm font-semibold text-gray-700">Yêu cầu Biển số</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {form.requiresPlate !== false
+                      ? 'Loại xe này cần quét biển số khi vào/ra'
+                      : 'Xe không cần biển số (VD: xe đạp) — dùng ảnh đối chiếu'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, requiresPlate: !f.requiresPlate }))}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                    form.requiresPlate !== false ? 'bg-[#8bc34a]' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                      form.requiresPlate !== false ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Facilities & Floors */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tòa Nhà & Tầng Hỗ Trợ
+              </label>
+
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  {/* Facility Select */}
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                      <Building2 size={16} className="text-gray-500" />
+                    </div>
+                    <div
+                      onClick={() => {
+                        setIsFacOpen(!isFacOpen);
+                        setIsFloorOpen(false);
+                      }}
+                      className={`w-full pl-9 pr-12 py-2 bg-white border rounded-xl text-sm transition-all cursor-pointer flex items-center justify-between shadow-sm relative z-10
+                        ${isFacOpen ? 'border-transparent ring-2 ring-[#9FE870]' : 'border-gray-200 hover:bg-gray-50'}`}
+                    >
+                      <span
+                        className={
+                          selectedFacId ? 'font-medium text-gray-700 truncate' : 'text-gray-500 font-medium'
+                        }
+                      >
+                        {selectedFacId
+                          ? facilities.find((f) => f._id === selectedFacId)?.name
+                          : 'Chọn tòa nhà'}
+                      </span>
+                    </div>
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-1 z-20">
+                      {selectedFacId && (
                         <button
-                          key={name}
                           type="button"
-                          title={label}
-                          onClick={() => {
-                            setForm({ ...form, icon: name });
-                            setErrors((e) => ({ ...e, icon: undefined }));
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedFacId('');
+                            setIsFacOpen(false);
+                            setIsFloorOpen(false);
                           }}
-                          className={`flex flex-col items-center justify-center gap-1.5 w-full py-3 rounded-xl border-2 transition-all ${isSelected
-                            ? 'border-[#9FE870] bg-[#9FE870]/15 text-[#062F28] scale-105 shadow-sm'
-                            : 'border-gray-200 text-gray-500 hover:border-[#9FE870]/50 hover:bg-[#9FE870]/5 hover:text-[#062F28]'
-                            }`}
+                          className="text-gray-400 hover:text-red-500 p-0.5 rounded-full transition-colors"
                         >
-                          <Icon size={20} strokeWidth={1.5} />
-                          <span className="text-[10px] font-semibold leading-none truncate w-full text-center px-1">
-                            {label}
-                          </span>
+                          <X size={14} />
                         </button>
+                      )}
+                      <ChevronDown
+                        size={16}
+                        className={`text-gray-400 pointer-events-none transition-transform ${isFacOpen ? 'rotate-180' : ''}`}
+                      />
+                    </div>
+
+                    <AnimatePresence>
+                      {isFacOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setIsFacOpen(false)} />
+                          <motion.div
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] pb-2 z-50 max-h-40 overflow-y-auto overflow-x-hidden custom-scrollbar"
+                          >
+                            <div className="px-3 pt-2.5 pb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider sticky top-0 bg-white/95 backdrop-blur-sm z-10">
+                              Danh Sách Tòa Nhà
+                            </div>
+                            {facilities.map((fac) => (
+                              <div
+                                key={fac._id}
+                                onClick={() => {
+                                  setSelectedFacId(fac._id);
+                                  setIsFacOpen(false);
+                                }}
+                                className={`px-4 py-2 text-sm cursor-pointer transition-colors flex items-center gap-2 whitespace-normal break-words ${selectedFacId === fac._id ? 'bg-[#9FE870]/20 text-[#062F28] font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
+                              >
+                                {fac.name}
+                              </div>
+                            ))}
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Floor Select */}
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                      <Layers size={16} className="text-gray-500" />
+                    </div>
+                    <div
+                      onClick={() => {
+                        if (availableFloors.length > 0) {
+                          setIsFloorOpen(!isFloorOpen);
+                          setIsFacOpen(false);
+                        }
+                      }}
+                      className={`w-full pl-9 pr-8 py-2 bg-white border rounded-xl text-sm transition-all flex items-center justify-between shadow-sm relative z-10
+                        ${availableFloors.length === 0 ? 'opacity-50 cursor-not-allowed border-gray-200' : 'cursor-pointer hover:bg-gray-50'}
+                        ${isFloorOpen ? 'border-transparent ring-2 ring-[#9FE870]' : 'border-gray-200'}`}
+                    >
+                      <span className="text-gray-500 font-medium">Thêm tầng...</span>
+                    </div>
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none z-10">
+                      <ChevronDown
+                        size={16}
+                        className={`text-gray-400 transition-transform ${isFloorOpen ? 'rotate-180' : ''}`}
+                      />
+                    </div>
+
+                    <AnimatePresence>
+                      {isFloorOpen && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setIsFloorOpen(false)}
+                          />
+                          <motion.div
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] pb-2 z-50 max-h-40 overflow-y-auto overflow-x-hidden custom-scrollbar"
+                          >
+                            <div className="px-3 pt-2.5 pb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider sticky top-0 bg-white/95 backdrop-blur-sm z-10">
+                              Danh Sách Tầng
+                            </div>
+                            {availableFloors.length === 0 && (
+                              <div className="px-4 py-2 text-sm text-gray-400">
+                                Không có tầng nào
+                              </div>
+                            )}
+                            {availableFloors.map((fl) => {
+                              const isSelected = form.floors?.includes(fl._id);
+                              return (
+                                <div
+                                  key={fl._id}
+                                  onClick={() => {
+                                    if (!isSelected) {
+                                      setForm((f) => ({
+                                        ...f,
+                                        floors: [...(f.floors || []), fl._id],
+                                      }));
+                                      setIsFloorOpen(false);
+                                    }
+                                  }}
+                                  className={`px-4 py-2 text-sm transition-colors flex items-center justify-between whitespace-normal break-words
+                                    ${isSelected ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'cursor-pointer text-gray-600 hover:bg-[#9FE870]/20 hover:text-[#062F28] hover:font-medium'}`}
+                                >
+                                  {fl.name}
+                                  {isSelected && (
+                                    <span className="text-xs font-semibold text-gray-400 shrink-0 ml-2">
+                                      Đã chọn
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                {/* Selected Floors Chips */}
+                {form.floors && form.floors.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100 min-h-[60px]">
+                    {form.floors.map((floorId) => {
+                      const fl = floorsList.find((f) => f._id === floorId);
+                      const fac = facilities.find(
+                        (f) =>
+                          f._id ===
+                          (typeof fl?.facilityId === 'object'
+                            ? (fl.facilityId as any)._id
+                            : fl?.facilityId)
+                      );
+                      if (!fl) return null;
+                      return (
+                        <div
+                          key={floorId}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-sm shadow-sm hover:border-red-200 hover:shadow-md transition-all group"
+                        >
+                          <span className="font-medium text-gray-700">{fac?.name}</span>
+                          <span className="text-gray-300 text-xs">/</span>
+                          <span className="text-emerald-600 font-semibold">{fl.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setForm((f) => ({
+                                ...f,
+                                floors: (f.floors || []).filter((id) => id !== floorId),
+                              }));
+                              if (fac && selectedFacId === fac._id) {
+                                setSelectedFacId('');
+                                setIsFloorOpen(false);
+                              }
+                            }}
+                            className="ml-1 text-gray-300 group-hover:text-red-500 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
                       );
                     })}
                   </div>
-                  {errors.icon && (
-                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                      <span>⚠</span> {errors.icon}
-                    </p>
-                  )}
-                </div>
-
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Tên Loại Xe <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => setName(e.target.value)}
-                    className={`${inputBase} ${errors.name ? inputErr : inputOk}`}
-                    placeholder="Xe máy, Ô tô, Xe đạp"
-                  />
-                  {errors.name && (
-                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                      <span>⚠</span> {errors.name}
-                    </p>
-                  )}
-                </div>
-
-                {/* Code */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Mã Loại Xe <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={form.code}
-                    onChange={(e) => setCode(e.target.value)}
-                    className={`${inputBase} ${errors.code ? inputErr : inputOk} uppercase`}
-                    placeholder="MOTORBIKE, CAR, BICYCLE"
-                  />
-                  {errors.code && (
-                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                      <span>⚠</span> {errors.code}
-                    </p>
-                  )}
-                </div>
-
-                {/* Requires Plate Toggle */}
-                <div>
-                  <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-700">Yêu cầu Biển số</p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {form.requiresPlate !== false
-                          ? 'Loại xe này cần quét biển số khi vào/ra'
-                          : 'Xe không cần biển số (VD: xe đạp) — dùng ảnh đối chiếu'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setForm((f) => ({ ...f, requiresPlate: !f.requiresPlate }))}
-                      className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${form.requiresPlate !== false ? 'bg-[#9FE870]' : 'bg-gray-300'
-                        }`}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${form.requiresPlate !== false ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column */}
-              <div className="space-y-4">
-                {/* Facilities & Floors */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Tòa Nhà Áp Dụng
-                  </label>
-
-                  {facilities.length === 0 ? (
-                    <p className="text-sm text-gray-400 italic">Không có tòa nhà khả dụng</p>
-                  ) : (
-                    <div className="flex flex-col gap-3 max-h-[350px] overflow-y-auto custom-scrollbar p-1">
-                      {facilities.map((fac) => {
-                        const facilityFloors = floorsList.filter((fl) => {
-                          const flFacId = typeof fl.facilityId === 'object' ? (fl.facilityId as any)._id : fl.facilityId;
-                          return flFacId === fac._id;
-                        });
-                        
-                        const hasFloors = facilityFloors.length > 0;
-                        const allSelected = hasFloors && facilityFloors.every(fl => (form.floors || []).includes(fl._id));
-                        const someSelected = hasFloors && facilityFloors.some(fl => (form.floors || []).includes(fl._id));
-                        
-                        return (
-                          <div key={fac._id} className={`border rounded-xl p-3 transition-all ${someSelected ? 'border-[#9FE870] bg-[#9FE870]/5' : 'border-gray-200 bg-white'}`}>
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex-1 pr-2">
-                                <span className="block text-sm font-bold text-gray-900">
-                                  {fac.name}
-                                </span>
-                                {fac.address && (
-                                  <span className="block text-[11px] text-gray-500 mt-0.5 truncate" title={fac.address}>
-                                    {fac.address}
-                                  </span>
-                                )}
-                              </div>
-                              {hasFloors ? (
-                                <button
-                                  type="button"
-                                  onClick={() => toggleAllFloorsInFacility(fac._id)}
-                                  className={`text-xs px-2.5 py-1 rounded-lg transition-colors font-medium whitespace-nowrap ${allSelected ? 'bg-[#9FE870] text-[#062F28]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                                >
-                                  {allSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
-                                </button>
-                              ) : (
-                                <span className="text-[11px] italic text-red-500 font-medium px-2 py-1 bg-red-50 rounded-md whitespace-nowrap">
-                                  Chưa cấu hình tầng
-                                </span>
-                              )}
-                            </div>
-                            
-                            {hasFloors && (
-                              <div className="flex flex-wrap gap-2 mt-3">
-                                {facilityFloors.map((fl) => {
-                                  const isSelected = (form.floors || []).includes(fl._id);
-                                  return (
-                                    <div
-                                      key={fl._id}
-                                      onClick={() => toggleFloor(fl._id)}
-                                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all select-none ${isSelected
-                                        ? 'border-[#9FE870] bg-[#9FE870]/20 text-[#062F28] font-bold shadow-sm'
-                                        : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
-                                      }`}
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => {}}
-                                        className="w-3.5 h-3.5 rounded text-[#062F28] border-gray-300 focus:ring-[#9FE870] accent-[#062F28] shrink-0 pointer-events-none"
-                                      />
-                                      <span className="whitespace-nowrap font-medium text-[13px]">{fl.name}</span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                ) : null}
               </div>
             </div>
 
@@ -439,7 +562,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
             </div>
 
             {/* Footer */}
-            <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
+            <div className="pt-2 flex justify-end gap-3 border-t border-gray-100">
               <button
                 type="button"
                 onClick={onClose}
@@ -458,11 +581,10 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
               </button>
             </div>
           </form>
-          </motion.div>
-            </Dialog.Content>
-          </Dialog.Portal>
-        )}
-      </AnimatePresence>
-    </Dialog.Root>
+        </motion.div>
+      </div>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 }

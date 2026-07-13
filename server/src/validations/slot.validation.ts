@@ -44,6 +44,19 @@ export const createBulkSlotsSchema = z.object({
   }),
 });
 
+// Update slot info (code, vehicleTypeId)
+export const updateSlotSchema = z.object({
+  body: z.object({
+    code: z.string().min(1, 'Slot code is required').optional(),
+    vehicleTypeId: z
+      .string()
+      .regex(objectIdRegex, 'Invalid vehicle type ID format')
+      .optional(),
+  }).refine(data => data.code || data.vehicleTypeId, {
+    message: 'At least one field (code or vehicleTypeId) is required',
+  }),
+});
+
 // FR-4.2: Cập nhật trạng thái slot (BR-3.3: validate chuyển trạng thái)
 export const updateSlotStatusSchema = z.object({
   body: z.object({
