@@ -49,10 +49,10 @@ const STATUS_CFG: Record<
   available: { label: 'TRỐNG', color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', dot: '#10b981' },
   occupied: {
     label: 'ĐANG DÙNG',
-    color: '#2563eb',
-    bg: '#eff6ff',
-    border: '#bfdbfe',
-    dot: '#3b82f6',
+    color: '#062F28',
+    bg: '#A0E870',
+    border: '#A0E870',
+    dot: '#062F28',
   },
   reserved: {
     label: 'ĐẶT TRƯỚC',
@@ -75,7 +75,7 @@ const SESSION_STATUS_CFG: Record<
   string,
   { label: string; color: string; bg: string; border: string }
 > = {
-  active: { label: 'HOẠT ĐỘNG', color: '#059669', bg: '#f0fdf4', border: '#86efac' },
+  active: { label: 'HOẠT ĐỘNG', color: '#062F28', bg: '#A0E870', border: '#A0E870' },
   pending_payment: { label: 'CHỜ THANH TOÁN', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
   completed: { label: 'HOÀN THÀNH', color: '#374151', bg: '#f9fafb', border: '#e5e7eb' },
   exception: { label: 'SỰ CỐ', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
@@ -309,21 +309,14 @@ function SessionInfo({ session }: { session: ParkingSessionPopulated }) {
     <div className="flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div>
+        <div className="flex-1 min-w-0 pr-4">
           <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest pl-1 mb-1.5">
             Biển số xe
           </p>
-          <p className="text-3xl font-black text-[#059669] tracking-widest uppercase">
+          <p className="text-3xl font-black text-[#062F28] tracking-widest uppercase break-words">
             {session.licensePlate}
           </p>
         </div>
-        <span
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-bold mt-1"
-          style={{ color: ssCfg.color, background: ssCfg.bg, borderColor: ssCfg.border }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-current" />
-          {ssCfg.label}
-        </span>
       </div>
 
       {/* Grid details */}

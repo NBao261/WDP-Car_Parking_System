@@ -133,7 +133,7 @@ export function SlotMappingEditorView({
           {onClose && (
             <button
               onClick={onClose}
-              className="p-2 text-gray-500 hover:text-[#062F28] hover:bg-[#9FE870]/20 rounded-xl transition-colors border border-gray-200 hover:border-[#9FE870]"
+              className="p-2 text-gray-500 hover:text-[#062F28] hover:bg-[#A0E870]/20 rounded-xl transition-colors border border-gray-200 hover:border-[#A0E870]"
               title="Quay lại danh sách tầng"
             >
               <ChevronLeft size={24} />
@@ -149,7 +149,7 @@ export function SlotMappingEditorView({
             <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${
               slots.length >= floor.totalSlots
                 ? 'text-red-600 bg-red-50'
-                : 'text-[#062F28] bg-[#9FE870]/30'
+                : 'text-[#062F28] bg-[#A0E870]/30'
             }`}>
               {slots.length} / {floor.totalSlots} slot
             </span>
@@ -166,7 +166,7 @@ export function SlotMappingEditorView({
                 onClick={() => setFilterStatus(btn.value)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   filterStatus === btn.value
-                    ? 'bg-[#9FE870] text-[#062F28] font-semibold'
+                    ? 'bg-[#A0E870] text-[#062F28] font-semibold'
                     : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
@@ -280,7 +280,7 @@ export function SlotMappingEditorView({
                 {/* Legend */}
                 <div className="flex gap-4 mb-4 text-xs text-gray-500">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3.5 h-3.5 rounded bg-green-100 border border-green-300" />{' '}
+                    <div className="w-3.5 h-3.5 rounded bg-[#A0E870] border border-[#A0E870]" />{' '}
                     Đang dùng
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -302,7 +302,7 @@ export function SlotMappingEditorView({
                       <div key={vtId}>
                         {/* Vehicle type label */}
                         <div className="flex items-center gap-2 mb-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-[#9FE870]/20 flex items-center justify-center shrink-0">
+                          <div className="w-7 h-7 rounded-lg bg-[#A0E870]/20 flex items-center justify-center shrink-0">
                             <Icon size={15} className="text-[#062F28]" />
                           </div>
                           <span className="text-sm font-bold text-[#062F28]">
@@ -318,7 +318,7 @@ export function SlotMappingEditorView({
                           {group.slots.map((slot) => {
                             let bgClass = 'bg-white border-gray-200 text-gray-500';
                             if (slot.status === 'occupied')
-                              bgClass = 'bg-green-100 border-green-300 text-green-700';
+                              bgClass = 'bg-[#A0E870] border-[#A0E870] text-[#062F28] shadow-sm';
                             else if (slot.status === 'reserved')
                               bgClass = 'bg-blue-100 border-blue-200 text-blue-700';
                             else if (
@@ -351,8 +351,8 @@ export function SlotMappingEditorView({
                                   const session = getSessionData(slot);
                                   if (session?.checkInImage) {
                                     return (
-                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-600 rounded-full flex items-center justify-center shadow-sm">
-                                        <Camera size={9} className="text-white" />
+                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#062F28] rounded-full flex items-center justify-center shadow-sm">
+                                        <Camera size={9} className="text-[#A0E870]" />
                                       </div>
                                     );
                                   }
@@ -396,7 +396,7 @@ export function SlotMappingEditorView({
                                   : 'Không thể thêm slot của tầng đang bị vô hiệu hóa.'
                               );
                           }}
-                          className={`w-20 h-12 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-200 text-gray-300 text-xs ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:border-[#9FE870] hover:text-[#9FE870] hover:bg-[#9FE870]/5' : 'cursor-not-allowed opacity-75'} transition-all`}
+                          className={`w-20 h-12 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-200 text-gray-300 text-xs ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:border-[#A0E870] hover:text-[#A0E870] hover:bg-[#A0E870]/5' : 'cursor-not-allowed opacity-75'} transition-all`}
                           title="Nhấp để thêm 1 slot"
                         >
                           <Plus size={16} />

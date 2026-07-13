@@ -468,7 +468,7 @@ export function FloorGrid({
         {isFacilityActive && (
           <button
             onClick={onAddFloor}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors bg-black text-white hover:bg-black/80"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors bg-[#062F28] text-white hover:bg-[#062F28]/80"
           >
             <Plus size={20} /> Thêm Tầng
           </button>
