@@ -13,6 +13,7 @@ import {
   StatusBar,
   Keyboard,
   FlatList,
+  ScrollView,
 } from "react-native";
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 
@@ -35,7 +36,6 @@ if (!isExpoGo) {
 }
 
 if (!MapView) {
-  // Fallback for Expo Go where native maps module is not available
   MapView = ({ children, style, ...props }: any) => (
     <View style={[style, { backgroundColor: '#e8f5e9', alignItems: 'center', justifyContent: 'center' }]}>
       <Text style={{ color: '#666', fontSize: 14 }}>Bản đồ không khả dụng trong Expo Go</Text>
@@ -45,17 +45,19 @@ if (!MapView) {
   Marker = View;
   PROVIDER_GOOGLE = undefined;
 }
+
 import * as Location from "expo-location";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors, Typography } from "../../src/constants/theme";
-import { api } from "../../src/services/api";
+import { api, vehicleTypeApi } from "../../src/services/api";
+import { PricingPlan, AvailableSlot } from "../../src/types/facility.types";
 
 // ─── Constants ────────────────────────────────────────
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const BOTTOM_SHEET_HEIGHT = 280;
+const BOTTOM_SHEET_HEIGHT = 420;
 const ASPECT_RATIO = SCREEN_WIDTH / SCREEN_HEIGHT;
 
 // Modern UI colors — high contrast & accessibility
@@ -92,7 +94,22 @@ interface ParkingLot {
   openTime: string;
   closeTime: string;
   distance?: string;
+  description?: string;
+  status: string;
+  slotsByType: AvailableSlot[];
+  pricing: PricingPlan[];
 }
+
+// ─── Vehicle Icon Helper ─────────────────────────────
+const getVehicleIcon = (code?: string): keyof typeof Ionicons.glyphMap => {
+  if (!code) return "bicycle";
+  const u = code.toUpperCase();
+  if (u.includes("CAR")) return "car-sport";
+  if (u.includes("BUS")) return "bus";
+  if (u.includes("TRUCK")) return "car";
+  if (u.includes("MOTO")) return "bicycle";
+  return "bicycle";
+};
 
 // ═══════════════════════════════════════════════════════
 
@@ -129,9 +146,11 @@ function SlotBadge({ available, total }: { available: number; total: number }) {
 function SearchSuggestionItem({
   lot,
   onPress,
+  distanceText,
 }: {
   lot: ParkingLot;
   onPress: () => void;
+  distanceText?: string;
 }) {
   const pct = lot.totalSlots > 0 ? lot.availableSlots / lot.totalSlots : 0;
   const slotColor =
@@ -140,6 +159,20 @@ function SearchSuggestionItem({
       : pct < 0.15
         ? Colors.warning
         : Colors.success;
+
+  const isOpen = (() => {
+    if (lot.status !== "active") return false;
+    if (!lot.openTime || !lot.closeTime) return true;
+    const now = new Date();
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+    const [openH, openM] = lot.openTime.split(":").map(Number);
+    const [closeH, closeM] = lot.closeTime.split(":").map(Number);
+    const openMins = openH * 60 + openM;
+    const closeMins = closeH * 60 + closeM;
+    if (closeMins <= openMins)
+      return nowMins >= openMins || nowMins < closeMins;
+    return nowMins >= openMins && nowMins < closeMins;
+  })();
 
   return (
     <TouchableOpacity
@@ -154,9 +187,37 @@ function SearchSuggestionItem({
         <Text style={styles.suggestionName} numberOfLines={1}>
           {lot.name}
         </Text>
-        <Text style={styles.suggestionAddress} numberOfLines={1}>
-          {lot.address}
-        </Text>
+        <View style={styles.suggestionMeta}>
+          <Text style={styles.suggestionAddress} numberOfLines={1}>
+            {lot.address}
+          </Text>
+          <View style={styles.suggestionMetaRow}>
+            {distanceText ? (
+              <View style={styles.suggestionMetaChip}>
+                <Ionicons
+                  name="navigate-outline"
+                  size={11}
+                  color={UI.textLight}
+                />
+                <Text style={styles.suggestionMetaText}>{distanceText}</Text>
+              </View>
+            ) : null}
+            <View
+              style={[
+                styles.suggestionStatusDot,
+                { backgroundColor: isOpen ? Colors.success : Colors.danger },
+              ]}
+            />
+            <Text
+              style={[
+                styles.suggestionMetaText,
+                { color: isOpen ? Colors.success : Colors.danger },
+              ]}
+            >
+              {isOpen ? "Đang mở" : "Đóng cửa"}
+            </Text>
+          </View>
+        </View>
       </View>
       <View
         style={[
@@ -177,7 +238,7 @@ function SearchSuggestionItem({
 // ═══════════════════════════════════════════════════════
 export default function HomeScreen() {
   const router = useRouter();
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<MapView>(null);
 
   // State
   const [userLocation, setUserLocation] = useState<{
@@ -190,7 +251,11 @@ export default function HomeScreen() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [parkingLots, setParkingLots] = useState<ParkingLot[]>([]);
+  const [allFacilities, setAllFacilities] = useState<ParkingLot[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [vehicleTypes, setVehicleTypes] = useState<any[]>([]);
+  const [selectedVehicleType, setSelectedVehicleType] = useState<string>("all");
 
   // Bottom Sheet animation
   const bottomSheetAnim = useRef(
@@ -217,6 +282,7 @@ export default function HomeScreen() {
 
       // Map facilities to ParkingLot — use coordinates from GeoJSON location
       const lotsWithCoords: ParkingLot[] = [];
+      const allLots: ParkingLot[] = [];
 
       await Promise.all(
         facilityList.map(async (f: any) => {
@@ -227,17 +293,13 @@ export default function HomeScreen() {
 
           console.log(`[HOME] Facility "${f.name}": coords=[${lng}, ${lat}]`);
 
-          // Skip facilities without valid coordinates
-          if (lat === 0 && lng === 0) {
-            console.log(`[HOME] Skipping "${f.name}" — no coordinates`);
-            return;
-          }
-
           // Fetch available slots count
           let availableSlots = 0;
           let totalSlots = 0;
+          let slotsByType: AvailableSlot[] = [];
           try {
             const slotsData = await api.getAvailableSlots(f._id);
+            slotsByType = slotsData;
             availableSlots = slotsData.reduce(
               (sum: number, s: any) => sum + s.availableCount,
               0,
@@ -245,7 +307,7 @@ export default function HomeScreen() {
             totalSlots = availableSlots + Math.floor(Math.random() * 50 + 20);
           } catch {}
 
-          lotsWithCoords.push({
+          const lot: ParkingLot = {
             id: f._id,
             name: f.name,
             address: f.address,
@@ -255,12 +317,32 @@ export default function HomeScreen() {
             availableSlots,
             openTime: f.openTime || "06:00",
             closeTime: f.closeTime || "22:00",
-          });
+            description: f.description || "",
+            status: f.status || "active",
+            slotsByType,
+            pricing: [],
+          };
+
+          // Add to allLots (for search)
+          allLots.push(lot);
+
+          // Only add to map markers if has valid coordinates
+          if (lat !== 0 || lng !== 0) {
+            lotsWithCoords.push(lot);
+          } else {
+            console.log(`[HOME] Facility "${f.name}" — no coords, search only`);
+          }
         }),
       );
 
-      console.log("[HOME] Lots with coords:", lotsWithCoords.length);
+      console.log(
+        "[HOME] Lots with coords:",
+        lotsWithCoords.length,
+        "| All facilities:",
+        allLots.length,
+      );
       setParkingLots(lotsWithCoords);
+      setAllFacilities(allLots);
 
       // Zoom to fit all markers
       if (lotsWithCoords.length > 0 && mapRef.current) {
@@ -314,6 +396,16 @@ export default function HomeScreen() {
     }, []),
   );
 
+  // ─── Fetch vehicle types ──────────────────────────
+  useEffect(() => {
+    vehicleTypeApi
+      .getVehicleTypes()
+      .then((r: any) => {
+        if (r.success) setVehicleTypes(r.data);
+      })
+      .catch(() => {});
+  }, []);
+
   // ─── Calculate distance between two points ─────────
   const calcDistance = (
     lat1: number,
@@ -348,36 +440,61 @@ export default function HomeScreen() {
     return lot.distance || "—";
   };
 
-  // ─── Bottom Sheet Handlers ─────────────────────────
-  const showBottomSheet = useCallback((lot: ParkingLot) => {
-    setSelectedLot(lot);
-    setShowSuggestions(false);
-    Keyboard.dismiss();
-    // Animate camera to marker
-    mapRef.current?.animateToRegion(
-      {
-        latitude: lot.latitude - 0.004,
-        longitude: lot.longitude,
-        latitudeDelta: 0.012,
-        longitudeDelta: 0.012 * ASPECT_RATIO,
-      },
-      400,
-    );
-    // Slide up bottom sheet
-    Animated.parallel([
-      Animated.spring(bottomSheetAnim, {
-        toValue: 0,
-        useNativeDriver: true,
-        tension: 65,
-        friction: 11,
-      }),
-      Animated.timing(backdropAnim, {
-        toValue: 1,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start();
+  // ─── Lazy-load pricing for a lot ───────────────────
+  const loadPricingForLot = useCallback(async (lot: ParkingLot) => {
+    if (lot.pricing.length > 0) return; // Already loaded
+    setPricingLoading(true);
+    try {
+      const pricingData = await api.getPublicPricing(lot.id);
+      // Update the lot in parkingLots state
+      setParkingLots((prev) =>
+        prev.map((l) => (l.id === lot.id ? { ...l, pricing: pricingData } : l)),
+      );
+      setSelectedLot((prev) =>
+        prev?.id === lot.id ? { ...prev, pricing: pricingData } : prev,
+      );
+    } catch (e) {
+      console.log("[HOME] Failed to load pricing:", e);
+    } finally {
+      setPricingLoading(false);
+    }
   }, []);
+
+  // ─── Bottom Sheet Handlers ─────────────────────────
+  const showBottomSheet = useCallback(
+    (lot: ParkingLot) => {
+      setSelectedLot(lot);
+      setShowSuggestions(false);
+      Keyboard.dismiss();
+      // Lazy-load pricing
+      loadPricingForLot(lot);
+      // Animate camera to marker
+      mapRef.current?.animateToRegion(
+        {
+          latitude: lot.latitude - 0.006,
+          longitude: lot.longitude,
+          latitudeDelta: 0.012,
+          longitudeDelta: 0.012 * ASPECT_RATIO,
+        },
+        400,
+      );
+      // Slide up bottom sheet
+      Animated.parallel([
+        Animated.spring(bottomSheetAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 65,
+          friction: 11,
+        }),
+        Animated.timing(backdropAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    },
+    [loadPricingForLot],
+  );
 
   const hideBottomSheet = useCallback(() => {
     Animated.parallel([
@@ -472,19 +589,35 @@ export default function HomeScreen() {
     }
   };
 
-  // ─── Filter lots by search ────────────────────────
-  const filteredLots = searchQuery.trim()
-    ? parkingLots.filter(
+  // ─── Filter by vehicle type helper ────────────────
+  const filterByVehicleType = (lots: ParkingLot[]) => {
+    if (selectedVehicleType === "all") return lots;
+    return lots.filter((lot) =>
+      lot.slotsByType.some((s) => s.vehicleTypeId === selectedVehicleType),
+    );
+  };
+
+  // ─── Filter lots by search (map markers) ──────────
+  const mapMarkers = filterByVehicleType(parkingLots);
+
+  // ─── Search suggestions (ALL facilities from DB) ──
+  const searchSuggestions = (() => {
+    let results = filterByVehicleType(allFacilities);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      results = results.filter(
         (lot) =>
-          lot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          lot.address.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : parkingLots;
+          lot.name.toLowerCase().includes(q) ||
+          lot.address.toLowerCase().includes(q),
+      );
+    }
+    return results;
+  })();
 
   // ─── Search text change handler ───────────────────
   const onSearchChange = (text: string) => {
     setSearchQuery(text);
-    setShowSuggestions(text.trim().length > 0);
+    setShowSuggestions(true);
   };
 
   // ─── Select a suggestion ──────────────────────────
@@ -492,7 +625,13 @@ export default function HomeScreen() {
     setSearchQuery("");
     setShowSuggestions(false);
     Keyboard.dismiss();
-    showBottomSheet(lot);
+    // If facility has valid coordinates, show on map + bottom sheet
+    if (lot.latitude !== 0 || lot.longitude !== 0) {
+      showBottomSheet(lot);
+    } else {
+      // No coordinates — navigate directly to detail page
+      router.push(`/facility/${lot.id}` as any);
+    }
   };
 
   // ─── Map Press (dismiss) ──────────────────────────
@@ -519,12 +658,12 @@ export default function HomeScreen() {
         showsMyLocationButton={false}
         showsCompass={false}
         onPress={onMapPress}
-        onRegionChangeComplete={(region: Region) => {
+        onRegionChangeComplete={(region) => {
           currentRegionRef.current = region;
         }}
         mapPadding={{ top: 80, right: 0, bottom: 0, left: 0 }}
       >
-        {filteredLots.map((lot) => {
+        {mapMarkers.map((lot) => {
           const isSelected = selectedLot?.id === lot.id;
           return (
             <Marker
@@ -607,7 +746,7 @@ export default function HomeScreen() {
               onChangeText={onSearchChange}
               onFocus={() => {
                 setIsSearchFocused(true);
-                if (searchQuery.trim().length > 0) setShowSuggestions(true);
+                setShowSuggestions(true);
               }}
               onBlur={() => setIsSearchFocused(false)}
               returnKeyType="search"
@@ -626,10 +765,84 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* ── VEHICLE TYPE FILTER CHIPS ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterChipsScroll}
+          style={styles.filterChipsContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <TouchableOpacity
+            style={[
+              styles.filterChip,
+              selectedVehicleType === "all" && styles.filterChipActive,
+            ]}
+            onPress={() => setSelectedVehicleType("all")}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="apps-outline"
+              size={14}
+              color={selectedVehicleType === "all" ? "#FFF" : UI.textMedium}
+            />
+            <Text
+              style={[
+                styles.filterChipText,
+                selectedVehicleType === "all" && styles.filterChipTextActive,
+              ]}
+            >
+              Tất cả
+            </Text>
+          </TouchableOpacity>
+          {vehicleTypes.map((type) => {
+            const isActive = selectedVehicleType === type._id;
+            const iconName = getVehicleIcon(type.code);
+            return (
+              <TouchableOpacity
+                key={type._id}
+                style={[styles.filterChip, isActive && styles.filterChipActive]}
+                onPress={() => setSelectedVehicleType(type._id)}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={iconName}
+                  size={14}
+                  color={isActive ? "#FFF" : UI.textMedium}
+                />
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    isActive && styles.filterChipTextActive,
+                  ]}
+                >
+                  {type.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
         {/* ── SEARCH SUGGESTIONS DROPDOWN ── */}
         {showSuggestions && (
           <View style={styles.suggestionsContainer}>
-            {filteredLots.length === 0 ? (
+            {/* Header */}
+            <View style={styles.suggestionsHeader}>
+              <Ionicons
+                name={searchQuery.trim() ? "search" : "business-outline"}
+                size={14}
+                color={UI.accentGreenDark}
+              />
+              <Text style={styles.suggestionsHeaderText}>
+                {searchQuery.trim()
+                  ? `Kết quả "${searchQuery}"`
+                  : "Tất cả bãi xe"}
+              </Text>
+              <Text style={styles.suggestionsCount}>
+                {searchSuggestions.length}
+              </Text>
+            </View>
+            {searchSuggestions.length === 0 ? (
               <View style={styles.suggestionsEmpty}>
                 <Ionicons
                   name="search-outline"
@@ -642,7 +855,7 @@ export default function HomeScreen() {
               </View>
             ) : (
               <FlatList
-                data={filteredLots}
+                data={searchSuggestions}
                 keyExtractor={(item) => item.id}
                 keyboardShouldPersistTaps="handled"
                 style={styles.suggestionsList}
@@ -650,6 +863,12 @@ export default function HomeScreen() {
                   <SearchSuggestionItem
                     lot={item}
                     onPress={() => onSelectSuggestion(item)}
+                    distanceText={
+                      userLocation &&
+                      (item.latitude !== 0 || item.longitude !== 0)
+                        ? getDistance(item)
+                        : undefined
+                    }
                   />
                 )}
                 ItemSeparatorComponent={() => (
@@ -722,149 +941,288 @@ export default function HomeScreen() {
           { transform: [{ translateY: bottomSheetAnim }] },
         ]}
       >
-        {selectedLot && (
-          <>
-            {/* Drag handle */}
-            <View style={styles.sheetHandle}>
-              <View style={styles.sheetHandleBar} />
-            </View>
+        {selectedLot &&
+          (() => {
+            const isOpen = (() => {
+              if (selectedLot.status !== "active") return false;
+              if (!selectedLot.openTime || !selectedLot.closeTime) return true;
+              const now = new Date();
+              const nowMins = now.getHours() * 60 + now.getMinutes();
+              const [openH, openM] = selectedLot.openTime
+                .split(":")
+                .map(Number);
+              const [closeH, closeM] = selectedLot.closeTime
+                .split(":")
+                .map(Number);
+              const openMins = openH * 60 + openM;
+              const closeMins = closeH * 60 + closeM;
+              if (closeMins <= openMins)
+                return nowMins >= openMins || nowMins < closeMins;
+              return nowMins >= openMins && nowMins < closeMins;
+            })();
 
-            {/* Header */}
-            <View style={styles.sheetHeader}>
-              <View style={styles.sheetIconWrap}>
-                <Ionicons
-                  name="business"
-                  size={22}
-                  color={UI.accentGreenDark}
-                />
-              </View>
-              <View style={styles.sheetTitleWrap}>
-                <Text style={styles.sheetName} numberOfLines={1}>
-                  {selectedLot.name}
-                </Text>
-                <View style={styles.sheetAddressRow}>
-                  <Ionicons name="location" size={13} color={UI.textLight} />
-                  <Text style={styles.sheetAddress} numberOfLines={1}>
-                    {selectedLot.address}
-                  </Text>
+            return (
+              <>
+                {/* Drag handle */}
+                <View style={styles.sheetHandle}>
+                  <View style={styles.sheetHandleBar} />
                 </View>
-              </View>
-              <TouchableOpacity
-                onPress={hideBottomSheet}
-                style={styles.sheetCloseBtn}
-              >
-                <Ionicons name="close" size={20} color={UI.textMuted} />
-              </TouchableOpacity>
-            </View>
 
-            {/* Info chips */}
-            <View style={styles.sheetInfoRow}>
-              <View style={styles.sheetInfoChip}>
-                <Ionicons
-                  name="navigate-outline"
-                  size={14}
-                  color={UI.accentGreenDark}
-                />
-                <Text style={styles.sheetInfoText}>
-                  {getDistance(selectedLot)}
-                </Text>
-              </View>
-              <View style={styles.sheetInfoChip}>
-                <Ionicons
-                  name="time-outline"
-                  size={14}
-                  color={UI.accentGreenDark}
-                />
-                <Text style={styles.sheetInfoText}>
-                  {selectedLot.openTime} – {selectedLot.closeTime}
-                </Text>
-              </View>
-              <SlotBadge
-                available={selectedLot.availableSlots}
-                total={selectedLot.totalSlots}
-              />
-            </View>
+                {/* Header */}
+                <View style={styles.sheetHeader}>
+                  <View style={styles.sheetIconWrap}>
+                    <Ionicons
+                      name="business"
+                      size={22}
+                      color={UI.accentGreenDark}
+                    />
+                  </View>
+                  <View style={styles.sheetTitleWrap}>
+                    <View style={styles.sheetNameRow}>
+                      <Text style={styles.sheetName} numberOfLines={1}>
+                        {selectedLot.name}
+                      </Text>
+                      <View
+                        style={[
+                          styles.sheetStatusPill,
+                          {
+                            backgroundColor: isOpen
+                              ? Colors.success + "20"
+                              : Colors.danger + "20",
+                          },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            styles.sheetStatusDot,
+                            {
+                              backgroundColor: isOpen
+                                ? Colors.success
+                                : Colors.danger,
+                            },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            styles.sheetStatusText,
+                            { color: isOpen ? Colors.success : Colors.danger },
+                          ]}
+                        >
+                          {isOpen ? "Mở cửa" : "Đóng"}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.sheetAddressRow}>
+                      <Ionicons
+                        name="location"
+                        size={13}
+                        color={UI.textLight}
+                      />
+                      <Text style={styles.sheetAddress} numberOfLines={1}>
+                        {selectedLot.address}
+                      </Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                    onPress={hideBottomSheet}
+                    style={styles.sheetCloseBtn}
+                  >
+                    <Ionicons name="close" size={20} color={UI.textMuted} />
+                  </TouchableOpacity>
+                </View>
 
-            {/* Capacity bar */}
-            <View style={styles.capacityRow}>
-              <Text style={styles.capacityLabel}>Sức chứa</Text>
-              <Text style={styles.capacityValue}>
-                {selectedLot.availableSlots}/{selectedLot.totalSlots} chỗ
-              </Text>
-            </View>
-            <View style={styles.capacityTrack}>
-              <View
-                style={[
-                  styles.capacityFill,
-                  {
-                    width: `${Math.round(
-                      (selectedLot.availableSlots /
-                        Math.max(selectedLot.totalSlots, 1)) *
-                        100,
-                    )}%`,
-                    backgroundColor:
-                      selectedLot.availableSlots === 0
-                        ? Colors.danger
-                        : selectedLot.availableSlots / selectedLot.totalSlots <
-                            0.15
-                          ? Colors.warning
-                          : Colors.success,
-                  },
-                ]}
-              />
-            </View>
-
-            {/* Action buttons */}
-            <View style={styles.sheetActions}>
-              <TouchableOpacity
-                style={styles.directionsBtn}
-                onPress={() => openDirections(selectedLot)}
-                activeOpacity={0.85}
-              >
-                <Ionicons
-                  name="navigate"
-                  size={18}
-                  color={UI.accentGreenDark}
-                />
-                <Text style={styles.directionsBtnText}>Chỉ đường</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.bookBtn,
-                  selectedLot.availableSlots === 0 && styles.bookBtnDisabled,
-                ]}
-                onPress={() => {
-                  hideBottomSheet();
-                  router.push(`/facility/${selectedLot.id}` as any);
-                }}
-                activeOpacity={0.85}
-                disabled={selectedLot.availableSlots === 0}
-              >
-                <Ionicons
-                  name="calendar"
-                  size={18}
-                  color={
-                    selectedLot.availableSlots === 0
-                      ? UI.textMuted
-                      : Colors.white
-                  }
-                />
-                <Text
-                  style={[
-                    styles.bookBtnText,
-                    selectedLot.availableSlots === 0 &&
-                      styles.bookBtnTextDisabled,
-                  ]}
+                {/* Scrollable content */}
+                <ScrollView
+                  style={styles.sheetScrollContent}
+                  showsVerticalScrollIndicator={false}
+                  bounces={false}
                 >
-                  {selectedLot.availableSlots === 0
-                    ? "Hết chỗ"
-                    : "Đặt chỗ trước"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
+                  {/* Info chips */}
+                  <View style={styles.sheetInfoRow}>
+                    <View style={styles.sheetInfoChip}>
+                      <Ionicons
+                        name="navigate-outline"
+                        size={14}
+                        color={UI.accentGreenDark}
+                      />
+                      <Text style={styles.sheetInfoText}>
+                        {getDistance(selectedLot)}
+                      </Text>
+                    </View>
+                    <View style={styles.sheetInfoChip}>
+                      <Ionicons
+                        name="time-outline"
+                        size={14}
+                        color={UI.accentGreenDark}
+                      />
+                      <Text style={styles.sheetInfoText}>
+                        {selectedLot.openTime} – {selectedLot.closeTime}
+                      </Text>
+                    </View>
+                    <SlotBadge
+                      available={selectedLot.availableSlots}
+                      total={selectedLot.totalSlots}
+                    />
+                  </View>
+
+                  {/* Slots by vehicle type */}
+                  {selectedLot.slotsByType.length > 0 && (
+                    <View style={styles.sheetSlotsSection}>
+                      <Text style={styles.sheetSectionTitle}>
+                        Chỗ trống theo loại xe
+                      </Text>
+                      <View style={styles.sheetSlotsGrid}>
+                        {selectedLot.slotsByType.map((slot) => {
+                          const avail = slot.availableCount;
+                          const dotColor =
+                            avail > 10
+                              ? Colors.success
+                              : avail > 0
+                                ? Colors.warning
+                                : Colors.danger;
+                          return (
+                            <View
+                              key={slot.vehicleTypeId}
+                              style={styles.sheetSlotCard}
+                            >
+                              <View
+                                style={[
+                                  styles.sheetSlotIconWrap,
+                                  { backgroundColor: dotColor + "15" },
+                                ]}
+                              >
+                                <Ionicons
+                                  name={getVehicleIcon(slot.vehicleTypeCode)}
+                                  size={18}
+                                  color={dotColor}
+                                />
+                              </View>
+                              <View style={styles.sheetSlotInfo}>
+                                <Text
+                                  style={styles.sheetSlotTypeName}
+                                  numberOfLines={1}
+                                >
+                                  {slot.vehicleTypeName}
+                                </Text>
+                                <Text
+                                  style={[
+                                    styles.sheetSlotCount,
+                                    { color: dotColor },
+                                  ]}
+                                >
+                                  {avail} chỗ
+                                </Text>
+                              </View>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Pricing summary */}
+                  <View style={styles.sheetPricingSection}>
+                    <Text style={styles.sheetSectionTitle}>Bảng giá</Text>
+                    {pricingLoading ? (
+                      <View style={styles.sheetPricingLoading}>
+                        <ActivityIndicator
+                          size="small"
+                          color={UI.accentGreenDark}
+                        />
+                        <Text style={styles.sheetPricingLoadingText}>
+                          Đang tải bảng giá...
+                        </Text>
+                      </View>
+                    ) : selectedLot.pricing.length === 0 ? (
+                      <Text style={styles.sheetPricingEmpty}>
+                        Chưa có bảng giá
+                      </Text>
+                    ) : (
+                      selectedLot.pricing.map((plan) => (
+                        <View key={plan._id} style={styles.sheetPricingCard}>
+                          <View style={styles.sheetPricingHeader}>
+                            <Ionicons
+                              name={getVehicleIcon(plan.vehicleTypeId?.code)}
+                              size={15}
+                              color={UI.accentGreenDark}
+                            />
+                            <Text
+                              style={styles.sheetPricingName}
+                              numberOfLines={1}
+                            >
+                              {plan.vehicleTypeId?.name || plan.name}
+                            </Text>
+                          </View>
+                          {plan.rates?.slice(0, 2).map((rate, i) => (
+                            <View key={i} style={styles.sheetPriceRow}>
+                              <Text style={styles.sheetPriceLabel}>
+                                {rate.label}
+                              </Text>
+                              <Text style={styles.sheetPriceValue}>
+                                {rate.amount.toLocaleString("vi-VN")}đ /{" "}
+                                {rate.unit}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      ))
+                    )}
+                  </View>
+                </ScrollView>
+
+                {/* Action buttons — sticky at bottom */}
+                <View style={styles.sheetActions}>
+                  <TouchableOpacity
+                    style={styles.directionsBtn}
+                    onPress={() => openDirections(selectedLot)}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons
+                      name="navigate"
+                      size={18}
+                      color={UI.accentGreenDark}
+                    />
+                    <Text style={styles.directionsBtnText}>Chỉ đường</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.bookBtn,
+                      selectedLot.availableSlots === 0 &&
+                        styles.bookBtnDisabled,
+                    ]}
+                    onPress={() => {
+                      hideBottomSheet();
+                      router.push(`/facility/${selectedLot.id}` as any);
+                    }}
+                    activeOpacity={0.85}
+                    disabled={selectedLot.availableSlots === 0}
+                  >
+                    <Ionicons
+                      name="calendar"
+                      size={18}
+                      color={
+                        selectedLot.availableSlots === 0
+                          ? UI.textMuted
+                          : Colors.white
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.bookBtnText,
+                        selectedLot.availableSlots === 0 &&
+                          styles.bookBtnTextDisabled,
+                      ]}
+                    >
+                      {selectedLot.availableSlots === 0
+                        ? "Hết chỗ"
+                        : "Đặt chỗ trước"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            );
+          })()}
       </Animated.View>
     </View>
   );
@@ -955,6 +1313,44 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
 
+  // ── Vehicle Type Filter Chips ────────────────────
+  filterChipsContainer: {
+    marginTop: 8,
+    marginHorizontal: 16,
+    maxHeight: 40,
+  },
+  filterChipsScroll: {
+    gap: 8,
+    paddingRight: 8,
+  },
+  filterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.92)",
+    shadowColor: UI.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  filterChipActive: {
+    backgroundColor: UI.accentGreenDark,
+    shadowColor: UI.accentGreenDark,
+    shadowOpacity: 0.3,
+  },
+  filterChipText: {
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: UI.textMedium,
+  },
+  filterChipTextActive: {
+    color: "#FFFFFF",
+  },
+
   // ── Search Suggestions ───────────────────────────
   suggestionsContainer: {
     marginHorizontal: 16,
@@ -1012,10 +1408,60 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: Typography.fontFamily.bold,
   },
+  suggestionMeta: {
+    flex: 1,
+  },
+  suggestionMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 3,
+  },
+  suggestionMetaChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  suggestionMetaText: {
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.medium,
+    color: UI.textLight,
+  },
+  suggestionStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
   suggestionSep: {
     height: 1,
     backgroundColor: Colors.borderLight,
     marginHorizontal: 16,
+  },
+  suggestionsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  suggestionsHeaderText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: UI.textLight,
+  },
+  suggestionsCount: {
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.bold,
+    color: UI.accentGreenDark,
+    backgroundColor: Colors.primaryBg,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    overflow: "hidden",
   },
   suggestionsEmpty: {
     alignItems: "center",
@@ -1173,11 +1619,34 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   sheetTitleWrap: { flex: 1 },
+  sheetNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 3,
+  },
   sheetName: {
     fontSize: 17,
     fontFamily: Typography.fontFamily.bold,
     color: UI.textDark,
-    marginBottom: 3,
+    flexShrink: 1,
+  },
+  sheetStatusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  sheetStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  sheetStatusText: {
+    fontSize: 10,
+    fontFamily: Typography.fontFamily.bold,
   },
   sheetAddressRow: {
     flexDirection: "row",
@@ -1258,7 +1727,113 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceElevated,
     borderRadius: 3,
     overflow: "hidden",
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  sheetScrollContent: {
+    flex: 1,
+    marginBottom: 8,
+  },
+  sheetSlotsSection: {
+    marginBottom: 12,
+  },
+  sheetSectionTitle: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: UI.textLight,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  sheetSlotsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  sheetSlotCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    minWidth: "46%",
+    flex: 1,
+  },
+  sheetSlotIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetSlotInfo: {
+    flex: 1,
+  },
+  sheetSlotTypeName: {
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.medium,
+    color: UI.textMedium,
+  },
+  sheetSlotCount: {
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  sheetPricingSection: {
+    marginBottom: 4,
+  },
+  sheetPricingLoading: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+  },
+  sheetPricingLoadingText: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.medium,
+    color: UI.textMuted,
+  },
+  sheetPricingEmpty: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.medium,
+    color: UI.textMuted,
+    textAlign: "center",
+    paddingVertical: 8,
+  },
+  sheetPricingCard: {
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 8,
+  },
+  sheetPricingHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 6,
+  },
+  sheetPricingName: {
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: UI.textDark,
+    flex: 1,
+  },
+  sheetPriceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 2,
+  },
+  sheetPriceLabel: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.regular,
+    color: UI.textLight,
+  },
+  sheetPriceValue: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: UI.accentGreenDark,
   },
   capacityFill: {
     height: "100%",
