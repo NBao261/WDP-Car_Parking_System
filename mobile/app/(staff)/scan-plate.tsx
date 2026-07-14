@@ -196,12 +196,13 @@ export default function StaffScanScreen() {
       }
 
       const { licensePlate, imageUrl } = alprRes.data;
-      setPlateData({ plate: licensePlate, imageUrl });
-      setExceptionPlate(licensePlate);
+      const formattedPlate = formatPlate(licensePlate);
+      setPlateData({ plate: formattedPlate, imageUrl });
+      setExceptionPlate(formattedPlate);
 
       // 2. Search for active session with this plate
       try {
-        const searchRes = await sessionApi.searchSession(licensePlate);
+        const searchRes = await sessionApi.searchSession(formattedPlate);
         const session = searchRes.data;
 
         const sessionFacilityId = session?.facilityId?._id || session?.facilityId;
@@ -217,7 +218,7 @@ export default function StaffScanScreen() {
         } else {
           // CHECK-IN FLOW (No active session at this facility)
           if (vehicleTypes.length > 0) {
-            const matchedTypeId = matchVehicleType(licensePlate, vehicleTypes);
+            const matchedTypeId = matchVehicleType(formattedPlate, vehicleTypes);
             setSelectedVehicleType(matchedTypeId || vehicleTypes[0]._id);
           }
           setShowCheckInModal(true);
@@ -230,7 +231,7 @@ export default function StaffScanScreen() {
           searchErr?.message?.includes("Không tìm thấy")
         ) {
           if (vehicleTypes.length > 0) {
-            const matchedTypeId = matchVehicleType(licensePlate, vehicleTypes);
+            const matchedTypeId = matchVehicleType(formattedPlate, vehicleTypes);
             setSelectedVehicleType(matchedTypeId || vehicleTypes[0]._id);
           }
           setShowCheckInModal(true);
