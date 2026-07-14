@@ -25,7 +25,13 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login(email, password);
-      router.replace('/(main)/home');
+      const userData = useAuthStore.getState().user;
+      const isStaff = userData?.role === 'staff' || userData?.role === 'manager' || userData?.role === 'admin';
+      if (isStaff) {
+        router.replace('/(staff)/scan-plate');
+      } else {
+        router.replace('/(driver)/home');
+      }
     } catch (error: any) {
       const errMsg = error?.message || (typeof error === 'string' ? error : 'Có lỗi xảy ra');
       Alert.alert('Đăng nhập thất bại', errMsg);

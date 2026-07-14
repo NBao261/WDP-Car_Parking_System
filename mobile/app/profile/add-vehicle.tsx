@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from "react";
 import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity,
-  ScrollView, Alert, ActivityIndicator, Image, Modal, FlatList, Switch,
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+  Image,
+  Modal,
+  FlatList,
+  Switch,
 } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
+import { formatPlate } from "../../src/utils/format";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors, Typography, Shadows } from "../../src/constants/theme";
@@ -62,14 +73,14 @@ export default function AddVehicleScreen() {
 
   // ── Auto format biển số (giống trang đặt chỗ) ──
   const autoFormatPlate = (text: string): string => {
-    let s = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (!s) return '';
+    let s = text.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!s) return "";
 
-    let prefix = '';
-    let tail = '';
+    let prefix = "";
+    let tail = "";
 
-    const typeName = selectedType?.name?.toLowerCase() || '';
-    const isCar = typeName.includes('ô tô') || typeName.includes('car');
+    const typeName = selectedType?.name?.toLowerCase() || "";
+    const isCar = typeName.includes("ô tô") || typeName.includes("car");
 
     if (isCar) {
       const match = s.match(/^(\d{2}[A-Z]{1,2})(\d*)$/);
@@ -88,14 +99,14 @@ export default function AddVehicleScreen() {
       }
     }
 
-    prefix = prefix.replace(/^(\d{2})([A-Z])/, '$1-$2');
+    prefix = prefix.replace(/^(\d{2})([A-Z])/, "$1-$2");
 
     if (tail) {
       tail = tail.substring(0, 5);
       if (tail.length === 5) {
-        tail = tail.substring(0, 3) + '.' + tail.substring(3);
+        tail = tail.substring(0, 3) + "." + tail.substring(3);
       }
-      return prefix + '-' + tail;
+      return prefix + "-" + tail;
     }
 
     return prefix;
@@ -113,7 +124,10 @@ export default function AddVehicleScreen() {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Quyền bị từ chối", "Bạn cần cấp quyền truy cập thư viện ảnh.");
+      Alert.alert(
+        "Quyền bị từ chối",
+        "Bạn cần cấp quyền truy cập thư viện ảnh.",
+      );
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -141,7 +155,7 @@ export default function AddVehicleScreen() {
     if (!isValidPlate(finalPlate)) {
       Alert.alert(
         "Biển số không hợp lệ",
-        `"${finalPlate}" không đúng định dạng biển số Việt Nam.\n\nVí dụ hợp lệ:\n• Xe máy: 29-A1-123.45\n• Ô tô: 30-A-123.45`
+        `"${finalPlate}" không đúng định dạng biển số Việt Nam.\n\nVí dụ hợp lệ:\n• Xe máy: 29-A1-123.45\n• Ô tô: 30-A-123.45`,
       );
       return;
     }
@@ -158,9 +172,11 @@ export default function AddVehicleScreen() {
 
       const res: any = await vehicleApi.addVehicle(payload);
       if (res.success) {
-        Alert.alert("✅ Thêm xe thành công!", "Xe đã được lưu vào danh sách của bạn.", [
-          { text: "OK", onPress: () => router.back() },
-        ]);
+        Alert.alert(
+          "✅ Thêm xe thành công!",
+          "Xe đã được lưu vào danh sách của bạn.",
+          [{ text: "OK", onPress: () => router.back() }],
+        );
       }
     } catch (error: any) {
       Alert.alert("Lỗi", error?.message || "Không thể thêm xe lúc này.");
@@ -170,8 +186,9 @@ export default function AddVehicleScreen() {
   };
 
   const getPlaceholder = () => {
-    const typeName = selectedType?.name?.toLowerCase() || '';
-    if (typeName.includes('ô tô') || typeName.includes('car')) return "Ví dụ: 30-A-123.45";
+    const typeName = selectedType?.name?.toLowerCase() || "";
+    if (typeName.includes("ô tô") || typeName.includes("car"))
+      return "Ví dụ: 30-A-123.45";
     return "Ví dụ: 29-A1-123.45";
   };
 
@@ -189,7 +206,10 @@ export default function AddVehicleScreen() {
           >
             <SafeAreaView edges={["top"]}>
               <View style={styles.heroNav}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={styles.backBtn}
+                >
                   <Ionicons name="arrow-back" size={22} color={Colors.white} />
                 </TouchableOpacity>
                 <Text style={styles.heroTitle}>Thêm xe mới</Text>
@@ -197,7 +217,11 @@ export default function AddVehicleScreen() {
               </View>
               <View style={styles.heroBody}>
                 <View style={styles.heroIconWrap}>
-                  <Ionicons name="add-circle" size={22} color={Colors.primary} />
+                  <Ionicons
+                    name="add-circle"
+                    size={22}
+                    color={Colors.primary}
+                  />
                 </View>
                 <Text style={styles.heroSub}>
                   Đăng ký xe để quản lý và đặt chỗ nhanh hơn
@@ -207,7 +231,10 @@ export default function AddVehicleScreen() {
           </LinearGradient>
         </View>
 
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           {/* ── Step 1: Loại xe (Dropdown) ── */}
           <View style={styles.stepHeader}>
             <View style={styles.stepBadge}>
@@ -225,24 +252,48 @@ export default function AddVehicleScreen() {
             </View>
           ) : (
             <TouchableOpacity
-              style={[styles.dropdownBtn, selectedTypeId ? styles.dropdownBtnActive : {}]}
+              style={[
+                styles.dropdownBtn,
+                selectedTypeId ? styles.dropdownBtnActive : {},
+              ]}
               onPress={() => setShowDropdown(true)}
               activeOpacity={0.8}
             >
               {selectedType ? (
                 <View style={styles.dropdownSelected}>
-                  <View style={[styles.dropdownIconWrap, { backgroundColor: Colors.primaryBg }]}>
-                    <Ionicons name={getTypeIcon(selectedType.name)} size={20} color={Colors.primary} />
+                  <View
+                    style={[
+                      styles.dropdownIconWrap,
+                      { backgroundColor: Colors.primaryBg },
+                    ]}
+                  >
+                    <Ionicons
+                      name={getTypeIcon(selectedType.name)}
+                      size={20}
+                      color={Colors.primary}
+                    />
                   </View>
-                  <Text style={styles.dropdownSelectedText}>{selectedType.name}</Text>
+                  <Text style={styles.dropdownSelectedText}>
+                    {selectedType.name}
+                  </Text>
                 </View>
               ) : (
                 <View style={styles.dropdownSelected}>
-                  <Ionicons name="car-outline" size={20} color={Colors.placeholder} />
-                  <Text style={styles.dropdownPlaceholder}>Chọn loại xe...</Text>
+                  <Ionicons
+                    name="car-outline"
+                    size={20}
+                    color={Colors.placeholder}
+                  />
+                  <Text style={styles.dropdownPlaceholder}>
+                    Chọn loại xe...
+                  </Text>
                 </View>
               )}
-              <Ionicons name="chevron-down" size={20} color={Colors.textTertiary} />
+              <Ionicons
+                name="chevron-down"
+                size={20}
+                color={Colors.textTertiary}
+              />
             </TouchableOpacity>
           )}
 
@@ -262,7 +313,11 @@ export default function AddVehicleScreen() {
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Chọn loại xe</Text>
                   <TouchableOpacity onPress={() => setShowDropdown(false)}>
-                    <Ionicons name="close" size={24} color={Colors.textSecondary} />
+                    <Ionicons
+                      name="close"
+                      size={24}
+                      color={Colors.textSecondary}
+                    />
                   </TouchableOpacity>
                 </View>
                 <FlatList
@@ -272,7 +327,10 @@ export default function AddVehicleScreen() {
                     const active = selectedTypeId === item._id;
                     return (
                       <TouchableOpacity
-                        style={[styles.modalItem, active && styles.modalItemActive]}
+                        style={[
+                          styles.modalItem,
+                          active && styles.modalItemActive,
+                        ]}
                         onPress={() => {
                           setSelectedTypeId(item._id);
                           setShowDropdown(false);
@@ -282,28 +340,45 @@ export default function AddVehicleScreen() {
                         }}
                         activeOpacity={0.7}
                       >
-                        <View style={[
-                          styles.modalItemIcon,
-                          { backgroundColor: active ? Colors.primaryBg : Colors.surfaceElevated }
-                        ]}>
+                        <View
+                          style={[
+                            styles.modalItemIcon,
+                            {
+                              backgroundColor: active
+                                ? Colors.primaryBg
+                                : Colors.surfaceElevated,
+                            },
+                          ]}
+                        >
                           <Ionicons
                             name={getTypeIcon(item.name)}
                             size={22}
-                            color={active ? Colors.primary : Colors.textSecondary}
+                            color={
+                              active ? Colors.primary : Colors.textSecondary
+                            }
                           />
                         </View>
                         <View style={{ flex: 1 }}>
-                          <Text style={[
-                            styles.modalItemText,
-                            active && { color: Colors.primary, fontFamily: Typography.fontFamily.semiBold }
-                          ]}>
+                          <Text
+                            style={[
+                              styles.modalItemText,
+                              active && {
+                                color: Colors.primary,
+                                fontFamily: Typography.fontFamily.semiBold,
+                              },
+                            ]}
+                          >
                             {item.name}
                           </Text>
                           <Text style={styles.modalItemCode}>{item.code}</Text>
                         </View>
                         {active && (
                           <View style={styles.modalCheck}>
-                            <Ionicons name="checkmark" size={14} color={Colors.white} />
+                            <Ionicons
+                              name="checkmark"
+                              size={14}
+                              color={Colors.white}
+                            />
                           </View>
                         )}
                       </TouchableOpacity>
@@ -325,7 +400,12 @@ export default function AddVehicleScreen() {
           </View>
           <View style={styles.card}>
             <Text style={styles.fieldLabel}>Biển số xe</Text>
-            <View style={[styles.plateInputWrap, plateError ? { borderColor: Colors.danger } : {}]}>
+            <View
+              style={[
+                styles.plateInputWrap,
+                plateError ? { borderColor: Colors.danger } : {},
+              ]}
+            >
               <Ionicons
                 name="newspaper-outline"
                 size={18}
@@ -340,9 +420,13 @@ export default function AddVehicleScreen() {
                   const formatted = autoFormatPlate(text);
                   setLicensePlate(formatted);
                   if (formatted.length >= 8) {
-                    setPlateError(isValidPlate(formatted) ? '' : 'Biển số không đúng định dạng');
+                    setPlateError(
+                      isValidPlate(formatted)
+                        ? ""
+                        : "Biển số không đúng định dạng",
+                    );
                   } else {
-                    setPlateError('');
+                    setPlateError("");
                   }
                 }}
                 autoCapitalize="characters"
@@ -352,19 +436,36 @@ export default function AddVehicleScreen() {
             {plateError ? (
               <View style={styles.plateStatus}>
                 <Ionicons name="alert-circle" size={13} color={Colors.danger} />
-                <Text style={[styles.plateStatusText, { color: Colors.danger }]}>{plateError}</Text>
+                <Text
+                  style={[styles.plateStatusText, { color: Colors.danger }]}
+                >
+                  {plateError}
+                </Text>
               </View>
             ) : licensePlate.length >= 8 && isValidPlate(licensePlate) ? (
               <View style={styles.plateStatus}>
-                <Ionicons name="checkmark-circle" size={13} color={Colors.success} />
-                <Text style={[styles.plateStatusText, { color: Colors.success }]}>Biển số hợp lệ</Text>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={13}
+                  color={Colors.success}
+                />
+                <Text
+                  style={[styles.plateStatusText, { color: Colors.success }]}
+                >
+                  Biển số hợp lệ
+                </Text>
               </View>
             ) : null}
           </View>
 
           {/* ── Step 3: Nickname ── */}
           <View style={styles.stepHeader}>
-            <View style={[styles.stepBadge, { backgroundColor: Colors.textTertiary }]}>
+            <View
+              style={[
+                styles.stepBadge,
+                { backgroundColor: Colors.textTertiary },
+              ]}
+            >
               <Text style={styles.stepNum}>3</Text>
             </View>
             <Text style={styles.stepTitle}>
@@ -384,7 +485,12 @@ export default function AddVehicleScreen() {
 
           {/* ── Step 4: Ảnh xe ── */}
           <View style={styles.stepHeader}>
-            <View style={[styles.stepBadge, { backgroundColor: Colors.textTertiary }]}>
+            <View
+              style={[
+                styles.stepBadge,
+                { backgroundColor: Colors.textTertiary },
+              ]}
+            >
               <Text style={styles.stepNum}>4</Text>
             </View>
             <Text style={styles.stepTitle}>
@@ -399,14 +505,28 @@ export default function AddVehicleScreen() {
                   style={styles.imageRemoveBtn}
                   onPress={() => setImage(null)}
                 >
-                  <Ionicons name="close-circle" size={26} color={Colors.danger} />
+                  <Ionicons
+                    name="close-circle"
+                    size={26}
+                    color={Colors.danger}
+                  />
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity style={styles.imagePickerBtn} onPress={pickImage} activeOpacity={0.8}>
-                <Ionicons name="camera-outline" size={32} color={Colors.textTertiary} />
+              <TouchableOpacity
+                style={styles.imagePickerBtn}
+                onPress={pickImage}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name="camera-outline"
+                  size={32}
+                  color={Colors.textTertiary}
+                />
                 <Text style={styles.imagePickerText}>Chọn ảnh từ thư viện</Text>
-                <Text style={styles.imagePickerSub}>Ảnh giúp bạn dễ nhận diện xe hơn</Text>
+                <Text style={styles.imagePickerSub}>
+                  Ảnh giúp bạn dễ nhận diện xe hơn
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -419,13 +539,18 @@ export default function AddVehicleScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.toggleTitle}>Đặt làm xe mặc định</Text>
-                <Text style={styles.toggleSub}>Xe mặc định sẽ được chọn sẵn khi đặt chỗ</Text>
+                <Text style={styles.toggleSub}>
+                  Xe mặc định sẽ được chọn sẵn khi đặt chỗ
+                </Text>
               </View>
             </View>
             <Switch
               value={isDefault}
               onValueChange={setIsDefault}
-              trackColor={{ false: Colors.borderLight, true: Colors.primary + '60' }}
+              trackColor={{
+                false: Colors.borderLight,
+                true: Colors.primary + "60",
+              }}
               thumbColor={isDefault ? Colors.primary : Colors.textTertiary}
             />
           </View>
@@ -447,10 +572,16 @@ export default function AddVehicleScreen() {
                   </View>
                 )}
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.previewPlate}>{licensePlate.trim().toUpperCase()}</Text>
-                  <Text style={styles.previewType}>{selectedType?.name || ""}</Text>
+                  <Text style={styles.previewPlate}>
+                    {licensePlate.trim().toUpperCase()}
+                  </Text>
+                  <Text style={styles.previewType}>
+                    {selectedType?.name || ""}
+                  </Text>
                   {!!nickname.trim() && (
-                    <Text style={styles.previewNickname}>{nickname.trim()}</Text>
+                    <Text style={styles.previewNickname}>
+                      {nickname.trim()}
+                    </Text>
                   )}
                 </View>
               </View>
@@ -461,14 +592,17 @@ export default function AddVehicleScreen() {
           <TouchableOpacity
             style={[
               styles.submitBtn,
-              (!selectedTypeId || !licensePlate.trim() || submitting) && styles.submitBtnDisabled,
+              (!selectedTypeId || !licensePlate.trim() || submitting) &&
+                styles.submitBtnDisabled,
             ]}
             onPress={handleSubmit}
             disabled={!selectedTypeId || !licensePlate.trim() || submitting}
             activeOpacity={0.85}
           >
             <Ionicons
-              name={submitting ? "hourglass-outline" : "checkmark-circle-outline"}
+              name={
+                submitting ? "hourglass-outline" : "checkmark-circle-outline"
+              }
               size={20}
               color={Colors.white}
             />
@@ -489,25 +623,45 @@ const styles = StyleSheet.create({
 
   // Hero
   heroWrapper: {
-    borderBottomLeftRadius: 28, borderBottomRightRadius: 28, overflow: "hidden",
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: "hidden",
   },
   hero: { paddingHorizontal: 16, paddingBottom: 24 },
   heroNav: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingTop: 8, marginBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 8,
+    marginBottom: 16,
   },
   backBtn: {
-    width: 38, height: 38, alignItems: "center", justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 19,
+    width: 38,
+    height: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 19,
   },
-  heroTitle: { fontSize: 17, fontFamily: Typography.fontFamily.bold, color: Colors.white },
+  heroTitle: {
+    fontSize: 17,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.white,
+  },
   heroBody: { flexDirection: "row", alignItems: "center", gap: 12 },
   heroIconWrap: {
-    width: 46, height: 46, borderRadius: 12, backgroundColor: Colors.white,
-    alignItems: "center", justifyContent: "center", ...Shadows.sm,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: Colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadows.sm,
   },
   heroSub: {
-    flex: 1, fontSize: 13, color: Colors.textOnDarkMuted,
+    flex: 1,
+    fontSize: 13,
+    color: Colors.textOnDarkMuted,
     fontFamily: Typography.fontFamily.regular,
   },
 
@@ -516,209 +670,346 @@ const styles = StyleSheet.create({
 
   // Step header
   stepHeader: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    marginBottom: 10, marginTop: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
+    marginTop: 4,
   },
   stepBadge: {
-    width: 26, height: 26, borderRadius: 13, backgroundColor: Colors.primary,
-    alignItems: "center", justifyContent: "center",
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  stepNum: { fontSize: 13, fontFamily: Typography.fontFamily.bold, color: Colors.white },
-  stepTitle: { fontSize: 15, fontFamily: Typography.fontFamily.semiBold, color: Colors.textPrimary },
-  optional: { fontFamily: Typography.fontFamily.regular, color: Colors.textTertiary, fontSize: 13 },
+  stepNum: {
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.white,
+  },
+  stepTitle: {
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.textPrimary,
+  },
+  optional: {
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textTertiary,
+    fontSize: 13,
+  },
 
   // Loading
   loadingRow: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    marginBottom: 20, paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 20,
+    paddingVertical: 12,
   },
-  loadingText: { fontSize: 14, color: Colors.textTertiary, fontFamily: Typography.fontFamily.regular },
+  loadingText: {
+    fontSize: 14,
+    color: Colors.textTertiary,
+    fontFamily: Typography.fontFamily.regular,
+  },
 
   // ── Dropdown ──
   dropdownBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: Colors.surface, borderRadius: 14,
-    borderWidth: 1.5, borderColor: Colors.border,
-    paddingHorizontal: 14, paddingVertical: 14,
-    marginBottom: 20, ...Shadows.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginBottom: 20,
+    ...Shadows.sm,
   },
   dropdownBtnActive: {
     borderColor: Colors.primary + "50",
   },
   dropdownSelected: {
-    flexDirection: "row", alignItems: "center", gap: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   dropdownIconWrap: {
-    width: 36, height: 36, borderRadius: 10,
-    alignItems: "center", justifyContent: "center",
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
   dropdownSelectedText: {
-    fontSize: 15, fontFamily: Typography.fontFamily.semiBold,
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.semiBold,
     color: Colors.textPrimary,
   },
   dropdownPlaceholder: {
-    fontSize: 15, fontFamily: Typography.fontFamily.regular,
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.regular,
     color: Colors.placeholder,
   },
 
   // ── Dropdown Modal ──
   modalOverlay: {
-    flex: 1, backgroundColor: "rgba(0,0,0,0.4)",
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    paddingBottom: 40, maxHeight: "60%",
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 40,
+    maxHeight: "60%",
   },
   modalHeader: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 20, paddingVertical: 16,
-    borderBottomWidth: 1, borderBottomColor: Colors.borderLight,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
   },
   modalTitle: {
-    fontSize: 17, fontFamily: Typography.fontFamily.bold,
+    fontSize: 17,
+    fontFamily: Typography.fontFamily.bold,
     color: Colors.textPrimary,
   },
   modalItem: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    paddingHorizontal: 20, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: Colors.borderLight,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
   },
   modalItemActive: {
     backgroundColor: Colors.primaryBg,
   },
   modalItemIcon: {
-    width: 44, height: 44, borderRadius: 12,
-    alignItems: "center", justifyContent: "center",
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalItemText: {
-    fontSize: 15, fontFamily: Typography.fontFamily.medium,
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.medium,
     color: Colors.textPrimary,
   },
   modalItemCode: {
-    fontSize: 12, fontFamily: Typography.fontFamily.regular,
-    color: Colors.textTertiary, marginTop: 2,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textTertiary,
+    marginTop: 2,
   },
   modalCheck: {
-    width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.primary,
-    alignItems: "center", justifyContent: "center",
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   // ── Plate input (giống trang đặt chỗ) ──
   card: {
-    backgroundColor: Colors.surface, borderRadius: 16, padding: 16,
-    marginBottom: 20, borderWidth: 1, borderColor: Colors.borderLight,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
     ...Shadows.sm,
   },
   fieldLabel: {
-    fontSize: 12, fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textTertiary, textTransform: "uppercase",
-    letterSpacing: 0.5, marginBottom: 10,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.textTertiary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 10,
   },
   plateInputWrap: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    borderWidth: 1.5, borderColor: Colors.border,
-    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     backgroundColor: Colors.white,
   },
   plateField: {
-    flex: 1, fontSize: 16, fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary, letterSpacing: 1,
+    flex: 1,
+    fontSize: 16,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.textPrimary,
+    letterSpacing: 1,
   },
   plateStatus: {
-    flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 6,
   },
   plateStatusText: {
-    fontSize: 12, fontFamily: Typography.fontFamily.medium,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.medium,
   },
   nicknameInput: {
-    fontSize: 15, fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary, paddingHorizontal: 0, paddingVertical: 2,
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textPrimary,
+    paddingHorizontal: 0,
+    paddingVertical: 2,
   },
 
   // Image
   imageSection: { marginBottom: 20 },
   imagePickerBtn: {
-    borderWidth: 1.5, borderColor: Colors.borderLight, borderStyle: "dashed",
-    borderRadius: 16, paddingVertical: 28, alignItems: "center",
-    backgroundColor: Colors.surface, gap: 4,
+    borderWidth: 1.5,
+    borderColor: Colors.borderLight,
+    borderStyle: "dashed",
+    borderRadius: 16,
+    paddingVertical: 28,
+    alignItems: "center",
+    backgroundColor: Colors.surface,
+    gap: 4,
   },
   imagePickerText: {
-    fontSize: 14, fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary, marginTop: 4,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.textSecondary,
+    marginTop: 4,
   },
   imagePickerSub: {
-    fontSize: 12, fontFamily: Typography.fontFamily.regular,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.regular,
     color: Colors.textTertiary,
   },
   imagePreviewWrap: { position: "relative", alignSelf: "center" },
   imagePreview: {
-    width: 200, height: 150, borderRadius: 16,
+    width: 200,
+    height: 150,
+    borderRadius: 16,
     backgroundColor: Colors.borderLight,
   },
   imageRemoveBtn: {
-    position: "absolute", top: -10, right: -10,
-    backgroundColor: Colors.white, borderRadius: 14,
+    position: "absolute",
+    top: -10,
+    right: -10,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
   },
 
   // Preview
   previewCard: {
-    backgroundColor: Colors.surfaceElevated, borderRadius: 18,
-    padding: 16, marginBottom: 24, borderWidth: 1, borderColor: Colors.borderLight,
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
   },
   previewLabel: {
-    fontSize: 11, fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textTertiary, textTransform: "uppercase",
-    letterSpacing: 0.8, marginBottom: 12,
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.textTertiary,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 12,
   },
   previewBody: { flexDirection: "row", alignItems: "center", gap: 14 },
   previewImg: { width: 56, height: 56, borderRadius: 12 },
   previewIconFallback: {
-    width: 56, height: 56, borderRadius: 12, backgroundColor: Colors.white,
-    alignItems: "center", justifyContent: "center",
-    borderWidth: 1, borderColor: Colors.borderLight,
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: Colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
   },
   previewPlate: {
-    fontSize: 18, fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary, letterSpacing: 1,
+    fontSize: 18,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textPrimary,
+    letterSpacing: 1,
   },
   previewType: {
-    fontSize: 13, fontFamily: Typography.fontFamily.medium,
-    color: Colors.textTertiary, marginTop: 2,
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.textTertiary,
+    marginTop: 2,
   },
   previewNickname: {
-    fontSize: 12, fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary, fontStyle: "italic", marginTop: 1,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textSecondary,
+    fontStyle: "italic",
+    marginTop: 1,
   },
 
   // Toggle
   toggleCard: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: Colors.surface, borderRadius: 16, padding: 16,
-    marginBottom: 20, borderWidth: 1, borderColor: Colors.borderLight,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
     ...Shadows.sm,
   },
   toggleInfo: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   toggleIconWrap: {
-    width: 36, height: 36, borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: Colors.warningLight || "#FFF8E1",
-    alignItems: "center", justifyContent: "center",
+    alignItems: "center",
+    justifyContent: "center",
   },
   toggleTitle: {
-    fontSize: 14, fontFamily: Typography.fontFamily.semiBold,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.semiBold,
     color: Colors.textPrimary,
   },
   toggleSub: {
-    fontSize: 12, fontFamily: Typography.fontFamily.regular,
-    color: Colors.textTertiary, marginTop: 2,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textTertiary,
+    marginTop: 2,
   },
 
   // Submit
   submitBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    backgroundColor: Colors.primary, borderRadius: 16, paddingVertical: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    paddingVertical: 16,
     ...Shadows.md,
   },
   submitBtnDisabled: { backgroundColor: Colors.disabled },
-  submitBtnText: { fontSize: 16, fontFamily: Typography.fontFamily.bold, color: Colors.white },
+  submitBtnText: {
+    fontSize: 16,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.white,
+  },
 });
