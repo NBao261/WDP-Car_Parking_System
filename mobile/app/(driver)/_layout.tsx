@@ -1,10 +1,18 @@
-import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet, Platform } from 'react-native';
-import { Colors, Typography } from '../../src/constants/theme';
-import { useAuthStore } from '../../src/store/useAuthStore';
+import { Tabs } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { View, StyleSheet, Platform } from "react-native";
+import { Colors, Typography } from "../../src/constants/theme";
+import { useAuthStore } from "../../src/store/useAuthStore";
 
-function TabIcon({ name, color, focused }: { name: any; color: string; focused: boolean }) {
+function TabIcon({
+  name,
+  color,
+  focused,
+}: {
+  name: any;
+  color: string;
+  focused: boolean;
+}) {
   return (
     <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
       <Ionicons name={name} size={22} color={color} />
@@ -17,7 +25,7 @@ export default function DriverLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: '#9EA894',
+        tabBarInactiveTintColor: "#9EA894",
         tabBarLabelStyle: {
           fontSize: 11,
           fontFamily: Typography.fontFamily.semiBold,
@@ -26,10 +34,10 @@ export default function DriverLayout() {
         tabBarStyle: {
           backgroundColor: Colors.white,
           borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 84 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+          height: Platform.OS === "ios" ? 84 : 64,
+          paddingBottom: Platform.OS === "ios" ? 24 : 8,
           paddingTop: 6,
-          shadowColor: '#3A5A1A',
+          shadowColor: "#3A5A1A",
           shadowOffset: { width: 0, height: -3 },
           shadowOpacity: 0.08,
           shadowRadius: 16,
@@ -51,47 +59,61 @@ export default function DriverLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          href: '/(driver)/home',
-          title: 'Trang chủ',
+          href: "/(driver)/home",
+          title: "Trang chủ",
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name={focused ? 'home' : 'home-outline'} color={color} focused={focused} />
+            <TabIcon
+              name={focused ? "home" : "home-outline"}
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="facilities"
         options={{
-          href: '/(driver)/facilities',
-          title: 'Bãi xe',
+          href: null,
+          title: "Bãi xe",
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name={focused ? 'map' : 'map-outline'} color={color} focused={focused} />
+            <TabIcon
+              name={focused ? "map" : "map-outline"}
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="sessions"
         options={{
-          href: '/(driver)/sessions',
-          title: 'Hoạt động',
+          href: "/(driver)/sessions",
+          title: "QR Code",
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name={focused ? 'receipt' : 'receipt-outline'} color={color} focused={focused} />
+            <TabIcon
+              name={focused ? "qr-code" : "qr-code-outline"}
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />
-
-
 
       {/* ── Shared Tabs ── */}
       <Tabs.Screen
         name="account"
         options={{
-          title: 'Tôi',
+          title: "Tôi",
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name={focused ? 'person' : 'person-outline'} color={color} focused={focused} />
+            <TabIcon
+              name={focused ? "person" : "person-outline"}
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />
@@ -106,8 +128,8 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 36,
     height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 14,
   },
   iconWrapActive: {
