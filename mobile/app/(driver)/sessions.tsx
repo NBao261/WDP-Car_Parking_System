@@ -365,7 +365,7 @@ function EmptyState({
 export default function ActivityScreen() {
   const router = useRouter();
   const { tab: initialTab } = useLocalSearchParams<{ tab?: Tab }>();
-  const [tab, setTab] = useState<Tab>((initialTab as Tab) || "active");
+  const [tab, setTab] = useState<Tab>((initialTab as Tab) || "reserved");
   const [activeSessions, setActiveSessions] = useState<ParkingSession[]>([]);
   const [histSessions, setHistSessions] = useState<ParkingSession[]>([]);
   const [upcomingRes, setUpcomingRes] = useState<Reservation[]>([]);
