@@ -450,8 +450,17 @@ export default function StaffScanScreen() {
               <View style={styles.sessionDetails}>
                 <Text style={styles.detailText}>
                   Vào lúc:{" "}
-                  {new Date(checkoutSession.startTime).toLocaleString("vi-VN")}
+                  {checkoutSession.checkInTime ? new Date(checkoutSession.checkInTime).toLocaleString("vi-VN") : "Không rõ"}
                 </Text>
+                {checkoutSession.checkInImage && (
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={[styles.detailText, { marginBottom: 8 }]}>Ảnh lúc vào:</Text>
+                    <Image 
+                      source={{ uri: checkoutSession.checkInImage }} 
+                      style={{ width: '100%', height: 120, borderRadius: 8, resizeMode: 'cover' }} 
+                    />
+                  </View>
+                )}
               </View>
             )}
 
