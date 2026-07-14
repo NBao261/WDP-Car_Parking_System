@@ -18,7 +18,16 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import * as ImageManipulator from "expo-image-manipulator";
-import NfcManager, { NfcTech } from "react-native-nfc-manager";
+
+let NfcManager: any = null;
+let NfcTech: any = null;
+try {
+  const nfcModule = require("react-native-nfc-manager");
+  NfcManager = nfcModule.default;
+  NfcTech = nfcModule.NfcTech;
+} catch (e) {
+  console.warn("NFC module is not available in this environment (likely Expo Go).");
+}
 import {
   Colors,
   Typography,
@@ -80,18 +89,22 @@ export default function StaffScanScreen() {
   useEffect(() => {
     async function initNfc() {
       try {
-        await NfcManager.start();
+        await NfcManager?.start();
       } catch (ex) {
         console.warn("NFC start error", ex);
       }
     }
     initNfc();
     return () => {
-      NfcManager.cancelTechnologyRequest().catch(() => {});
+      NfcManager?.cancelTechnologyRequest().catch(() => {});
     };
   }, []);
 
   const scanNfc = async (onSuccess: (uid: string) => void) => {
+    if (!NfcManager) {
+      Alert.alert("Lỗi", "NFC không được hỗ trợ trên thiết bị này hoặc đang chạy trên Expo Go.");
+      return;
+    }
     setIsScanningNfc(true);
     try {
       await NfcManager.requestTechnology(NfcTech.Ndef);
@@ -104,7 +117,7 @@ export default function StaffScanScreen() {
       console.warn("NFC Error", ex);
       Alert.alert("Lỗi", "Không thể đọc thẻ NFC hoặc đã hủy.");
     } finally {
-      NfcManager.cancelTechnologyRequest();
+      NfcManager?.cancelTechnologyRequest();
       setIsScanningNfc(false);
     }
   };

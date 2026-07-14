@@ -36,6 +36,7 @@ const parkingSlotSchema = new Schema<IParkingSlot>(
 );
 
 parkingSlotSchema.index({ facilityId: 1, floorId: 1, status: 1 });
+parkingSlotSchema.index({ facilityId: 1, vehicleTypeId: 1, status: 1, isDeleted: 1, code: 1 });
 parkingSlotSchema.index({ code: 1, facilityId: 1 }, { unique: true });
 
 export const ParkingSlot = mongoose.model<IParkingSlot>('ParkingSlot', parkingSlotSchema);

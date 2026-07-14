@@ -101,7 +101,7 @@ export class VehicleService {
   /**
    * Lấy danh sách xe của Driver
    */
-  static async getMyVehicles(userId: string) {
+  static async getMyVehicles(userId: string): Promise<any[]> {
     const vehicles = await Vehicle.find({ userId, isDeleted: false })
       .sort({ isDefault: -1, createdAt: -1 })
       .populate('vehicleTypeId', 'name code icon')
@@ -138,7 +138,7 @@ export class VehicleService {
   /**
    * Lấy chi tiết 1 xe
    */
-  static async getVehicleById(userId: string, vehicleId: string) {
+  static async getVehicleById(userId: string, vehicleId: string): Promise<any> {
     const vehicle = await Vehicle.findOne({ _id: vehicleId, userId, isDeleted: false })
       .populate('vehicleTypeId', 'name code icon')
       .lean();
