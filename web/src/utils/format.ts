@@ -1,7 +1,12 @@
 export function formatPlate(raw: string): string {
-  let s = raw.trim().toUpperCase();
-  s = s.replace(/[^A-Z0-9\s.\-]/g, '');
-  s = s.replace(/\s+/g, ' ').trim();
-  s = s.replace(/^(\d{2})([A-Z])/, '$1-$2');
-  return s;
+  if (!raw) return '';
+  let cleaned = raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  
+  if (cleaned.length === 8) {
+    return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
+  } else if (cleaned.length === 9) {
+    return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 7)}.${cleaned.slice(7)}`;
+  }
+  
+  return cleaned;
 }

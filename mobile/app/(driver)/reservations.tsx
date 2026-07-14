@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useFocusEffect } from "expo-router";
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
 import {
   View,
   Text,
@@ -54,7 +54,7 @@ export default function ReservationsScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchReservations();
-    }, [])
+    }, []),
   );
 
   const onRefresh = useCallback(() => {
@@ -79,7 +79,12 @@ export default function ReservationsScreen() {
 
   const renderEmptyState = (title: string, subtitle: string) => (
     <View style={styles.emptyState}>
-      <Ionicons name="calendar-outline" size={64} color={Colors.disabled} style={{ marginBottom: Spacing.md }} />
+      <Ionicons
+        name="calendar-outline"
+        size={64}
+        color={Colors.disabled}
+        style={{ marginBottom: Spacing.md }}
+      />
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptySubtitle}>{subtitle}</Text>
     </View>
