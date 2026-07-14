@@ -205,7 +205,8 @@ export default function StaffScanScreen() {
         const searchRes = await sessionApi.searchSession(formattedPlate);
         const session = searchRes.data;
 
-        const sessionFacilityId = session?.facilityId?._id || session?.facilityId;
+        const sessionFacilityId =
+          session?.facilityId?._id || session?.facilityId;
         if (
           session &&
           session.status === "active" &&
@@ -218,7 +219,10 @@ export default function StaffScanScreen() {
         } else {
           // CHECK-IN FLOW (No active session at this facility)
           if (vehicleTypes.length > 0) {
-            const matchedTypeId = matchVehicleType(formattedPlate, vehicleTypes);
+            const matchedTypeId = matchVehicleType(
+              formattedPlate,
+              vehicleTypes,
+            );
             setSelectedVehicleType(matchedTypeId || vehicleTypes[0]._id);
           }
           setShowCheckInModal(true);
@@ -231,7 +235,10 @@ export default function StaffScanScreen() {
           searchErr?.message?.includes("Không tìm thấy")
         ) {
           if (vehicleTypes.length > 0) {
-            const matchedTypeId = matchVehicleType(formattedPlate, vehicleTypes);
+            const matchedTypeId = matchVehicleType(
+              formattedPlate,
+              vehicleTypes,
+            );
             setSelectedVehicleType(matchedTypeId || vehicleTypes[0]._id);
           }
           setShowCheckInModal(true);
@@ -280,7 +287,6 @@ export default function StaffScanScreen() {
       Alert.alert("Lỗi Check-in", error.message || "Không thể tạo lượt gửi");
     } finally {
       setIsProcessing(false);
-      setShowCheckInModal(false);
     }
   };
 
@@ -304,7 +310,6 @@ export default function StaffScanScreen() {
       );
     } finally {
       setIsProcessing(false);
-      setShowCheckOutModal(false);
     }
   };
 
@@ -451,14 +456,25 @@ export default function StaffScanScreen() {
               <View style={styles.sessionDetails}>
                 <Text style={styles.detailText}>
                   Vào lúc:{" "}
-                  {checkoutSession.checkInTime ? new Date(checkoutSession.checkInTime).toLocaleString("vi-VN") : "Không rõ"}
+                  {checkoutSession.checkInTime
+                    ? new Date(checkoutSession.checkInTime).toLocaleString(
+                        "vi-VN",
+                      )
+                    : "Không rõ"}
                 </Text>
                 {checkoutSession.checkInImage && (
                   <View style={{ marginTop: 12 }}>
-                    <Text style={[styles.detailText, { marginBottom: 8 }]}>Ảnh lúc vào:</Text>
-                    <Image 
-                      source={{ uri: checkoutSession.checkInImage }} 
-                      style={{ width: '100%', height: 120, borderRadius: 8, resizeMode: 'cover' }} 
+                    <Text style={[styles.detailText, { marginBottom: 8 }]}>
+                      Ảnh lúc vào:
+                    </Text>
+                    <Image
+                      source={{ uri: checkoutSession.checkInImage }}
+                      style={{
+                        width: "100%",
+                        height: 120,
+                        borderRadius: 8,
+                        resizeMode: "cover",
+                      }}
                     />
                   </View>
                 )}
