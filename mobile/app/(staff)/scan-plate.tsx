@@ -32,6 +32,7 @@ import {
   paymentApi,
   facilityApi,
   exceptionApi,
+  getBaseUrl,
 } from "../../src/services/api";
 import { useAuthStore } from "../../src/store/useAuthStore";
 
@@ -70,6 +71,13 @@ export default function StaffScanScreen() {
   const [selectedVehicleType, setSelectedVehicleType] = useState<string | null>(
     null,
   );
+
+  const getFullImageUrl = (path?: string) => {
+    if (!path) return undefined;
+    if (path.startsWith("http")) return path;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    return `${getBaseUrl()}${cleanPath}`;
+  };
 
   useEffect(() => {
     if (selectedFacilityId) {
@@ -472,7 +480,7 @@ export default function StaffScanScreen() {
                       Ảnh lúc vào:
                     </Text>
                     <Image
-                      source={{ uri: checkoutSession.checkInImage }}
+                      source={{ uri: getFullImageUrl(checkoutSession.checkInImage) }}
                       style={{
                         width: "100%",
                         height: 120,

@@ -27,6 +27,10 @@ if (Platform.OS === 'android' && API_URL.includes('localhost')) {
   API_URL = API_URL.replace('localhost', '10.0.2.2');
 }
 
+export const getBaseUrl = () => {
+  return API_URL.replace(/\/api\/v1\/?$/, '');
+};
+
 export const TOKEN_KEY = 'sp_access_token';
 export const REFRESH_TOKEN_KEY = 'sp_refresh_token';
 
