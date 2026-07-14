@@ -228,7 +228,7 @@ export default function BookingScreen() {
               text: "Xem đặt chỗ của tôi",
               onPress: () => {
                 router.dismissAll();
-                router.replace("/(main)/sessions?tab=reserved" as any);
+                router.replace("/(driver)/sessions?tab=reserved" as any);
               },
             },
           ],

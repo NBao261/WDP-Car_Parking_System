@@ -31,7 +31,7 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       await register({ name, email, phone, password });
-      router.replace('/(main)/home');
+      router.replace('/(driver)/home');
     } catch (error: any) {
       const errMsg = error?.message || (typeof error === 'string' ? error : 'Có lỗi xảy ra');
       Alert.alert('Đăng ký thất bại', errMsg);

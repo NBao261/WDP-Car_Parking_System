@@ -3,18 +3,33 @@ import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { Facility, PricingPlan, AvailableSlot } from '../types/facility.types';
 
+import Constants from 'expo-constants';
+
 // ─── API Configuration ───────────────────────────────
 // Ưu tiên EXPO_PUBLIC_API_URL từ .env
-// Fallback: Android Emulator dùng 10.0.2.2, iOS Simulator dùng localhost
-const DEFAULT_API_URL =
-  Platform.OS === 'android'
-    ? 'http://10.0.2.2:5000/api/v1'
-    : 'http://localhost:5000/api/v1';
+let API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-let API_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
+// Auto-detect local IP in Expo Go development mode
+if (__DEV__ && !API_URL) {
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const ip = hostUri.split(':')[0];
+    API_URL = `http://${ip}:5000/api/v1`;
+  }
+}
+
+// Fallback: Android Emulator dùng 10.0.2.2, iOS Simulator dùng localhost
+if (!API_URL) {
+  API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5000/api/v1' : 'http://localhost:5000/api/v1';
+}
+
 if (Platform.OS === 'android' && API_URL.includes('localhost')) {
   API_URL = API_URL.replace('localhost', '10.0.2.2');
 }
+
+export const getBaseUrl = () => {
+  return API_URL.replace(/\/api\/v1\/?$/, '');
+};
 
 export const TOKEN_KEY = 'sp_access_token';
 export const REFRESH_TOKEN_KEY = 'sp_refresh_token';
@@ -54,21 +69,27 @@ export const sessionApi = {
   getActiveSessions: (params?: { facilityId?: string }) => {
     return apiClient.get('/sessions/active', { params });
   },
-  searchSession: (licensePlate: string) => {
-    return apiClient.get('/sessions/search', { params: { licensePlate } });
+  searchSession: (query: { licensePlate?: string; cardCode?: string }) => {
+    return apiClient.get('/sessions/search', { params: query });
   },
   calculateFee: (sessionId: string) => {
     return apiClient.get(`/sessions/${sessionId}/fee`);
   },
-  checkIn: (data: { facilityId: string; vehicleTypeId: string; licensePlate: string; gateIn?: string; checkInImage?: string }) => {
-    return apiClient.post('/sessions/check-in', data);
+  checkIn: (data: { facilityId: string; vehicleTypeId: string; licensePlate?: string; gateIn?: string; checkInImage?: string; cardCode?: string }) => {
+    return apiClient.post('/sessions/check-in', {
+      ...data,
+      gateIn: data.gateIn || "Mobile Gate",
+    });
   }
 };
 
 // Payment API
 export const paymentApi = {
   cashCheckout: (data: { sessionId: string; gateOut?: string; checkOutImage?: string }) => {
-    return apiClient.post('/payments/cash-checkout', data);
+    return apiClient.post('/payments/cash-checkout', {
+      ...data,
+      gateOut: data.gateOut || "Mobile Gate",
+    });
   }
 };
 
@@ -151,6 +172,9 @@ export const locationApi = {
 export const facilityApi = {
   getFacilities: () => {
     return apiClient.get('/facilities');
+  },
+  getOperationsConfig: (id: string) => {
+    return apiClient.get(`/facilities/${id}/operations-config`);
   }
 };
 

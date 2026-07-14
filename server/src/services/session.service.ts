@@ -35,6 +35,7 @@ interface CheckInData {
   slotId?: string;
   reservationCode?: string;
   checkInImage?: string;
+  cardCode?: string;
 }
 
 export class SessionService {
@@ -309,10 +310,23 @@ export class SessionService {
 
     // 5. Sinh mã session + mã thẻ xe (đảm bảo unique)
     let sessionCode = generateSessionCode();
+
+    // Validate cardCode nếu có (đảm bảo thẻ NFC không đang được sử dụng)
+    if (data.cardCode) {
+      const activeCard = await ParkingSession.findOne({ 
+        cardCode: data.cardCode, 
+        status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } 
+      });
+      if (activeCard) {
+        throw new AppError('Thẻ NFC này đang được sử dụng cho một xe khác (Chưa check-out)', 400);
+      }
+    }
+
     // Nếu có reservation → dùng reservation code làm cardCode (thẻ ảo, không cần thẻ vật lý)
+    // Nếu có data.cardCode từ NFC → dùng data.cardCode
     let cardCode = matchedReservation
       ? matchedReservation.code   // VD: RSV-20260623-AB12
-      : generateCardCode();       // Walk-in: sinh thẻ vật lý bình thường
+      : data.cardCode || generateCardCode();       // Walk-in: dùng thẻ NFC hoặc sinh thẻ vật lý bình thường
 
     // Retry nếu trùng (unlikely nhưng phòng)
     let retries = 5;
@@ -320,8 +334,8 @@ export class SessionService {
       const codeExists = await ParkingSession.findOne({ $or: [{ code: sessionCode }, { cardCode }] });
       if (!codeExists) break;
       sessionCode = generateSessionCode();
-      // Chỉ re-gen cardCode cho walk-in; reservation code là cố định
-      if (!matchedReservation) cardCode = generateCardCode();
+      // Chỉ re-gen cardCode cho walk-in không có thẻ NFC; reservation code là cố định
+      if (!matchedReservation && !data.cardCode) cardCode = generateCardCode();
       retries--;
     }
 

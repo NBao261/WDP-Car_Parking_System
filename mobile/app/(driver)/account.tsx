@@ -102,7 +102,7 @@ export default function AccountScreen() {
         } catch {}
       };
       loadCount();
-    }, [])
+    }, []),
   );
 
   const handleLogout = () => {
@@ -136,7 +136,9 @@ export default function AccountScreen() {
             <SafeAreaView edges={["top"]}>
               <View style={styles.heroContent}>
                 <View style={styles.avatarLarge}>
-                  <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
+                  <Text style={styles.avatarText}>
+                    {getInitials(user?.name)}
+                  </Text>
                 </View>
                 <Text style={styles.heroName}>{user?.name || "Driver"}</Text>
                 <Text style={styles.heroEmail}>{user?.email}</Text>
@@ -155,8 +157,14 @@ export default function AccountScreen() {
                     onPress={() => router.push("/profile/my-vehicles" as any)}
                     activeOpacity={0.8}
                   >
-                    <Ionicons name="car-outline" size={15} color={Colors.gradientAccent} />
-                    <Text style={styles.statText}>{vehicleCount} xe đã đăng ký</Text>
+                    <Ionicons
+                      name="car-outline"
+                      size={15}
+                      color={Colors.gradientAccent}
+                    />
+                    <Text style={styles.statText}>
+                      {vehicleCount} xe đã đăng ký
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -205,7 +213,7 @@ export default function AccountScreen() {
             icon="receipt-outline"
             label="Lịch sử gửi xe"
             subtitle="Xem lượt gửi đã hoàn thành"
-            onPress={() => router.push("/(main)/sessions?tab=history" as any)}
+            onPress={() => router.push("/(driver)/sessions?tab=history" as any)}
             color={Colors.success}
           />
           <View style={styles.divider} />
@@ -213,7 +221,9 @@ export default function AccountScreen() {
             icon="calendar-outline"
             label="Đặt chỗ của tôi"
             subtitle="Quản lý chỗ đã đặt trước"
-            onPress={() => router.push("/(main)/sessions?tab=reserved" as any)}
+            onPress={() =>
+              router.push("/(driver)/sessions?tab=reserved" as any)
+            }
             color={Colors.secondary}
           />
         </MenuSection>
@@ -259,7 +269,7 @@ const styles = StyleSheet.create({
   heroWrapper: {
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   hero: {
     paddingBottom: 28,
@@ -345,7 +355,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: Colors.border,
-    shadowColor: '#5E8F25',
+    shadowColor: "#5E8F25",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -382,7 +392,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     overflow: "hidden",
-    shadowColor: '#5E8F25',
+    shadowColor: "#5E8F25",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,

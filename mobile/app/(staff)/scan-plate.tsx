@@ -18,6 +18,16 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import * as ImageManipulator from "expo-image-manipulator";
+
+let NfcManager: any = null;
+let NfcTech: any = null;
+try {
+  const nfcModule = require("react-native-nfc-manager");
+  NfcManager = nfcModule.default;
+  NfcTech = nfcModule.NfcTech;
+} catch (e) {
+  console.warn("NFC module is not available in this environment (likely Expo Go).");
+}
 import {
   Colors,
   Typography,
@@ -30,8 +40,9 @@ import {
   alprApi,
   sessionApi,
   paymentApi,
-  vehicleTypeApi,
+  facilityApi,
   exceptionApi,
+  getBaseUrl,
 } from "../../src/services/api";
 import { useAuthStore } from "../../src/store/useAuthStore";
 
@@ -71,16 +82,67 @@ export default function StaffScanScreen() {
     null,
   );
 
+  // NFC States
+  const [nfcUid, setNfcUid] = useState<string | null>(null);
+  const [isScanningNfc, setIsScanningNfc] = useState(false);
+
   useEffect(() => {
-    fetchVehicleTypes();
+    async function initNfc() {
+      try {
+        await NfcManager?.start();
+      } catch (ex) {
+        console.warn("NFC start error", ex);
+      }
+    }
+    initNfc();
+    return () => {
+      NfcManager?.cancelTechnologyRequest().catch(() => {});
+    };
   }, []);
 
-  const fetchVehicleTypes = async () => {
+  const scanNfc = async (onSuccess: (uid: string) => void) => {
+    if (!NfcManager) {
+      Alert.alert("Lỗi", "NFC không được hỗ trợ trên thiết bị này hoặc đang chạy trên Expo Go.");
+      return;
+    }
+    setIsScanningNfc(true);
     try {
-      const res = await vehicleTypeApi.getVehicleTypes();
-      if (res.data) setVehicleTypes(res.data);
+      await NfcManager.requestTechnology(NfcTech.Ndef);
+      const tag = await NfcManager.getTag();
+      if (tag && tag.id) {
+        setNfcUid(tag.id);
+        onSuccess(tag.id);
+      }
+    } catch (ex) {
+      console.warn("NFC Error", ex);
+      Alert.alert("Lỗi", "Không thể đọc thẻ NFC hoặc đã hủy.");
+    } finally {
+      NfcManager?.cancelTechnologyRequest();
+      setIsScanningNfc(false);
+    }
+  };
+
+  const getFullImageUrl = (path?: string) => {
+    if (!path) return undefined;
+    if (path.startsWith("http")) return path;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    return `${getBaseUrl()}${cleanPath}`;
+  };
+
+  useEffect(() => {
+    if (selectedFacilityId) {
+      fetchVehicleTypes(selectedFacilityId);
+    }
+  }, [selectedFacilityId]);
+
+  const fetchVehicleTypes = async (fid: string) => {
+    try {
+      const res = await facilityApi.getOperationsConfig(fid);
+      if (res.data?.allowedVehicleTypes) {
+        setVehicleTypes(res.data.allowedVehicleTypes);
+      }
     } catch (e) {
-      console.log("Error fetching vehicle types", e);
+      console.log("Error fetching facility config", e);
     }
   };
 
@@ -196,18 +258,23 @@ export default function StaffScanScreen() {
       }
 
       const { licensePlate, imageUrl } = alprRes.data;
-      setPlateData({ plate: licensePlate, imageUrl });
-      setExceptionPlate(licensePlate);
+      const formattedPlate = formatPlate(licensePlate);
+      setPlateData({ plate: formattedPlate, imageUrl });
+      setExceptionPlate(formattedPlate);
 
       // 2. Search for active session with this plate
       try {
-        const searchRes = await sessionApi.searchSession(licensePlate);
+        const searchRes = await sessionApi.searchSession({
+          licensePlate: formattedPlate,
+        });
         const session = searchRes.data;
 
+        const sessionFacilityId =
+          session?.facilityId?._id || session?.facilityId;
         if (
           session &&
           session.status === "active" &&
-          session.facilityId === facilityId
+          sessionFacilityId === facilityId
         ) {
           // CHECK-OUT FLOW
           setCheckoutSession(session);
@@ -216,7 +283,10 @@ export default function StaffScanScreen() {
         } else {
           // CHECK-IN FLOW (No active session at this facility)
           if (vehicleTypes.length > 0) {
-            const matchedTypeId = matchVehicleType(licensePlate, vehicleTypes);
+            const matchedTypeId = matchVehicleType(
+              formattedPlate,
+              vehicleTypes,
+            );
             setSelectedVehicleType(matchedTypeId || vehicleTypes[0]._id);
           }
           setShowCheckInModal(true);
@@ -229,7 +299,10 @@ export default function StaffScanScreen() {
           searchErr?.message?.includes("Không tìm thấy")
         ) {
           if (vehicleTypes.length > 0) {
-            const matchedTypeId = matchVehicleType(licensePlate, vehicleTypes);
+            const matchedTypeId = matchVehicleType(
+              formattedPlate,
+              vehicleTypes,
+            );
             setSelectedVehicleType(matchedTypeId || vehicleTypes[0]._id);
           }
           setShowCheckInModal(true);
@@ -262,6 +335,26 @@ export default function StaffScanScreen() {
     }
   };
 
+  const handleNfcScanInCheckInModal = async () => {
+    await scanNfc(async (uid) => {
+      // Khi đọc được thẻ, kiểm tra xem thẻ này có đang giữ xe không
+      try {
+        const searchRes = await sessionApi.searchSession({ cardCode: uid });
+        const session = searchRes.data;
+        if (session && session.status === "active") {
+          // Thẻ này đang giữ xe => Chuyển sang Check-out Modal!
+          setShowCheckInModal(false);
+          setCheckoutSession(session);
+          setShowCheckOutModal(true);
+          calculateFee(session._id);
+        }
+      } catch (err: any) {
+        // Thẻ chưa sử dụng (404) -> Tiếp tục Check-in bình thường, nfcUid đã được set
+        Alert.alert("Thành công", `Đã nhận thẻ NFC: ${uid}`);
+      }
+    });
+  };
+
   const handleCheckIn = async () => {
     if (!selectedVehicleType || !plateData) return;
     setIsProcessing(true);
@@ -271,6 +364,7 @@ export default function StaffScanScreen() {
         vehicleTypeId: selectedVehicleType,
         licensePlate: plateData.plate,
         checkInImage: plateData.imageUrl,
+        cardCode: nfcUid || undefined,
       });
       Alert.alert("Thành công", `Đã tạo lượt gửi cho xe ${plateData.plate}`);
       resetScan();
@@ -278,7 +372,6 @@ export default function StaffScanScreen() {
       Alert.alert("Lỗi Check-in", error.message || "Không thể tạo lượt gửi");
     } finally {
       setIsProcessing(false);
-      setShowCheckInModal(false);
     }
   };
 
@@ -302,7 +395,6 @@ export default function StaffScanScreen() {
       );
     } finally {
       setIsProcessing(false);
-      setShowCheckOutModal(false);
     }
   };
 
@@ -313,6 +405,7 @@ export default function StaffScanScreen() {
     setShowCheckOutModal(false);
     setCheckoutSession(null);
     setCheckoutFee(null);
+    setNfcUid(null);
   };
 
   return (
@@ -414,6 +507,28 @@ export default function StaffScanScreen() {
               ))}
             </View>
 
+            <View style={styles.nfcSection}>
+              <Text style={styles.modalLabel}>Thẻ NFC:</Text>
+              {nfcUid ? (
+                <Text style={styles.nfcUidText}>{nfcUid}</Text>
+              ) : (
+                <TouchableOpacity
+                  style={styles.nfcButton}
+                  onPress={handleNfcScanInCheckInModal}
+                  disabled={isScanningNfc}
+                >
+                  <Ionicons
+                    name="radio-outline"
+                    size={20}
+                    color={Colors.white}
+                  />
+                  <Text style={styles.nfcButtonText}>
+                    {isScanningNfc ? "Đang chờ thẻ..." : "Quét thẻ NFC"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             <TouchableOpacity
               style={[
                 styles.primaryButton,
@@ -449,8 +564,30 @@ export default function StaffScanScreen() {
               <View style={styles.sessionDetails}>
                 <Text style={styles.detailText}>
                   Vào lúc:{" "}
-                  {new Date(checkoutSession.startTime).toLocaleString("vi-VN")}
+                  {checkoutSession.checkInTime
+                    ? new Date(checkoutSession.checkInTime).toLocaleString(
+                        "vi-VN",
+                      )
+                    : "Không rõ"}
                 </Text>
+                {checkoutSession.checkInImage && (
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={[styles.detailText, { marginBottom: 8 }]}>
+                      Ảnh lúc vào:
+                    </Text>
+                    <Image
+                      source={{
+                        uri: getFullImageUrl(checkoutSession.checkInImage),
+                      }}
+                      style={{
+                        width: "100%",
+                        height: 120,
+                        borderRadius: 8,
+                        resizeMode: "cover",
+                      }}
+                    />
+                  </View>
+                )}
               </View>
             )}
 
@@ -465,13 +602,55 @@ export default function StaffScanScreen() {
               )}
             </View>
 
+            <View style={styles.nfcSection}>
+              <Text style={styles.modalLabel}>Xác nhận thẻ NFC:</Text>
+              {nfcUid ? (
+                <Text
+                  style={[
+                    styles.nfcUidText,
+                    nfcUid === checkoutSession?.cardCode
+                      ? { color: Colors.success }
+                      : { color: Colors.danger },
+                  ]}
+                >
+                  {nfcUid === checkoutSession?.cardCode
+                    ? `Khớp thẻ: ${nfcUid}`
+                    : `Thẻ sai: ${nfcUid}`}
+                </Text>
+              ) : (
+                <TouchableOpacity
+                  style={styles.nfcButton}
+                  onPress={() =>
+                    scanNfc((uid) => console.log("Checked out card", uid))
+                  }
+                  disabled={isScanningNfc}
+                >
+                  <Ionicons
+                    name="radio-outline"
+                    size={20}
+                    color={Colors.white}
+                  />
+                  <Text style={styles.nfcButtonText}>
+                    {isScanningNfc ? "Đang chờ thẻ..." : "Quét thẻ NFC"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             <TouchableOpacity
               style={[
                 styles.primaryButton,
-                (isCalculatingFee || isProcessing) && styles.disabledButton,
+                (isCalculatingFee ||
+                  isProcessing ||
+                  !!(nfcUid && nfcUid !== checkoutSession?.cardCode)) &&
+                  styles.disabledButton,
               ]}
               onPress={handleCheckOut}
-              disabled={isCalculatingFee || isProcessing}
+              disabled={
+                isCalculatingFee ||
+                isProcessing ||
+                !!(nfcUid && nfcUid !== checkoutSession?.cardCode)
+              }
             >
               {isProcessing ? (
                 <ActivityIndicator color={Colors.white} />
@@ -699,13 +878,41 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   modalPlateText: {
-    fontSize: 32,
-    fontFamily: Typography.fontFamily.bold,
+    fontFamily: Typography.fontFamily.semiBold,
+    fontSize: 24,
+    color: Colors.primary,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  nfcSection: {
+    marginBottom: 20,
+    alignItems: "center",
+    width: "100%",
+  },
+  nfcButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.secondary,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: BorderRadius.full,
+    justifyContent: "center",
+    width: "100%",
+    ...Shadows.sm,
+  },
+  nfcButtonText: {
+    fontFamily: Typography.fontFamily.medium,
+    fontSize: 16,
+    color: Colors.white,
+    marginLeft: 8,
+  },
+  nfcUidText: {
+    fontFamily: Typography.fontFamily.semiBold,
+    fontSize: 18,
     color: Colors.primary,
     textAlign: "center",
-    marginVertical: 10,
+    marginTop: 8,
   },
-
   vehicleTypeContainer: {
     flexDirection: "row",
     flexWrap: "wrap",

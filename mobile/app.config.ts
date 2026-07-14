@@ -47,6 +47,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       "expo-asset",
       "expo-font",
       "@react-native-community/datetimepicker",
+      [
+        "react-native-nfc-manager",
+        {
+          "nfcPermission": "Quét thẻ NFC để Check-in/Check-out xe."
+        }
+      ],
     ],
     scheme: "smartparking",
   };
