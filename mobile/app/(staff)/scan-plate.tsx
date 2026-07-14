@@ -204,10 +204,11 @@ export default function StaffScanScreen() {
         const searchRes = await sessionApi.searchSession(licensePlate);
         const session = searchRes.data;
 
+        const sessionFacilityId = session?.facilityId?._id || session?.facilityId;
         if (
           session &&
           session.status === "active" &&
-          session.facilityId === facilityId
+          sessionFacilityId === facilityId
         ) {
           // CHECK-OUT FLOW
           setCheckoutSession(session);
