@@ -98,7 +98,6 @@ export default function DriverLayout() {
 
       {/* Hidden screens */}
       <Tabs.Screen name="reservations" options={{ href: null }} />
-      <Tabs.Screen name="facility/[id]" options={{ href: null }} />
     </Tabs>
   );
 }

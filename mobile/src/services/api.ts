@@ -3,15 +3,26 @@ import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { Facility, PricingPlan, AvailableSlot } from '../types/facility.types';
 
+import Constants from 'expo-constants';
+
 // ─── API Configuration ───────────────────────────────
 // Ưu tiên EXPO_PUBLIC_API_URL từ .env
-// Fallback: Android Emulator dùng 10.0.2.2, iOS Simulator dùng localhost
-const DEFAULT_API_URL =
-  Platform.OS === 'android'
-    ? 'http://10.0.2.2:5000/api/v1'
-    : 'http://localhost:5000/api/v1';
+let API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-let API_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
+// Auto-detect local IP in Expo Go development mode
+if (__DEV__ && !API_URL) {
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const ip = hostUri.split(':')[0];
+    API_URL = `http://${ip}:5000/api/v1`;
+  }
+}
+
+// Fallback: Android Emulator dùng 10.0.2.2, iOS Simulator dùng localhost
+if (!API_URL) {
+  API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5000/api/v1' : 'http://localhost:5000/api/v1';
+}
+
 if (Platform.OS === 'android' && API_URL.includes('localhost')) {
   API_URL = API_URL.replace('localhost', '10.0.2.2');
 }
