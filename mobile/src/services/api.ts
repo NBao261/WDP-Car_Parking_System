@@ -69,13 +69,13 @@ export const sessionApi = {
   getActiveSessions: (params?: { facilityId?: string }) => {
     return apiClient.get('/sessions/active', { params });
   },
-  searchSession: (licensePlate: string) => {
-    return apiClient.get('/sessions/search', { params: { licensePlate } });
+  searchSession: (query: { licensePlate?: string; cardCode?: string }) => {
+    return apiClient.get('/sessions/search', { params: query });
   },
   calculateFee: (sessionId: string) => {
     return apiClient.get(`/sessions/${sessionId}/fee`);
   },
-  checkIn: (data: { facilityId: string; vehicleTypeId: string; licensePlate: string; gateIn?: string; checkInImage?: string }) => {
+  checkIn: (data: { facilityId: string; vehicleTypeId: string; licensePlate?: string; gateIn?: string; checkInImage?: string; cardCode?: string }) => {
     return apiClient.post('/sessions/check-in', {
       ...data,
       gateIn: data.gateIn || "Mobile Gate",

@@ -18,6 +18,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import * as ImageManipulator from "expo-image-manipulator";
+import NfcManager, { NfcTech } from "react-native-nfc-manager";
 import {
   Colors,
   Typography,
@@ -71,6 +72,42 @@ export default function StaffScanScreen() {
   const [selectedVehicleType, setSelectedVehicleType] = useState<string | null>(
     null,
   );
+
+  // NFC States
+  const [nfcUid, setNfcUid] = useState<string | null>(null);
+  const [isScanningNfc, setIsScanningNfc] = useState(false);
+
+  useEffect(() => {
+    async function initNfc() {
+      try {
+        await NfcManager.start();
+      } catch (ex) {
+        console.warn("NFC start error", ex);
+      }
+    }
+    initNfc();
+    return () => {
+      NfcManager.cancelTechnologyRequest().catch(() => {});
+    };
+  }, []);
+
+  const scanNfc = async (onSuccess: (uid: string) => void) => {
+    setIsScanningNfc(true);
+    try {
+      await NfcManager.requestTechnology(NfcTech.Ndef);
+      const tag = await NfcManager.getTag();
+      if (tag && tag.id) {
+        setNfcUid(tag.id);
+        onSuccess(tag.id);
+      }
+    } catch (ex) {
+      console.warn("NFC Error", ex);
+      Alert.alert("Lỗi", "Không thể đọc thẻ NFC hoặc đã hủy.");
+    } finally {
+      NfcManager.cancelTechnologyRequest();
+      setIsScanningNfc(false);
+    }
+  };
 
   const getFullImageUrl = (path?: string) => {
     if (!path) return undefined;
@@ -214,7 +251,9 @@ export default function StaffScanScreen() {
 
       // 2. Search for active session with this plate
       try {
-        const searchRes = await sessionApi.searchSession(formattedPlate);
+        const searchRes = await sessionApi.searchSession({
+          licensePlate: formattedPlate,
+        });
         const session = searchRes.data;
 
         const sessionFacilityId =
@@ -283,6 +322,26 @@ export default function StaffScanScreen() {
     }
   };
 
+  const handleNfcScanInCheckInModal = async () => {
+    await scanNfc(async (uid) => {
+      // Khi đọc được thẻ, kiểm tra xem thẻ này có đang giữ xe không
+      try {
+        const searchRes = await sessionApi.searchSession({ cardCode: uid });
+        const session = searchRes.data;
+        if (session && session.status === "active") {
+          // Thẻ này đang giữ xe => Chuyển sang Check-out Modal!
+          setShowCheckInModal(false);
+          setCheckoutSession(session);
+          setShowCheckOutModal(true);
+          calculateFee(session._id);
+        }
+      } catch (err: any) {
+        // Thẻ chưa sử dụng (404) -> Tiếp tục Check-in bình thường, nfcUid đã được set
+        Alert.alert("Thành công", `Đã nhận thẻ NFC: ${uid}`);
+      }
+    });
+  };
+
   const handleCheckIn = async () => {
     if (!selectedVehicleType || !plateData) return;
     setIsProcessing(true);
@@ -292,6 +351,7 @@ export default function StaffScanScreen() {
         vehicleTypeId: selectedVehicleType,
         licensePlate: plateData.plate,
         checkInImage: plateData.imageUrl,
+        cardCode: nfcUid || undefined,
       });
       Alert.alert("Thành công", `Đã tạo lượt gửi cho xe ${plateData.plate}`);
       resetScan();
@@ -332,6 +392,7 @@ export default function StaffScanScreen() {
     setShowCheckOutModal(false);
     setCheckoutSession(null);
     setCheckoutFee(null);
+    setNfcUid(null);
   };
 
   return (
@@ -433,6 +494,28 @@ export default function StaffScanScreen() {
               ))}
             </View>
 
+            <View style={styles.nfcSection}>
+              <Text style={styles.modalLabel}>Thẻ NFC:</Text>
+              {nfcUid ? (
+                <Text style={styles.nfcUidText}>{nfcUid}</Text>
+              ) : (
+                <TouchableOpacity
+                  style={styles.nfcButton}
+                  onPress={handleNfcScanInCheckInModal}
+                  disabled={isScanningNfc}
+                >
+                  <Ionicons
+                    name="radio-outline"
+                    size={20}
+                    color={Colors.white}
+                  />
+                  <Text style={styles.nfcButtonText}>
+                    {isScanningNfc ? "Đang chờ thẻ..." : "Quét thẻ NFC"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             <TouchableOpacity
               style={[
                 styles.primaryButton,
@@ -480,7 +563,9 @@ export default function StaffScanScreen() {
                       Ảnh lúc vào:
                     </Text>
                     <Image
-                      source={{ uri: getFullImageUrl(checkoutSession.checkInImage) }}
+                      source={{
+                        uri: getFullImageUrl(checkoutSession.checkInImage),
+                      }}
                       style={{
                         width: "100%",
                         height: 120,
@@ -504,13 +589,55 @@ export default function StaffScanScreen() {
               )}
             </View>
 
+            <View style={styles.nfcSection}>
+              <Text style={styles.modalLabel}>Xác nhận thẻ NFC:</Text>
+              {nfcUid ? (
+                <Text
+                  style={[
+                    styles.nfcUidText,
+                    nfcUid === checkoutSession?.cardCode
+                      ? { color: Colors.success }
+                      : { color: Colors.danger },
+                  ]}
+                >
+                  {nfcUid === checkoutSession?.cardCode
+                    ? `Khớp thẻ: ${nfcUid}`
+                    : `Thẻ sai: ${nfcUid}`}
+                </Text>
+              ) : (
+                <TouchableOpacity
+                  style={styles.nfcButton}
+                  onPress={() =>
+                    scanNfc((uid) => console.log("Checked out card", uid))
+                  }
+                  disabled={isScanningNfc}
+                >
+                  <Ionicons
+                    name="radio-outline"
+                    size={20}
+                    color={Colors.white}
+                  />
+                  <Text style={styles.nfcButtonText}>
+                    {isScanningNfc ? "Đang chờ thẻ..." : "Quét thẻ NFC"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             <TouchableOpacity
               style={[
                 styles.primaryButton,
-                (isCalculatingFee || isProcessing) && styles.disabledButton,
+                (isCalculatingFee ||
+                  isProcessing ||
+                  !!(nfcUid && nfcUid !== checkoutSession?.cardCode)) &&
+                  styles.disabledButton,
               ]}
               onPress={handleCheckOut}
-              disabled={isCalculatingFee || isProcessing}
+              disabled={
+                isCalculatingFee ||
+                isProcessing ||
+                !!(nfcUid && nfcUid !== checkoutSession?.cardCode)
+              }
             >
               {isProcessing ? (
                 <ActivityIndicator color={Colors.white} />
@@ -738,13 +865,41 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   modalPlateText: {
-    fontSize: 32,
-    fontFamily: Typography.fontFamily.bold,
+    fontFamily: Typography.fontFamily.semiBold,
+    fontSize: 24,
+    color: Colors.primary,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  nfcSection: {
+    marginBottom: 20,
+    alignItems: "center",
+    width: "100%",
+  },
+  nfcButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.secondary,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: BorderRadius.full,
+    justifyContent: "center",
+    width: "100%",
+    ...Shadows.sm,
+  },
+  nfcButtonText: {
+    fontFamily: Typography.fontFamily.medium,
+    fontSize: 16,
+    color: Colors.white,
+    marginLeft: 8,
+  },
+  nfcUidText: {
+    fontFamily: Typography.fontFamily.semiBold,
+    fontSize: 18,
     color: Colors.primary,
     textAlign: "center",
-    marginVertical: 10,
+    marginTop: 8,
   },
-
   vehicleTypeContainer: {
     flexDirection: "row",
     flexWrap: "wrap",

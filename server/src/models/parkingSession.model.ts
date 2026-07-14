@@ -53,7 +53,7 @@ const parkingSessionSchema = new Schema<IParkingSession>(
     totalFee: { type: Number, default: 0, min: 0 },
     assignmentMode: { type: String, enum: ['auto', 'manual'], default: 'manual' }, // RQ-ready
     status: { type: String, enum: Object.values(SessionStatus), default: SessionStatus.ACTIVE },
-    cardCode: { type: String, required: true, unique: true },
+    cardCode: { type: String, required: true },
     checkInImage: { type: String, default: null },
     checkOutImage: { type: String, default: null },
   },
