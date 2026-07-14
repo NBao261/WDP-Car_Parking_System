@@ -30,7 +30,7 @@ import {
   alprApi,
   sessionApi,
   paymentApi,
-  vehicleTypeApi,
+  facilityApi,
   exceptionApi,
 } from "../../src/services/api";
 import { useAuthStore } from "../../src/store/useAuthStore";
@@ -72,15 +72,19 @@ export default function StaffScanScreen() {
   );
 
   useEffect(() => {
-    fetchVehicleTypes();
-  }, []);
+    if (selectedFacilityId) {
+      fetchVehicleTypes(selectedFacilityId);
+    }
+  }, [selectedFacilityId]);
 
-  const fetchVehicleTypes = async () => {
+  const fetchVehicleTypes = async (fid: string) => {
     try {
-      const res = await vehicleTypeApi.getVehicleTypes();
-      if (res.data) setVehicleTypes(res.data);
+      const res = await facilityApi.getOperationsConfig(fid);
+      if (res.data?.allowedVehicleTypes) {
+        setVehicleTypes(res.data.allowedVehicleTypes);
+      }
     } catch (e) {
-      console.log("Error fetching vehicle types", e);
+      console.log("Error fetching facility config", e);
     }
   };
 

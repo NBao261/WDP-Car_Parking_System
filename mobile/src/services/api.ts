@@ -168,6 +168,9 @@ export const locationApi = {
 export const facilityApi = {
   getFacilities: () => {
     return apiClient.get('/facilities');
+  },
+  getOperationsConfig: (id: string) => {
+    return apiClient.get(`/facilities/${id}/operations-config`);
   }
 };
 
