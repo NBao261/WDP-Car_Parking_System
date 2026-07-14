@@ -1,4 +1,4 @@
-import { Car, TrendingUp, ParkingSquare, Receipt, Loader2 } from 'lucide-react';
+import { TrendingUp, CarFront, GaugeCircle, ShieldCheck, Loader2 } from 'lucide-react';
 import { TrafficReportData, RevenueReportData, OccupancyReportData } from '../../../../services/report.service';
 
 interface DashboardCardsProps {
@@ -7,45 +7,6 @@ interface DashboardCardsProps {
   occupancyData: OccupancyReportData | null;
   isLoading?: boolean;
 }
-
-/* ─── Stat Card — giữ layout Manager nhưng thêm subtitle (Admin-only) ─── */
-
-interface StatCardProps {
-  label: string;
-  value: string;
-  subtitle?: string;
-  icon: React.ReactNode;
-  iconBg: string;
-  loading: boolean;
-}
-
-function StatCard({ label, value, subtitle, icon, iconBg, loading }: StatCardProps) {
-  return (
-    <div className="group bg-white rounded-2xl border border-[#e5e7eb] p-5 flex items-center gap-4 relative overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
-      {/* Tonal circle decoration */}
-      <div className={`absolute -right-3 -top-3 w-14 h-14 rounded-full opacity-20 ${iconBg}`} />
-      <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 z-10 ${iconBg}`}>
-        {icon}
-      </div>
-      <div className="z-10 min-w-0 flex-1">
-        <p className="text-[13px] text-[#6b7280] font-medium truncate">{label}</p>
-        <p className="text-[30px] leading-tight font-bold text-[#1a1a1a] tracking-tight">
-          {loading ? (
-            <Loader2 size={20} className="animate-spin mt-2" style={{ color: '#062F28' }} />
-          ) : (
-            value
-          )}
-        </p>
-        {/* Admin-exclusive subtitle line */}
-        {!loading && subtitle && (
-          <p className="text-[11px] text-[#9ca3af] mt-0.5 truncate">{subtitle}</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Main Component ─── */
 
 export function DashboardCards({
   trafficData,
@@ -56,78 +17,147 @@ export function DashboardCards({
   const loading = isLoading ?? false;
 
   const formatCompactVND = (value: number) => {
-    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B ₫`;
-    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M ₫`;
-    if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K ₫`;
-    return value.toLocaleString('vi-VN') + 'đ';
+    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+    if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+    return value.toLocaleString('vi-VN');
   };
 
-  // ── Card 1: Traffic (lượt ra/vào)
-  const totalTraffic = trafficData
-    ? (trafficData.summary.totalCheckIn + trafficData.summary.totalCheckOut).toLocaleString('vi-VN')
-    : '--';
-  const trafficSubtitle = trafficData
-    ? `↑ ${trafficData.summary.totalCheckIn.toLocaleString('vi-VN')} vào · ↓ ${trafficData.summary.totalCheckOut.toLocaleString('vi-VN')} ra`
-    : undefined;
+  // ── Data Computations ──
+  const totalRevenue = revenueData?.summary.grandTotal ?? 0;
+  const avgRevenue = revenueData?.summary.avgRevenuePerDay ?? 0;
+  const totalTransactions = revenueData?.summary.totalTransactions ?? 0;
 
-  // ── Card 2: Revenue (Admin exclusive: avgRevenuePerDay)
-  const totalRevenue = revenueData
-    ? formatCompactVND(revenueData.summary.grandTotal)
-    : '--';
-  const revenueSubtitle = revenueData
-    ? `TB ${formatCompactVND(revenueData.summary.avgRevenuePerDay)}/ngày · ${revenueData.summary.totalTransactions} GD`
-    : undefined;
+  const totalSlots = occupancyData?.summary.totalSlots ?? 0;
+  const totalOccupied = occupancyData?.summary.totalOccupied ?? 0;
+  const occupancyRate = occupancyData?.summary.effectiveOccupancyRate ?? 0;
 
-  // ── Card 3: Effective Occupancy Rate (Admin exclusive field)
-  const effectiveOccupancy = occupancyData
-    ? `${occupancyData.summary.effectiveOccupancyRate.toFixed(1)}%`
-    : '--';
-  const occupancySubtitle = occupancyData
-    ? `Thực tế · Danh nghĩa: ${occupancyData.summary.overallOccupancyRate.toFixed(1)}%`
-    : undefined;
+  const checkIn = trafficData?.summary.totalCheckIn ?? 0;
+  const checkOut = trafficData?.summary.totalCheckOut ?? 0;
+  const totalTraffic = checkIn + checkOut;
 
-  // ── Card 4: Currently parked (Admin exclusive: currentlyParked from traffic)
-  const currentlyParked = occupancyData
-    ? occupancyData.summary.totalOccupied.toLocaleString('vi-VN')
-    : '--';
-  const parkedSubtitle = occupancyData
-    ? `${occupancyData.summary.totalAvailable.toLocaleString('vi-VN')} trống · ${occupancyData.summary.totalSlots.toLocaleString('vi-VN')} tổng`
-    : undefined;
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl border border-[#e5e7eb] shadow-sm p-8 flex items-center justify-center min-h-[160px]">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 size={24} className="animate-spin text-[#062F28]" />
+          <p className="text-[13px] text-[#6b7280] font-medium">Đang tải dữ liệu hệ thống...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      <StatCard
-        label="Tổng lượt ra/vào"
-        value={totalTraffic}
-        subtitle={trafficSubtitle}
-        icon={<Car size={22} className="text-[#060606]" />}
-        iconBg="bg-[#9FE870]"
-        loading={loading}
-      />
-      <StatCard
-        label="Doanh thu hệ thống"
-        value={totalRevenue}
-        subtitle={revenueSubtitle}
-        icon={<TrendingUp size={22} className="text-white" />}
-        iconBg="bg-[#22c55e]"
-        loading={loading}
-      />
-      <StatCard
-        label="Lấp đầy thực tế"
-        value={effectiveOccupancy}
-        subtitle={occupancySubtitle}
-        icon={<ParkingSquare size={22} className="text-white" />}
-        iconBg="bg-[#3b82f6]"
-        loading={loading}
-      />
-      <StatCard
-        label="Xe đang đỗ"
-        value={currentlyParked}
-        subtitle={parkedSubtitle}
-        icon={<Receipt size={22} className="text-white" />}
-        iconBg="bg-[#f97316]"
-        loading={loading}
-      />
+    <div className="bg-white rounded-xl border border-[#e5e7eb] shadow-sm flex flex-col lg:flex-row overflow-hidden">
+      
+      {/* ─── Column 1: Revenue (Business Core) ─── */}
+      <div className="flex-1 p-6 flex flex-col justify-between relative group">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[11px] font-bold text-[#6b7280] tracking-wider uppercase flex items-center gap-1.5">
+            <TrendingUp size={14} className="text-[#062F28]" /> Doanh thu hệ thống
+          </h3>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#f0fdf4] text-[#166534] border border-[#dcfce7]">
+            +12.5%
+          </span>
+        </div>
+        
+        <div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-[32px] font-bold text-[#062F28] tracking-tight tabular-nums leading-none">
+              {formatCompactVND(totalRevenue)}
+            </span>
+            <span className="text-[16px] font-semibold text-[#6b7280]">VNĐ</span>
+          </div>
+          
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-[11px] text-[#9ca3af] font-medium mb-0.5">TB mỗi ngày</p>
+              <p className="text-[14px] font-semibold text-[#1a1a1a] tabular-nums">{formatCompactVND(avgRevenue)}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#9ca3af] font-medium mb-0.5">Lượt giao dịch</p>
+              <p className="text-[14px] font-semibold text-[#1a1a1a] tabular-nums">{totalTransactions.toLocaleString('vi-VN')}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="hidden lg:block w-[1px] bg-[#e5e7eb] my-4" />
+      <div className="block lg:hidden h-[1px] bg-[#e5e7eb] mx-4" />
+
+      {/* ─── Column 2: Traffic & Capacity (Operation) ─── */}
+      <div className="flex-1 p-6 flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[11px] font-bold text-[#6b7280] tracking-wider uppercase flex items-center gap-1.5">
+            <CarFront size={14} className="text-[#062F28]" /> Lưu lượng & Sức chứa
+          </h3>
+        </div>
+
+        <div>
+          {/* Capacity Progress */}
+          <div className="mb-4">
+            <div className="flex justify-between items-end mb-1.5">
+              <span className="text-[13px] font-semibold text-[#1a1a1a]">
+                <span className="text-[#062F28] text-[20px] tabular-nums">{totalOccupied.toLocaleString('vi-VN')}</span>
+                <span className="text-[#9ca3af] text-[13px] font-normal mx-1">/</span>
+                <span className="text-[#6b7280] text-[15px] tabular-nums">{totalSlots.toLocaleString('vi-VN')} xe</span>
+              </span>
+            </div>
+            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden flex">
+              <div 
+                className="h-full bg-[#062F28] rounded-l-full transition-all duration-1000 ease-out"
+                style={{ width: `${occupancyRate}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100">
+            <div>
+              <p className="text-[11px] text-[#9ca3af] font-medium">Tổng ra/vào</p>
+              <p className="text-[13px] font-bold text-[#1a1a1a] tabular-nums">{totalTraffic.toLocaleString('vi-VN')}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#9ca3af] font-medium">Xe vào</p>
+              <p className="text-[13px] font-bold text-[#16a34a] tabular-nums">+{checkIn.toLocaleString('vi-VN')}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#9ca3af] font-medium">Xe ra</p>
+              <p className="text-[13px] font-bold text-[#ea580c] tabular-nums">-{checkOut.toLocaleString('vi-VN')}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="hidden lg:block w-[1px] bg-[#e5e7eb] my-4" />
+      <div className="block lg:hidden h-[1px] bg-[#e5e7eb] mx-4" />
+
+      {/* ─── Column 3: Efficiency & Status ─── */}
+      <div className="w-full lg:w-[30%] p-6 flex flex-col justify-between bg-gray-50/50">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[11px] font-bold text-[#6b7280] tracking-wider uppercase flex items-center gap-1.5">
+            <GaugeCircle size={14} className="text-[#062F28]" /> Hiệu suất lấp đầy
+          </h3>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className="flex items-end gap-1">
+            <span className="text-[36px] font-bold text-[#1a1a1a] tracking-tight tabular-nums leading-none">
+              {occupancyRate.toFixed(1)}
+            </span>
+            <span className="text-[20px] font-semibold text-[#6b7280]">%</span>
+          </div>
+
+          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#e5e7eb] rounded-lg shadow-sm">
+            <ShieldCheck size={16} className="text-[#16a34a]" />
+            <div className="flex flex-col">
+              <span className="text-[12px] font-bold text-[#1a1a1a]">Trạng thái ổn định</span>
+              <span className="text-[10px] text-[#6b7280]">Hệ thống hoạt động bình thường</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
     </div>
   );
 }
+

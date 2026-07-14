@@ -12,6 +12,8 @@ import { DashboardCards } from './components/DashboardCards';
 import { DashboardCharts } from './components/DashboardCharts';
 import { SystemStatsWidget } from './components/SystemStatsWidget';
 import { RevenueBreakdownWidget } from './components/RevenueBreakdownWidget';
+import { FacilityLeaderboardWidget } from './components/FacilityLeaderboardWidget';
+import { SystemAlertsWidget } from './components/SystemAlertsWidget';
 import { CustomDropdown } from '../../../components/ui/CustomDropdown';
 import { reportService } from '../../../services/report.service';
 import { format, subDays, startOfMonth, startOfYear } from 'date-fns';
@@ -144,7 +146,7 @@ export default function DashboardPage() {
 
       {/* ═══ CONTENT ═══ */}
       <div className="space-y-4">
-        {/* ── Quick Stats Row (4 cards với Admin-exclusive subtitles) ── */}
+        {/* ── System Status Panel (Redesigned) ── */}
         <DashboardCards
           trafficData={trafficData}
           revenueData={revenueData}
@@ -154,7 +156,7 @@ export default function DashboardPage() {
 
         {/* ── Main Grid: 2/3 Charts + 1/3 Right Sidebar ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left 2/3 — Tabbed Charts (6 tabs vs Manager 4 tabs) */}
+          {/* Left 2/3 — Tabbed Charts */}
           <div className="lg:col-span-2">
             <DashboardCharts
               trafficData={trafficData}
@@ -167,11 +169,15 @@ export default function DashboardPage() {
 
           {/* Right 1/3 — 2 admin-exclusive widgets */}
           <div className="flex flex-col gap-4">
-            {/* Widget 1: Personnel & Facility stats (Admin-only) */}
             <SystemStatsWidget userStats={userStats} />
-            {/* Widget 2: Revenue by payment method (Admin-only) */}
             <RevenueBreakdownWidget revenueData={revenueData} />
           </div>
+        </div>
+
+        {/* ── Additional Admin Data Grid ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <FacilityLeaderboardWidget occupancyData={occupancyData} />
+          <SystemAlertsWidget />
         </div>
       </div>
     </div>
