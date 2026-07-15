@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Alert, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Alert, TouchableOpacity, Image, TextInput as RNTextInput } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, TextInput } from '../../src/components';
-import { Colors, Typography, Spacing, Shadows } from '../../src/constants/theme';
+import { Colors, Typography, Shadows } from '../../src/constants/theme';
 import { useAuthStore } from '../../src/store/useAuthStore';
 
 export default function LoginScreen() {
@@ -52,77 +50,78 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header Gradient */}
-          <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientMid]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <SafeAreaView edges={['top']}>
-              <View style={styles.heroNav}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                  <Ionicons name="arrow-back" size={22} color={Colors.white} />
-                </TouchableOpacity>
+          <SafeAreaView edges={['top']} style={styles.safeArea}>
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                <Ionicons name="arrow-back" size={20} color={Colors.brandDark} />
+              </TouchableOpacity>
+              <View style={styles.logoSmall}>
+                <Ionicons name="car-sport" size={16} color={Colors.brandDark} />
               </View>
-              <View style={styles.logoContainer}>
-                <View style={styles.logoCircle}>
-                  <Image source={require('../../assets/images/logo.png')} style={{ width: 180, height: 60, resizeMode: 'contain' }} />
-                </View>
-                <Text style={styles.title}>Smart Parking</Text>
-                <Text style={styles.subtitle}>Đăng nhập tài khoản Driver</Text>
+              <View style={{ width: 40 }} />
+            </View>
+
+            {/* Title */}
+            <View style={styles.titleSection}>
+              <Text style={styles.title}>Smart Parking</Text>
+              <Text style={styles.subtitle}>Đăng nhập tài khoản Driver</Text>
+            </View>
+
+            {/* Form */}
+            <View style={styles.formSection}>
+              {/* Email Input */}
+              <View style={styles.inputWrap}>
+                <Ionicons name="mail-outline" size={18} color={Colors.brandGrayText} style={styles.inputIcon} />
+                <RNTextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor={Colors.brandGrayText}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
               </View>
-            </SafeAreaView>
-          </LinearGradient>
 
-          {/* Form */}
-          <View style={styles.formContainer}>
-            <View style={styles.card}>
-              <TextInput
-                label="Email"
-                placeholder="email@example.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                leftIcon={<Ionicons name="mail-outline" size={20} color={Colors.textTertiary} />}
-              />
-
-              <TextInput
-                label="Mật khẩu"
-                placeholder="Nhập mật khẩu"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                leftIcon={<Ionicons name="lock-closed-outline" size={20} color={Colors.textTertiary} />}
-                rightIcon={
+              {/* Password Input */}
+              <View style={styles.inputWrap}>
+                <Ionicons name="lock-closed-outline" size={18} color={Colors.brandGrayText} style={styles.inputIcon} />
+                <RNTextInput
+                  style={styles.input}
+                  placeholder="Mật khẩu"
+                  placeholderTextColor={Colors.brandGrayText}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color={Colors.textTertiary}
-                    onPress={() => setShowPassword(!showPassword)}
+                    size={18}
+                    color={Colors.brandGrayText}
                   />
-                }
-              />
-              
+                </TouchableOpacity>
+              </View>
+
+              {/* Forgot Password */}
               <TouchableOpacity style={styles.forgotPass}>
                 <Text style={styles.forgotPassText}>Quên mật khẩu?</Text>
               </TouchableOpacity>
 
+              {/* Login Button */}
               <TouchableOpacity
                 style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
                 onPress={handleLogin}
                 disabled={loading}
                 activeOpacity={0.85}
               >
-                {loading ? (
-                  <Ionicons name="hourglass-outline" size={20} color={Colors.white} />
-                ) : (
-                  <Ionicons name="log-in-outline" size={20} color={Colors.white} />
-                )}
+                <Ionicons name="log-in-outline" size={18} color={Colors.brandDark} />
                 <Text style={styles.loginBtnText}>{loading ? "Đang xử lý..." : "Đăng nhập"}</Text>
               </TouchableOpacity>
             </View>
+
+            <View style={{ flex: 1 }} />
 
             {/* Footer */}
             <View style={styles.footer}>
@@ -131,7 +130,7 @@ export default function LoginScreen() {
                 <Text style={styles.footerLink}>Đăng ký ngay</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </SafeAreaView>
         </ScrollView>
       </KeyboardAvoidingView>
     </>
@@ -141,111 +140,113 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.white,
   },
   scrollContent: {
     flexGrow: 1,
   },
-  
-  // Hero
-  hero: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    ...Shadows.md,
-  },
-  heroNav: {
-    paddingTop: 8,
-    marginBottom: 20,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 19,
-  },
-  logoContainer: {
-    alignItems: 'center',
-  },
-  logoCircle: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 24,
-    backgroundColor: Colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-    shadowColor: '#5E8F25',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 28,
-    fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.8)',
-    fontFamily: Typography.fontFamily.medium,
-    marginTop: 4,
-  },
-
-  // Form Container
-  formContainer: {
+  safeArea: {
     flex: 1,
     paddingHorizontal: 20,
-    marginTop: -20,
   },
-  card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 24,
-    padding: 22,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: '#5E8F25',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 4,
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 8,
+    marginBottom: 24,
   },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.brandGray,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoSmall: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: Colors.brandLime,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Title
+  titleSection: {
+    marginBottom: 28,
+  },
+  title: {
+    fontSize: 26,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.brandGrayText,
+  },
+
+  // Form
+  formSection: {
+    gap: 14,
+  },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.brandGray,
+    borderRadius: 20,
+    height: 56,
+    paddingHorizontal: 16,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.brandDark,
+    height: '100%',
+  },
+  eyeBtn: {
+    padding: 8,
+  },
+
+  // Forgot password
   forgotPass: {
     alignSelf: 'flex-end',
-    marginTop: -4,
   },
   forgotPassText: {
     fontSize: 13,
-    color: Colors.primary,
-    fontFamily: Typography.fontFamily.semiBold,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
+    textDecorationLine: 'underline',
   },
+
+  // Login button
   loginBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
-    paddingVertical: 17,
-    marginTop: 6,
-    shadowColor: '#5E8F25',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 16,
-    elevation: 6,
+    backgroundColor: Colors.brandLime,
+    borderRadius: 9999,
+    height: 56,
+    marginTop: 8,
+    ...Shadows.sm,
   },
   loginBtnDisabled: {
     backgroundColor: Colors.disabled,
   },
   loginBtnText: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
+    color: Colors.brandDark,
   },
 
   // Footer
@@ -253,17 +254,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 32,
-    marginBottom: 20,
+    paddingBottom: 24,
   },
   footerText: {
-    fontSize: 15,
-    color: Colors.textSecondary,
+    fontSize: 13,
+    color: Colors.brandGrayText,
     fontFamily: Typography.fontFamily.regular,
   },
   footerLink: {
-    fontSize: 15,
-    color: Colors.primary,
+    fontSize: 13,
+    color: Colors.brandDark,
     fontFamily: Typography.fontFamily.bold,
   },
 });
