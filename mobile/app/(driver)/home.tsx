@@ -33,18 +33,18 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const BOTTOM_SHEET_HEIGHT = 420;
 const ASPECT_RATIO = SCREEN_WIDTH / SCREEN_HEIGHT;
 
-// Modern UI colors — high contrast & accessibility
+// Modern UI colors — Smart Parking brand palette
 const UI = {
-  textDark: "#2B2E27",
+  textDark: "#14161C",
   textMedium: "#4A4A4A",
   textLight: "#6B7260",
-  textMuted: "#9EA894",
+  textMuted: "#9AA0A6",
   cardBg: "#FFFFFF",
   searchBg: "#FFFFFF",
-  shadow: "#1A3A0A",
-  accentGreen: "#7DB83A",
-  accentGreenDark: "#5E8F25",
-  accentGreenLight: "#A8D164",
+  shadow: "#14161C",
+  accentGreen: "#A4FF07",
+  accentGreenDark: "#14161C",
+  accentGreenLight: "#C4FF5A",
 };
 
 // Default region: Quận 1, TP.HCM
@@ -1311,8 +1311,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   filterChipActive: {
-    backgroundColor: UI.accentGreenDark,
-    shadowColor: UI.accentGreenDark,
+    backgroundColor: Colors.brandDark,
+    shadowColor: Colors.brandDark,
     shadowOpacity: 0.3,
   },
   filterChipText: {
@@ -1513,8 +1513,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   markerBubbleSelected: {
-    backgroundColor: UI.accentGreenDark,
-    borderColor: UI.accentGreenDark,
+    backgroundColor: Colors.brandDark,
+    borderColor: Colors.brandDark,
   },
   markerBubbleFull: {
     borderColor: Colors.danger,
@@ -1538,7 +1538,7 @@ const styles = StyleSheet.create({
     borderTopColor: UI.accentGreen,
     marginTop: -1,
   },
-  markerArrowSelected: { borderTopColor: UI.accentGreenDark },
+  markerArrowSelected: { borderTopColor: Colors.brandDark },
   markerArrowFull: { borderTopColor: Colors.danger },
 
   // ── Backdrop ─────────────────────────────────────
@@ -1823,15 +1823,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     height: 48,
-    borderRadius: 16,
-    backgroundColor: Colors.primaryBg,
-    borderWidth: 1.5,
-    borderColor: UI.accentGreen,
+    borderRadius: 9999,
+    backgroundColor: Colors.brandGray,
+    borderWidth: 0,
   },
   directionsBtnText: {
     fontSize: 14,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: UI.accentGreenDark,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
   bookBtn: {
     flex: 1.5,
@@ -1840,23 +1839,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     height: 48,
-    borderRadius: 16,
-    backgroundColor: UI.accentGreenDark,
-    shadowColor: UI.accentGreenDark,
+    borderRadius: 9999,
+    backgroundColor: Colors.brandLime,
+    shadowColor: Colors.brandLime,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 6,
   },
   bookBtnDisabled: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: Colors.brandGray,
     shadowOpacity: 0,
     elevation: 0,
   },
   bookBtnText: {
     fontSize: 14,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
+    color: Colors.brandDark,
   },
   bookBtnTextDisabled: {
     color: UI.textMuted,
