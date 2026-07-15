@@ -261,39 +261,25 @@ export default function BookingScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.root}>
-        <View style={styles.heroWrapper}>
-          <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientMid]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <SafeAreaView edges={["top"]}>
-              <View style={styles.heroNav}>
-                <TouchableOpacity
-                  onPress={() => router.back()}
-                  style={styles.backBtn}
-                >
-                  <Ionicons name="arrow-back" size={22} color={Colors.white} />
-                </TouchableOpacity>
-                <Text style={styles.heroNavTitle}>Đặt chỗ trước</Text>
-                <View style={{ width: 38 }} />
-              </View>
+        {/* ── White header: ← Đặt chỗ trước ── */}
+        <SafeAreaView edges={["top"]} style={{ backgroundColor: Colors.white }}>
+          <View style={styles.heroNav}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backBtn}
+            >
+              <Ionicons name="arrow-back" size={18} color={Colors.brandDark} />
+            </TouchableOpacity>
+            <View style={{ flex: 1, marginLeft: 14 }}>
+              <Text style={styles.heroNavTitle}>Đặt chỗ trước</Text>
               {facilityName ? (
-                <View style={styles.heroFacility}>
-                  <Ionicons
-                    name="business-outline"
-                    size={14}
-                    color={Colors.textOnDarkMuted}
-                  />
-                  <Text style={styles.heroFacilityName} numberOfLines={1}>
-                    {facilityName}
-                  </Text>
-                </View>
+                <Text style={styles.heroFacilityName} numberOfLines={1}>
+                  {facilityName} • {facilityOpenTime} – {facilityCloseTime}
+                </Text>
               ) : null}
-            </SafeAreaView>
-          </LinearGradient>
-        </View>
+            </View>
+          </View>
+        </SafeAreaView>
 
         <ScrollView
           contentContainerStyle={styles.content}
@@ -469,7 +455,7 @@ export default function BookingScreen() {
                 <Ionicons
                   name="calendar-outline"
                   size={18}
-                  color={Colors.primary}
+                  color={Colors.brandDark}
                 />
                 <Text style={styles.dateBtnText}>
                   {startTime.toLocaleDateString("vi-VN", {
@@ -486,7 +472,7 @@ export default function BookingScreen() {
                 <Ionicons
                   name="time-outline"
                   size={18}
-                  color={Colors.primary}
+                  color={Colors.brandDark}
                 />
                 <Text style={styles.dateBtnText}>
                   {startTime.toLocaleTimeString("vi-VN", {
@@ -600,9 +586,9 @@ export default function BookingScreen() {
             activeOpacity={0.85}
           >
             <Ionicons
-              name={submitting ? "hourglass-outline" : "calendar-outline"}
-              size={20}
-              color={Colors.white}
+              name={submitting ? "hourglass-outline" : "checkmark"}
+              size={18}
+              color={Colors.brandDark}
             />
             <Text style={styles.confirmBtnText}>
               {submitting ? "Đang xử lý..." : "Xác nhận đặt chỗ"}
@@ -617,362 +603,362 @@ export default function BookingScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: Colors.white },
 
-  // Hero
-  heroWrapper: {
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    overflow: 'hidden',
-  },
-  hero: { paddingHorizontal: 16, paddingBottom: 24 },
+  /* ── Header ── */
   heroNav: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: 8,
-    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.brandGray,
   },
   backBtn: {
     width: 38,
     height: 38,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.12)",
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.brandGray,
     borderRadius: 19,
   },
   heroNavTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
+    color: Colors.brandDark,
   },
-  heroFacility: { flexDirection: "row", alignItems: "center", gap: 6 },
   heroFacilityName: {
-    fontSize: 13,
-    color: Colors.textOnDarkMuted,
-    fontFamily: Typography.fontFamily.medium,
+    fontSize: 11,
+    color: Colors.brandGrayText,
+    fontFamily: Typography.fontFamily.bold,
+    marginTop: 2,
   },
 
-  // Content
-  content: { padding: 16, paddingBottom: 16 },
+  /* ── Content ── */
+  content: { padding: 20, paddingBottom: 16 },
 
-  // Step header
+  /* ── Step header ── */
   stepHeader: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
     marginBottom: 10,
-    marginTop: 4,
+    marginTop: 6,
   },
   stepBadge: {
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: Colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: Colors.brandDark,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   stepNum: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
+    color: Colors.brandLime,
   },
   stepTitle: {
-    fontSize: 15,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
-  // Card
+  /* ── Card ── */
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
+    backgroundColor: Colors.white,
+    borderRadius: 20,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: Colors.brandGray,
     ...Shadows.sm,
   },
   fieldLabel: {
-    fontSize: 12,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textTertiary,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    fontSize: 10,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandGrayText,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
     marginBottom: 10,
   },
 
-  // Vehicle type chips
-  vtRow: { flexDirection: "row", gap: 10, paddingBottom: 4 },
+  /* ── Vehicle type chips — lime active ── */
+  vtRow: { flexDirection: 'row', gap: 10, paddingBottom: 4 },
   vtChip: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: Colors.borderLight,
-    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 9999,
+    backgroundColor: Colors.brandGray,
   },
   vtChipActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primaryBg,
+    backgroundColor: Colors.brandLime,
   },
   vtChipText: {
-    fontSize: 13,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
   vtChipTextActive: {
-    color: Colors.primary,
-    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.brandDark,
+    fontFamily: Typography.fontFamily.bold,
   },
   vtCheck: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: Colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: Colors.brandDark,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   vtChipFull: {
-    borderColor: Colors.borderLight,
-    backgroundColor: Colors.surfaceElevated,
-    opacity: 0.6,
+    backgroundColor: Colors.brandGray,
+    opacity: 0.5,
   },
   vtChipTextFull: {
-    color: Colors.textTertiary,
+    color: Colors.brandGrayText,
   },
   slotCountBadge: {
-    borderRadius: 10,
-    paddingHorizontal: 6,
+    borderRadius: 9999,
+    paddingHorizontal: 7,
     paddingVertical: 2,
     minWidth: 22,
-    alignItems: "center",
+    alignItems: 'center',
+    backgroundColor: Colors.white,
   },
   slotCountText: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: Typography.fontFamily.bold,
   },
 
-  // ── Vehicle selector ──
+  /* ── Vehicle selector ── */
   vehicleList: { marginBottom: 20 },
   vehicleCard: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1.5,
-    borderColor: Colors.borderLight,
-    ...Shadows.sm,
+    borderColor: Colors.brandGray,
   },
   vehicleCardActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primaryBg + "30",
+    borderColor: Colors.brandLime,
+    backgroundColor: Colors.white,
   },
   radioOuter: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: Colors.border,
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: Colors.brandGray,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   radioOuterActive: {
-    borderColor: Colors.primary,
+    borderColor: Colors.brandLime,
   },
   radioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.brandDark,
   },
   vehicleImg: {
     width: 48,
     height: 36,
     borderRadius: 8,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: Colors.brandGray,
   },
   vehicleIconFallback: {
-    width: 48,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.brandGray,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   vehicleInfo: { flex: 1 },
   vehiclePlate: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: Colors.brandDark,
     letterSpacing: 0.5,
   },
   vehicleMeta: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
     marginTop: 2,
   },
   vehicleNickname: {
-    fontSize: 12,
-    fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
-    fontStyle: "italic",
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandGrayText,
   },
   vehicleTypeName: {
-    fontSize: 12,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textTertiary,
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandGrayText,
   },
   defaultPill: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 3,
-    backgroundColor: Colors.warningLight || "#FFF8E1",
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+    backgroundColor: 'rgba(164,255,7,0.15)',
+    borderRadius: 9999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   defaultPillText: {
-    fontSize: 10,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.warning,
+    fontSize: 9,
+    fontFamily: Typography.fontFamily.bold,
+    color: '#304f00',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   addVehicleLink: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     paddingVertical: 10,
   },
   addVehicleLinkText: {
-    fontSize: 13,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.primary,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
 
-  // No vehicle card
+  /* ── No vehicle card ── */
   noVehicleCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
+    backgroundColor: Colors.white,
+    borderRadius: 20,
     padding: 24,
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadows.sm,
+    borderColor: Colors.brandGray,
+    borderStyle: 'dashed',
   },
   noVehicleIconWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.brandGray,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
   noVehicleTitle: {
-    fontSize: 15,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
     marginBottom: 4,
   },
   noVehicleSub: {
-    fontSize: 13,
-    fontFamily: Typography.fontFamily.regular,
-    color: Colors.textTertiary,
-    textAlign: "center",
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.brandGrayText,
+    textAlign: 'center',
     marginBottom: 16,
     lineHeight: 18,
   },
   addVehicleBtn: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
-    backgroundColor: Colors.primary,
-    borderRadius: 12,
+    backgroundColor: Colors.brandDark,
+    borderRadius: 9999,
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
   addVehicleBtnText: {
-    fontSize: 14,
-    fontFamily: Typography.fontFamily.semiBold,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
     color: Colors.white,
   },
 
-  // Date row
-  dateRow: { flexDirection: "row", gap: 10, marginBottom: 12 },
+  /* ── Date row ── */
+  dateRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
   dateBtn: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
-    borderWidth: 1.5,
-    borderColor: Colors.primary + "50",
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    backgroundColor: Colors.brandGray,
+    borderRadius: 9999,
+    paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: Colors.primaryBg,
   },
   dateBtnText: {
     flex: 1,
-    fontSize: 14,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.primaryDark,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
 
-  // Reminder
+  /* ── Reminder ── */
   reminderBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+    backgroundColor: 'rgba(255, 191, 0, 0.08)',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.warning,
   },
   reminderText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    fontFamily: Typography.fontFamily.regular,
+    fontSize: 11,
+    color: Colors.brandDark,
+    fontFamily: Typography.fontFamily.semiBold,
+    flex: 1,
+    lineHeight: 16,
   },
 
-  // Availability banner
+  /* ── Availability banner ── */
   availBanner: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 20,
+    padding: 16,
     marginBottom: 20,
   },
-  availTitle: { fontSize: 14, fontFamily: Typography.fontFamily.semiBold },
+  availTitle: { fontSize: 13, fontFamily: Typography.fontFamily.bold },
   availSub: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    fontFamily: Typography.fontFamily.regular,
+    fontSize: 11,
+    color: Colors.brandGrayText,
+    fontFamily: Typography.fontFamily.semiBold,
     marginTop: 2,
   },
 
-  // Confirm button
+  /* ── Confirm button — lime pill ── */
   confirmBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
+    backgroundColor: Colors.brandLime,
+    borderRadius: 9999,
     paddingVertical: 16,
     marginBottom: 8,
-    ...Shadows.md,
+    ...Shadows.sm,
   },
-  confirmBtnLoading: { backgroundColor: Colors.primaryLight },
+  confirmBtnLoading: { backgroundColor: Colors.brandGray },
   confirmBtnText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
+    color: Colors.brandDark,
   },
 });
