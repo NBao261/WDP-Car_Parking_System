@@ -218,33 +218,16 @@ export default function EditVehicleScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.root}>
-        {/* ── Gradient Header ── */}
-        <View style={styles.heroWrapper}>
-          <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientMid]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <SafeAreaView edges={["top"]}>
-              <View style={styles.heroNav}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                  <Ionicons name="arrow-back" size={22} color={Colors.white} />
-                </TouchableOpacity>
-                <Text style={styles.heroTitle}>Chỉnh sửa xe</Text>
-                <View style={{ width: 38 }} />
-              </View>
-              <View style={styles.heroBody}>
-                <View style={styles.heroIconWrap}>
-                  <Ionicons name="create" size={22} color={Colors.primary} />
-                </View>
-                <Text style={styles.heroSub}>
-                  Cập nhật thông tin xe của bạn
-                </Text>
-              </View>
-            </SafeAreaView>
-          </LinearGradient>
-        </View>
+        {/* ── White Header ── */}
+        <SafeAreaView edges={["top"]} style={{ backgroundColor: Colors.white }}>
+          <View style={styles.heroNav}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+              <Ionicons name="arrow-back" size={20} color={Colors.brandDark} />
+            </TouchableOpacity>
+            <Text style={styles.heroTitle}>Chỉnh sửa xe</Text>
+            <View style={{ width: 38 }} />
+          </View>
+        </SafeAreaView>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* ── Warning: Xe đang sử dụng ── */}
@@ -479,12 +462,7 @@ export default function EditVehicleScreen() {
             disabled={!selectedTypeId || !licensePlate.trim() || submitting || isInUse}
             activeOpacity={0.85}
           >
-            <Ionicons
-              name={submitting ? "hourglass-outline" : "checkmark-circle-outline"}
-              size={20}
-              color={Colors.white}
-            />
-            <Text style={styles.submitBtnText}>
+            <Text style={[styles.submitBtnText, (!selectedTypeId || !licensePlate.trim() || submitting || isInUse) && { color: Colors.brandGrayText }]}>
               {submitting ? "Đang lưu..." : "Lưu thay đổi"}
             </Text>
           </TouchableOpacity>
@@ -497,31 +475,19 @@ export default function EditVehicleScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: Colors.white },
 
-  // Hero
-  heroWrapper: {
-    borderBottomLeftRadius: 28, borderBottomRightRadius: 28, overflow: "hidden",
-  },
-  hero: { paddingHorizontal: 16, paddingBottom: 24 },
+  // Header
   heroNav: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingTop: 8, marginBottom: 16,
+    paddingHorizontal: 16, height: 56,
+    borderBottomWidth: 1, borderBottomColor: Colors.brandGray,
   },
   backBtn: {
-    width: 38, height: 38, alignItems: "center", justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 19,
+    width: 36, height: 36, alignItems: "center", justifyContent: "center",
+    backgroundColor: Colors.brandGray, borderRadius: 18,
   },
-  heroTitle: { fontSize: 17, fontFamily: Typography.fontFamily.bold, color: Colors.white },
-  heroBody: { flexDirection: "row", alignItems: "center", gap: 12 },
-  heroIconWrap: {
-    width: 46, height: 46, borderRadius: 12, backgroundColor: Colors.white,
-    alignItems: "center", justifyContent: "center", ...Shadows.sm,
-  },
-  heroSub: {
-    flex: 1, fontSize: 13, color: Colors.textOnDarkMuted,
-    fontFamily: Typography.fontFamily.regular,
-  },
+  heroTitle: { fontSize: 15, fontFamily: Typography.fontFamily.bold, color: Colors.brandDark },
 
   // Content
   content: { padding: 16 },
@@ -694,9 +660,9 @@ const styles = StyleSheet.create({
   // Submit
   submitBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    backgroundColor: Colors.primary, borderRadius: 16, paddingVertical: 16,
-    ...Shadows.md,
+    backgroundColor: Colors.brandLime, borderRadius: 9999, paddingVertical: 16,
+    ...Shadows.sm,
   },
-  submitBtnDisabled: { backgroundColor: Colors.disabled },
-  submitBtnText: { fontSize: 16, fontFamily: Typography.fontFamily.bold, color: Colors.white },
+  submitBtnDisabled: { backgroundColor: Colors.brandGray },
+  submitBtnText: { fontSize: 15, fontFamily: Typography.fontFamily.bold, color: Colors.brandDark },
 });
