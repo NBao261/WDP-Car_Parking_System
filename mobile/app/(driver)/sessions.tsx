@@ -42,13 +42,13 @@ function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; color: string; bg: string }> = {
     active: {
       label: "Đang đỗ",
-      color: Colors.success,
-      bg: Colors.successLight,
+      color: '#304f00',
+      bg: 'rgba(164, 255, 7, 0.15)',
     },
     completed: {
       label: "Hoàn thành",
-      color: Colors.textSecondary,
-      bg: Colors.surfaceElevated,
+      color: Colors.brandGrayText,
+      bg: Colors.brandGray,
     },
     pending: {
       label: "Chờ duyệt",
@@ -57,8 +57,8 @@ function StatusBadge({ status }: { status: string }) {
     },
     confirmed: {
       label: "Xác nhận",
-      color: Colors.primary,
-      bg: Colors.primaryBg,
+      color: '#304f00',
+      bg: 'rgba(164, 255, 7, 0.15)',
     },
     used: { label: "Đã dùng", color: Colors.success, bg: Colors.successLight },
     cancelled: {
@@ -68,14 +68,14 @@ function StatusBadge({ status }: { status: string }) {
     },
     expired: {
       label: "Hết hạn",
-      color: Colors.textTertiary,
-      bg: Colors.surfaceElevated,
+      color: Colors.brandGrayText,
+      bg: Colors.brandGray,
     },
   };
   const s = map[status] || {
     label: status,
-    color: Colors.textSecondary,
-    bg: Colors.surfaceElevated,
+    color: Colors.brandGrayText,
+    bg: Colors.brandGray,
   };
   return (
     <View style={[styles.badge, { backgroundColor: s.bg }]}>
@@ -517,48 +517,31 @@ export default function ActivityScreen() {
 
   return (
     <View style={styles.root}>
-      {/* Header */}
-      <View style={styles.headerWrapper}>
-        <LinearGradient
-          colors={[Colors.gradientStart, Colors.gradientMid]}
-          style={styles.header}
-        >
-          <SafeAreaView edges={["top"]}>
-            <Image
-              source={require("../../assets/images/logo.png")}
-              style={{
-                width: 100,
-                height: 28,
-                resizeMode: "contain",
-                marginTop: 12,
-              }}
-            />
-            <Text style={styles.headerTitle}>Hoạt động</Text>
-            <Text style={styles.headerSub}>Quản lý lượt gửi &amp; đặt chỗ</Text>
-          </SafeAreaView>
-        </LinearGradient>
-      </View>
+      {/* Header — White like reference */}
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: Colors.white }}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Hoạt động</Text>
+        </View>
+      </SafeAreaView>
 
-      {/* Tab bar */}
-      <View style={styles.tabBar}>
-        {TABS.map((t) => (
-          <TouchableOpacity
-            key={t.key}
-            style={[styles.tabItem, tab === t.key && styles.tabItemActive]}
-            onPress={() => setTab(t.key)}
-          >
-            <Ionicons
-              name={tab === t.key ? t.icon : (`${t.icon}-outline` as any)}
-              size={16}
-              color={tab === t.key ? Colors.primary : Colors.textTertiary}
-            />
-            <Text
-              style={[styles.tabLabel, tab === t.key && styles.tabLabelActive]}
+      {/* Segmented control — like reference ActivityTab */}
+      <View style={styles.segmentedWrap}>
+        <View style={styles.segmentedBg}>
+          {TABS.map((t) => (
+            <TouchableOpacity
+              key={t.key}
+              style={[styles.segmentedItem, tab === t.key && styles.segmentedItemActive]}
+              onPress={() => setTab(t.key)}
+              activeOpacity={0.8}
             >
-              {t.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[styles.segmentedLabel, tab === t.key && styles.segmentedLabelActive]}
+              >
+                {t.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       {/* Content */}
@@ -568,117 +551,109 @@ export default function ActivityScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: Colors.white },
 
-  headerWrapper: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: "hidden",
-  },
+  // Header — white flat
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 22,
+    height: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.brandGray,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 20,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textOnDark,
-    marginTop: 8,
-  },
-  headerSub: {
-    fontSize: 13,
-    color: Colors.textOnDarkMuted,
-    fontFamily: Typography.fontFamily.regular,
-    marginTop: 3,
+    color: Colors.brandDark,
   },
 
-  tabBar: {
-    flexDirection: "row",
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-    paddingHorizontal: 8,
-  },
-  tabItem: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 5,
+  // Segmented control — reference pattern
+  segmentedWrap: {
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
   },
-  tabItemActive: { borderBottomColor: Colors.primary },
-  tabLabel: {
-    fontSize: 13,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textTertiary,
+  segmentedBg: {
+    flexDirection: 'row',
+    backgroundColor: Colors.brandGray,
+    borderRadius: 9999,
+    padding: 3,
   },
-  tabLabelActive: {
-    color: Colors.primary,
-    fontFamily: Typography.fontFamily.semiBold,
+  segmentedItem: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 9999,
+  },
+  segmentedItemActive: {
+    backgroundColor: Colors.brandDark,
+  },
+  segmentedLabel: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandGrayText,
+  },
+  segmentedLabelActive: {
+    color: Colors.brandLime,
   },
 
   content: { flex: 1 },
   list: { padding: 16, paddingBottom: 32 },
 
-  // Card
+  // Card — white with gray border, rounded-24
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 18,
+    backgroundColor: Colors.white,
+    borderRadius: 24,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: "#5E8F25",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: Colors.brandGray,
+    ...Shadows.sm,
   },
   cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 10,
   },
-  cardLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
+  cardLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   plateWrap: {
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
+    backgroundColor: Colors.brandGray,
   },
   plateText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.primary,
+    color: Colors.brandDark,
     letterSpacing: 1.5,
   },
   cardTime: {
     fontSize: 12,
-    color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.medium,
+    color: Colors.brandGrayText,
+    fontFamily: Typography.fontFamily.bold,
   },
 
   cardDetails: { gap: 4 },
-  cardDetail: { flexDirection: "row", alignItems: "center", gap: 5 },
+  cardDetail: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   cardDetailText: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    fontFamily: Typography.fontFamily.regular,
+    fontSize: 12,
+    color: Colors.brandGrayText,
+    fontFamily: Typography.fontFamily.semiBold,
     flex: 1,
   },
 
   feeWrap: {
     marginTop: 10,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+    borderTopColor: Colors.brandGray,
     paddingTop: 10,
   },
   totalFeeRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
     marginTop: 8,
   },
@@ -688,12 +663,12 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.semiBold,
   },
 
-  // Badge
-  badge: { borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeText: { fontSize: 11, fontFamily: Typography.fontFamily.semiBold },
+  // Badge — pill
+  badge: { borderRadius: 9999, paddingHorizontal: 10, paddingVertical: 3 },
+  badgeText: { fontSize: 10, fontFamily: Typography.fontFamily.bold, textTransform: 'uppercase', letterSpacing: 0.5 },
 
   // Countdown
-  countdownWrap: { alignItems: "flex-end" },
+  countdownWrap: { alignItems: 'flex-end' },
   countdownText: {
     fontSize: 16,
     fontFamily: Typography.fontFamily.bold,
@@ -701,111 +676,109 @@ const styles = StyleSheet.create({
   },
   countdownLabel: {
     fontSize: 10,
-    color: Colors.textTertiary,
+    color: Colors.brandGrayText,
     fontFamily: Typography.fontFamily.medium,
   },
 
-  // Cancel
+  // Cancel — rose pill like reference
   cancelBtn: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 4,
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-    paddingTop: 10,
+    marginTop: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.20)',
+    borderRadius: 9999,
   },
   cancelBtnText: {
-    fontSize: 13,
-    color: Colors.danger,
-    fontFamily: Typography.fontFamily.medium,
-  },
-
-  // Reservation
-  reservedTime: {
     fontSize: 12,
-    color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.medium,
+    color: Colors.danger,
+    fontFamily: Typography.fontFamily.bold,
   },
 
-  // Empty
+  // Empty — reference pattern
   emptyWrap: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 32,
-    marginTop: 60,
+    marginTop: 40,
   },
   emptyIcon: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: Colors.brandGray,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 16,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
     marginBottom: 6,
   },
   emptySubtitle: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    textAlign: "center",
+    fontSize: 12,
+    color: Colors.brandGrayText,
+    textAlign: 'center',
     lineHeight: 20,
+    maxWidth: 240,
   },
   emptyAction: {
-    marginTop: 16,
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    marginTop: 20,
+    backgroundColor: Colors.brandLime,
+    borderRadius: 9999,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    ...Shadows.sm,
   },
   emptyActionText: {
-    color: Colors.white,
-    fontSize: 14,
-    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.brandDark,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
   },
 
-  // QR Banner (inline trong card)
+  // QR Banner — dark like reference
   qrBanner: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
     marginTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-    paddingTop: 12,
-    backgroundColor: Colors.primaryBg,
-    borderRadius: 12,
-    padding: 10,
+    backgroundColor: Colors.brandDark,
+    borderRadius: 16,
+    padding: 12,
   },
   qrLeft: {
-    width: 60,
-    height: 60,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 52,
+    height: 52,
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   qrRight: { flex: 1 },
   qrLabel: {
     fontSize: 10,
-    color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.medium,
+    color: Colors.brandLime,
+    fontFamily: Typography.fontFamily.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: 2,
   },
   qrCode: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.primary,
+    color: Colors.white,
     letterSpacing: 1.5,
   },
   qrHint: {
-    fontSize: 10,
-    color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.regular,
+    fontSize: 9,
+    color: 'rgba(255,255,255,0.5)',
+    fontFamily: Typography.fontFamily.bold,
     marginTop: 2,
   },
 
