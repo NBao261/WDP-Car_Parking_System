@@ -87,11 +87,11 @@ function FacilityCard({
       onPress={onPress}
       activeOpacity={0.85}
     >
-      {/* Colored top bar */}
+      {/* Lime/gray top accent bar */}
       <View
         style={[
           styles.cardAccent,
-          { backgroundColor: isOpen ? Colors.success : Colors.danger },
+          { backgroundColor: isOpen ? Colors.brandLime : Colors.brandGrayText },
         ]}
       />
 
@@ -99,7 +99,7 @@ function FacilityCard({
         {/* Header row */}
         <View style={styles.cardHeader}>
           <View style={styles.cardIconWrap}>
-            <Ionicons name="business" size={20} color={Colors.primary} />
+            <Ionicons name="business" size={20} color={Colors.brandDark} />
           </View>
           <View style={styles.cardTitleWrap}>
             <Text style={styles.cardName} numberOfLines={1}>
@@ -121,21 +121,21 @@ function FacilityCard({
               styles.statusBadge,
               {
                 backgroundColor: isOpen
-                  ? Colors.successLight
-                  : Colors.dangerLight,
+                  ? 'rgba(164, 255, 7, 0.15)'
+                  : Colors.brandGray,
               },
             ]}
           >
             <View
               style={[
                 styles.statusDot,
-                { backgroundColor: isOpen ? Colors.success : Colors.danger },
+                { backgroundColor: isOpen ? Colors.brandLime : Colors.brandGrayText },
               ]}
             />
             <Text
               style={[
                 styles.statusText,
-                { color: isOpen ? Colors.success : Colors.danger },
+                { color: isOpen ? '#304f00' : Colors.brandGrayText },
               ]}
             >
               {isOpen ? "Mở cửa" : "Đóng cửa"}
@@ -181,10 +181,9 @@ function FacilityCard({
           </View>
         </View>
 
-        {/* CTA */}
-        <TouchableOpacity style={styles.cta} onPress={onPress}>
-          <Text style={styles.ctaText}>Xem chi tiết & Đặt chỗ</Text>
-          <Ionicons name="arrow-forward" size={14} color={Colors.primary} />
+        {/* CTA — dark pill like reference */}
+        <TouchableOpacity style={[styles.cta, !isOpen && styles.ctaDisabled]} onPress={onPress} disabled={!isOpen}>
+          <Text style={[styles.ctaText, !isOpen && styles.ctaTextDisabled]}>Xem chi tiết & Đặt chỗ</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -293,58 +292,43 @@ export default function FacilitiesScreen() {
 
   return (
     <View style={styles.root}>
-      {/* ── Gradient Header ── */}
-      <View style={styles.headerWrapper}>
-        <LinearGradient
-          colors={[Colors.gradientStart, Colors.gradientMid]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
-          <SafeAreaView edges={["top"]}>
-            <Image
-              source={require("../../assets/images/logo.png")}
-              style={{
-                width: 100,
-                height: 28,
-                resizeMode: "contain",
-                marginTop: 12,
-              }}
-            />
-            <Text style={styles.headerTitle}>Bãi đỗ xe</Text>
-            <Text style={styles.headerSub}>Tìm và chọn bãi xe phù hợp</Text>
+      {/* ── White Header ── */}
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: Colors.white }}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Bãi đỗ xe</Text>
+        </View>
+      </SafeAreaView>
 
-            {/* Search bar */}
-            <View style={styles.searchWrap}>
+      {/* ── Search bar — gray pill ── */}
+      <View style={styles.searchOuter}>
+        <View style={styles.searchWrap}>
+          <Ionicons
+            name="search-outline"
+            size={18}
+            color={Colors.brandGrayText}
+            style={{ marginLeft: 14 }}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Tìm kiếm bãi đỗ xe..."
+            placeholderTextColor={Colors.brandGrayText}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearchQuery("")}
+              style={{ paddingRight: 14 }}
+            >
               <Ionicons
-                name="search-outline"
+                name="close-circle"
                 size={18}
-                color={Colors.textSecondary}
-                style={{ marginLeft: 12 }}
+                color={Colors.brandGrayText}
               />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Tìm kiếm bãi xe, địa chỉ..."
-                placeholderTextColor={Colors.placeholder}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                returnKeyType="search"
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => setSearchQuery("")}
-                  style={{ paddingRight: 12 }}
-                >
-                  <Ionicons
-                    name="close-circle"
-                    size={18}
-                    color={Colors.textTertiary}
-                  />
-                </TouchableOpacity>
-              )}
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* ── Filter chips ── */}
@@ -386,15 +370,6 @@ export default function FacilitiesScreen() {
             ]}
             onPress={() => setVehicleTypeIdFilter("all")}
           >
-            <Ionicons
-              name="car-outline"
-              size={13}
-              color={
-                vehicleTypeIdFilter === "all"
-                  ? Colors.primary
-                  : Colors.textSecondary
-              }
-            />
             <Text
               style={[
                 styles.chipText,
@@ -429,7 +404,7 @@ export default function FacilitiesScreen() {
       {/* ── Content ── */}
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={Colors.brandDark} />
           <Text style={styles.loadingText}>Đang tải danh sách...</Text>
         </View>
       ) : (
@@ -441,7 +416,7 @@ export default function FacilitiesScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={Colors.primary}
+              tintColor={Colors.brandDark}
             />
           }
           renderItem={({ item }) => (
@@ -463,7 +438,7 @@ export default function FacilitiesScreen() {
                 <Ionicons
                   name="business-outline"
                   size={32}
-                  color={Colors.textTertiary}
+                  color={Colors.brandGrayText}
                 />
               </View>
               <Text style={styles.emptyTitle}>Không tìm thấy bãi xe</Text>
@@ -479,86 +454,69 @@ export default function FacilitiesScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: Colors.white },
 
-  // Header
-  headerWrapper: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: "hidden",
-  },
+  // Header — white flat
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 22,
+    height: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.brandGray,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 22,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textOnDark,
-    marginTop: 8,
-  },
-  headerSub: {
-    fontSize: 13,
-    color: Colors.textOnDarkMuted,
-    fontFamily: Typography.fontFamily.regular,
-    marginTop: 3,
-    marginBottom: 16,
+    color: Colors.brandDark,
   },
 
+  // Search — gray pill
+  searchOuter: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 },
   searchWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    overflow: "hidden",
-    shadowColor: "#5E8F25",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.brandGray,
+    borderRadius: 9999,
+    height: 46,
   },
   searchInput: {
     flex: 1,
     height: 46,
     paddingHorizontal: 10,
-    fontSize: 14,
-    fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: Colors.brandDark,
   },
 
-  // Filters
+  // Filters — lime active chips
   filtersWrap: {
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    paddingBottom: 4,
   },
   filtersScroll: { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
   chip: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 9999,
+    backgroundColor: Colors.brandGray,
   },
   chipActive: {
-    backgroundColor: Colors.primaryBg,
-    borderColor: Colors.primary,
+    backgroundColor: Colors.brandLime,
   },
   chipText: {
-    fontSize: 13,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandGrayText,
   },
-  chipTextActive: { color: Colors.primary },
+  chipTextActive: { color: Colors.brandDark },
   chipSep: {
     width: 1,
     height: 20,
-    backgroundColor: Colors.borderLight,
-    alignSelf: "center",
+    backgroundColor: Colors.brandGray,
+    alignSelf: 'center',
     marginHorizontal: 4,
   },
 
@@ -566,132 +524,147 @@ const styles = StyleSheet.create({
   listContent: { padding: 16, paddingBottom: 32 },
   resultCount: {
     fontSize: 12,
-    color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.medium,
+    color: Colors.brandGrayText,
+    fontFamily: Typography.fontFamily.bold,
     marginBottom: 10,
   },
 
-  // Facility Card
+  // Facility Card — white rounded-24 with border
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    marginBottom: 14,
-    overflow: "hidden",
+    backgroundColor: Colors.white,
+    borderRadius: 24,
+    marginBottom: 16,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: "#5E8F25",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.07,
-    shadowRadius: 12,
-    elevation: 3,
+    borderColor: Colors.brandGray,
+    ...Shadows.sm,
   },
-  cardAccent: { height: 4 },
-  cardBody: { padding: 16 },
+  cardAccent: { height: 5 },
+  cardBody: { padding: 16, paddingTop: 18 },
 
   cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   cardIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: Colors.primaryBg,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 46,
+    height: 46,
+    borderRadius: 16,
+    backgroundColor: Colors.brandGray,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cardTitleWrap: { flex: 1 },
   cardName: {
     fontSize: 15,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
   addressRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 3,
-    marginTop: 2,
+    marginTop: 3,
   },
   cardAddress: {
-    fontSize: 12,
-    color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.regular,
+    fontSize: 11,
+    color: Colors.brandGrayText,
+    fontFamily: Typography.fontFamily.bold,
     flex: 1,
   },
 
   statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderRadius: 20,
-    paddingHorizontal: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 9999,
+    paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  statusDot: { width: 6, height: 6, borderRadius: 3 },
-  statusText: { fontSize: 11, fontFamily: Typography.fontFamily.semiBold },
+  statusDot: { width: 5, height: 5, borderRadius: 3 },
+  statusText: { fontSize: 10, fontFamily: Typography.fontFamily.bold, textTransform: 'uppercase', letterSpacing: 0.5 },
 
-  divider: { height: 1, backgroundColor: Colors.borderLight, marginBottom: 12 },
+  divider: { height: 0 }, // removed visual divider
 
-  detailsRow: { flexDirection: "row", gap: 16, marginBottom: 14 },
-  detailItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  // Details specs grid — like reference 3-col
+  detailsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  detailItem: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    backgroundColor: Colors.brandGray + '99',
+    borderRadius: 14,
+    gap: 4,
+  },
   detailText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    fontFamily: Typography.fontFamily.medium,
+    fontSize: 10,
+    color: Colors.brandGrayText,
+    fontFamily: Typography.fontFamily.bold,
+    textAlign: 'center',
   },
 
   // Occupancy
   occupancyTrack: {
     height: 4,
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: Colors.brandGray,
     borderRadius: 2,
-    overflow: "hidden",
+    overflow: 'hidden',
     marginBottom: 3,
   },
-  occupancyFill: { height: "100%", borderRadius: 2 },
+  occupancyFill: { height: '100%', borderRadius: 2 },
   occupancyLabel: { fontSize: 11, fontFamily: Typography.fontFamily.medium },
 
-  // CTA
+  // CTA — dark pill like reference
   cta: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    backgroundColor: Colors.primaryBg,
-    borderRadius: 10,
-    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.brandDark,
+    borderRadius: 9999,
+    paddingVertical: 14,
   },
   ctaText: {
-    fontSize: 13,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.primary,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.white,
+  },
+  ctaDisabled: {
+    backgroundColor: Colors.brandGray,
+  },
+  ctaTextDisabled: {
+    color: Colors.brandGrayText,
   },
 
   // States
-  center: { flex: 1, justifyContent: "center", alignItems: "center", gap: 8 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 8 },
   loadingText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: Colors.brandGrayText,
     fontFamily: Typography.fontFamily.medium,
   },
 
-  emptyWrap: { alignItems: "center", paddingVertical: 60 },
+  emptyWrap: { alignItems: 'center', paddingVertical: 60 },
   emptyIcon: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: Colors.brandGray,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 14,
   },
   emptyTitle: {
     fontSize: 16,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
     marginBottom: 6,
   },
-  emptySub: { fontSize: 13, color: Colors.textSecondary, textAlign: "center" },
+  emptySub: { fontSize: 12, color: Colors.brandGrayText, textAlign: 'center' },
 });

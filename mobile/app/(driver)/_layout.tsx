@@ -2,7 +2,6 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { View, StyleSheet, Platform } from "react-native";
 import { Colors, Typography } from "../../src/constants/theme";
-import { useAuthStore } from "../../src/store/useAuthStore";
 
 function TabIcon({
   name,
@@ -15,7 +14,7 @@ function TabIcon({
 }) {
   return (
     <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <Ionicons name={name} size={22} color={color} />
+      <Ionicons name={name} size={22} color={focused ? Colors.brandLime : color} />
     </View>
   );
 }
@@ -24,8 +23,8 @@ export default function DriverLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: "#9EA894",
+        tabBarActiveTintColor: Colors.brandLime,
+        tabBarInactiveTintColor: Colors.brandGrayText,
         tabBarLabelStyle: {
           fontSize: 11,
           fontFamily: Typography.fontFamily.semiBold,
@@ -37,9 +36,9 @@ export default function DriverLayout() {
           height: Platform.OS === "ios" ? 84 : 64,
           paddingBottom: Platform.OS === "ios" ? 24 : 8,
           paddingTop: 6,
-          shadowColor: "#3A5A1A",
+          shadowColor: "#14161C",
           shadowOffset: { width: 0, height: -3 },
-          shadowOpacity: 0.08,
+          shadowOpacity: 0.06,
           shadowRadius: 16,
           elevation: 12,
         },
@@ -133,6 +132,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   iconWrapActive: {
-    backgroundColor: Colors.primaryBg,
+    backgroundColor: Colors.brandDark,
+    borderRadius: 14,
   },
 });

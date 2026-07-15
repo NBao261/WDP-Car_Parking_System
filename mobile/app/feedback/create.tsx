@@ -115,31 +115,16 @@ export default function CreateFeedbackScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.root}>
-        {/* ── Gradient Header ── */}
-        <View style={styles.heroWrapper}>
-          <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientMid]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <SafeAreaView edges={["top"]}>
-              <View style={styles.heroNav}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                  <Ionicons name="arrow-back" size={22} color={Colors.white} />
-                </TouchableOpacity>
-                <Text style={styles.heroTitle}>Gửi phản hồi</Text>
-                <View style={{ width: 38 }} />
-              </View>
-              <View style={styles.heroBody}>
-                <View style={styles.heroIconWrap}>
-                  <Ionicons name="chatbubble-ellipses" size={22} color={Colors.primary} />
-                </View>
-                <Text style={styles.heroSub}>Giúp chúng tôi cải thiện dịch vụ tốt hơn</Text>
-              </View>
-            </SafeAreaView>
-          </LinearGradient>
-        </View>
+        {/* ── White Header ── */}
+        <SafeAreaView edges={["top"]} style={{ backgroundColor: Colors.white }}>
+          <View style={styles.heroNav}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+              <Ionicons name="arrow-back" size={20} color={Colors.brandDark} />
+            </TouchableOpacity>
+            <Text style={styles.heroTitle}>Gửi phản hồi</Text>
+            <View style={{ width: 38 }} />
+          </View>
+        </SafeAreaView>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
@@ -247,8 +232,9 @@ export default function CreateFeedbackScreen() {
             disabled={!description.trim() || submitting}
             activeOpacity={0.85}
           >
-            <Ionicons name={submitting ? "hourglass-outline" : "send-outline"} size={20} color={Colors.white} />
-            <Text style={styles.submitBtnText}>{submitting ? "Đang gửi..." : "Gửi phản hồi"}</Text>
+            <Text style={[styles.submitBtnText, (!description.trim() || submitting) && { color: Colors.brandGrayText }]}>
+              {submitting ? "Đang gửi..." : "Gửi phản hồi"}
+            </Text>
           </TouchableOpacity>
 
           <View style={{ height: 32 }} />
@@ -259,75 +245,72 @@ export default function CreateFeedbackScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: Colors.white },
 
-  // Hero
-  heroWrapper: {
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    overflow: 'hidden',
+  // Header
+  heroNav: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 16, height: 56,
+    borderBottomWidth: 1, borderBottomColor: Colors.brandGray,
   },
-  hero: { paddingHorizontal: 16, paddingBottom: 24 },
-  heroNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 8, marginBottom: 16 },
-  backBtn: { width: 38, height: 38, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 19 },
-  heroTitle: { fontSize: 17, fontFamily: Typography.fontFamily.bold, color: Colors.white },
-  heroBody: { flexDirection: "row", alignItems: "center", gap: 12 },
-  heroIconWrap: { width: 46, height: 46, borderRadius: 12, backgroundColor: Colors.white, alignItems: "center", justifyContent: "center", ...Shadows.sm },
-  heroSub: { flex: 1, fontSize: 13, color: Colors.textOnDarkMuted, fontFamily: Typography.fontFamily.regular },
+  backBtn: {
+    width: 36, height: 36, alignItems: "center", justifyContent: "center",
+    backgroundColor: Colors.brandGray, borderRadius: 18,
+  },
+  heroTitle: { fontSize: 15, fontFamily: Typography.fontFamily.bold, color: Colors.brandDark },
 
   // Content
   content: { padding: 16 },
 
   // Step header
   stepHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10, marginTop: 4 },
-  stepBadge: { width: 26, height: 26, borderRadius: 13, backgroundColor: Colors.primary, alignItems: "center", justifyContent: "center" },
-  stepNum: { fontSize: 13, fontFamily: Typography.fontFamily.bold, color: Colors.white },
-  stepTitle: { fontSize: 15, fontFamily: Typography.fontFamily.semiBold, color: Colors.textPrimary },
-  optional: { fontFamily: Typography.fontFamily.regular, color: Colors.textTertiary, fontSize: 13 },
+  stepBadge: { width: 26, height: 26, borderRadius: 13, backgroundColor: Colors.brandDark, alignItems: "center", justifyContent: "center" },
+  stepNum: { fontSize: 13, fontFamily: Typography.fontFamily.bold, color: Colors.brandLime },
+  stepTitle: { fontSize: 14, fontFamily: Typography.fontFamily.bold, color: Colors.brandDark },
+  optional: { fontFamily: Typography.fontFamily.regular, color: Colors.brandGrayText, fontSize: 13 },
 
   // Type chips
   typesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 },
   typeChip: {
     flexDirection: "row", alignItems: "center", gap: 6,
     paddingHorizontal: 12, paddingVertical: 9,
-    borderRadius: 20, borderWidth: 1.5, borderColor: Colors.borderLight,
-    backgroundColor: Colors.surface,
+    borderRadius: 20, borderWidth: 1.5, borderColor: Colors.brandGray,
+    backgroundColor: Colors.white,
   },
-  typeChipActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryBg },
-  typeChipText: { fontSize: 13, fontFamily: Typography.fontFamily.medium, color: Colors.textSecondary },
-  typeChipTextActive: { color: Colors.primary, fontFamily: Typography.fontFamily.semiBold },
-  typeCheck: { width: 16, height: 16, borderRadius: 8, backgroundColor: Colors.primary, alignItems: "center", justifyContent: "center" },
+  typeChipActive: { borderColor: Colors.brandDark, backgroundColor: Colors.brandDark },
+  typeChipText: { fontSize: 12, fontFamily: Typography.fontFamily.medium, color: Colors.brandGrayText },
+  typeChipTextActive: { color: Colors.white, fontFamily: Typography.fontFamily.bold },
+  typeCheck: { width: 16, height: 16, borderRadius: 8, backgroundColor: Colors.brandLime, alignItems: "center", justifyContent: "center" },
 
   // Description card
   card: {
-    backgroundColor: Colors.surface, borderRadius: 16, padding: 14, marginBottom: 20,
-    borderWidth: 1, borderColor: Colors.borderLight, ...Shadows.sm,
+    backgroundColor: Colors.brandGray, borderRadius: 16, padding: 14, marginBottom: 20,
   },
   descInput: {
-    fontSize: 15, fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary, minHeight: 120, textAlignVertical: "top",
+    fontSize: 14, fontFamily: Typography.fontFamily.regular,
+    color: Colors.brandDark, minHeight: 120, textAlignVertical: "top",
   },
-  charCount: { fontSize: 11, color: Colors.textTertiary, fontFamily: Typography.fontFamily.medium, textAlign: "right", marginTop: 6 },
+  charCount: { fontSize: 10, color: Colors.brandGrayText, fontFamily: Typography.fontFamily.medium, textAlign: "right", marginTop: 6 },
 
   // Image row
   imgRow: { gap: 10, paddingBottom: 4, marginBottom: 20 },
   imgWrap: { position: "relative" },
-  imgPreview: { width: 96, height: 96, borderRadius: 12, backgroundColor: Colors.borderLight },
+  imgPreview: { width: 96, height: 96, borderRadius: 14, backgroundColor: Colors.brandGray },
   imgRemove: { position: "absolute", top: -8, right: -8, backgroundColor: Colors.white, borderRadius: 12 },
   imgAdd: {
-    width: 96, height: 96, borderRadius: 12,
-    borderWidth: 1.5, borderColor: Colors.borderLight, borderStyle: "dashed",
-    justifyContent: "center", alignItems: "center", backgroundColor: Colors.surface, gap: 2,
+    width: 96, height: 96, borderRadius: 14,
+    borderWidth: 1.5, borderColor: Colors.brandGray, borderStyle: "dashed",
+    justifyContent: "center", alignItems: "center", backgroundColor: Colors.white, gap: 2,
   },
-  imgAddText: { fontSize: 12, color: Colors.textSecondary, fontFamily: Typography.fontFamily.medium },
-  imgAddSub: { fontSize: 11, color: Colors.textTertiary, fontFamily: Typography.fontFamily.regular },
+  imgAddText: { fontSize: 11, color: Colors.brandGrayText, fontFamily: Typography.fontFamily.medium },
+  imgAddSub: { fontSize: 10, color: Colors.brandGrayText, fontFamily: Typography.fontFamily.regular },
 
   // Submit
   submitBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    backgroundColor: Colors.primary, borderRadius: 16, paddingVertical: 16,
-    ...Shadows.md,
+    backgroundColor: Colors.brandLime, borderRadius: 9999, paddingVertical: 16,
+    ...Shadows.sm,
   },
-  submitBtnDisabled: { backgroundColor: Colors.disabled },
-  submitBtnText: { fontSize: 16, fontFamily: Typography.fontFamily.bold, color: Colors.white },
+  submitBtnDisabled: { backgroundColor: Colors.brandGray },
+  submitBtnText: { fontSize: 15, fontFamily: Typography.fontFamily.bold, color: Colors.brandDark },
 });

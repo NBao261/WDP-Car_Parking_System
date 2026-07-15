@@ -2,9 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../src/constants/theme';
+import { Colors, Typography, Shadows } from '../src/constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
@@ -14,54 +13,52 @@ export default function WelcomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Abstract Background Elements */}
-        <View style={styles.blob1} />
-        <View style={styles.blob2} />
-        <View style={styles.blob3} />
-
         <View style={styles.content}>
           {/* Hero Section */}
           <View style={styles.hero}>
             <View style={styles.logoBadge}>
-              <Image source={require('../assets/images/logo.png')} style={{ width: 140, height: 48, resizeMode: 'contain' }} />
+              <Ionicons name="car-sport" size={18} color={Colors.brandDark} />
             </View>
             <Text style={styles.title}>
               Smart{'\n'}Parking
               <Text style={styles.titleAccent}>.</Text>
             </Text>
-            <Text style={styles.tagline}>Intelligent parking orchestration for the modern driver.</Text>
+            <Text style={styles.tagline}>Hệ thống đỗ xe thông minh — Tìm, đặt chỗ và thanh toán nhanh chóng.</Text>
           </View>
 
-          {/* Cards Section */}
-          <View style={styles.cardsWrap}>
-            {/* Main Feature Card */}
-            <LinearGradient
-              colors={[Colors.primary, Colors.primaryDark]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={styles.featureCard}
-            >
+          {/* Feature Card — Dark */}
+          <View style={styles.featureCard}>
+            <View style={styles.featureRow}>
               <View style={styles.featureIconBox}>
-                <Ionicons name="navigate-outline" size={24} color={Colors.primary} />
+                <Ionicons name="navigate-outline" size={22} color={Colors.brandDark} />
               </View>
-              <Text style={styles.featureTitle}>Proximity Mapping</Text>
-              <Text style={styles.featureDesc}>Find available slots instantly around your location in real-time.</Text>
-            </LinearGradient>
-
-            <View style={styles.cardsRow}>
-              {/* Small Card 1 */}
-              <View style={styles.smallCard}>
-                <View style={[styles.smallIconBox, { backgroundColor: Colors.warningLight }]}>
-                  <Ionicons name="time" size={24} color={Colors.warning} />
-                </View>
-                <Text style={styles.smallCardTitle}>Zero{'\n'}Waiting</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.featureTitle}>Tìm bãi xe gần nhất</Text>
+                <Text style={styles.featureDesc}>Định vị tự động và hiển thị bãi xe còn chỗ trống xung quanh bạn.</Text>
               </View>
+            </View>
 
-              {/* Small Card 2 */}
-              <View style={styles.smallCard}>
-                <View style={[styles.smallIconBox, { backgroundColor: Colors.successLight }]}>
-                  <Ionicons name="card" size={24} color={Colors.success} />
-                </View>
-                <Text style={styles.smallCardTitle}>Seamless{'\n'}Payment</Text>
+            <View style={styles.featureDivider} />
+
+            <View style={styles.featureRow}>
+              <View style={styles.featureIconBox}>
+                <Ionicons name="time-outline" size={22} color={Colors.brandDark} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.featureTitle}>Đặt chỗ trước</Text>
+                <Text style={styles.featureDesc}>Không cần chờ đợi, đặt trước chỗ đỗ xe ngay trên điện thoại.</Text>
+              </View>
+            </View>
+
+            <View style={styles.featureDivider} />
+
+            <View style={styles.featureRow}>
+              <View style={styles.featureIconBox}>
+                <Ionicons name="card-outline" size={22} color={Colors.brandDark} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.featureTitle}>Thanh toán dễ dàng</Text>
+                <Text style={styles.featureDesc}>Quét QR, kiểm tra phí, thanh toán nhanh chóng và an toàn.</Text>
               </View>
             </View>
           </View>
@@ -75,7 +72,7 @@ export default function WelcomeScreen() {
             activeOpacity={0.85}
           >
             <Text style={styles.primaryBtnText}>Đăng nhập</Text>
-            <Ionicons name="arrow-forward" size={20} color={Colors.white} />
+            <Ionicons name="arrow-forward" size={18} color={Colors.brandDark} />
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -94,24 +91,10 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.white,
   },
   container: {
     flexGrow: 1,
-  },
-  
-  // Background blobs for visual interest
-  blob1: {
-    position: 'absolute', top: -60, right: -60, width: 220, height: 220,
-    borderRadius: 110, backgroundColor: '#A8D16428', zIndex: -1,
-  },
-  blob2: {
-    position: 'absolute', top: 270, left: -120, width: 260, height: 260,
-    borderRadius: 130, backgroundColor: '#7DB83A18', zIndex: -1,
-  },
-  blob3: {
-    position: 'absolute', bottom: 60, right: -160, width: 320, height: 320,
-    borderRadius: 160, backgroundColor: '#D6EDA820', zIndex: -1,
   },
 
   content: {
@@ -122,90 +105,73 @@ const styles = StyleSheet.create({
 
   // Hero
   hero: {
-    marginBottom: 40,
+    marginBottom: 32,
   },
   logoBadge: {
-    paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20,
-    backgroundColor: Colors.white,
-    alignSelf: 'flex-start',
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 28,
-    shadowColor: '#5E8F25',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: Colors.brandLime,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   title: {
-    fontSize: 42,
+    fontSize: 40,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
-    lineHeight: 46,
+    color: Colors.brandDark,
+    lineHeight: 44,
     letterSpacing: -1,
   },
   titleAccent: {
-    color: Colors.primary,
+    color: Colors.brandLime,
   },
   tagline: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
-    marginTop: 14,
-    lineHeight: 24,
+    color: Colors.brandGrayText,
+    marginTop: 12,
+    lineHeight: 22,
     maxWidth: '85%',
   },
 
-  // Cards
-  cardsWrap: {
-    gap: 16,
-  },
+  // Feature Card — Dark themed
   featureCard: {
-    borderRadius: 28,
-    padding: 26,
-    shadowColor: '#5E8F25',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 6,
+    backgroundColor: Colors.brandDark,
+    borderRadius: 24,
+    padding: 20,
+    ...Shadows.lg,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+    paddingVertical: 4,
+  },
+  featureDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginVertical: 14,
   },
   featureIconBox: {
-    width: 48, height: 48, borderRadius: 14,
-    backgroundColor: Colors.white,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: Colors.brandLime,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   featureTitle: {
-    fontSize: 20, fontFamily: Typography.fontFamily.bold,
-    color: Colors.white, marginBottom: 8,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.white,
+    marginBottom: 4,
   },
   featureDesc: {
-    fontSize: 14, fontFamily: Typography.fontFamily.regular,
-    color: 'rgba(255,255,255,0.85)', lineHeight: 20,
-  },
-
-  cardsRow: {
-    flexDirection: 'row', gap: 16,
-  },
-  smallCard: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: 22,
-    padding: 20,
-    borderWidth: 1, borderColor: Colors.border,
-    shadowColor: '#5E8F25',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  smallIconBox: {
-    width: 44, height: 44, borderRadius: 12,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 16,
-  },
-  smallCardTitle: {
-    fontSize: 16, fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary, lineHeight: 22,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.regular,
+    color: 'rgba(255,255,255,0.55)',
+    lineHeight: 18,
   },
 
   // Bottom Actions
@@ -213,30 +179,32 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 32,
     gap: 12,
-    backgroundColor: Colors.background, // Block blobs overlapping buttons
   },
   primaryBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: Colors.primary,
-    paddingVertical: 18, paddingHorizontal: 24,
-    borderRadius: 18,
-    shadowColor: '#5E8F25',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.30,
-    shadowRadius: 16,
-    elevation: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.brandLime,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    borderRadius: 9999,
+    ...Shadows.sm,
   },
   primaryBtnText: {
-    fontSize: 16, fontFamily: Typography.fontFamily.bold, color: Colors.white,
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
   secondaryBtn: {
-    paddingVertical: 15, alignItems: 'center', justifyContent: 'center',
-    borderRadius: 18,
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 9999,
+    backgroundColor: Colors.brandGray,
   },
   secondaryBtnText: {
-    fontSize: 15, fontFamily: Typography.fontFamily.semiBold, color: Colors.textSecondary,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
 });

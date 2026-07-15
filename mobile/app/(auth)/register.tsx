@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Alert, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Alert, TouchableOpacity, TextInput as RNTextInput } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, TextInput } from '../../src/components';
-import { Colors, Typography, Spacing, Shadows } from '../../src/constants/theme';
+import { Colors, Typography, Shadows } from '../../src/constants/theme';
 import { useAuthStore } from '../../src/store/useAuthStore';
 
 export default function RegisterScreen() {
@@ -52,90 +50,94 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header Gradient */}
-          <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientMid]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <SafeAreaView edges={['top']}>
-              <View style={styles.heroNav}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                  <Ionicons name="arrow-back" size={22} color={Colors.white} />
-                </TouchableOpacity>
+          <SafeAreaView edges={['top']} style={styles.safeArea}>
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                <Ionicons name="arrow-back" size={20} color={Colors.brandDark} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Title */}
+            <View style={styles.titleSection}>
+              <Text style={styles.title}>Tạo tài khoản</Text>
+              <Text style={styles.subtitle}>Bắt đầu hành trình đỗ xe thông minh</Text>
+            </View>
+
+            {/* Form */}
+            <View style={styles.formSection}>
+              {/* Full Name */}
+              <View style={styles.inputWrap}>
+                <Ionicons name="person-outline" size={18} color={Colors.brandGrayText} style={styles.inputIcon} />
+                <RNTextInput
+                  style={styles.input}
+                  placeholder="Họ và tên"
+                  placeholderTextColor={Colors.brandGrayText}
+                  value={name}
+                  onChangeText={setName}
+                />
               </View>
-              <View style={styles.logoContainer}>
-                <View style={styles.logoCircle}>
-                  <Image source={require('../../assets/images/logo.png')} style={{ width: 48, height: 48, resizeMode: 'contain' }} />
-                </View>
-                <Text style={styles.title}>Tạo tài khoản</Text>
-                <Text style={styles.subtitle}>Bắt đầu hành trình đỗ xe thông minh</Text>
+
+              {/* Email */}
+              <View style={styles.inputWrap}>
+                <Ionicons name="mail-outline" size={18} color={Colors.brandGrayText} style={styles.inputIcon} />
+                <RNTextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor={Colors.brandGrayText}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
               </View>
-            </SafeAreaView>
-          </LinearGradient>
 
-          {/* Form */}
-          <View style={styles.formContainer}>
-            <View style={styles.card}>
-              <TextInput
-                label="Họ và tên"
-                placeholder="Nguyễn Văn A"
-                value={name}
-                onChangeText={setName}
-                leftIcon={<Ionicons name="person-outline" size={20} color={Colors.textTertiary} />}
-              />
+              {/* Phone */}
+              <View style={styles.inputWrap}>
+                <Ionicons name="call-outline" size={18} color={Colors.brandGrayText} style={styles.inputIcon} />
+                <RNTextInput
+                  style={styles.input}
+                  placeholder="Số điện thoại"
+                  placeholderTextColor={Colors.brandGrayText}
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                />
+              </View>
 
-              <TextInput
-                label="Email"
-                placeholder="email@example.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                leftIcon={<Ionicons name="mail-outline" size={20} color={Colors.textTertiary} />}
-              />
-
-              <TextInput
-                label="Số điện thoại"
-                placeholder="0912345678"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                leftIcon={<Ionicons name="call-outline" size={20} color={Colors.textTertiary} />}
-              />
-
-              <TextInput
-                label="Mật khẩu"
-                placeholder="Tối thiểu 6 ký tự"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                leftIcon={<Ionicons name="lock-closed-outline" size={20} color={Colors.textTertiary} />}
-                rightIcon={
+              {/* Password */}
+              <View style={styles.inputWrap}>
+                <Ionicons name="lock-closed-outline" size={18} color={Colors.brandGrayText} style={styles.inputIcon} />
+                <RNTextInput
+                  style={styles.input}
+                  placeholder="Mật khẩu (tối thiểu 6 ký tự)"
+                  placeholderTextColor={Colors.brandGrayText}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color={Colors.textTertiary}
-                    onPress={() => setShowPassword(!showPassword)}
+                    size={18}
+                    color={Colors.brandGrayText}
                   />
-                }
-              />
+                </TouchableOpacity>
+              </View>
 
+              {/* Register Button */}
               <TouchableOpacity
                 style={[styles.registerBtn, loading && styles.registerBtnDisabled]}
                 onPress={handleRegister}
                 disabled={loading}
                 activeOpacity={0.85}
               >
-                {loading ? (
-                  <Ionicons name="hourglass-outline" size={20} color={Colors.white} />
-                ) : (
-                  <Ionicons name="checkmark-circle-outline" size={20} color={Colors.white} />
-                )}
                 <Text style={styles.registerBtnText}>{loading ? "Đang xử lý..." : "Đăng ký"}</Text>
+                <Ionicons name="checkmark" size={18} color={Colors.brandDark} />
               </TouchableOpacity>
             </View>
+
+            <View style={{ flex: 1 }} />
 
             {/* Footer */}
             <View style={styles.footer}>
@@ -144,7 +146,7 @@ export default function RegisterScreen() {
                 <Text style={styles.footerLink}>Đăng nhập</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </SafeAreaView>
         </ScrollView>
       </KeyboardAvoidingView>
     </>
@@ -154,80 +156,83 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.white,
   },
   scrollContent: {
     flexGrow: 1,
   },
-  
-  // Hero
-  hero: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    ...Shadows.md,
-  },
-  heroNav: {
-    paddingTop: 8,
-    marginBottom: 20,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 19,
-  },
-  logoContainer: {
-    alignItems: 'center',
-  },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    ...Shadows.sm,
-  },
-  title: {
-    fontSize: 28,
-    fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.8)',
-    fontFamily: Typography.fontFamily.medium,
-    marginTop: 4,
-  },
-
-  // Form Container
-  formContainer: {
+  safeArea: {
     flex: 1,
     paddingHorizontal: 20,
-    marginTop: -20,
   },
-  card: {
-    backgroundColor: Colors.surface,
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 8,
+    marginBottom: 16,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    padding: 20,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadows.md,
+    backgroundColor: Colors.brandGray,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+
+  // Title
+  titleSection: {
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 26,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.brandGrayText,
+  },
+
+  // Form
+  formSection: {
+    gap: 12,
+  },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.brandGray,
+    borderRadius: 16,
+    height: 56,
+    paddingHorizontal: 16,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.brandDark,
+    height: '100%',
+  },
+  eyeBtn: {
+    padding: 8,
+  },
+
+  // Register button
   registerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
+    backgroundColor: Colors.brandLime,
+    borderRadius: 9999,
+    height: 56,
     marginTop: 8,
     ...Shadows.sm,
   },
@@ -235,9 +240,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.disabled,
   },
   registerBtnText: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
+    color: Colors.brandDark,
   },
 
   // Footer
@@ -245,17 +250,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 32,
-    marginBottom: 20,
+    paddingBottom: 24,
   },
   footerText: {
-    fontSize: 15,
-    color: Colors.textSecondary,
+    fontSize: 13,
+    color: Colors.brandGrayText,
     fontFamily: Typography.fontFamily.regular,
   },
   footerLink: {
-    fontSize: 15,
-    color: Colors.primary,
+    fontSize: 13,
+    color: Colors.brandDark,
     fontFamily: Typography.fontFamily.bold,
   },
 });
