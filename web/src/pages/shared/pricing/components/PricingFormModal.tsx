@@ -121,16 +121,7 @@ export function PricingFormModal({
   const currentFacilityId = useWatch({ control, name: 'facilityId' });
   const currentFacility = facilities.find((f) => f._id === currentFacilityId);
 
-  const allowedVehicleTypes = useMemo(() => {
-    if (!currentFacilityId) return vehicleTypes;
-    return vehicleTypes.filter((vt) => {
-      if (!vt.floors || vt.floors.length === 0) return false;
-      return vt.floors.some((f: any) => {
-        const fFacId = typeof f.facilityId === 'object' ? f.facilityId._id : f.facilityId;
-        return fFacId === currentFacilityId;
-      });
-    });
-  }, [vehicleTypes, currentFacilityId]);
+  const allowedVehicleTypes = vehicleTypes;
 
   // Kiểm tra số lượt gửi xe đang dùng bảng giá này
   const [activeSessionCount, setActiveSessionCount] = useState(0);
@@ -188,7 +179,10 @@ export function PricingFormModal({
       const { feeType, feeMethod } = mapToBackendFeeConfig(uiFeeType);
 
       if (isEdit) {
-        const payload: UpdatePricingPlanPayload = { ...restData, feeType, feeMethod } as any;
+        let payload: UpdatePricingPlanPayload = { ...restData, feeType, feeMethod } as any;
+        if (hasActiveSessions) {
+          payload = { name: payload.name } as any;
+        }
         await pricingService.update(plan!._id, payload);
         toast.success('Cập nhật bảng giá thành công');
       } else {
