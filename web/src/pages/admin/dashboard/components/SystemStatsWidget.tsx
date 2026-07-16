@@ -89,7 +89,7 @@ export function SystemStatsWidget({ userStats }: SystemStatsWidgetProps) {
           <p className="text-[12px] text-[#6b7280] mt-0.5">Toàn bộ tài khoản đang hoạt động</p>
         </div>
         <div className="w-9 h-9 rounded-xl bg-[#f0fdf4] flex items-center justify-center">
-          <Users size={17} className="text-[#22c55e]" />
+          <Users size={17} className="text-[#72d645]" />
         </div>
       </div>
 
@@ -97,7 +97,7 @@ export function SystemStatsWidget({ userStats }: SystemStatsWidgetProps) {
       {userStats && (
         <div className="flex items-center justify-between bg-[#f9fafb] rounded-xl px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-[#062F28] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-[#132c20] flex items-center justify-center">
               <Users size={14} className="text-white" />
             </div>
             <div>
@@ -107,8 +107,8 @@ export function SystemStatsWidget({ userStats }: SystemStatsWidgetProps) {
           </div>
           {/* Facilities */}
           <div className="flex items-center gap-2.5 border-l border-[#e5e7eb] pl-4">
-            <div className="w-8 h-8 rounded-full bg-[#eff6ff] flex items-center justify-center">
-              <Building2 size={14} className="text-[#3b82f6]" />
+            <div className="w-8 h-8 rounded-full bg-[#f0fdf4] flex items-center justify-center">
+              <Building2 size={14} className="text-[#72d645]" />
             </div>
             <div>
               <p className="text-[11px] text-[#6b7280]">Cơ sở</p>

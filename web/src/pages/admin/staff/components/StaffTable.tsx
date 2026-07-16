@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -10,6 +11,7 @@ import {
   KeyRound,
   Trash2,
   Building2,
+  ArrowUpDown,
 } from 'lucide-react';
 import { User as UserType } from '../../../../types/user.types';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
@@ -34,6 +36,38 @@ export function StaffTable({
   onAssignFacility,
   indexOffset = 0,
 }: StaffTableProps) {
+  const [sortField, setSortField] = useState<'name' | 'role' | 'lastLogin'>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (field: 'name' | 'role' | 'lastLogin') => {
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir(field === 'lastLogin' ? 'desc' : 'asc');
+    } else if (sortDir === (field === 'lastLogin' ? 'desc' : 'asc')) {
+      setSortDir(field === 'lastLogin' ? 'asc' : 'desc');
+    } else {
+      setSortField('name');
+      setSortDir('asc');
+    }
+  };
+
+  const sortedUsers = [...users].sort((a, b) => {
+    let aVal: any = a[sortField];
+    let bVal: any = b[sortField];
+
+    if (sortField === 'lastLogin') {
+      aVal = a.lastLogin ? new Date(a.lastLogin).getTime() : 0;
+      bVal = b.lastLogin ? new Date(b.lastLogin).getTime() : 0;
+    }
+
+    if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+    if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+
+    if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   const {
     confirmState,
     isActionLoading,
@@ -54,13 +88,50 @@ export function StaffTable({
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-[#FAFAFA] text-[#6b6b6b] text-[13px] border-b border-gray-100 font-semibold uppercase tracking-wider">
               <tr>
-                <th className="px-6 py-4 rounded-tl-2xl w-[5%] text-center">STT</th>
-                <th className="px-6 py-4 w-[25%]">Thông tin User</th>
-                <th className="px-6 py-4 w-[15%]">Vai trò</th>
-                <th className="px-6 py-4 w-[15%] text-center">Phân công</th>
-                <th className="px-6 py-4 w-[15%]">Trạng thái</th>
-                <th className="px-6 py-4 w-[15%]">Đăng nhập lần cuối</th>
-                <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Thao tác</th>
+                <th 
+                  className="px-4 py-4 rounded-tl-2xl w-[5%] text-center"
+                >
+                  STT
+                </th>
+                <th 
+                  className="px-4 py-4 w-[25%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                  onClick={() => toggleSort('name')}
+                >
+                  <span className="flex items-center gap-1.5">
+                    User
+                    <ArrowUpDown size={14} className={sortField === 'name' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    {sortField === 'name' && (
+                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                    )}
+                  </span>
+                </th>
+                <th 
+                  className="px-4 py-4 w-[15%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                  onClick={() => toggleSort('role')}
+                >
+                  <span className="flex items-center gap-1.5">
+                    Vai trò
+                    <ArrowUpDown size={14} className={sortField === 'role' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    {sortField === 'role' && (
+                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                    )}
+                  </span>
+                </th>
+                <th className="px-4 py-4 w-[15%] text-center">Phân công</th>
+                <th className="px-4 py-4 w-[15%]">Trạng thái</th>
+                <th 
+                  className="px-4 py-4 w-[15%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                  onClick={() => toggleSort('lastLogin')}
+                >
+                  <span className="flex items-center gap-1.5">
+                    Đăng nhập
+                    <ArrowUpDown size={14} className={sortField === 'lastLogin' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    {sortField === 'lastLogin' && (
+                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
+                    )}
+                  </span>
+                </th>
+                <th className="px-4 py-4 text-right rounded-tr-2xl w-[10%]">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -81,28 +152,35 @@ export function StaffTable({
                   </td>
                 </tr>
               ) : (
-                users.map((user, idx) => (
-                  <motion.tr key={user._id} className="hover:bg-[#9FE870]/10 transition-colors group">
-                    <td className="px-6 py-4 text-[#6b6b6b] text-[13px] text-center font-medium">
+                sortedUsers.map((user, idx) => (
+                  <motion.tr 
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    key={user._id} 
+                    className="hover:bg-[#9FE870]/10 transition-colors group"
+                  >
+                    <td className="px-4 py-4 text-[#6b6b6b] text-[13px] text-center font-medium">
                       {indexOffset + idx + 1}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-500 group-hover:bg-[#9FE870]/20 group-hover:text-[#062F28] transition-colors">
+                        <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-500 shrink-0">
                           {user.name.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                          <Link
-                            to={`/admin/staff/${user._id}`}
-                            className="font-semibold text-[#062F28] hover:text-[#062F28]/80 hover:underline transition-colors"
+                        <div className="min-w-0">
+                          <button
+                            onClick={() => onEdit(user)}
+                            className="font-semibold text-[#062F28] hover:text-[#062F28]/80 hover:underline transition-colors outline-none truncate block max-w-[150px] lg:max-w-[200px]"
+                            title={user.name}
                           >
                             {user.name}
-                          </Link>
-                          <div className="text-gray-500 text-xs mt-0.5">{user.email}</div>
+                          </button>
+                          <div className="text-gray-500 text-xs mt-0.5 truncate max-w-[150px] lg:max-w-[200px]" title={user.email}>{user.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center">
                           <RoleIcon role={user.role} />
@@ -110,8 +188,7 @@ export function StaffTable({
                         <span className="font-medium capitalize">{user.role}</span>
                       </div>
                     </td>
-                    {/* Phân công Tòa nhà — chỉ áp dụng cho Manager và Staff */}
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-4 text-center">
                       {user.role === 'manager' || user.role === 'staff' ? (
                         user.assignedFacilities && user.assignedFacilities.length > 0 ? (
                           (() => {
@@ -136,15 +213,24 @@ export function StaffTable({
                         <span className="text-gray-300 text-xs">—</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
                       <StatusBadge status={user.status} />
                     </td>
-                    <td className="px-6 py-4 text-gray-500 text-xs">
-                      {user.lastLogin
-                        ? new Date(user.lastLogin).toLocaleString('vi-VN')
-                        : 'Chưa đăng nhập'}
+                    <td className="px-4 py-4">
+                      {user.lastLogin ? (
+                        <>
+                          <div className="text-[13px] font-semibold text-gray-800">
+                            {new Date(user.lastLogin).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                          <div className="text-[11px] text-gray-400 mt-0.5">
+                            {new Date(user.lastLogin).toLocaleDateString('vi-VN')}
+                          </div>
+                        </>
+                      ) : (
+                        <span className="text-gray-400 text-xs">Chưa đăng nhập</span>
+                      )}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-4 py-4 text-right">
                       <DropdownMenu.Root>
                         <DropdownMenu.Trigger asChild>
                           <button className="select-none text-gray-400 hover:text-[#062F28] p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none outline-none">

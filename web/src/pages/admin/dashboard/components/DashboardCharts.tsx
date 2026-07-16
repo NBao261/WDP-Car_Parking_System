@@ -64,12 +64,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 /* ── Tabs: Admin có thêm 2 tab độc quyền ── */
 const TABS = [
-  { key: 'overview',   label: 'Tổng quan',  activeColor: '#22c55e',  textDark: false },
+  { key: 'overview',   label: 'Tổng quan',  activeColor: '#9ee671',  textDark: true  },
   { key: 'traffic',    label: 'Lưu lượng',  activeColor: '#9FE870',  textDark: true  },
-  { key: 'revenue',    label: 'Doanh thu',  activeColor: '#3b82f6',  textDark: false },
-  { key: 'vehicletype',label: 'Loại xe',    activeColor: '#8b5cf6',  textDark: false }, // Admin-only
-  { key: 'payment',    label: 'Thanh toán', activeColor: '#062F28',  textDark: false }, // Admin-only
-  { key: 'peakhours',  label: 'Cao điểm',  activeColor: '#f97316',  textDark: false },
+  { key: 'revenue',    label: 'Doanh thu',  activeColor: '#132c20',  textDark: false },
+  { key: 'vehicletype',label: 'Loại xe',    activeColor: '#4ade80',  textDark: true  }, // Admin-only
+  { key: 'payment',    label: 'Thanh toán', activeColor: '#166534',  textDark: false }, // Admin-only
+  { key: 'peakhours',  label: 'Cao điểm',  activeColor: '#a6e676',  textDark: true  },
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
@@ -101,9 +101,9 @@ function formatMethodLabel(method: string): string {
   return map[method?.toLowerCase()] ?? method;
 }
 
-/* ── Vehicle type colors ── */
-const VEHICLE_COLORS = ['#8b5cf6', '#3b82f6', '#22c55e', '#f97316', '#ef4444', '#ec4899'];
-const PAYMENT_COLORS = ['#062F28', '#22c55e', '#3b82f6', '#f97316', '#8b5cf6', '#ec4899'];
+/* ── Vehicle type colors — lime green palette ── */
+const VEHICLE_COLORS = ['#72d645', '#132c20', '#4ade80', '#166534', '#9ee671', '#a6e676'];
+const PAYMENT_COLORS = ['#132c20', '#72d645', '#4ade80', '#166534', '#9ee671', '#bbf7d0'];
 
 /* ── Main Component ── */
 export function DashboardCharts({
@@ -240,10 +240,10 @@ export function DashboardCharts({
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dx={-10} />
                 <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: '#f5f5f3', opacity: 0.6 }} />
                 <Legend verticalAlign="top" height={28} iconSize={8} iconType="circle" wrapperStyle={{ fontSize: '12px', color: '#6b7280' }} />
-                <Bar dataKey="Đang dùng" stackId="a" fill="#f97316" />
-                <Bar dataKey="Đã đặt" stackId="a" fill="#3b82f6" />
+                <Bar dataKey="Đang dùng" stackId="a" fill="#132c20" />
+                <Bar dataKey="Đã đặt" stackId="a" fill="#72d645" />
                 <Bar dataKey="Bảo trì" stackId="a" fill="#9ca3af" />
-                <Bar dataKey="Chỗ trống" stackId="a" fill="#22c55e" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="Chỗ trống" stackId="a" fill="#9ee671" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
         )}

@@ -343,9 +343,7 @@ export default function ManagerDashboard() {
           <div className="col-span-2 xl:col-span-1 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between h-[160px] overflow-hidden">
             <div className="text-[16px] font-bold text-gray-900">Tỷ lệ lấp đầy</div>
             <div>
-              <div className="text-[14px] text-gray-400 font-medium mb-1">
-                Trạng thái bãi đỗ
-              </div>
+              <div className="text-[14px] text-gray-400 font-medium mb-1">Trạng thái bãi đỗ</div>
               <div className="flex justify-between items-end mb-3">
                 <div className="text-[26px] font-bold text-[#0a2012] tracking-tight truncate">
                   {loading ? <Loader2 size={20} className="animate-spin" /> : occupancyStatus}

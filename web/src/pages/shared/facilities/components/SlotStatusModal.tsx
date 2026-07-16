@@ -8,7 +8,6 @@ import {
   Trash2,
   MapPin,
   Layers,
-  Car,
   Clock,
   CreditCard,
   User,
@@ -19,6 +18,10 @@ import {
   Edit2,
   ChevronDown,
   Tag,
+  Ticket,
+  Phone,
+  Mail,
+  CalendarClock,
 } from 'lucide-react';
 import { getOptimizedImageUrl } from '../../../../utils/cloudinary';
 import {
@@ -33,7 +36,7 @@ import { userService } from '../../../../services/user.service';
 import { vehicleTypeService, type VehicleType } from '../../../../services/vehicleType.service';
 import { sessionService } from '../../../../services/session.service';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
-import { ICON_MAP } from '../../../shared/vehicles/components/constants';
+import { ICON_MAP, DEFAULT_ICON, getVehicleColorTheme } from '../../../shared/vehicles/components/constants';
 
 interface SlotStatusModalProps {
   slot: ParkingSlot | null;
@@ -47,7 +50,7 @@ const STATUS_CFG: Record<
   SlotStatus,
   { label: string; color: string; bg: string; border: string; dot: string }
 > = {
-  available: { label: 'TRỐNG', color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', dot: '#10b981' },
+  available: { label: 'TRỐNG', color: '#6b7280', bg: '#ffffff', border: '#e5e7eb', dot: '#9ca3af' },
   occupied: {
     label: 'ĐANG DÙNG',
     color: '#062F28',
@@ -57,17 +60,17 @@ const STATUS_CFG: Record<
   },
   reserved: {
     label: 'ĐẶT TRƯỚC',
-    color: '#7c3aed',
-    bg: '#f5f3ff',
-    border: '#ddd6fe',
-    dot: '#8b5cf6',
+    color: '#1d4ed8',
+    bg: '#dbeafe',
+    border: '#bfdbfe',
+    dot: '#3b82f6',
   },
   maintenance: {
     label: 'BẢO TRÌ',
-    color: '#b45309',
-    bg: '#fffbeb',
-    border: '#fde68a',
-    dot: '#f59e0b',
+    color: '#dc2626',
+    bg: '#fef2f2',
+    border: '#fecaca',
+    dot: '#ef4444',
   },
   locked: { label: 'KHÓA', color: '#dc2626', bg: '#fef2f2', border: '#fecaca', dot: '#ef4444' },
 };
@@ -265,6 +268,7 @@ function getImageUrl(url?: string) {
 
 function SessionInfo({ session }: { session: ParkingSessionPopulated }) {
   const ssCfg = SESSION_STATUS_CFG[session.status] ?? SESSION_STATUS_CFG.active;
+  void ssCfg; // used for future reference
   const isActive = session.status === 'active' || session.status === 'pending_payment';
 
   const [staffInName, setStaffInName] = useState(nameFromField(session.staffInId) ?? '…');
@@ -477,15 +481,26 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
       ? (displaySlot.currentSessionId as ParkingSessionPopulated)
       : null;
 
-  let VtIcon = Car;
+  const reservation = displaySlot.reservationInfo || null;
+
+  let VtIcon = ICON_MAP[DEFAULT_ICON];
   let vtNameStr = 'N/A';
+  let vtCode = '';
+  let vtIconKey = '';
   if (displaySlot.vehicleTypeId && typeof displaySlot.vehicleTypeId === 'object') {
     const vt = displaySlot.vehicleTypeId as any;
     vtNameStr = vt.name || 'N/A';
+    vtCode = vt.code || '';
+    vtIconKey = vt.icon || '';
     if (vt.icon && ICON_MAP[vt.icon]) VtIcon = ICON_MAP[vt.icon];
   } else if (displaySlot.vehicleTypeId) {
     vtNameStr = displaySlot.vehicleTypeId as string;
   }
+  const vtColorTheme = getVehicleColorTheme(vtCode, vtIconKey);
+  // Override curCfg for slot box colors based on vehicle type
+  const slotBoxCfg = (vtCode || vtIconKey)
+    ? { bg: vtColorTheme.bg, color: vtColorTheme.text, border: vtColorTheme.bg, dot: vtColorTheme.text }
+    : curCfg;
 
   const handleSubmit = async () => {
     if (!selected) return;
@@ -679,8 +694,8 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                           <div
                             className="flex flex-col items-center justify-center min-w-[72px] h-[72px] px-3 rounded-[18px] shadow-sm relative overflow-hidden transition-colors"
                             style={{
-                              background: curCfg.bg,
-                              borderColor: curCfg.border,
+                              background: slotBoxCfg.bg,
+                              borderColor: slotBoxCfg.border,
                               borderWidth: 1,
                             }}
                           >
@@ -688,24 +703,32 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                               <>
                                 <VtIcon
                                   size={28}
-                                  style={{ color: curCfg.color }}
+                                  style={{ color: slotBoxCfg.color }}
                                   className="opacity-90 mb-0.5"
                                   strokeWidth={1.5}
                                 />
                                 <span
                                   className="text-[11px] font-bold opacity-75"
-                                  style={{ color: curCfg.color }}
+                                  style={{ color: slotBoxCfg.color }}
                                 >
                                   {displaySlot.code}
                                 </span>
                               </>
                             ) : (
-                              <h2
-                                className="text-[28px] font-black tracking-tight leading-none"
-                                style={{ color: curCfg.color }}
-                              >
-                                {displaySlot.code}
-                              </h2>
+                              <>
+                                <VtIcon
+                                  size={28}
+                                  style={{ color: slotBoxCfg.color }}
+                                  className="opacity-90 mb-0.5"
+                                  strokeWidth={1.5}
+                                />
+                                <span
+                                  className="text-[11px] font-bold opacity-75"
+                                  style={{ color: slotBoxCfg.color }}
+                                >
+                                  {displaySlot.code}
+                                </span>
+                              </>
                             )}
                           </div>
 
@@ -745,7 +768,10 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                           Các loại xe cho phép
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#9FE870]/15 border border-[#9FE870]/30 rounded-lg text-[#062F28]">
+                          <div
+                            className="inline-flex items-center gap-2 px-3 py-1.5 border rounded-lg"
+                            style={{ background: vtColorTheme.bg, borderColor: vtColorTheme.bg, color: vtColorTheme.text }}
+                          >
                             <VtIcon size={16} strokeWidth={2.5} />
                             <span className="text-[13px] font-bold">{vtNameStr}</span>
                           </div>
@@ -826,7 +852,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                     {/* --- Divider --- */}
                     {session && <hr className="border-gray-100 my-1" />}
 
-                    {/* --- Session Info Section (Bottom) --- */}
+                    {/* --- Session / Reservation Info Section (Bottom) --- */}
                     {fetchingSlot ? (
                       <div className="flex flex-col items-center justify-center py-8 gap-3 text-gray-400">
                         <Loader2 className="animate-spin" size={24} />
@@ -836,30 +862,103 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                       <div>
                         <SessionInfo session={session} />
                       </div>
+                    ) : reservation ? (
+                      <div className="flex flex-col gap-5">
+                        {/* Reservation Header */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0 pr-4">
+                            <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest pl-1 mb-1.5">
+                              Thông tin đặt trước
+                            </p>
+                            <p className="text-3xl font-black text-[#062F28] tracking-widest uppercase break-words">
+                              {reservation.licensePlate}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Reservation Grid */}
+                        <div className="grid grid-cols-2 gap-x-5 gap-y-5 bg-white p-5 rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+                          <InfoItem
+                            icon={Ticket}
+                            label="Mã đặt chỗ"
+                            value={
+                              <span className="font-mono bg-blue-50 px-2.5 py-0.5 rounded text-blue-700 border border-blue-200">
+                                {reservation.code}
+                              </span>
+                            }
+                          />
+                          <InfoItem
+                            icon={Tag}
+                            label="Trạng thái"
+                            value={
+                              <span className={`inline-flex items-center gap-1.5 text-[12px] font-bold px-3 py-1 rounded-xl border ${
+                                reservation.status === 'confirmed'
+                                  ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                                  : 'text-amber-700 bg-amber-50 border-amber-200'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${reservation.status === 'confirmed' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                                {reservation.status === 'confirmed' ? 'Đã xác nhận' : 'Chờ xác nhận'}
+                              </span>
+                            }
+                          />
+                          {typeof reservation.user === 'object' && (
+                            <InfoItem icon={User} label="Người đặt" value={reservation.user.name} />
+                          )}
+                          <InfoItem
+                            icon={CalendarClock}
+                            label="Thời gian đặt"
+                            value={fmtDateTime(reservation.startTime)}
+                          />
+                          {typeof reservation.user === 'object' && reservation.user.email && (
+                            <InfoItem icon={Mail} label="Email" value={reservation.user.email} />
+                          )}
+                          {typeof reservation.user === 'object' && reservation.user.phone && (
+                            <InfoItem icon={Phone} label="Số điện thoại" value={reservation.user.phone} />
+                          )}
+                        </div>
+                      </div>
                     ) : null}
                   </div>
                 </div>
 
                 {/* Right Column: Image */}
                 <div className="bg-[#fafafa] flex flex-col items-center p-7 relative overflow-hidden">
-                  {!session ? (
+                  {!session && !reservation ? (
                     <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                        <Car size={24} className="text-gray-300" />
+                        {(() => { const DefIcon = ICON_MAP[DEFAULT_ICON]; return <DefIcon size={24} className="text-gray-300" />; })()}
                       </div>
                       <p className="text-[14px] font-medium text-gray-500 mb-1">
                         Vị trí đang trống
                       </p>
                       <p className="text-[13px]">Chưa có xe nào đang đỗ tại đây.</p>
                     </div>
-                  ) : session.checkInImage ? (
+                  ) : reservation && !session ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center">
+                      <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center shadow-sm mb-4 border-2 border-blue-200">
+                        <Ticket size={32} className="text-blue-500" />
+                      </div>
+                      <p className="text-[14px] font-bold text-blue-700 mb-1">
+                        Đã đặt trước
+                      </p>
+                      <p className="text-[13px] text-gray-500">
+                        Slot này đã được đặt bởi{' '}
+                        <span className="font-semibold text-[#062F28]">
+                          {typeof reservation.user === 'object' ? reservation.user.name : 'Người dùng'}
+                        </span>
+                      </p>
+                      <p className="text-[12px] text-gray-400 mt-1">
+                        Biển số: <span className="font-bold text-[#062F28] tracking-wider">{reservation.licensePlate}</span>
+                      </p>
+                    </div>
+                  ) : session?.checkInImage ? (
                     <div className="w-full h-full flex flex-col gap-3">
                       <p className="text-[11px] font-bold text-gray-900 uppercase tracking-widest w-full text-left pl-1 shrink-0">
                         Hình ảnh xe lúc vào
                       </p>
                       <div className="w-full flex-1 rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-200/60 p-2 flex items-center justify-center">
                         <img 
-                          src={getImageUrl(session.checkInImage) || ''} 
+                          src={getImageUrl(session?.checkInImage) || ''} 
                           alt="Hình ảnh xe lúc vào" 
                           className="w-full h-full object-contain rounded-xl"
                         />
@@ -868,7 +967,7 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                   ) : (
                     <div className="flex flex-col items-center justify-center text-center text-gray-400">
                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                        <Car size={24} className="text-gray-300" />
+                        {(() => { const DefIcon = ICON_MAP[DEFAULT_ICON]; return <DefIcon size={24} className="text-gray-300" />; })()}
                       </div>
                       <p className="text-[14px] font-medium text-gray-500 mb-1">
                         Không có hình ảnh

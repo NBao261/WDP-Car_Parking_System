@@ -18,8 +18,8 @@ export function FacilityLeaderboardWidget({ occupancyData }: Props) {
   return (
     <div className="bg-white rounded-xl border border-[#e5e7eb] p-5 h-full flex flex-col shadow-sm">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-[#062F28]/5 flex items-center justify-center shrink-0">
-          <Map size={16} className="text-[#062F28]" />
+        <div className="w-8 h-8 rounded-lg bg-[#f0fdf4] flex items-center justify-center shrink-0">
+          <Map size={16} className="text-[#72d645]" />
         </div>
         <div>
           <h2 className="text-[15px] font-semibold text-[#1a1a1a]">Hiện trạng khu vực</h2>
@@ -38,7 +38,7 @@ export function FacilityLeaderboardWidget({ occupancyData }: Props) {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1.5">
                       <span className="text-[13px] font-bold text-[#1a1a1a] truncate">{floor.facilityName}</span>
-                      <span className="text-[12px] font-semibold text-[#062F28] tabular-nums">{rate.toFixed(1)}%</span>
+                      <span className="text-[12px] font-semibold text-[#132c20] tabular-nums">{rate.toFixed(1)}%</span>
                     </div>
                     <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
                       <div 

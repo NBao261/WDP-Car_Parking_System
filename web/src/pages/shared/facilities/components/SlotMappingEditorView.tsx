@@ -3,13 +3,13 @@ import { getOptimizedImageUrl } from '../../../../utils/cloudinary';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RefreshCw, Plus, GripHorizontal, Map, Car, ChevronLeft, Camera } from 'lucide-react';
+import { RefreshCw, Plus, Map, ChevronLeft, Camera } from 'lucide-react';
 import { Floor } from '../../../../services/floor.service';
 import { ParkingSlot, SlotStatus, ParkingSessionPopulated } from '../../../../services/slot.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 import { SlotStatusModal } from './SlotStatusModal';
 import { SlotFormModal } from './SlotFormModal';
-import { ICON_MAP } from '../../../shared/vehicles/components/constants';
+import { ICON_MAP, DEFAULT_ICON, getVehicleColorTheme } from '../../../shared/vehicles/components/constants';
 
 const SERVER_URL = import.meta.env.VITE_API_BASE_URL
   ? import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '')
@@ -54,6 +54,7 @@ export function SlotMappingEditorView({
   const [bulkOpen, setBulkOpen] = useState(false);
   const [singleSlotOpen, setSingleSlotOpen] = useState(false);
   const [hoveredSlotInfo, setHoveredSlotInfo] = useState<{ id: string; rect: DOMRect } | null>(null);
+  const [filterVehicleType, setFilterVehicleType] = useState<string | 'all'>('all');
 
   // Helper to extract session data from a slot
   const getSessionData = (slot: ParkingSlot): ParkingSessionPopulated | null => {
@@ -65,8 +66,18 @@ export function SlotMappingEditorView({
 
   if (!floor) return null;
 
-  const filteredSlots =
-    filterStatus === 'all' ? slots : slots.filter((s) => s.status === filterStatus);
+  const filteredSlots = useMemo(() => {
+    let result = filterStatus === 'all' ? slots : slots.filter((s) => s.status === filterStatus);
+    if (filterVehicleType !== 'all') {
+      result = result.filter((s) => {
+        const vtId = s.vehicleTypeId && typeof s.vehicleTypeId === 'object'
+          ? (s.vehicleTypeId as any)._id
+          : s.vehicleTypeId;
+        return vtId === filterVehicleType;
+      });
+    }
+    return result;
+  }, [slots, filterStatus, filterVehicleType]);
 
   // Group slots by vehicle type
   const groupedSlots = useMemo(() => {
@@ -145,7 +156,7 @@ export function SlotMappingEditorView({
             <h2 className="text-xl font-bold text-[#062F28]">
               Sơ đồ vị trí đỗ xe — Tầng {floor.name}
             </h2>
-            <p className="text-sm text-gray-500 mt-0.5">Nhấp vào một slot để thay đổi trạng thái</p>
+            <p className="text-sm text-gray-500 mt-0.5">Nhấp vào một vị trí để thay đổi trạng thái</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${
@@ -153,7 +164,7 @@ export function SlotMappingEditorView({
                 ? 'text-red-600 bg-red-50'
                 : 'text-[#062F28] bg-[#A0E870]/30'
             }`}>
-              {slots.length} / {floor.totalSlots} slot
+              {slots.length} / {floor.totalSlots} vị trí
             </span>
           </div>
         </div>
@@ -223,16 +234,25 @@ export function SlotMappingEditorView({
                     const unassignedVTs = floorVehicleTypes.filter(vt => !hasSlot(vt._id));
 
                     const renderVtCard = (vt: any) => {
-                      const Icon = vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : Car;
+                      const Icon = vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : ICON_MAP[DEFAULT_ICON];
+                      const isSelected = filterVehicleType === vt._id;
+                      const vtTheme = getVehicleColorTheme(vt.code, vt.icon);
                       return (
-                        <div
+                        <button
                           key={vt._id}
-                          className="bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm flex items-center gap-2 text-gray-700 hover:shadow-sm transition-shadow cursor-grab shrink-0"
+                          onClick={() => setFilterVehicleType(isSelected ? 'all' : vt._id)}
+                          className={`w-full border px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-all shrink-0 text-left ${
+                            isSelected
+                              ? 'font-semibold shadow-sm'
+                              : 'bg-white border-gray-200 text-gray-700 hover:shadow-sm'
+                          }`}
+                          style={isSelected ? { background: vtTheme.bg, borderColor: vtTheme.bg, color: vtTheme.text } : undefined}
                         >
-                          <GripHorizontal size={13} className="opacity-40 shrink-0" />
-                          <Icon size={16} className="text-gray-500 shrink-0" />
+                          <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ background: vtTheme.bg }}>
+                            <Icon size={14} style={{ color: vtTheme.text }} />
+                          </div>
                           <span className="truncate">{vt.name}</span>
-                        </div>
+                        </button>
                       );
                     };
 
@@ -240,7 +260,7 @@ export function SlotMappingEditorView({
                       <>
                         {unassignedVTs.length > 0 && (
                           <div className={assignedVTs.length > 0 ? "mb-4" : ""}>
-                            <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Chưa gán slot</h5>
+                            <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Chưa gán vị trí</h5>
                             <div className="space-y-2.5">
                               {unassignedVTs.map(renderVtCard)}
                             </div>
@@ -248,7 +268,7 @@ export function SlotMappingEditorView({
                         )}
                         {assignedVTs.length > 0 && (
                           <div>
-                            <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Đã gán slot</h5>
+                            <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Đã gán vị trí</h5>
                             <div className="space-y-2.5">
                               {assignedVTs.map(renderVtCard)}
                             </div>
@@ -274,16 +294,16 @@ export function SlotMappingEditorView({
               <div className="flex flex-col items-center justify-center h-40 text-gray-400 text-sm gap-2">
                 <Map size={28} className="opacity-30" />
                 {slots.length === 0
-                  ? `Tầng này chưa có slot nào (0/${floor.totalSlots}).`
-                  : 'Không có slot phù hợp bộ lọc.'}
+                  ? `Tầng này chưa có vị trí nào (0/${floor.totalSlots}).`
+                  : 'Không có vị trí phù hợp bộ lọc.'}
               </div>
             ) : (
               <div className="min-w-[500px]">
                 {/* Legend */}
                 <div className="flex gap-4 mb-4 text-xs text-gray-500">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3.5 h-3.5 rounded bg-[#A0E870] border border-[#A0E870]" />{' '}
-                    Đang dùng
+                    <div className="w-3.5 h-3.5 rounded border border-gray-300" style={{ background: 'linear-gradient(135deg, #F3F8ED 0%, #9FE870 50%, #085041 100%)' }} />{' '}
+                    Đang dùng (theo loại xe)
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3.5 h-3.5 rounded bg-blue-100 border border-blue-200" /> Đã
@@ -299,29 +319,38 @@ export function SlotMappingEditorView({
                 <div className="space-y-5">
                   {groupedSlots.map(([vtId, group]) => {
                     const Icon =
-                      group.icon && ICON_MAP[group.icon] ? ICON_MAP[group.icon] : Car;
+                      group.icon && ICON_MAP[group.icon] ? ICON_MAP[group.icon] : ICON_MAP[DEFAULT_ICON];
+                    const vtForGroup = vehicleTypes.find(v => v._id === vtId);
+                    const groupTheme = getVehicleColorTheme(vtForGroup?.code, vtForGroup?.icon || group.icon);
                     return (
                       <div key={vtId}>
                         {/* Vehicle type label */}
                         <div className="flex items-center gap-2 mb-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-[#A0E870]/20 flex items-center justify-center shrink-0">
-                            <Icon size={15} className="text-[#062F28]" />
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: groupTheme.bg }}>
+                            <Icon size={15} style={{ color: groupTheme.text }} />
                           </div>
                           <span className="text-sm font-bold text-[#062F28]">
                             {group.name}
                           </span>
                           <span className="text-xs text-gray-400 font-medium">
-                            ({group.slots.length} slot)
+                            ({group.slots.length} vị trí)
                           </span>
                           <div className="flex-1 h-px bg-gray-200 ml-2" />
                         </div>
                         {/* Slots row */}
                         <div className="flex flex-wrap gap-2.5 pl-9">
                           {group.slots.map((slot) => {
+                            const vtObj = slot.vehicleTypeId && typeof slot.vehicleTypeId === 'object'
+                              ? (slot.vehicleTypeId as any)
+                              : vehicleTypes.find(v => v._id === slot.vehicleTypeId);
+                            const vtColorTheme = getVehicleColorTheme(vtObj?.code, vtObj?.icon);
+
                             let bgClass = 'bg-white border-gray-200 text-gray-500';
-                            if (slot.status === 'occupied')
-                              bgClass = 'bg-[#A0E870] border-[#A0E870] text-[#062F28] shadow-sm';
-                            else if (slot.status === 'reserved')
+                            let inlineStyle: React.CSSProperties = {};
+                            if (slot.status === 'occupied') {
+                              bgClass = 'border shadow-sm';
+                              inlineStyle = { background: vtColorTheme.bg, borderColor: vtColorTheme.bg, color: vtColorTheme.text };
+                            } else if (slot.status === 'reserved')
                               bgClass = 'bg-blue-100 border-blue-200 text-blue-700';
                             else if (
                               slot.status === 'maintenance' ||
@@ -338,13 +367,14 @@ export function SlotMappingEditorView({
                                   else
                                     toast.error(
                                       !isFacilityActive
-                                        ? 'Không thể chỉnh sửa slot của tòa nhà đang bị vô hiệu hóa.'
-                                        : 'Không thể chỉnh sửa slot của tầng đang bị vô hiệu hóa.'
+                                        ? 'Không thể chỉnh sửa vị trí của tòa nhà đang bị vô hiệu hóa.'
+                                        : 'Không thể chỉnh sửa vị trí của tầng đang bị vô hiệu hóa.'
                                     );
                                 }}
                                 onMouseEnter={(e) => setHoveredSlotInfo({ id: slot._id, rect: e.currentTarget.getBoundingClientRect() })}
                                 onMouseLeave={() => setHoveredSlotInfo(null)}
                                 className={`relative w-20 h-12 rounded-lg flex items-center justify-center text-sm font-semibold ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:scale-105 hover:shadow-md' : 'cursor-not-allowed opacity-75'} transition-all shadow-sm border ${bgClass}`}
+                                style={inlineStyle}
                                 title={`${slot.code} – ${group.name} (${slot.status})`}
                               >
                                 {slot.code}
@@ -380,7 +410,7 @@ export function SlotMappingEditorView({
                         Chưa phân bổ
                       </span>
                       <span className="text-xs text-gray-400 font-medium">
-                        ({floor.totalSlots - slots.length} slot trống)
+                        ({floor.totalSlots - slots.length} vị trí trống)
                       </span>
                       <div className="flex-1 h-px bg-gray-200 ml-2" />
                     </div>
@@ -394,12 +424,12 @@ export function SlotMappingEditorView({
                             else
                               toast.error(
                                 !isFacilityActive
-                                  ? 'Không thể thêm slot của tòa nhà đang bị vô hiệu hóa.'
-                                  : 'Không thể thêm slot của tầng đang bị vô hiệu hóa.'
+                                  ? 'Không thể thêm vị trí của tòa nhà đang bị vô hiệu hóa.'
+                                  : 'Không thể thêm vị trí của tầng đang bị vô hiệu hóa.'
                               );
                           }}
                           className={`w-20 h-12 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-200 text-gray-300 text-xs ${floor.status === 'active' && isFacilityActive ? 'cursor-pointer hover:border-[#A0E870] hover:text-[#A0E870] hover:bg-[#A0E870]/5' : 'cursor-not-allowed opacity-75'} transition-all`}
-                          title="Nhấp để thêm 1 slot"
+                          title="Nhấp để thêm 1 vị trí"
                         >
                           <Plus size={16} />
                         </div>
@@ -467,7 +497,10 @@ export function SlotMappingEditorView({
         const slot = slots.find((s) => s._id === hoveredSlotInfo.id);
         if (!slot) return null;
         const session = getSessionData(slot);
-        if (!session) return null;
+        const reservation = slot.reservationInfo;
+
+        // Không có gì để hiển thị
+        if (!session && !reservation) return null;
 
         return createPortal(
           <div
@@ -479,20 +512,38 @@ export function SlotMappingEditorView({
             }}
           >
             <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-2 min-w-[160px]">
-              {session.checkInImage ? (
-                <img
-                  src={getImageUrl(session.checkInImage) || ''}
-                  alt={`Xe ${session.licensePlate}`}
-                  className="w-36 h-24 object-cover rounded-lg mb-1.5"
-                />
-              ) : (
-                <div className="w-36 h-24 bg-gray-100 rounded-lg mb-1.5 flex items-center justify-center">
-                  <Car size={24} className="text-gray-300" />
+              {session ? (
+                <>
+                  {session.checkInImage ? (
+                    <img
+                      src={getImageUrl(session.checkInImage) || ''}
+                      alt={`Xe ${session.licensePlate}`}
+                      className="w-36 h-24 object-cover rounded-lg mb-1.5"
+                    />
+                  ) : (
+                    <div className="w-36 h-24 bg-gray-100 rounded-lg mb-1.5 flex items-center justify-center">
+                      {(() => { const DefaultIcon = ICON_MAP[DEFAULT_ICON]; return <DefaultIcon size={24} className="text-gray-300" />; })()}
+                    </div>
+                  )}
+                  <p className="text-xs font-bold text-center text-[#062F28]">
+                    {session.licensePlate || 'Không có biển số'}
+                  </p>
+                </>
+              ) : reservation ? (
+                <div className="p-1 space-y-1">
+                  <p className="text-[10px] font-bold uppercase" style={{ color: reservation.status === 'confirmed' ? '#059669' : '#d97706' }}>
+                    {reservation.status === 'confirmed' ? 'Đã xác nhận ✓' : 'Chờ xác nhận'}
+                  </p>
+                  {typeof reservation.user === 'object' && (
+                    <p className="text-xs font-semibold text-[#062F28]">
+                      {reservation.user.name}
+                    </p>
+                  )}
+                  <p className="text-[11px] font-bold text-[#062F28]">
+                    {reservation.licensePlate}
+                  </p>
                 </div>
-              )}
-              <p className="text-xs font-bold text-center text-[#062F28]">
-                {session.licensePlate || 'Không có biển số'}
-              </p>
+              ) : null}
             </div>
             <div className="w-3 h-3 bg-white border-b border-r border-gray-200 rotate-45 absolute -bottom-1.5 left-1/2 -translate-x-1/2" />
           </div>,

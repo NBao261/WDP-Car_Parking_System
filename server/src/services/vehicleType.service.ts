@@ -5,39 +5,29 @@ import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { AppError } from '../middlewares/error.middleware';
 import { delPattern } from '../config/redis';
 
-/**
- * Chuẩn hóa tên: bỏ dấu tiếng Việt, lowercase, trim khoảng trắng thừa.
- * VD: "Xe Máy" → "xe may", "  ô   tô  " → "o to"
- */
-function normalizeName(name: string): string {
-  return name
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+import { normalizeVehicleTypeName } from '../utils/string.util';
+// (Note: To implement getSimilar, we might need fastest-levenshtein, but let's see if we can just use natural or fastest-levenshtein)
+import { distance } from 'fastest-levenshtein';
 
 export class VehicleTypeService {
   /**
-   * Kiểm tra tên loại xe trùng lặp (bỏ dấu tiếng Việt).
+   * Kiểm tra tên loại xe trùng lặp theo normalized_name
    * @param name Tên cần kiểm tra
    * @param excludeId ID loại xe cần loại trừ (khi cập nhật)
    */
   private static async checkDuplicateName(name: string, excludeId?: string): Promise<void> {
-    const normalized = normalizeName(name);
-    const allTypes = await VehicleType.find({ isDeleted: false });
-    const duplicate = allTypes.find(vt => {
-      if (excludeId && vt._id.toString() === excludeId) return false;
-      return normalizeName(vt.name) === normalized;
-    });
+    const normalized = normalizeVehicleTypeName(name);
+    const query: any = { normalized_name: normalized, isDeleted: false };
+    if (excludeId) {
+      query._id = { $ne: excludeId };
+    }
+    const duplicate = await VehicleType.findOne(query);
     if (duplicate) {
-      throw new AppError(
-        `Tên loại xe "${name}" đã tồn tại (trùng với "${duplicate.name}"). Vui lòng chọn tên khác.`,
-        400
-      );
+      const error: any = new Error('Loại xe tương tự đã tồn tại');
+      error.statusCode = 409;
+      error.code = 'DUPLICATE_VEHICLE_TYPE';
+      error.existingId = duplicate._id;
+      throw error;
     }
   }
 
@@ -192,5 +182,36 @@ export class VehicleTypeService {
       .sort({ createdAt: -1 });
     const total = await VehicleType.countDocuments(query);
     return { vehicleTypes, total };
+  }
+
+  static async getSimilarVehicleTypes(name?: string, icon?: string): Promise<{ byName: IVehicleType[], byIcon: IVehicleType[] }> {
+    const allTypes = await VehicleType.find({ isDeleted: false }).lean();
+    
+    let byName: IVehicleType[] = [];
+    if (name) {
+      const normalizedTarget = normalizeVehicleTypeName(name);
+      if (normalizedTarget.length < 3) {
+        // Quá ngắn (VD: "xe") → không tìm tương tự theo tên
+        byName = [];
+      } else {
+        byName = allTypes.filter(vt => {
+          const vtNormalized = normalizeVehicleTypeName(vt.name);
+          // Chỉ match "chứa" khi tên tìm kiếm đủ cụ thể (>= 50% độ dài tên đích)
+          if (normalizedTarget.length >= vtNormalized.length * 0.5) {
+            if (vtNormalized.includes(normalizedTarget) || normalizedTarget.includes(vtNormalized)) return true;
+          }
+          const dist = distance(normalizedTarget, vtNormalized);
+          const maxDist = Math.max(1, Math.floor(normalizedTarget.length / 5));
+          return dist <= maxDist;
+        }) as unknown as IVehicleType[];
+      }
+    }
+
+    let byIcon: IVehicleType[] = [];
+    if (icon) {
+      byIcon = allTypes.filter(vt => vt.icon === icon) as unknown as IVehicleType[];
+    }
+
+    return { byName, byIcon };
   }
 }

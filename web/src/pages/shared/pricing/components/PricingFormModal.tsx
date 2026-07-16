@@ -10,7 +10,6 @@ import {
   Clock,
   CreditCard,
   ChevronDown,
-  Car,
   AlertTriangle,
   ShieldAlert,
   MapPin,
@@ -34,7 +33,7 @@ import {
   mapToUiType,
   mapToBackendFeeConfig,
 } from './constants';
-import { ICON_MAP } from '../../../shared/vehicles/components/constants';
+import { ICON_MAP, DEFAULT_ICON } from '../../../shared/vehicles/components/constants';
 
 interface FormModalProps {
   plan?: PricingPlan;
@@ -139,8 +138,9 @@ export function PricingFormModal({
 
   useEffect(() => {
     if (isEdit && plan?._id) {
-      pricingService.getActiveSessionCount(plan._id)
-        .then(res => setActiveSessionCount(res.data.activeSessionCount))
+      pricingService
+        .getActiveSessionCount(plan._id)
+        .then((res) => setActiveSessionCount(res.data.activeSessionCount))
         .catch(() => setActiveSessionCount(0));
     }
   }, [isEdit, plan?._id]);
@@ -207,6 +207,7 @@ export function PricingFormModal({
     let valid = false;
     if (step === 1) {
       valid = await trigger(['facilityId', 'name', 'vehicleTypeId', 'uiFeeType']);
+      if (!valid) toast.error('Vui lòng điền đầy đủ thông tin ở bước 1');
     } else if (step === 2) {
       valid = await trigger([
         'gracePeriodMinutes',
@@ -216,6 +217,7 @@ export function PricingFormModal({
         'overnightFee',
         'overtimeFeePerHour',
       ]);
+      if (!valid) toast.error('Vui lòng kiểm tra lại các trường ở bước 2');
     }
     if (valid) setStep(step + 1);
   };
@@ -248,7 +250,9 @@ export function PricingFormModal({
             <h2 className="text-[19px] font-extrabold text-[#062F28]">
               {isEdit ? 'Chỉnh Sửa Bảng Giá' : 'Thêm Bảng Giá Mới'}
             </h2>
-            <p className="text-[15px] text-gray-500 mt-1">Thiết lập cấu hình thu phí cho bãi đỗ xe</p>
+            <p className="text-[15px] text-gray-500 mt-1">
+              Thiết lập cấu hình thu phí cho bãi đỗ xe
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -265,11 +269,21 @@ export function PricingFormModal({
             const isCurr = step === i + 1;
             return (
               <div key={i} className="flex items-center gap-2 sm:gap-3">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${isCurr ? 'bg-[#9FE870] text-[#062F28] ring-4 ring-[#9FE870]/20' : isPast ? 'bg-[#062F28] text-white' : 'bg-gray-100 text-gray-400'}`}>
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${isCurr ? 'bg-[#9FE870] text-[#062F28] ring-4 ring-[#9FE870]/20' : isPast ? 'bg-[#062F28] text-white' : 'bg-gray-100 text-gray-400'}`}
+                >
                   {isPast ? <Check size={12} /> : i + 1}
                 </div>
-                <span className={`text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors ${isCurr || isPast ? 'text-[#062F28]' : 'text-gray-400'}`}>{s}</span>
-                {i < STEPS.length - 1 && <div className={`hidden sm:block w-4 lg:w-12 h-[2px] rounded-full transition-colors ${isPast ? 'bg-[#062F28]' : 'bg-gray-100'}`} />}
+                <span
+                  className={`text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors ${isCurr || isPast ? 'text-[#062F28]' : 'text-gray-400'}`}
+                >
+                  {s}
+                </span>
+                {i < STEPS.length - 1 && (
+                  <div
+                    className={`hidden sm:block w-4 lg:w-12 h-[2px] rounded-full transition-colors ${isPast ? 'bg-[#062F28]' : 'bg-gray-100'}`}
+                  />
+                )}
               </div>
             );
           })}
@@ -283,7 +297,8 @@ export function PricingFormModal({
                 Hiện có {activeSessionCount} lượt gửi xe đang sử dụng bảng giá này
               </p>
               <p className="mt-0.5 text-amber-700">
-                Không thể chỉnh sửa thông tin giá khi còn xe đang gửi. Bạn chỉ có thể đổi tên bảng giá. Vui lòng đợi tất cả xe ra bãi hoặc tạo bảng giá mới.
+                Không thể chỉnh sửa thông tin giá khi còn xe đang gửi. Bạn chỉ có thể đổi tên bảng
+                giá. Vui lòng đợi tất cả xe ra bãi hoặc tạo bảng giá mới.
               </p>
             </div>
           </div>
@@ -307,113 +322,154 @@ export function PricingFormModal({
           {/* ── BƯỚC 1: THÔNG TIN CHUNG ──────────────────────────────────── */}
           <div className={step === 1 ? 'block flex-1' : 'hidden'}>
             <div className="px-6 py-5 border-b border-gray-100 bg-white">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">
-                Tòa nhà áp dụng <span className="text-red-500">*</span>
+              <label className="text-xs font-bold text-gray-800 uppercase tracking-wider block mb-2">
+                Tòa nhà áp dụng <span className="text-red-600">*</span>
               </label>
               <Controller
                 control={control}
                 name="facilityId"
                 render={({ field }) => {
-                const selected = facilities.find((f) => f._id === field.value);
-                const hasErr = !!errors.facilityId;
-                const isLocked = isEdit || !!selectedFacilityId;
-                return (
-                  <div className="relative">
-                    <div
-                      onClick={() => !isLocked && setIsFacOpen(!isFacOpen)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                        isLocked
-                          ? 'border-gray-100 bg-gray-50 cursor-not-allowed opacity-70'
-                          : isFacOpen
-                          ? 'border-[#9FE870] bg-white shadow-sm cursor-pointer'
-                          : hasErr
-                          ? 'border-red-400 focus:ring-red-300 bg-red-50/30 cursor-pointer'
-                          : 'border-gray-200 bg-gray-50 hover:bg-white hover:border-[#9FE870]/50 cursor-pointer'
-                      }`}
-                    >
+                  const selected = facilities.find((f) => f._id === field.value);
+                  const hasErr = !!errors.facilityId;
+                  const isLocked = isEdit || !!selectedFacilityId;
+                  return (
+                    <div className="relative">
                       <div
-                        style={{
-                          width: 40, height: 40, borderRadius: 10,
-                          background: 'rgba(159,232,112,0.15)',
-                          border: '1px solid rgba(159,232,112,0.3)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                        }}
+                        onClick={() => !isLocked && setIsFacOpen(!isFacOpen)}
+                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                          isLocked
+                            ? 'border-gray-300 bg-gray-200 cursor-not-allowed opacity-90'
+                            : isFacOpen
+                              ? 'border-[#8AD65D] bg-white shadow-md cursor-pointer' // Viền xanh đậm hơn chút, bóng to hơn
+                              : hasErr
+                                ? 'border-red-500 focus:ring-red-400 bg-red-50 cursor-pointer'
+                                : 'border-gray-300 bg-gray-100 hover:bg-white hover:border-[#9FE870] cursor-pointer'
+                        }`}
                       >
-                        <Building2 size={18} style={{ color: '#062F28' }} />
-                      </div>
-                      {selected ? (
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-[14px] text-[#062F28] truncate">{selected.name}</p>
-                          <div className="flex items-center gap-4 mt-0.5">
-                            <span className="flex items-center gap-1 text-[12px] text-gray-400 truncate">
-                              <MapPin size={11} className="shrink-0" />{selected.address}
-                            </span>
-                            <span className="flex items-center gap-1 text-[12px] text-gray-400 shrink-0">
-                              <Clock size={11} />{selected.openTime} – {selected.closeTime}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-400 flex-1">-- Chọn tòa nhà / bãi đỗ xe --</span>
-                      )}
-                      {!isLocked && (
-                        <ChevronDown
-                          size={15}
-                          className={`text-gray-400 shrink-0 transition-transform ${isFacOpen ? 'rotate-180' : ''}`}
-                        />
-                      )}
-                    </div>
-                    {hasErr && (
-                      <p className={errCls}>
-                        <span>⚠</span> {errors.facilityId!.message}
-                      </p>
-                    )}
-
-                    <AnimatePresence>
-                      {isFacOpen && (
                         <div
-                          key="fac-overlay"
-                          className="fixed inset-0 z-40"
-                          onClick={() => setIsFacOpen(false)}
-                        />
-                      )}
-                      {isFacOpen && (
-                        <motion.div
-                          key="fac-dropdown"
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -5 }}
-                          className="absolute top-[calc(100%+6px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-xl py-1 z-50 max-h-52 overflow-y-auto"
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 10,
+                            background: 'rgba(159,232,112,0.25)', // Nền icon đậm hơn
+                            border: '1px solid rgba(159,232,112,0.5)', // Viền icon rõ hơn
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
                         >
-                          {facilities.map((f) => (
-                            <div
-                              key={f._id}
-                              onClick={() => { field.onChange(f._id); setIsFacOpen(false); }}
-                              className={`px-4 py-2.5 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0 transition-colors ${
-                                field.value === f._id ? 'bg-[#9FE870]/20' : 'hover:bg-gray-50'
-                              }`}
-                            >
-                              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(159,232,112,0.15)', border: '1px solid rgba(159,232,112,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Building2 size={14} style={{ color: '#062F28' }} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className={`text-[13px] truncate ${field.value === f._id ? 'text-[#062F28] font-bold' : 'text-gray-700 font-semibold'}`}>{f.name}</p>
-                                <div className="flex items-center gap-3 text-[11px] text-gray-400">
-                                  <span className="flex items-center gap-1 truncate"><MapPin size={10} />{f.address}</span>
-                                  <span className="flex items-center gap-1 shrink-0"><Clock size={10} />{f.openTime}–{f.closeTime}</span>
+                          <Building2 size={20} style={{ color: '#062F28' }} />
+                        </div>
+
+                        {selected ? (
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-[15px] text-[#062F28] truncate">
+                              {selected.name}
+                            </p>
+                            <div className="flex items-start gap-1.5 mt-1 text-[13px] font-medium text-gray-800">
+                              <MapPin size={14} className="shrink-0 mt-0.5 text-gray-600" />
+                              <span>{selected.address}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5 text-[13px] font-medium text-gray-800">
+                              <Clock size={14} className="shrink-0 text-gray-600" />
+                              <span>
+                                {selected.openTime} – {selected.closeTime}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-[14px] font-medium text-gray-600 flex-1">
+                            -- Chọn tòa nhà / bãi đỗ xe --
+                          </span>
+                        )}
+
+                        {!isLocked && (
+                          <ChevronDown
+                            size={18}
+                            className={`text-gray-600 shrink-0 transition-transform ${isFacOpen ? 'rotate-180' : ''}`}
+                          />
+                        )}
+                      </div>
+
+                      {hasErr && (
+                        <p className={`${errCls} text-red-600 font-medium mt-1.5`}>
+                          <span>⚠</span> {errors.facilityId!.message}
+                        </p>
+                      )}
+
+                      <AnimatePresence>
+                        {isFacOpen && (
+                          <div
+                            key="fac-overlay"
+                            className="fixed inset-0 z-40"
+                            onClick={() => setIsFacOpen(false)}
+                          />
+                        )}
+                        {isFacOpen && (
+                          <motion.div
+                            key="fac-dropdown"
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            className="absolute top-[calc(100%+6px)] left-0 w-full bg-white border border-gray-200 rounded-xl shadow-xl py-1 z-50 max-h-60 overflow-y-auto"
+                          >
+                            {facilities.map((f) => (
+                              <div
+                                key={f._id}
+                                onClick={() => {
+                                  field.onChange(f._id);
+                                  setIsFacOpen(false);
+                                }}
+                                className={`px-4 py-3 cursor-pointer flex items-center gap-3 border-b border-gray-100 last:border-0 transition-colors ${
+                                  field.value === f._id ? 'bg-[#9FE870]/30' : 'hover:bg-gray-100'
+                                }`}
+                              >
+                                <div
+                                  style={{
+                                    width: 34,
+                                    height: 34,
+                                    borderRadius: 8,
+                                    background: 'rgba(159,232,112,0.2)',
+                                    border: '1px solid rgba(159,232,112,0.4)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <Building2 size={16} style={{ color: '#062F28' }} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p
+                                    className={`text-[14px] truncate ${
+                                      field.value === f._id
+                                        ? 'text-[#062F28] font-bold'
+                                        : 'text-gray-900 font-semibold'
+                                    }`}
+                                  >
+                                    {f.name}
+                                  </p>
+                                  <div className="flex items-start gap-1.5 mt-0.5 text-[12px] font-medium text-gray-600">
+                                    <MapPin size={12} className="shrink-0 mt-0.5" />
+                                    {f.address}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-[12px] font-medium text-gray-600">
+                                    <Clock size={12} className="shrink-0" />
+                                    {f.openTime} – {f.closeTime}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              }}
-            />
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                }}
+              />
             </div>
-            
+
             <div className="px-6 py-6 bg-white space-y-6">
               {/* Tên bảng giá */}
               <div>
@@ -442,7 +498,10 @@ export function PricingFormModal({
                   name="vehicleTypeId"
                   render={({ field }) => {
                     const selected = allowedVehicleTypes.find((v) => v._id === field.value);
-                    const SelectedIcon = selected?.icon && ICON_MAP[selected.icon] ? ICON_MAP[selected.icon] : Car;
+                    const SelectedIcon =
+                      selected?.icon && ICON_MAP[selected.icon]
+                        ? ICON_MAP[selected.icon]
+                        : ICON_MAP[DEFAULT_ICON];
                     const hasErr = !!errors.vehicleTypeId;
                     return (
                       <div className="relative">
@@ -454,14 +513,26 @@ export function PricingFormModal({
                           }}
                           className={`${getInputCls(hasErr)} flex items-center justify-between ${isEdit || allowedVehicleTypes.length === 0 ? 'bg-gray-100 opacity-70 pointer-events-none cursor-not-allowed' : 'cursor-pointer'} ${isVtOpen ? 'ring-2 ring-[#9FE870] border-[#9FE870]' : ''}`}
                         >
-                          <span className={selected ? 'flex items-center gap-2 text-[#062F28]' : 'text-gray-400'}>
+                          <span
+                            className={
+                              selected ? 'flex items-center gap-2 text-[#062F28]' : 'text-gray-400'
+                            }
+                          >
                             {selected ? (
-                              <><SelectedIcon size={15} />{selected.name}</>
+                              <>
+                                <SelectedIcon size={15} />
+                                {selected.name}
+                              </>
+                            ) : allowedVehicleTypes.length === 0 ? (
+                              'Chưa có loại xe'
                             ) : (
-                              allowedVehicleTypes.length === 0 ? 'Chưa có loại xe' : '-- Chọn loại xe --'
+                              '-- Chọn loại xe --'
                             )}
                           </span>
-                          <ChevronDown size={15} className={`text-gray-400 transition-transform ${isVtOpen ? 'rotate-180' : ''}`} />
+                          <ChevronDown
+                            size={15}
+                            className={`text-gray-400 transition-transform ${isVtOpen ? 'rotate-180' : ''}`}
+                          />
                         </div>
                         {hasErr && (
                           <p className={errCls}>
@@ -470,7 +541,11 @@ export function PricingFormModal({
                         )}
                         <AnimatePresence>
                           {isVtOpen && (
-                            <div key="vt-overlay" className="fixed inset-0 z-40" onClick={() => setIsVtOpen(false)} />
+                            <div
+                              key="vt-overlay"
+                              className="fixed inset-0 z-40"
+                              onClick={() => setIsVtOpen(false)}
+                            />
                           )}
                           {isVtOpen && (
                             <motion.div
@@ -486,14 +561,25 @@ export function PricingFormModal({
                                 </div>
                               ) : (
                                 allowedVehicleTypes.map((v) => {
-                                  const IconComp = v.icon && ICON_MAP[v.icon] ? ICON_MAP[v.icon] : Car;
+                                  const IconComp =
+                                    v.icon && ICON_MAP[v.icon]
+                                      ? ICON_MAP[v.icon]
+                                      : ICON_MAP[DEFAULT_ICON];
                                   return (
                                     <div
                                       key={v._id}
-                                      onClick={() => { field.onChange(v._id); setIsVtOpen(false); }}
+                                      onClick={() => {
+                                        field.onChange(v._id);
+                                        setIsVtOpen(false);
+                                      }}
                                       className={`px-3 py-2.5 text-sm cursor-pointer flex items-center gap-2 transition-colors ${field.value === v._id ? 'bg-[#9FE870]/20 text-[#062F28] font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
                                     >
-                                      <IconComp size={15} className={field.value === v._id ? 'text-[#062F28]' : 'text-gray-400'} />
+                                      <IconComp
+                                        size={15}
+                                        className={
+                                          field.value === v._id ? 'text-[#062F28]' : 'text-gray-400'
+                                        }
+                                      />
                                       {v.name}
                                     </div>
                                   );
@@ -517,7 +603,8 @@ export function PricingFormModal({
                   <div className="text-xs text-blue-700 bg-blue-50 px-3 py-2 rounded-xl border border-blue-100 mb-2 flex items-start gap-2">
                     <Lock size={12} className="shrink-0 mt-0.5" />
                     <span>
-                      Tòa nhà này đã có bảng giá <b>{FEE_TYPE_LABELS[lockedFeeType]}</b>. Loại hình thu phí phải thống nhất.
+                      Tòa nhà này đã có bảng giá <b>{FEE_TYPE_LABELS[lockedFeeType]}</b>. Loại hình
+                      thu phí phải thống nhất.
                     </span>
                   </div>
                 )}
@@ -533,10 +620,10 @@ export function PricingFormModal({
                             lockedFeeType && lockedFeeType !== val
                               ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed opacity-50'
                               : field.value === val
-                              ? 'border-[#062F28] bg-[#9FE870]/20 text-[#062F28] ring-1 ring-[#062F28] shadow-sm cursor-pointer'
-                              : errors.uiFeeType
-                              ? 'border-red-400 focus:ring-red-300 bg-red-50/30 text-gray-600 cursor-pointer'
-                              : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-[#9FE870]/50 hover:bg-white cursor-pointer'
+                                ? 'border-[#062F28] bg-[#9FE870]/20 text-[#062F28] ring-1 ring-[#062F28] shadow-sm cursor-pointer'
+                                : errors.uiFeeType
+                                  ? 'border-red-400 focus:ring-red-300 bg-red-50/30 text-gray-600 cursor-pointer'
+                                  : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-[#9FE870]/50 hover:bg-white cursor-pointer'
                           }`}
                         >
                           <input
@@ -544,7 +631,9 @@ export function PricingFormModal({
                             className="w-4 h-4 accent-[#062F28]"
                             value={val}
                             checked={field.value === val}
-                            disabled={(!!lockedFeeType && lockedFeeType !== val) || hasActiveSessions}
+                            disabled={
+                              (!!lockedFeeType && lockedFeeType !== val) || hasActiveSessions
+                            }
                             onChange={() => field.onChange(val)}
                           />
                           {label}
@@ -577,7 +666,7 @@ export function PricingFormModal({
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
-                        Miễn phí (Phút) <span className="text-red-500">*</span>
+                        Miễn phí (Phút)
                       </label>
                       {errors.gracePeriodMinutes && (
                         <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
@@ -587,7 +676,9 @@ export function PricingFormModal({
                     </div>
                     <input
                       {...register('gracePeriodMinutes')}
-                      type="number" min="0" max="60"
+                      type="number"
+                      min="0"
+                      max="60"
                       className={`${getInputCls(!!errors.gracePeriodMinutes)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                       placeholder="0"
                       readOnly={hasActiveSessions}
@@ -599,7 +690,7 @@ export function PricingFormModal({
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block flex items-center gap-1">
-                        <CreditCard size={13} /> Phí mất thẻ (VNĐ) <span className="text-red-500">*</span>
+                        <CreditCard size={13} /> Phí mất thẻ (VNĐ)
                       </label>
                       {errors.lostCardFee && (
                         <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
@@ -609,7 +700,8 @@ export function PricingFormModal({
                     </div>
                     <input
                       {...register('lostCardFee')}
-                      type="number" min="0"
+                      type="number"
+                      min="0"
                       className={`${getInputCls(!!errors.lostCardFee)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                       placeholder="50000"
                       readOnly={hasActiveSessions}
@@ -621,7 +713,7 @@ export function PricingFormModal({
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
-                          Giờ tính mức đầu <span className="text-red-500">*</span>
+                          Giờ tính mức đầu
                         </label>
                         {errors.firstBlockHours && (
                           <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
@@ -631,12 +723,13 @@ export function PricingFormModal({
                       </div>
                       <input
                         {...register('firstBlockHours')}
-                        type="number" min="1"
+                        type="number"
+                        min="1"
                         className={`${getInputCls(!!errors.firstBlockHours)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                         placeholder="1"
                         readOnly={hasActiveSessions}
                       />
-                      <p className="text-[10px] text-gray-400 mt-1">Số giờ cho giá bậc 1</p>
+                      <p className="text-[10px] text-gray-400 mt-1">Số giờ đầu tiên áp dụng mức giá 'Giờ đầu'</p>
                     </div>
                   )}
 
@@ -645,7 +738,7 @@ export function PricingFormModal({
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
-                          Phí tối đa/Ngày (VNĐ) <span className="text-red-500">*</span>
+                          Phí tối đa/Ngày (VNĐ)
                         </label>
                         {errors.maxDailyFee && (
                           <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
@@ -655,7 +748,8 @@ export function PricingFormModal({
                       </div>
                       <input
                         {...register('maxDailyFee')}
-                        type="number" min="0"
+                        type="number"
+                        min="0"
                         className={`${getInputCls(!!errors.maxDailyFee)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                         placeholder="0"
                         readOnly={hasActiveSessions}
@@ -669,7 +763,7 @@ export function PricingFormModal({
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block flex items-center gap-1">
-                          <Moon size={13} /> Phí qua đêm (VNĐ) <span className="text-red-500">*</span>
+                          <Moon size={13} /> Phí qua đêm (VNĐ)
                         </label>
                         {errors.overnightFee && (
                           <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
@@ -679,7 +773,8 @@ export function PricingFormModal({
                       </div>
                       <input
                         {...register('overnightFee')}
-                        type="number" min="0"
+                        type="number"
+                        min="0"
                         className={`${getInputCls(!!errors.overnightFee)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                         placeholder="0"
                         readOnly={hasActiveSessions}
@@ -692,7 +787,7 @@ export function PricingFormModal({
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block flex items-center gap-1">
-                          <Clock size={13} /> Phí quá giờ (VNĐ/h) <span className="text-red-500">*</span>
+                          <Clock size={13} /> Phí quá giờ (VNĐ/h)
                         </label>
                         {errors.overtimeFeePerHour && (
                           <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
@@ -702,7 +797,8 @@ export function PricingFormModal({
                       </div>
                       <input
                         {...register('overtimeFeePerHour')}
-                        type="number" min="0"
+                        type="number"
+                        min="0"
                         className={`${getInputCls(!!errors.overtimeFeePerHour)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                         placeholder="0"
                         readOnly={hasActiveSessions}
@@ -724,126 +820,159 @@ export function PricingFormModal({
           </div>
 
           {/* ── BƯỚC 3: CẤU HÌNH MỨC GIÁ ─────────── */}
-          <div className={step === 3 ? 'block flex-1 bg-[#f8fafc] px-6 py-8' : 'hidden'}>
+          <div className={step === 3 ? 'block flex-1 bg-white px-6 py-8' : 'hidden'}>
             {currentUiFeeType && (
               <div>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                  Cấu hình mức giá <span className="text-red-500">*</span>
-                </p>
-                {currentUiFeeType === 'time_window' && (
-                  <button
-                    type="button"
-                    onClick={() => append({ label: '', amount: 0, unit: 'giờ', startTime: '', endTime: '' })}
-                    disabled={hasActiveSessions}
-                    className={`text-xs font-bold text-[#062F28] hover:bg-[#9FE870]/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors border border-[#9FE870]/40 ${hasActiveSessions ? 'opacity-50 pointer-events-none' : ''}`}
-                  >
-                    <Plus size={13} /> Thêm Khung Giờ
-                  </button>
-                )}
-              </div>
-
-              {currentUiFeeType === 'time_window' && (
-                <div className="text-xs text-blue-700 bg-blue-50 px-3 py-2.5 rounded-xl border border-blue-100 mb-4 flex items-start gap-2">
-                  <AlertTriangle size={13} className="shrink-0 mt-0.5" />
-                  <span>
-                    Các khung giờ <b>phải nối tiếp nhau và phủ kín toàn bộ thời gian hoạt động</b> của tòa nhà
-                    {currentFacility ? ` (${currentFacility.openTime} – ${currentFacility.closeTime})` : ''}.
-                    Ngoài khung sẽ tính theo phí quá giờ.
-                  </span>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                    Cấu hình mức giá <span className="text-red-500">*</span>
+                  </p>
+                  {currentUiFeeType === 'time_window' && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        append({ label: '', amount: 0, unit: 'giờ', startTime: '', endTime: '' })
+                      }
+                      disabled={hasActiveSessions}
+                      className={`text-xs font-bold text-[#062F28] hover:bg-[#9FE870]/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors border border-[#9FE870]/40 ${hasActiveSessions ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
+                      <Plus size={13} /> Thêm Khung Giờ
+                    </button>
+                  )}
                 </div>
-              )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {fields.map((fld, idx) => (
-                  <div
-                    key={fld.id}
-                    className="bg-white border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] rounded-[20px] p-6 relative"
-                  >
-                    {fields.length > 1 && currentUiFeeType === 'time_window' && (
-                      <button
-                        type="button"
-                        onClick={() => remove(idx)}
-                        className="absolute top-2 right-2 text-gray-300 hover:text-red-400 hover:bg-red-50 p-1 rounded-lg transition-all"
-                      >
-                        <X size={13} />
-                      </button>
-                    )}
+                {currentUiFeeType === 'time_window' && (
+                  <div className="text-xs text-blue-700 bg-blue-50 px-3 py-2.5 rounded-xl border border-blue-100 mb-4 flex items-start gap-2">
+                    <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+                    <span>
+                      Các khung giờ <b>phải nối tiếp nhau và phủ kín toàn bộ thời gian hoạt động</b>{' '}
+                      của tòa nhà
+                      {currentFacility
+                        ? ` (${currentFacility.openTime} – ${currentFacility.closeTime})`
+                        : ''}
+                      . Ngoài khung sẽ tính theo phí quá giờ.
+                    </span>
+                  </div>
+                )}
 
-                    {currentUiFeeType === 'time_window' && (
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="flex-1">
-                          <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Từ giờ <span className="text-red-500">*</span></label>
-                          <input type="time" {...register(`rates.${idx}.startTime`)} readOnly={hasActiveSessions} className={`${getInputCls(!!errors.rates?.[idx]?.startTime, 'py-2 text-[15px] font-semibold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`} />
-                          {errors.rates?.[idx]?.startTime && (
-                            <p className={errCls}>
-                              <span>⚠</span> {errors.rates[idx]!.startTime!.message}
-                            </p>
-                          )}
-                        </div>
-                        <span className="text-gray-300 mt-4">–</span>
-                        <div className="flex-1">
-                          <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Đến giờ <span className="text-red-500">*</span></label>
-                          <input type="time" {...register(`rates.${idx}.endTime`)} readOnly={hasActiveSessions} className={`${getInputCls(!!errors.rates?.[idx]?.endTime, 'py-2 text-[15px] font-semibold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`} />
-                          {errors.rates?.[idx]?.endTime && (
-                            <p className={errCls}>
-                              <span>⚠</span> {errors.rates[idx]!.endTime!.message}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="mb-3">
-                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">
-                        Tên <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        {...register(`rates.${idx}.label`)}
-                        placeholder={
-                          currentUiFeeType === 'hourly'
-                            ? idx === 0 ? 'Giờ đầu' : 'Giờ tiếp theo'
-                            : currentUiFeeType === 'per_turn' ? 'Mỗi lượt' : 'Khung giờ'
-                        }
-                        className={`${getInputCls(!!errors.rates?.[idx]?.label, 'py-2 text-[15px] font-bold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
-                        readOnly={hasActiveSessions}
-                      />
-                      {errors.rates?.[idx]?.label && (
-                        <p className={errCls}>
-                          <span>⚠</span> {errors.rates[idx]!.label!.message}
-                        </p>
+                <div
+                  className={`grid gap-5 ${currentUiFeeType === 'hourly' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}
+                >
+                  {fields.map((fld, idx) => (
+                    <div
+                      key={fld.id}
+                      className={`relative ${
+                        currentUiFeeType === 'per_turn'
+                          ? 'p-6'
+                          : 'bg-white border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] rounded-[20px] p-6'
+                      }`}
+                    >
+                      {fields.length > 1 && currentUiFeeType === 'time_window' && (
+                        <button
+                          type="button"
+                          onClick={() => remove(idx)}
+                          className="absolute top-2 right-2 text-gray-300 hover:text-red-400 hover:bg-red-50 p-1 rounded-lg transition-all"
+                        >
+                          <X size={13} />
+                        </button>
                       )}
-                    </div>
 
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
-                          Đơn giá (VNĐ) <span className="text-red-500">*</span>
+                      {currentUiFeeType === 'time_window' && (
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="flex-1">
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                              Từ giờ <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="time"
+                              {...register(`rates.${idx}.startTime`)}
+                              readOnly={hasActiveSessions}
+                              className={`${getInputCls(!!errors.rates?.[idx]?.startTime, 'py-2 text-[15px] font-semibold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
+                            />
+                            {errors.rates?.[idx]?.startTime && (
+                              <p className={errCls}>
+                                <span>⚠</span> {errors.rates[idx]!.startTime!.message}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-gray-300 mt-4">–</span>
+                          <div className="flex-1">
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                              Đến giờ <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="time"
+                              {...register(`rates.${idx}.endTime`)}
+                              readOnly={hasActiveSessions}
+                              className={`${getInputCls(!!errors.rates?.[idx]?.endTime, 'py-2 text-[15px] font-semibold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
+                            />
+                            {errors.rates?.[idx]?.endTime && (
+                              <p className={errCls}>
+                                <span>⚠</span> {errors.rates[idx]!.endTime!.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mb-3">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">
+                          Tên <span className="text-red-500">*</span>
                         </label>
                         <input
-                          {...register(`rates.${idx}.amount`)}
-                          type="number" min="0" placeholder="0"
+                          {...register(`rates.${idx}.label`)}
+                          placeholder={
+                            currentUiFeeType === 'hourly'
+                              ? idx === 0
+                                ? 'Giờ đầu'
+                                : 'Giờ tiếp theo'
+                              : currentUiFeeType === 'per_turn'
+                                ? 'Mỗi lượt'
+                                : 'Khung giờ'
+                          }
+                          className={`${getInputCls(!!errors.rates?.[idx]?.label, 'py-2 text-[15px] font-bold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                           readOnly={hasActiveSessions}
-                          className={`${getInputCls(!!errors.rates?.[idx]?.amount, 'text-[16px] text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                         />
+                        {errors.rates?.[idx]?.label && (
+                          <p className={errCls}>
+                            <span>⚠</span> {errors.rates[idx]!.label!.message}
+                          </p>
+                        )}
                       </div>
-                      {errors.rates?.[idx]?.amount && (
-                        <p className={errCls}>
-                          <span>⚠</span> {errors.rates[idx]!.amount!.message}
-                        </p>
-                      )}
-                      <div className="w-16">
-                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Đơn vị</label>
-                        <input
-                          {...register(`rates.${idx}.unit`)}
-                          readOnly
-                          className={`${getInputCls(false, 'text-[15px] font-bold')} bg-gray-50 text-gray-500 cursor-not-allowed text-center border-gray-100`}
-                        />
+
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                            Đơn giá (VNĐ) <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            {...register(`rates.${idx}.amount`)}
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            readOnly={hasActiveSessions}
+                            className={`${getInputCls(!!errors.rates?.[idx]?.amount, 'text-[16px] text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
+                          />
+                        </div>
+                        {errors.rates?.[idx]?.amount && (
+                          <p className={errCls}>
+                            <span>⚠</span> {errors.rates[idx]!.amount!.message}
+                          </p>
+                        )}
+                        <div className="w-16">
+                          <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                            Đơn vị
+                          </label>
+                          <input
+                            {...register(`rates.${idx}.unit`)}
+                            readOnly
+                            className={`${getInputCls(false, 'text-[15px] font-bold')} bg-gray-50 text-gray-500 cursor-not-allowed text-center border-gray-100`}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
                 {errors.rates?.root && (
                   <p className={errCls}>
                     <span>⚠</span> {errors.rates.root.message}
@@ -869,7 +998,7 @@ export function PricingFormModal({
           >
             {step === 1 ? 'Hủy Bỏ' : 'Quay Lại'}
           </button>
-          
+
           {step < 3 ? (
             <button
               type="button"

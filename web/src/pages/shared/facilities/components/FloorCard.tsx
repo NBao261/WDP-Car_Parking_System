@@ -8,6 +8,7 @@ import {
   CheckCircle,
   Trash2,
   Pencil,
+  Eye,
   Map,
   Plus,
   Layers,
@@ -15,6 +16,7 @@ import {
 import { floorService, Floor } from '../../../../services/floor.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
+import { getVehicleColorTheme } from '../../vehicles/components/constants';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -34,6 +36,7 @@ interface FloorCardProps {
   onUpdate: (updated: Floor) => void;
   onRemove: (id: string) => void;
   onViewMap: (floor: Floor) => void;
+  onViewDetail?: (floor: Floor) => void;
   isFacilityActive?: boolean;
 }
 
@@ -49,6 +52,7 @@ interface FloorGridProps {
   onRemove: (id: string) => void;
   onRefresh: () => void; // only needed for create/edit
   onViewMap: (floor: Floor) => void;
+  onViewDetail?: (floor: Floor) => void;
   isFacilityActive?: boolean;
 }
 
@@ -98,6 +102,7 @@ export const FloorCard = React.memo(function FloorCard({
   onUpdate,
   onRemove,
   onViewMap,
+  onViewDetail,
   isFacilityActive = true,
 }: FloorCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -168,12 +173,12 @@ export const FloorCard = React.memo(function FloorCard({
       ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
       : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
-  // Vehicle type name pills - Optimized with useMemo
-  const vtNames = useMemo(() => {
+  // Vehicle type objects - Optimized with useMemo
+  const vtTypes = useMemo(() => {
     return (floor.allowedVehicleTypes || [])
       .map((item: any) => {
         const typeId = typeof item === 'string' ? item : item._id;
-        return vehicleTypes.find((v) => v._id === typeId)?.name || item.name;
+        return vehicleTypes.find((v) => v._id === typeId) || (typeof item === 'object' ? item : null);
       })
       .filter(Boolean);
   }, [floor.allowedVehicleTypes, vehicleTypes]);
@@ -287,6 +292,21 @@ export const FloorCard = React.memo(function FloorCard({
                         setMenuOpen(false);
                       }}
                     />
+                    {onViewDetail && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onViewDetail(floor);
+                            setMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <Eye size={14} /> Xem chi tiết
+                        </button>
+                        <div className="h-px bg-gray-100 mx-2 my-1" />
+                      </>
+                    )}
                     {isActive && (
                       <>
                         <button
@@ -341,26 +361,18 @@ export const FloorCard = React.memo(function FloorCard({
 
         {/* Vehicle type pills - separate row */}
         <div className="flex flex-wrap gap-1.5 mt-1 pl-[60px]">
-          {vtNames.length === 0 ? (
+          {vtTypes.length === 0 ? (
             <span className="text-[11px] text-gray-400 italic">Không có loại xe</span>
           ) : (
-            vtNames.map((name, i) => {
-              const vtIndex = vehicleTypes.findIndex((v) => v.name === name);
-              const idx = Math.max(0, vtIndex);
-              const colors = [
-                { bg: '#F3F4F6', text: '#4B5563' },
-                { bg: '#EAF5E4', text: '#062F28' },
-                { bg: '#9FE870', text: '#062F28' },
-                { bg: '#062F28', text: '#9FE870' },
-              ];
-              const color = colors[Math.min(idx, colors.length - 1)];
+            vtTypes.map((v: any, i: number) => {
+              const color = getVehicleColorTheme(v.code || v.name, v.icon);
               return (
                 <span
                   key={i}
                   className="px-2 py-0.5 rounded text-[11px] font-medium"
                   style={{ background: color.bg, color: color.text }}
                 >
-                  {name}
+                  {v.name}
                 </span>
               );
             })
@@ -370,7 +382,7 @@ export const FloorCard = React.memo(function FloorCard({
 
       {/* 3 Stats Box */}
       <div className="px-5 pb-5 mt-1">
-        <div className="flex items-center justify-between border border-gray-100 rounded-xl p-3 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+        <div className="flex items-center justify-between border border-[#9FE870] rounded-xl p-3 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
           <div className="text-center flex-1">
             <div className="text-[11px] text-[#7B7B7B] mb-1">Tổng slot</div>
             <div className="text-[15px] font-bold text-[#062F28]">{total}</div>
@@ -437,6 +449,7 @@ export function FloorGrid({
   onUpdate,
   onRemove,
   onViewMap,
+  onViewDetail,
   isFacilityActive = true,
 }: FloorGridProps) {
   if (isLoading) {
@@ -490,6 +503,7 @@ export function FloorGrid({
           onUpdate={onUpdate}
           onRemove={onRemove}
           onViewMap={onViewMap}
+          onViewDetail={onViewDetail}
           isFacilityActive={isFacilityActive}
         />
       ))}

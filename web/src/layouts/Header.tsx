@@ -12,6 +12,32 @@ import { useAuthStore } from '../store';
 import { UserRole } from '../../../shared/types';
 import React from 'react';
 
+const PATH_TRANSLATIONS: Record<string, string> = {
+  admin: 'Hệ thống',
+  manager: 'Quản lý',
+  staff: 'Nhân viên',
+  dashboard: 'Tổng quan',
+  users: 'Người dùng',
+  roles: 'Vai trò',
+  facilities: 'Bãi đỗ xe',
+  floors: 'Tầng / Khu vực',
+  slots: 'Vị trí đỗ',
+  vehicles: 'Phương tiện',
+  'vehicle-types': 'Loại xe',
+  reservations: 'Đặt chỗ',
+  payments: 'Thanh toán',
+  pricing: 'Bảng giá',
+  reports: 'Báo cáo',
+  settings: 'Cài đặt',
+  profile: 'Hồ sơ',
+  support: 'Hỗ trợ',
+  billing: 'Giao dịch',
+  exceptions: 'Ngoại lệ',
+  customers: 'Khách hàng',
+  config: 'Cấu hình',
+  logs: 'Lịch sử hoạt động',
+};
+
 interface HeaderProps {
   onMobileMenuToggle: () => void;
 }
@@ -44,20 +70,23 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         <BreadcrumbList>
           {pathnames.length === 0 ? (
             <BreadcrumbItem>
-              <BreadcrumbPage>Dashboard</BreadcrumbPage>
+              <BreadcrumbPage>Tổng quan</BreadcrumbPage>
             </BreadcrumbItem>
           ) : (
             <React.Fragment>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to={dashboardPath}>Home</Link>
+                  <Link to={dashboardPath}>Trang chủ</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               {pathnames.map((value, index) => {
                 const isLast = index === pathnames.length - 1;
                 const to = `/${pathnames.slice(0, index + 1).join('/')}`;
-                // Capitalize and format value
-                let title = value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, ' ');
+                
+                // Translate or Capitalize
+                let title = PATH_TRANSLATIONS[value.toLowerCase()] || 
+                            value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, ' ');
+                
                 // If the path segment is a MongoDB ObjectId, show "Chi tiết" instead
                 if (/^[a-fA-F0-9]{24}$/.test(value)) {
                   title = 'Chi tiết';
