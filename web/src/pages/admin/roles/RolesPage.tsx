@@ -69,7 +69,7 @@ export default function RoleListPage() {
 
   return (
     <motion.div
-      className="space-y-6 max-w-[1400px] mx-auto pb-12"
+      className="space-y-6 pb-12"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -166,7 +166,7 @@ export default function RoleListPage() {
               <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">
                 Vai trò hệ thống mặc định ({defaultRoles.length})
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {defaultRoles.map((role) => (
                   <RoleCard
                     key={role._id}
@@ -185,7 +185,7 @@ export default function RoleListPage() {
               <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">
                 Vai trò tùy chỉnh ({customRoles.length})
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {customRoles.map((role) => (
                   <RoleCard
                     key={role._id}
