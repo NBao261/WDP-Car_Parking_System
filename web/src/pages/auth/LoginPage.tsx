@@ -19,7 +19,7 @@ const LoginPage: React.FC = () => {
         className="absolute top-0 left-0 w-full p-6 sm:p-10 z-20 flex items-center gap-3"
       >
         <img
-          src="/Logo.png"
+          src="/Logo_chu.png"
           alt="LYNC Park Logo"
           className="h-[40px] sm:h-[48px] w-auto object-contain rounded-[8px]"
         />

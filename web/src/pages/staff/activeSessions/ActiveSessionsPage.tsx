@@ -26,14 +26,14 @@ export default function ActiveSessionsPage() {
     <div className="h-full flex flex-col gap-3 overflow-hidden p-4 lg:p-6">
       {/* Page Title — compact */}
       <div className="shrink-0 px-1 pt-1">
-        <h1 className="text-xl font-bold text-[#060606]">Danh Sách Xe Trong Bãi</h1>
+        <h1 className="text-[25px] font-bold text-[#060606]">Danh Sách Xe Trong Bãi</h1>
         <p className="text-[12px] text-gray-400 mt-0.5">
           Theo dõi danh sách xe đang trong bãi và hỗ trợ tìm kiếm.
         </p>
       </div>
 
-      {/* Stats Row — 1 hàng ngang compact, ~60px */}
-      <div className="grid grid-cols-3 gap-3 shrink-0 h-[60px]">
+      {/* Stats Row — 1 hàng ngang compact */}
+      <div className="grid grid-cols-3 gap-3 shrink-0">
         <div className="col-span-1">
           <CurrentOccupancy count={totalActiveSessions} />
         </div>

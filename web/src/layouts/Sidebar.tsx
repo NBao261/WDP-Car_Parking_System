@@ -133,11 +133,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         role="navigation"
         aria-label="Main navigation"
       >
-        <div className="h-20 flex items-center px-6 gap-3 shrink-0">
-          <div className="w-14 h-14 flex items-center justify-center shrink-0 overflow-hidden">
-            <img src="/Logo.png" alt="ParkMaster Logo" className="w-full h-full object-contain" />
-          </div>
-          <span className="font-bold text-xl tracking-tight">LYNC PARK</span>
+        <div className="h-20 flex items-center justify-start pl-3 pr-4 shrink-0">
+          <img src="/Logo_chu.png" alt="LYNC Park Logo" className="h-20 w-auto py-1 object-contain" />
         </div>
 
         <nav className="flex-1 px-4 pb-6 overflow-y-auto custom-scrollbar">

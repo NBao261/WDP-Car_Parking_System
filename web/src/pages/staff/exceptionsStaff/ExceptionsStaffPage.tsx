@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { RefreshCw, Plus } from 'lucide-react';
 import ExceptionsList, { ExceptionData } from './components/ExceptionsList';
 import ExceptionDetailDrawer from './components/ExceptionDetailDrawer';
 import CreateExceptionModal from './components/CreateExceptionModal';
@@ -54,12 +55,12 @@ function mapApiException(exc: any, pricingMap?: Map<string, number>): ExceptionD
     vehicleType: (session?.vehicleTypeId as any)?.name || '—',
     checkInTime: session?.checkInTime
       ? new Date(session.checkInTime).toLocaleString('vi-VN', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
       : '—',
     slotCode: (session?.slotId as any)?.code || '—',
     floorName: (session?.floorId as any)?.name || '—',
@@ -156,24 +157,26 @@ export default function ExceptionsStaffPage() {
     <div className="h-full flex flex-col gap-3 overflow-hidden p-4 lg:p-6">
       <div className="shrink-0 px-1 pt-1 flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold text-[#060606]">Xử lý sự cố</h1>
+          <h1 className="text-[25px] font-bold text-[#060606]">Xử lý sự cố</h1>
           <p className="text-[12px] text-gray-400 mt-0.5">
             Các sự cố bạn đã báo cáo và trạng thái giải quyết.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-[12px]">
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="px-4 py-2 text-[13px] font-bold bg-[#1a1a1a] text-[#9FE870] rounded-[8px] hover:bg-black transition-colors"
+            className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[#a6e676] text-[#132c20] border-none text-[16px] font-bold hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            + Tạo Sự Cố
+            <Plus size={17} />
+            Tạo Sự Cố
           </button>
           <button
             onClick={fetchExceptions}
             disabled={isLoading}
-            className="px-4 py-2 text-[13px] font-medium border border-[#e8e9e8] rounded-[8px] hover:bg-[#f5ffe8] hover:border-[#9FE870] transition-colors disabled:opacity-50"
+            className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-white border-[1.5px] border-gray-200 text-[#1a1a1a] text-[16px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Đang tải...' : '↻ Làm mới'}
+            <RefreshCw size={17} className={isLoading ? 'animate-spin' : ''} />
+            Làm mới
           </button>
         </div>
       </div>
