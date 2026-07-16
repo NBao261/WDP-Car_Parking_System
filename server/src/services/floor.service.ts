@@ -2,6 +2,7 @@ import { Floor, IFloor } from '../models/floor.model';
 import { ParkingSlot } from '../models/parkingSlot.model';
 import { VehicleType } from '../models/vehicleType.model';
 import { AppError } from '../middlewares/error.middleware';
+import { delCache } from '../config/redis';
 
 export class FloorService {
   static async createFloor(data: Partial<IFloor>): Promise<IFloor> {
@@ -25,6 +26,10 @@ export class FloorService {
         { $addToSet: { floors: newFloor._id } }
       );
     }
+    
+    // Invalidate OperationsConfig Cache
+    await delCache(`cache:operationsConfig:${data.facilityId}`);
+    await delCache(`cache:public:available-slots:${data.facilityId}`);
 
     return newFloor;
   }
@@ -50,6 +55,10 @@ export class FloorService {
       // Cascade: slots available → maintenance
       await ParkingSlot.updateMany({ floorId: id, status: 'available' }, { status: 'maintenance' });
     }
+    
+    // Invalidate OperationsConfig Cache
+    await delCache(`cache:operationsConfig:${floor.facilityId}`);
+    await delCache(`cache:public:available-slots:${floor.facilityId}`);
 
     return floor;
   }
@@ -110,6 +119,10 @@ export class FloorService {
         { $addToSet: { floors: currentFloor._id } }
       );
     }
+    
+    // Invalidate OperationsConfig Cache
+    await delCache(`cache:operationsConfig:${currentFloor.facilityId}`);
+    await delCache(`cache:public:available-slots:${currentFloor.facilityId}`);
 
     return floor;
   }
@@ -140,6 +153,10 @@ export class FloorService {
         { $pull: { floors: floor._id } }
       );
     }
+    
+    // Invalidate OperationsConfig Cache
+    await delCache(`cache:operationsConfig:${floor.facilityId}`);
+    await delCache(`cache:public:available-slots:${floor.facilityId}`);
 
     return floor;
   }

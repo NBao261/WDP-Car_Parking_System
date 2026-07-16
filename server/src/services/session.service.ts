@@ -439,6 +439,8 @@ export class SessionService {
       };
       delete populatedSession.checkInImage;
       delete populatedSession.checkOutImage;
+      // Invalidate public available slots cache
+      await delCache(`cache:public:available-slots:${data.facilityId}`);
 
       return populatedSession as any;
     } catch (error) {
@@ -1119,6 +1121,9 @@ export class SessionService {
 
       // Defer Background Upload (Push to BullMQ)
       addUploadJob(session._id.toString()).catch(console.error);
+
+      // Invalidate public available slots cache
+      await delCache(`cache:public:available-slots:${session.facilityId}`);
 
       return populatedSession!;
     } catch (error) {

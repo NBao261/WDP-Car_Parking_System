@@ -3,6 +3,7 @@ import { Floor } from '../models/floor.model';
 import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
 import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { AppError } from '../middlewares/error.middleware';
+import { delPattern } from '../config/redis';
 
 /**
  * Chuẩn hóa tên: bỏ dấu tiếng Việt, lowercase, trim khoảng trắng thừa.
@@ -61,6 +62,10 @@ export class VehicleTypeService {
       );
     }
 
+    // Invalidate OperationsConfig Cache
+    await delPattern('cache:operationsConfig:*');
+    await delPattern('cache:public:available-slots:*');
+
     return newType;
   }
 
@@ -106,6 +111,10 @@ export class VehicleTypeService {
       }
     }
 
+    // Invalidate OperationsConfig Cache
+    await delPattern('cache:operationsConfig:*');
+    await delPattern('cache:public:available-slots:*');
+
     return vehicleType;
   }
 
@@ -150,6 +159,10 @@ export class VehicleTypeService {
 
     vehicleType.floors = [];
     await vehicleType.save();
+
+    // Invalidate OperationsConfig Cache
+    await delPattern('cache:operationsConfig:*');
+    await delPattern('cache:public:available-slots:*');
 
     return vehicleType;
   }

@@ -84,7 +84,7 @@ export async function getCache<T = any>(key: string): Promise<T | null> {
 /**
  * Ghi cache với TTL (giây).
  */
-export async function setCache(key: string, data: any, ttlSeconds: number): Promise<void> {
+export async function setCache(key: string, data: any, ttlSeconds: number = 86400): Promise<void> {
   try {
     const client = getRedis();
     if (!client || !isConnected) return;

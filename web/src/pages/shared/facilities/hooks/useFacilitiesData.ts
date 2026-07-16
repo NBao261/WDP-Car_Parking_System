@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 import { facilityService, Facility } from '../../../../services/facility.service';
 import { floorService, Floor } from '../../../../services/floor.service';
@@ -23,6 +24,7 @@ export function useFacilitiesData() {
   const [allSlots, setAllSlots] = useState<ParkingSlot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewFacility, setViewFacility] = useState<Facility | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   // Filters state
   const [search, setSearch] = useState('');
@@ -101,29 +103,63 @@ export function useFacilitiesData() {
 
   useEffect(() => {
     fetchAll();
-    const interval = setInterval(() => fetchAll(true), 30000); // 30s global polling
-    return () => clearInterval(interval);
+
+    const socketUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
+    const socket = io(socketUrl, {
+      transports: ['websocket'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      // Admin might not have assignedFacilityIds (meaning all facilities), 
+      // but for managers we join specific ones. For admin, we could listen to a global event if we had one.
+      // But we can join all loaded facilities once they are loaded.
+    });
+
+    socket.on('slot:statusChanged', () => {
+      fetchAll(true);
+    });
+    
+    socket.on('facility:updated', () => {
+      fetchAll(true);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, [fetchAll]);
 
-  // Fast polling only for the currently viewed mapFloor
+  // Join rooms when facilities load
   useEffect(() => {
-    if (!mapFloor) return;
-    const interval = setInterval(() => {
-      slotService
-        .getByFloor(mapFloor._id)
-        .then((res) => {
-          const sorted = res.data.sort((a: ParkingSlot, b: ParkingSlot) =>
-            a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
-          );
-          setMapSlots(sorted);
-          setAllSlots((prev) => {
-            const others = prev.filter((s) => s.floorId !== mapFloor._id);
-            return [...others, ...sorted];
-          });
-        })
-        .catch(() => {});
-    }, 5000);
-    return () => clearInterval(interval);
+    if (socketRef.current && socketRef.current.connected && facilities.length > 0) {
+      facilities.forEach(f => {
+        socketRef.current?.emit('join:facility', f._id);
+      });
+    }
+  }, [facilities]);
+
+  // Fast polling only for the currently viewed mapFloor - REMOVED
+  // Instead, the global socket listener above triggers fetchAll(true) which syncs all slots.
+  // To avoid heavy loads on every single slot change, we might want to just fetch slots for the viewed floor, 
+  // but since we only have ~100s slots, fetchAll(true) is acceptable. 
+  // For better map real-time performance without full fetch:
+  useEffect(() => {
+    if (!mapFloor || !socketRef.current) return;
+    
+    const handleSlotChange = (data: any) => {
+      // If the changed slot belongs to the current mapFloor, we can update just that slot
+      if (data.facilityId === mapFloor.facilityId) {
+         // fetchAll is already triggered globally, but we can also do a quick localized fetch if needed.
+         // Actually fetchAll(true) handles syncing mapSlots already!
+      }
+    };
+    
+    socketRef.current.on('slot:statusChanged', handleSlotChange);
+    return () => {
+      socketRef.current?.off('slot:statusChanged', handleSlotChange);
+    };
   }, [mapFloor]);
 
   const refreshFloors = useCallback(async () => {
