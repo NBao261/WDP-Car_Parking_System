@@ -64,9 +64,6 @@ export default function RoleListPage() {
       role.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const defaultRoles = filteredRoles.filter((r) => r.isDefault);
-  const customRoles = filteredRoles.filter((r) => !r.isDefault);
-
   return (
     <motion.div
       className="space-y-6 pb-12"
@@ -97,13 +94,10 @@ export default function RoleListPage() {
           
           <div className="relative z-10 flex gap-3 mt-auto">
             <div className="bg-white text-black px-4 py-3 rounded-full text-[14px] font-medium flex-1 flex justify-center items-center gap-2 shadow-sm">
-              {defaultRoles.length} Cố định 
+              {filteredRoles.length} Vai trò mặc định 
               <div className="w-4 h-4 rounded-full bg-[#9FE870] flex items-center justify-center">
                 <ArrowDown size={10} className="text-[#062F28]" strokeWidth={3}/>
               </div>
-            </div>
-            <div className="bg-[#111111] text-white px-4 py-3 rounded-full text-[14px] font-medium flex-1 flex justify-center items-center gap-2 shadow-sm">
-              {customRoles.length} Tùy chỉnh <ArrowUpRight size={16} strokeWidth={2} />
             </div>
           </div>
         </div>
@@ -113,29 +107,18 @@ export default function RoleListPage() {
           <div className="absolute top-0 left-0 bg-[#9FE870] px-6 py-3 rounded-br-[24px] z-10">
             <h3 className="font-bold text-[15px] text-[#062F28]">Phân quyền & Truy cập</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5 relative z-10">
+          <div className="grid grid-cols-1 gap-5 mb-5 relative z-10">
             <div className="p-5 bg-white rounded-[20px] border-2 border-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-xl bg-[#9FE870]/20 flex items-center justify-center border border-[#9FE870]/30">
                   <ShieldAlert size={18} className="text-[#062F28]" />
                 </div>
-                <span className="font-bold text-sm text-[#062F28]">Vai trò hệ thống</span>
+                <span className="font-bold text-sm text-[#062F28]">Cấu trúc Phân Quyền</span>
               </div>
-              <div className="text-lg font-extrabold text-[#062F28] mb-1">Cố định</div>
-              <p className="text-[#6b6b6b] text-[11px] leading-relaxed font-semibold">
-                Các quyền mặc định không thể xóa. Phục vụ các nghiệp vụ cốt lõi của hệ thống.
-              </p>
-            </div>
-            <div className="p-5 bg-white rounded-[20px] border-2 border-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200">
-                  <Key size={18} className="text-gray-600" />
-                </div>
-                <span className="font-bold text-sm text-[#062F28]">Vai trò tùy chỉnh</span>
-              </div>
-              <div className="text-lg font-extrabold text-[#062F28] mb-1">Linh hoạt</div>
-              <p className="text-[#6b6b6b] text-[11px] leading-relaxed font-semibold">
-                Tạo và phân quyền chi tiết cho từng nghiệp vụ đặc thù mới phát sinh.
+              <div className="text-lg font-extrabold text-[#062F28] mb-1">Cố định & Mở rộng</div>
+              <p className="text-[#6b6b6b] text-[12px] leading-relaxed font-semibold">
+                Hệ thống sử dụng các <span className="text-[#062F28]">Vai trò cố định</span> để đảm bảo nghiệp vụ lõi (Admin, Manager, Staff, Driver). <br className="hidden md:block"/>
+                Để phân quyền chi tiết cho nghiệp vụ đặc thù mới phát sinh, vui lòng chỉnh sửa <span className="text-[#062F28]">Quyền tùy chỉnh</span> trực tiếp trên từng Nhân sự tại trang Quản lý Nhân Sự.
               </p>
             </div>
           </div>
@@ -160,33 +143,13 @@ export default function RoleListPage() {
         </div>
       ) : (
         <motion.div variants={containerVariants} className="space-y-6">
-          {/* Default Roles Section */}
-          {defaultRoles.length > 0 && (
+          {filteredRoles.length > 0 && (
             <div>
               <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">
-                Vai trò hệ thống mặc định ({defaultRoles.length})
+                Danh sách vai trò hệ thống ({filteredRoles.length})
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {defaultRoles.map((role) => (
-                  <RoleCard
-                    key={role._id}
-                    role={role}
-                    onConfigPerms={handleConfigPerms}
-                    onDeleted={handleRoleDeleted}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Custom Roles Section */}
-          {customRoles.length > 0 && (
-            <div>
-              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">
-                Vai trò tùy chỉnh ({customRoles.length})
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {customRoles.map((role) => (
+                {filteredRoles.map((role) => (
                   <RoleCard
                     key={role._id}
                     role={role}
