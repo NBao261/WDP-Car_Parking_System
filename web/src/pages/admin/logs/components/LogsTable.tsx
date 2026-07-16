@@ -355,42 +355,40 @@ export function LogsTable({ logs, isLoading, indexOffset }: LogsTableProps) {
 
                   {/* ── Expanded detail row — dùng CSS transition, KHÔNG dùng motion.tr ── */}
                   <tr className={`border-b border-gray-100 ${isExpanded ? 'bg-[#f8fffe]' : ''}`}>
-                    <td
-                      colSpan={6}
-                      style={{
-                        padding: 0,
-                        // CSS max-height transition: đây là cách duy nhất để animate table row đúng chuẩn
-                        maxHeight: isExpanded ? '600px' : '0px',
-                        overflow: 'hidden',
-                        transition: 'max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-                        display: 'block', // cần để max-height hoạt động trên <td>
-                      }}
-                    >
+                    <td colSpan={6} className="p-0 border-none">
                       <div
                         style={{
-                          opacity: isExpanded ? 1 : 0,
-                          transition: 'opacity 0.25s ease',
-                          transitionDelay: isExpanded ? '0.08s' : '0s',
+                          maxHeight: isExpanded ? '1000px' : '0px',
+                          overflow: 'hidden',
+                          transition: 'max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
                         }}
-                        className="px-6 py-4"
                       >
-                        {/* Header của panel chi tiết */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-6 h-6 rounded-md bg-[#132c20]/10 flex items-center justify-center">
-                            <Info size={13} className="text-[#132c20]" />
-                          </div>
-                          <span className="text-[12px] font-semibold text-[#132c20] uppercase tracking-wide">
-                            Chi tiết thay đổi
-                          </span>
-                          {log.ipAddress && (
-                            <span className="ml-auto text-[11px] text-gray-400 font-mono bg-gray-100 px-2 py-0.5 rounded">
-                              IP: {log.ipAddress}
+                        <div
+                          style={{
+                            opacity: isExpanded ? 1 : 0,
+                            transition: 'opacity 0.25s ease',
+                            transitionDelay: isExpanded ? '0.08s' : '0s',
+                          }}
+                          className="px-6 py-4"
+                        >
+                          {/* Header của panel chi tiết */}
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-6 h-6 rounded-md bg-[#132c20]/10 flex items-center justify-center">
+                              <Info size={13} className="text-[#132c20]" />
+                            </div>
+                            <span className="text-[12px] font-semibold text-[#132c20] uppercase tracking-wide">
+                              Chi tiết thay đổi
                             </span>
-                          )}
-                        </div>
+                            {log.ipAddress && (
+                              <span className="ml-auto text-[11px] text-gray-400 font-mono bg-gray-100 px-2 py-0.5 rounded">
+                                IP: {log.ipAddress}
+                              </span>
+                            )}
+                          </div>
 
-                        {/* Key-value table */}
-                        <PayloadPanel changes={log.changes as any} />
+                          {/* Key-value table */}
+                          <PayloadPanel changes={log.changes as any} />
+                        </div>
                       </div>
                     </td>
                   </tr>
