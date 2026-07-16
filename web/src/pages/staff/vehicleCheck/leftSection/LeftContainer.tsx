@@ -9,7 +9,7 @@ interface LeftContainerProps {
 export function LeftContainer({ checkInResult, setCheckInResult }: LeftContainerProps) {
   return (
     <div className="flex flex-col bg-white rounded-[12px] border border-[#e8e9e8] shadow-sm p-3 h-full min-h-0 overflow-y-auto">
-      <div className="shrink-0 pb-2">
+      <div className="flex-1 flex flex-col min-h-0 pb-2">
         <CheckInContainer onCheckIn={setCheckInResult} />
       </div>
       <div className="shrink-0">

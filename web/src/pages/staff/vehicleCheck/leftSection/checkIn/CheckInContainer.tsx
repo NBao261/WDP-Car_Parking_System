@@ -191,8 +191,8 @@ export function CheckInContainer({ onCheckIn }: { onCheckIn: (data: any) => void
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
       <CheckInHeader facilityName={logic.facilityName} gateIn={logic.gateIn} checkInImage={logic.checkInImage} ocrSuccess={logic.ocrSuccess} />
-      <div className="flex flex-col gap-3 flex-1 min-h-0">
-        <div className="flex gap-3 shrink-0">
+      <div className="flex flex-col gap-3 flex-1 min-h-[300px]">
+        <div className="flex gap-3 flex-1 min-h-0">
           <CheckInOCR previewUrl={logic.previewUrl} fileInputRef={logic.fileInputRef} isUploading={logic.isUploading} clearPreview={logic.clearPreview} handleImageUpload={logic.handleImageUpload} />
           <CheckInReservation
             inputReservationMode={logic.inputReservationMode} setInputReservationMode={logic.setInputReservationMode}

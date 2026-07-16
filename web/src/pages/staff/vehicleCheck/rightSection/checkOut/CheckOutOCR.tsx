@@ -13,7 +13,7 @@ export function CheckOutOCR({
   handleImageUpload,
 }: any) {
   return (
-    <div className="flex gap-3 relative shrink-0">
+    <div className="flex gap-3 relative flex-1 min-h-0">
       {step === 'CONFIRM' && !isMismatch && !isNoPlateVehicle && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#A3E635] text-[#1A202C] px-4 py-1 rounded-[4px] font-bold text-[12px] z-10 shadow-sm border border-[#84CC16]">
           Khớp
@@ -27,7 +27,7 @@ export function CheckOutOCR({
 
       <div className="flex-1 flex flex-col gap-1.5 min-h-0">
         <label className="block text-[10px] font-semibold text-[#6b6b6b]">Ảnh biển số vào</label>
-        <div className="h-[210px] w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 bg-[#fdfdfd] overflow-hidden relative">
+        <div className="h-full flex-1 w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 bg-[#fdfdfd] overflow-hidden relative min-h-[150px]">
           {currentSession?.checkInImage ? (
             (() => {
               const SERVER_URL = (
@@ -58,7 +58,7 @@ export function CheckOutOCR({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="h-[210px] w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 hover:border-[#A3E635] hover:bg-[#ECFCCB] transition-all duration-200 disabled:opacity-60 bg-[#fcfcfc]"
+            className="h-full flex-1 w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 hover:border-[#A3E635] hover:bg-[#ECFCCB] transition-all duration-200 disabled:opacity-60 bg-[#fcfcfc] min-h-[150px]"
           >
             {isUploading ? (
               <RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" />
@@ -76,7 +76,7 @@ export function CheckOutOCR({
             )}
           </button>
         ) : (
-          <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden h-[200px] bg-[#f5f5f4]">
+          <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden h-full flex-1 bg-[#f5f5f4] min-h-[150px]">
             <img src={ocrPreviewUrl} alt="preview" className="w-full h-full object-contain" />
             <button
               type="button"

@@ -122,7 +122,7 @@ export function CheckInReservation({
           </div>
         </div>
       ) : (
-        <div className="h-[210px] w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 bg-[#fcfcfc] px-3 relative">
+        <div className="h-full flex-1 min-h-[150px] w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 bg-[#fcfcfc] px-3 relative">
           {inputReservationMode === 'code' ? (
             <div className="w-full px-2">
               <input
