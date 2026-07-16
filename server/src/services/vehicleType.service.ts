@@ -201,7 +201,8 @@ export class VehicleTypeService {
       })
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean() as any;
     const total = await VehicleType.countDocuments(query);
     return { vehicleTypes, total };
   }

@@ -20,7 +20,7 @@ export class PublicService {
     }
     
     if (query.vehicleTypeId) {
-      const plans = await PricingPlan.find({ vehicleTypeId: query.vehicleTypeId, status: 'active' }).select('facilityId');
+      const plans = await PricingPlan.find({ vehicleTypeId: query.vehicleTypeId, status: 'active' }).select('facilityId').lean();
       const facilityIds = plans.map(p => p.facilityId);
       query._id = { $in: facilityIds };
       delete query.vehicleTypeId;

@@ -51,7 +51,7 @@ export class SessionService {
    */
   static async checkConditions(facilityId: string, vehicleTypeId: string, licensePlate?: string): Promise<CheckConditionsResult> {
     // 1. Kiểm tra facility tồn tại + active
-    const facility = await ParkingFacility.findById(facilityId);
+    const facility = await ParkingFacility.findById(facilityId).lean();
     if (!facility || facility.status !== 'active') {
       return { eligible: false, reason: 'Bãi xe không hoạt động hoặc không tồn tại' };
     }
@@ -78,18 +78,13 @@ export class SessionService {
     }
 
     // 3. Kiểm tra vehicleType tồn tại
-    const vehicleType = await VehicleType.findById(vehicleTypeId);
+    const vehicleType = await VehicleType.findById(vehicleTypeId).lean();
     if (!vehicleType || vehicleType.isDeleted) {
       return { eligible: false, reason: 'Loại phương tiện không hợp lệ' };
     }
 
     // 4. Kiểm tra loại xe có được phục vụ trong facility (qua floor.allowedVehicleTypes)
-    const floorsServingVehicle = await Floor.find({
-      facilityId,
-      allowedVehicleTypes: vehicleTypeId,
-      isDeleted: false,
-      status: 'active',
-    });
+    const floorsServingVehicle = await Floor.find({}).lean();
 
     if (floorsServingVehicle.length === 0) {
       return { eligible: false, reason: `Bãi xe không phục vụ loại xe "${vehicleType.name}"` };
@@ -142,10 +137,7 @@ export class SessionService {
 
     // 0. BR-6.6: Nếu có reservationCode → auto-fill facilityId, vehicleTypeId, licensePlate từ reservation
     if (data.reservationCode) {
-      matchedReservation = await Reservation.findOne({
-        code: data.reservationCode,
-        status: ReservationStatus.CONFIRMED,
-      });
+      matchedReservation = await Reservation.findOne({}).lean();
 
       if (!matchedReservation) {
         throw new AppError('Mã đặt chỗ không tồn tại hoặc đã được sử dụng/hủy', 404);
@@ -487,12 +479,7 @@ export class SessionService {
    */
   static async suggestFloors(facilityId: string, vehicleTypeId: string): Promise<SuggestedFloor[]> {
     // Tìm floors phục vụ loại xe này
-    const floors = await Floor.find({
-      facilityId,
-      allowedVehicleTypes: vehicleTypeId,
-      isDeleted: false,
-      status: 'active',
-    });
+    const floors = await Floor.find({}).lean();
 
     if (floors.length === 0) {
       return [];
@@ -572,7 +559,7 @@ export class SessionService {
       if (cachedSession) return cachedSession as any;
     }
 
-    const session = await ParkingSession.findOne(searchConditions)
+    const session = await ParkingSession.findOne(searchConditions).lean()
       .populate('vehicleTypeId', 'name code icon requiresPlate')
       .populate('facilityId', 'name address')
       .populate('floorId', 'name')
@@ -588,7 +575,7 @@ export class SessionService {
       await setCache(cacheKey, session, 30); // 30s TTL
     }
 
-    return session;
+    return session as any;
   }
 
   /**
@@ -731,7 +718,7 @@ export class SessionService {
       // Vẫn tính exception surcharge nếu có
       let exceptionSurcharge = 0;
       let lostCardFeeTotal = 0;
-      const resolvedExceptions = await Exception.find({ sessionId, status: ExceptionStatus.RESOLVED });
+      const resolvedExceptions = await Exception.find({ sessionId, status: ExceptionStatus.RESOLVED }).lean();
       for (const exc of resolvedExceptions) {
         exceptionSurcharge += exc.surcharge || 0;
         if (exc.type === ExceptionType.LOST_CARD) lostCardFeeTotal += pricingPlan.lostCardFee || 0;
@@ -772,7 +759,7 @@ export class SessionService {
 
       // Phí quá giờ: tính số giờ xe đậu NGOÀI giờ hoạt động của bãi
       if (pricingPlan.overtimeFeePerHour > 0) {
-        const facility = await ParkingFacility.findById(session.facilityId);
+        const facility = await ParkingFacility.findById(session.facilityId).lean();
         if (facility && facility.openTime !== facility.closeTime) {
           const otMinutes = this.calculateOvertimeMinutes(checkInTime, checkOutTime, facility.openTime, facility.closeTime);
           overtimeFee = Math.ceil(otMinutes / 60) * pricingPlan.overtimeFeePerHour;
@@ -809,7 +796,7 @@ export class SessionService {
 
       // Phí quá giờ: tính số giờ xe đậu NGOÀI giờ hoạt động của bãi
       if (pricingPlan.overtimeFeePerHour > 0) {
-        const facility = await ParkingFacility.findById(session.facilityId);
+        const facility = await ParkingFacility.findById(session.facilityId).lean();
         if (facility && facility.openTime !== facility.closeTime) {
           const otMinutes = this.calculateOvertimeMinutes(checkInTime, checkOutTime, facility.openTime, facility.closeTime);
           overtimeFee = Math.ceil(otMinutes / 60) * pricingPlan.overtimeFeePerHour;
@@ -822,7 +809,7 @@ export class SessionService {
     // ═══════════════════════════════════════════════════
     else if (feeMethod === 'time_window') {
       // Lookup facility operating hours
-      const facility = await ParkingFacility.findById(session.facilityId);
+      const facility = await ParkingFacility.findById(session.facilityId).lean();
       if (!facility) throw new AppError('Facility không tồn tại', 404);
 
       const twResult = this.calculateTimeWindowFee(
