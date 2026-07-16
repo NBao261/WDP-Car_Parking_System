@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { io, Socket } from 'socket.io-client';
 import { toast } from "sonner";
 import { facilityService } from "../../../../../services/facility.service";
 import { apiClient } from "../../../../../services/api";
@@ -55,8 +56,25 @@ export function CheckInContainer({ onCheckIn }: { onCheckIn: (data: any) => void
       logic.setCapacityLoaded(true);
     };
     fetchCapacity();
-    const interval = setInterval(fetchCapacity, 30000);
-    return () => clearInterval(interval);
+
+    const socketUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
+    const socket: Socket = io(socketUrl, {
+      transports: ['websocket'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+
+    socket.on('connect', () => {
+      socket.emit('join:facility', logic.facilityId);
+    });
+
+    socket.on('slot:statusChanged', () => {
+      fetchCapacity();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, [logic.facilityId]);
 
   useEffect(() => {

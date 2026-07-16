@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import axios from "axios";
+import { io, Socket } from 'socket.io-client';
 import { sessionService } from "../../../../../services/session.service";
 import { paymentService } from "../../../../../services/payment.service";
 import { useCheckOutState } from "./useCheckOutState";
@@ -11,6 +13,50 @@ export function useCheckOutLogic(
   onSearch?: (session: any) => void
 ) {
   const state = useCheckOutState();
+  const socketRef = useRef<Socket | null>(null);
+
+  const finishCheckOutProcess = (checkOutResData: any, methodStr: string) => {
+    const timeStr = checkOutResData.checkOutTime ? new Date(checkOutResData.checkOutTime) : new Date();
+    const actualCheckOutTime = timeStr.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const actualCheckOutDate = timeStr.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    onCheckOut((prev: any) => ({ ...prev, checkOutTime: actualCheckOutTime, checkOutDate: actualCheckOutDate, paymentStatus: methodStr }));
+    state.setPaymentSuccess(true);
+  };
+
+  useEffect(() => {
+    const socketUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
+    const socket: Socket = io(socketUrl, {
+      transports: ['websocket'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      if (state.currentSession?.facilityId) {
+        socket.emit('join:facility', state.currentSession.facilityId);
+      }
+    });
+
+    socket.on('payment:completed', (data: any) => {
+      if (state.transactionCode && data.transactionCode === state.transactionCode) {
+        state.showMsg("Khách đã thanh toán Momo thành công!", "success");
+        state.setMomoQR(null);
+        state.setIsPolling(false);
+        finishCheckOutProcess({ ...state.currentSession, checkOutTime: new Date().toISOString() }, 'Momo');
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [state.transactionCode, state.currentSession]);
+
+  useEffect(() => {
+    if (socketRef.current && socketRef.current.connected && state.currentSession?.facilityId) {
+      socketRef.current.emit('join:facility', state.currentSession.facilityId);
+    }
+  }, [state.currentSession]);
 
   const handleSearch = async (overrideQuery?: string, overrideMode?: 'code' | 'plate') => {
     const query = (typeof overrideQuery === 'string' ? overrideQuery : state.searchInput).trim();
@@ -116,14 +162,6 @@ export function useCheckOutLogic(
     if (onSearch) onSearch(null); if (onCheckOut) onCheckOut(null);
   };
 
-  const finishCheckOutProcess = (checkOutResData: any, methodStr: string) => {
-    const timeStr = checkOutResData.checkOutTime ? new Date(checkOutResData.checkOutTime) : new Date();
-    const actualCheckOutTime = timeStr.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-    const actualCheckOutDate = timeStr.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    onCheckOut((prev: any) => ({ ...prev, checkOutTime: actualCheckOutTime, checkOutDate: actualCheckOutDate, paymentStatus: methodStr }));
-    state.setPaymentSuccess(true);
-  };
-
   const validateMismatch = () => {
     const isMismatch = !state.isNoPlateVehicle && plate.toUpperCase() !== state.plateIn.toUpperCase();
     if (isMismatch && !state.manualConfirmed) { state.showMsg("LỖI: Biển số xe ra KHÔNG KHỚP với biển số vào. Xác nhận thủ công trước!"); return false; }
@@ -150,19 +188,9 @@ export function useCheckOutLogic(
         const res = await paymentService.createIntent({ sessionId: state.currentSession._id, method: 'e_wallet' });
         if (res.success && (res.data?.qrCodeUrl || res.data?.paymentUrl)) {
           const finalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(res.data.qrCodeUrl || res.data.paymentUrl)}`;
-          state.setMomoQR(finalQrUrl); state.setTransactionCode(res.data.payment.transactionCode); state.setIsPolling(true);
-          if (state.pollIntervalRef.current) clearInterval(state.pollIntervalRef.current);
-          state.pollIntervalRef.current = setInterval(async () => {
-            try {
-              const statusRes = await paymentService.checkStatus(res.data.payment.transactionCode);
-              if (statusRes.data?.isPaid) {
-                if (state.pollIntervalRef.current) clearInterval(state.pollIntervalRef.current);
-                state.showMsg("Khách đã thanh toán Momo thành công!", "success");
-                state.setMomoQR(null);
-                finishCheckOutProcess({ ...state.currentSession, checkOutTime: new Date().toISOString() }, 'Momo');
-              }
-            } catch (err) { }
-          }, 3000);
+          state.setMomoQR(finalQrUrl); 
+          state.setTransactionCode(res.data.payment.transactionCode); 
+          state.setIsPolling(true);
         } else { state.showMsg("Không thể tạo mã QR Momo!"); }
       } catch (error: any) { state.showMsg(error.message || 'Lỗi khi tạo giao dịch Momo!'); }
       finally { state.setIsSubmitting(false); }

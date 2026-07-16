@@ -5,6 +5,8 @@ import { VehicleType, IVehicleType } from '../models/vehicleType.model';
 import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 
+import { getCache, setCache, delPattern, delCache } from '../config/redis';
+
 export class FacilityService {
   static async createFacility(data: Partial<IParkingFacility>): Promise<IParkingFacility> {
     const existingFacility = await ParkingFacility.findOne({ name: data.name });
@@ -14,6 +16,10 @@ export class FacilityService {
 
     const newFacility = new ParkingFacility(data);
     await newFacility.save();
+    
+    // Invalidate public facilities cache
+    await delPattern('cache:public:facilities:*');
+    
     return newFacility;
   }
 
@@ -43,6 +49,10 @@ export class FacilityService {
       await Floor.updateMany({ facilityId: id, isDeleted: false }, { status: 'active' });
       await ParkingSlot.updateMany({ facilityId: id, status: 'maintenance' }, { status: 'available' });
     }
+
+    // Invalidate caches
+    await delPattern('cache:public:facilities:*');
+    await delCache(`cache:public:available-slots:${id}`);
 
     return facility;
   }
@@ -75,6 +85,10 @@ export class FacilityService {
     // Cascade: floors → inactive, slots available → maintenance
     await Floor.updateMany({ facilityId: id, isDeleted: false }, { status: 'inactive' });
     await ParkingSlot.updateMany({ facilityId: id, status: 'available' }, { status: 'maintenance' });
+
+    // Invalidate caches
+    await delPattern('cache:public:facilities:*');
+    await delCache(`cache:public:available-slots:${id}`);
 
     return facility;
   }
@@ -118,6 +132,12 @@ export class FacilityService {
       await facility.save();
     }
 
+    // Invalidate caches
+    await delPattern('cache:public:facilities:*');
+    await delCache(`cache:public:available-slots:${id}`);
+    await delCache(`cache:public:pricing:${id}`);
+    await delCache(`cache:operationsConfig:${id}`);
+
     return facility;
   }
 
@@ -142,6 +162,10 @@ export class FacilityService {
    * API này an toàn với Staff (FACILITY_READ) mà không cần mở Floor API
    */
   static async getOperationsConfig(facilityId: string): Promise<{ facilityId: string; allowedVehicleTypes: IVehicleType[] }> {
+    const cacheKey = `cache:operationsConfig:${facilityId}`;
+    const cached = await getCache(cacheKey);
+    if (cached) return cached;
+
     const facility = await ParkingFacility.findById(facilityId);
     if (!facility) {
       throw new AppError('Facility not found', 404);
@@ -168,6 +192,11 @@ export class FacilityService {
       isDeleted: false,
     }).sort({ name: 1 });
 
-    return { facilityId, allowedVehicleTypes };
+    const result = { facilityId, allowedVehicleTypes };
+    
+    // Cache indefinitely (until invalidated by floor/vehicle type changes)
+    await setCache(cacheKey, result);
+
+    return result;
   }
 }

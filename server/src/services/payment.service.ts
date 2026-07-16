@@ -164,6 +164,10 @@ export class PaymentService {
           status: SlotStatus.AVAILABLE,
           facilityId: session.facilityId,
         });
+        getIO().to(`facility:${session.facilityId}`).emit('payment:completed', {
+          transactionCode: payment.transactionCode,
+          sessionId: session._id,
+        });
       } catch (e) {
         // Bỏ qua lỗi socket
       }

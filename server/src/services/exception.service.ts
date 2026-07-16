@@ -4,6 +4,7 @@ import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
 import { ParkingSlot, SlotStatus } from '../models/parkingSlot.model';
 import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
+import { getIO } from '../config/socket';
 
 interface CreateExceptionDto {
   sessionId: string;
@@ -70,7 +71,6 @@ export class ExceptionService {
 
     await exception.save();
 
-    // Khoá session (không cho checkout cho đến khi exception được resolve)
     if (
       data.type === ExceptionType.LOST_CARD ||
       data.type === ExceptionType.WRONG_PLATE ||
@@ -78,6 +78,15 @@ export class ExceptionService {
     ) {
       session.status = SessionStatus.EXCEPTION;
       await session.save();
+    }
+
+    try {
+      getIO().to(`facility:${session.facilityId}`).emit('exception:created', {
+        exception,
+        facilityId: session.facilityId,
+      });
+    } catch (e) {
+      // Bỏ qua lỗi socket
     }
 
     return exception;
@@ -290,6 +299,15 @@ export class ExceptionService {
       .populate('managerId', 'name email')
       .populate('sessionId');
 
+    try {
+      getIO().to(`facility:${session.facilityId}`).emit('exception:resolved', {
+        exception: updatedException,
+        facilityId: session.facilityId,
+      });
+    } catch (e) {
+      // Bỏ qua lỗi socket
+    }
+
     return updatedException!;
   }
 
@@ -350,7 +368,7 @@ export class ExceptionService {
         const adminUser = await mongooseUser.findOne({ role: 'admin' });
 
         if (adminUser) {
-          await Exception.create({
+          const newException = await Exception.create({
             sessionId: session._id,
             type: ExceptionType.OVERTIME,
             description: 'Phát hiện xe đỗ quá 24h liên tục tự động bởi hệ thống.',
@@ -358,6 +376,15 @@ export class ExceptionService {
             status: ExceptionStatus.NEW
           });
           detectedCount++;
+          
+          try {
+            getIO().to(`facility:${session.facilityId}`).emit('exception:created', {
+              exception: newException,
+              facilityId: session.facilityId,
+            });
+          } catch (e) {
+            // ignore
+          }
         }
       }
     }
