@@ -149,7 +149,13 @@ export function StaffTable({
                 </tr>
               ) : (
                 sortedUsers.map((user, idx) => (
-                  <motion.tr key={user._id} className="hover:bg-[#9FE870]/10 transition-colors group">
+                  <motion.tr 
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    key={user._id} 
+                    className="hover:bg-[#9FE870]/10 transition-colors group"
+                  >
                     <td className="px-6 py-4 text-[#6b6b6b] text-[13px] text-center font-medium">
                       {indexOffset + idx + 1}
                     </td>

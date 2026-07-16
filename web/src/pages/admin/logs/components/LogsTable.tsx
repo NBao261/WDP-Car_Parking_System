@@ -201,7 +201,10 @@ export function LogsTable({ logs, isLoading, indexOffset }: LogsTableProps) {
               const isExpanded = expandedLogId === log._id;
               return (
                 <React.Fragment key={log._id}>
-                  <tr
+                  <motion.tr
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     className={`hover:bg-gray-50/50 transition-colors cursor-pointer ${isExpanded ? 'bg-gray-50/50' : ''}`}
                     onClick={() => setExpandedLogId(isExpanded ? null : log._id)}
                   >
@@ -265,7 +268,7 @@ export function LogsTable({ logs, isLoading, indexOffset }: LogsTableProps) {
                         {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                       </button>
                     </td>
-                  </tr>
+                  </motion.tr>
 
                   {/* Expanded payload row */}
                   <AnimatePresence>

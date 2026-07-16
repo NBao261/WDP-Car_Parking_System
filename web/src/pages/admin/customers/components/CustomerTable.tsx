@@ -140,6 +140,9 @@ export function CustomerTable({
               ) : (
                 sortedUsers.map((user, idx) => (
                   <motion.tr
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     key={user._id}
                     className="hover:bg-[#9FE870]/10 transition-colors group"
                   >
