@@ -221,8 +221,7 @@ export function PricingDetailModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase mb-1.5 flex items-center gap-1.5">
-                      <VtIcon size={14} /> Loại xe
-                    </p>
+                     </p>
                     <div className="flex items-center">
                       {(() => {
                         const vtObj = vehicleTypes.find(v => v._id === vtId);
