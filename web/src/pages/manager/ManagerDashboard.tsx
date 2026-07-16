@@ -6,9 +6,6 @@ import {
   FileSpreadsheet,
   ArrowUpRight,
   ArrowDownRight,
-  LayoutDashboard,
-  Building2,
-  ScrollText,
 } from 'lucide-react';
 import { userService } from '../../services/user.service';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -79,22 +76,12 @@ function getRevenueFontSize(value: number): string {
   return 'text-[26px] xl:text-[30px]';
 }
 
-/* ── Tab config ─────────────────────────────────────────── */
-
-const TABS = [
-  { id: 'overview', label: 'Tổng quan', icon: LayoutDashboard },
-  { id: 'facilities', label: 'Cơ sở vật chất', icon: Building2 },
-  { id: 'logs', label: 'Nhật ký', icon: ScrollText },
-] as const;
-type TabId = (typeof TABS)[number]['id'];
-
 /* ── Main Dashboard ──────────────────────────────────────── */
 
 export default function ManagerDashboard() {
   const { user } = useAuthStore();
   const managerFacilities = (user?.assignedFacilities ?? []) as AssignedFacility[];
 
-  const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [timeFilter, setTimeFilter] = useState('today');
   const [facilityFilter, setFacilityFilter] = useState('all');
 
@@ -253,197 +240,168 @@ export default function ManagerDashboard() {
         </div>
       </header>
 
-      {/* ═══ TAB BAR ═══ */}
-      <div className="flex items-center gap-1 border-b border-gray-200 mb-5">
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            id={`tab-${id}`}
-            onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-[15px] font-medium transition-all relative ${
-              activeTab === id ? 'text-[#132c20]' : 'text-[#6b7280] hover:text-[#1a1a1a]'
-            }`}
-          >
-            <Icon size={15} />
-            {label}
-            {activeTab === id && (
-              <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#a6e676] rounded-t-full" />
-            )}
-          </button>
-        ))}
-      </div>
+      {/* ═══ CONTENT ═══ */}
+      <div className="space-y-6 pb-8">
+        {/* ROW 1: KPI Cards */}
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 xl:gap-4">
+          {/* Card 1: Tổng doanh thu */}
+          <div className="col-span-2 xl:col-span-1 relative overflow-hidden bg-gradient-to-br from-[#9ee671] to-[#72d645] rounded-xl p-5 text-black flex flex-col justify-between h-[160px] shadow-sm">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <svg viewBox="0 0 400 160" preserveAspectRatio="none" className="w-full h-full">
+                <path
+                  d="M 120 160 Q 280 -20 440 160 Q 280 40 120 160 Z"
+                  fill="rgba(255,255,255,0.2)"
+                />
+                <path
+                  d="M 150 160 Q 280 -40 410 160 Q 280 20 150 160 Z"
+                  fill="rgba(255,255,255,0.1)"
+                />
+                <path
+                  d="M -20 160 Q 80 40 180 160 Q 80 90 -20 160 Z"
+                  fill="rgba(255,255,255,0.15)"
+                />
+                <path
+                  d="M -40 160 Q 60 20 160 160 Q 60 70 -40 160 Z"
+                  fill="rgba(255,255,255,0.05)"
+                />
+              </svg>
+            </div>
+            <div className="relative z-10">
+              <div className="text-[16px] font-medium text-[#1a2e22]/80">Tổng doanh thu</div>
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-baseline gap-1.5 text-[#0a1a12]">
+                <div
+                  className={`font-bold leading-none tracking-tight tabular-nums ${loading ? '' : getRevenueFontSize(grandTotal)}`}
+                >
+                  {loading ? (
+                    <Loader2 size={28} className="animate-spin" />
+                  ) : (
+                    grandTotal.toLocaleString('vi-VN')
+                  )}
+                </div>
+                {!loading && grandTotal > 0 && (
+                  <div className="text-[16px] font-medium opacity-70">đ</div>
+                )}
+              </div>
+            </div>
+          </div>
 
-      {/* ═══ TAB CONTENT ═══ */}
-      <div className="space-y-4">
-        {/* ━━━ TAB: Tổng quan ━━━ */}
-        {activeTab === 'overview' && (
-          <>
-            {/* ROW 1: KPI Cards */}
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 xl:gap-4">
-              {/* Card 1: Tổng doanh thu */}
-              <div className="col-span-2 xl:col-span-1 relative overflow-hidden bg-gradient-to-br from-[#9ee671] to-[#72d645] rounded-xl p-5 text-black flex flex-col justify-between h-[160px] shadow-sm">
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                  <svg viewBox="0 0 400 160" preserveAspectRatio="none" className="w-full h-full">
-                    <path
-                      d="M 120 160 Q 280 -20 440 160 Q 280 40 120 160 Z"
-                      fill="rgba(255,255,255,0.2)"
-                    />
-                    <path
-                      d="M 150 160 Q 280 -40 410 160 Q 280 20 150 160 Z"
-                      fill="rgba(255,255,255,0.1)"
-                    />
-                    <path
-                      d="M -20 160 Q 80 40 180 160 Q 80 90 -20 160 Z"
-                      fill="rgba(255,255,255,0.15)"
-                    />
-                    <path
-                      d="M -40 160 Q 60 20 160 160 Q 60 70 -40 160 Z"
-                      fill="rgba(255,255,255,0.05)"
-                    />
-                  </svg>
-                </div>
-                <div className="relative z-10">
-                  <div className="text-[16px] font-medium text-[#1a2e22]/80">Tổng doanh thu</div>
-                </div>
-                <div className="relative z-10">
-                  <div className="flex items-baseline gap-1.5 text-[#0a1a12]">
-                    <div
-                      className={`font-bold leading-none tracking-tight tabular-nums ${loading ? '' : getRevenueFontSize(grandTotal)}`}
-                    >
-                      {loading ? (
-                        <Loader2 size={28} className="animate-spin" />
-                      ) : (
-                        grandTotal.toLocaleString('vi-VN')
-                      )}
-                    </div>
-                    {!loading && grandTotal > 0 && (
-                      <div className="text-[16px] font-medium opacity-70">đ</div>
-                    )}
+          {/* Card 2: Activity Stats */}
+          <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col h-[160px] overflow-hidden">
+            <div className="text-[16px] font-bold text-gray-900 mb-3">Thống kê hoạt động</div>
+            <div className="flex gap-3 flex-1 min-h-0">
+              <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-md bg-[#f0f9eb] border border-gray-100 shadow-sm flex items-center justify-center text-[#72d645]">
+                    <ArrowDownRight size={14} />
                   </div>
+                  <span className="text-[14px] text-gray-500 font-medium">Xe vào</span>
+                </div>
+                <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
+                  {loading ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    totalCheckIn.toLocaleString('vi-VN')
+                  )}
                 </div>
               </div>
-
-              {/* Card 2: Activity Stats */}
-              <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col h-[160px] overflow-hidden">
-                <div className="text-[16px] font-bold text-gray-900 mb-3">Thống kê hoạt động</div>
-                <div className="flex gap-3 flex-1 min-h-0">
-                  <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-7 h-7 rounded-md bg-[#f0f9eb] border border-gray-100 shadow-sm flex items-center justify-center text-[#72d645]">
-                        <ArrowDownRight size={14} />
-                      </div>
-                      <span className="text-[14px] text-gray-500 font-medium">Xe vào</span>
-                    </div>
-                    <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
-                      {loading ? (
-                        <Loader2 size={20} className="animate-spin" />
-                      ) : (
-                        totalCheckIn.toLocaleString('vi-VN')
-                      )}
-                    </div>
+              <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-md bg-[#f0f9eb] border border-gray-100 shadow-sm flex items-center justify-center text-[#72d645]">
+                    <ArrowUpRight size={14} />
                   </div>
-                  <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-7 h-7 rounded-md bg-[#f0f9eb] border border-gray-100 shadow-sm flex items-center justify-center text-[#72d645]">
-                        <ArrowUpRight size={14} />
-                      </div>
-                      <span className="text-[14px] text-gray-500 font-medium">Xe ra</span>
-                    </div>
-                    <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
-                      {loading ? (
-                        <Loader2 size={20} className="animate-spin" />
-                      ) : (
-                        totalCheckOut.toLocaleString('vi-VN')
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-7 h-7 rounded-md bg-[#f0f9eb] border border-gray-100 shadow-sm flex items-center justify-center text-[#72d645]">
-                        <Clock size={14} />
-                      </div>
-                      <span className="text-[14px] text-gray-500 font-medium">Đang gửi</span>
-                    </div>
-                    <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
-                      {loading ? (
-                        <Loader2 size={20} className="animate-spin" />
-                      ) : (
-                        currentlyParked.toLocaleString('vi-VN')
-                      )}
-                    </div>
-                  </div>
+                  <span className="text-[14px] text-gray-500 font-medium">Xe ra</span>
+                </div>
+                <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
+                  {loading ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    totalCheckOut.toLocaleString('vi-VN')
+                  )}
                 </div>
               </div>
-
-              {/* Card 3: Tỷ lệ lấp đầy */}
-              <div className="col-span-2 xl:col-span-1 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between h-[160px] overflow-hidden">
-                <div className="text-[16px] font-bold text-gray-900">Tỷ lệ lấp đầy</div>
-                <div>
-                  <div className="text-[14px] text-gray-400 font-medium mb-1">
-                    Trạng thái bãi đỗ
+              <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-md bg-[#f0f9eb] border border-gray-100 shadow-sm flex items-center justify-center text-[#72d645]">
+                    <Clock size={14} />
                   </div>
-                  <div className="flex justify-between items-end mb-3">
-                    <div className="text-[26px] font-bold text-[#0a2012] tracking-tight truncate">
-                      {loading ? <Loader2 size={20} className="animate-spin" /> : occupancyStatus}
-                    </div>
-                    <div className="text-[28px] font-semibold text-gray-700 tabular-nums">
-                      {loading ? '' : `${occupancyRate}%`}
-                    </div>
-                  </div>
-                  <div className="flex h-4 rounded-md overflow-hidden bg-[#a6e676] opacity-90">
-                    <div
-                      className="bg-[#132c20] h-full transition-all duration-500"
-                      style={{ width: loading ? '0%' : `${occupancyRate}%` }}
-                    />
-                  </div>
+                  <span className="text-[14px] text-gray-500 font-medium">Đang gửi</span>
+                </div>
+                <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
+                  {loading ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    currentlyParked.toLocaleString('vi-VN')
+                  )}
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* ROW 2: Visual Insights */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-              <div className="lg:col-span-7">
-                <TrafficChartWidget
-                  trafficData={trafficData}
-                  peakHoursData={peakHoursData}
-                  loading={loading}
-                />
+          {/* Card 3: Tỷ lệ lấp đầy */}
+          <div className="col-span-2 xl:col-span-1 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between h-[160px] overflow-hidden">
+            <div className="text-[16px] font-bold text-gray-900">Tỷ lệ lấp đầy</div>
+            <div>
+              <div className="text-[14px] text-gray-400 font-medium mb-1">
+                Trạng thái bãi đỗ
               </div>
-              <div className="lg:col-span-5">
-                <TabbedInsightWidget
-                  vehicleTypes={vehicleTypes}
-                  revenueData={revenueData}
-                  occupancyData={occupancyData}
-                  facilityFilter={facilityFilter}
-                  loading={loading}
+              <div className="flex justify-between items-end mb-3">
+                <div className="text-[26px] font-bold text-[#0a2012] tracking-tight truncate">
+                  {loading ? <Loader2 size={20} className="animate-spin" /> : occupancyStatus}
+                </div>
+                <div className="text-[28px] font-semibold text-gray-700 tabular-nums">
+                  {loading ? '' : `${occupancyRate}%`}
+                </div>
+              </div>
+              <div className="flex h-4 rounded-md overflow-hidden bg-[#a6e676] opacity-90">
+                <div
+                  className="bg-[#132c20] h-full transition-all duration-500"
+                  style={{ width: loading ? '0%' : `${occupancyRate}%` }}
                 />
               </div>
             </div>
-          </>
-        )}
-
-        {/* ━━━ TAB: Cơ sở vật chất ━━━ */}
-        {activeTab === 'facilities' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <div className="lg:col-span-6">
-              <FacilityListWidget
-                managerFacilities={managerFacilities}
-                staffList={staffList}
-                revenueData={revenueData}
-              />
-            </div>
-            <div className="lg:col-span-6">
-              <OccupancyHorizontalBar occupancyData={occupancyData} loading={loading} />
-            </div>
           </div>
-        )}
+        </div>
 
-        {/* ━━━ TAB: Nhật ký ━━━ */}
-        {activeTab === 'logs' && (
-          <div className="pb-8">
-            <AuditLogWidget />
+        {/* ROW 2: Visual Insights */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-7">
+            <TrafficChartWidget
+              trafficData={trafficData}
+              peakHoursData={peakHoursData}
+              loading={loading}
+            />
           </div>
-        )}
+          <div className="lg:col-span-5">
+            <TabbedInsightWidget
+              vehicleTypes={vehicleTypes}
+              revenueData={revenueData}
+              occupancyData={occupancyData}
+              facilityFilter={facilityFilter}
+              loading={loading}
+            />
+          </div>
+        </div>
+
+        {/* ROW 3: Facilities */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-4 border-t border-gray-100">
+          <div className="lg:col-span-6">
+            <FacilityListWidget
+              managerFacilities={managerFacilities}
+              staffList={staffList}
+              revenueData={revenueData}
+            />
+          </div>
+          <div className="lg:col-span-6">
+            <OccupancyHorizontalBar occupancyData={occupancyData} loading={loading} />
+          </div>
+        </div>
+
+        {/* ROW 4: Audit Logs */}
+        <div className="pt-4 border-t border-gray-100">
+          <AuditLogWidget />
+        </div>
       </div>
 
       {/* ── Floating AI Chatbot ── */}

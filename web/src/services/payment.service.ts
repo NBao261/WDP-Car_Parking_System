@@ -9,7 +9,7 @@ export const paymentService = {
     return apiClient.post('/payments/cash-checkout', payload);
   },
 
-  createIntent: async (payload: { sessionId: string; method: string }): Promise<any> => {
+  createIntent: async (payload: { sessionId: string; method: string; checkOutImage?: string; gateOut?: string }): Promise<any> => {
     return apiClient.post('/payments/create-intent', payload);
   },
 

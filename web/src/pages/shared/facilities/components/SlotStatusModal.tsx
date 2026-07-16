@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Tag,
 } from 'lucide-react';
+import { getOptimizedImageUrl } from '../../../../utils/cloudinary';
 import {
   slotService,
   type ParkingSlot,
@@ -255,14 +256,11 @@ function InfoItem({
 
 // ── SessionInfo ───────────────────────────────────────────
 
-const SERVER_URL = import.meta.env.VITE_API_BASE_URL
-  ? import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '')
-  : 'http://localhost:5000';
-
 function getImageUrl(url?: string) {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  return `${SERVER_URL}${url}`;
+  if (!url) return undefined;
+  if (url.startsWith('http')) return getOptimizedImageUrl(url, 400);
+  const SERVER_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
+  return `${SERVER_URL}${url.startsWith('/') ? url : `/${url}`}`;
 }
 
 function SessionInfo({ session }: { session: ParkingSessionPopulated }) {

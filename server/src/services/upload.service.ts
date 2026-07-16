@@ -10,7 +10,11 @@ export class UploadService {
    */
   static async processCompletedSessionImages(sessionId: string): Promise<void> {
     try {
-      if (!process.env.CLOUDINARY_CLOUD_NAME) return;
+      console.log(`[UploadService] Starting upload for session ${sessionId}`);
+      if (!process.env.CLOUDINARY_CLOUD_NAME) {
+        console.warn('[UploadService] CLOUDINARY_CLOUD_NAME not set, skipping upload');
+        return;
+      }
 
       const session = await ParkingSession.findById(sessionId);
       if (!session) return;
@@ -33,6 +37,7 @@ export class UploadService {
       }
     } catch (error) {
       console.error(`[UploadService] [FAIL] Sync background thất bại cho session ${sessionId}:`, error);
+      throw error; // Throw so BullMQ can retry
     }
   }
 
@@ -40,6 +45,7 @@ export class UploadService {
     const filename = path.basename(localUrl);
     const localFilePath = path.join(__dirname, '../../public/uploads/alpr', filename);
 
+    console.log(`[UploadService] Looking for file: ${localFilePath} (exists: ${fs.existsSync(localFilePath)})`);
     if (!fs.existsSync(localFilePath)) return null;
 
     try {
@@ -58,7 +64,7 @@ export class UploadService {
       return cloudinaryUrl;
     } catch (err) {
       console.error(`[UploadService] Lỗi xử lý file ${filename}:`, err);
-      return null;
+      throw err; // Throw so BullMQ can retry
     }
   }
 }

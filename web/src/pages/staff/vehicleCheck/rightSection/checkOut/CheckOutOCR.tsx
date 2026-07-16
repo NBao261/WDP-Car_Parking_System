@@ -1,4 +1,5 @@
 import { ImagePlus, RefreshCw, X } from 'lucide-react';
+import { getOptimizedImageUrl } from '../../../../../utils/cloudinary';
 
 export function CheckOutOCR({
   step,
@@ -36,7 +37,8 @@ export function CheckOutOCR({
               if (!imgSrc.startsWith('http')) {
                 imgSrc = `${SERVER_URL}${imgSrc.startsWith('/') ? imgSrc : `/${imgSrc}`}`;
               }
-              return <img src={imgSrc} alt="check-in" className="w-full h-full object-contain" />;
+              const optimizedUrl = getOptimizedImageUrl(imgSrc, 400);
+              return <img src={optimizedUrl} alt="check-in" className="w-full h-full object-contain" />;
             })()
           ) : (
             <div className="flex flex-col items-center">

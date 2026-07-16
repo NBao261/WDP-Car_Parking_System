@@ -149,7 +149,7 @@ export class ExceptionService {
     ]);
 
     return {
-      data,
+      data: data as any[],
       total,
       page: Number(page),
       totalPages: Math.ceil(total / Number(limit))

@@ -606,7 +606,7 @@ export class SessionService {
     ]);
 
     return {
-      data,
+      data: data as any[],
       total,
       page: Number(page),
       totalPages: Math.ceil(total / Number(limit))
@@ -664,7 +664,7 @@ export class SessionService {
       ParkingSession.countDocuments(filter)
     ]);
 
-    return { data, total };
+    return { data: data as any[], total };
   }
 
   /**
@@ -1123,7 +1123,8 @@ export class SessionService {
       }
 
       // Defer Background Upload (Push to BullMQ)
-      addUploadJob(session._id.toString()).catch(console.error);
+      console.log(`[Checkout] Triggering upload job for session ${session._id}`);
+      addUploadJob(session._id.toString()).catch(err => console.error('[Checkout] Upload job failed:', err));
 
       // Invalidate public available slots cache
       await delCache(`cache:public:available-slots:${session.facilityId}`);
