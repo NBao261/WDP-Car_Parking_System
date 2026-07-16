@@ -4,6 +4,8 @@ import { useExceptionDetailLogic } from "./useExceptionDetailLogic";
 import { ExceptionInfoBlocks } from "./ExceptionDetailInfoBlocks";
 import { ExceptionDetailResolveForm } from "./ExceptionDetailResolveForm";
 import { ExceptionDetailReviewBlocks } from "./ExceptionDetailReviewBlocks";
+import { DirectCheckoutModal } from "./DirectCheckoutModal";
+import { useState } from "react";
 
 interface ExceptionDetailDrawerProps {
   selectedException: ExceptionData | null;
@@ -41,6 +43,7 @@ const STATUS_BADGE: Record<string, { bg: string; text: string; border: string; l
 
 export default function ExceptionDetailDrawer({ selectedException, onClose, onContinueCheckout: _onContinueCheckout, onResolved }: ExceptionDetailDrawerProps) {
   const logic = useExceptionDetailLogic({ selectedException, onClose, onResolved });
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   if (!selectedException) return null;
 
@@ -81,7 +84,7 @@ export default function ExceptionDetailDrawer({ selectedException, onClose, onCo
         </div>
 
         <div className="p-6 border-t border-[#e8e9e8] flex gap-3 bg-white">
-          <button onClick={onClose} disabled={logic.isResolving} className={`${canResolve ? 'flex-1' : 'w-full'} h-11 border border-[#e8e9e8] bg-white rounded-[8px] text-[#060606] font-medium hover:bg-gray-50 transition-colors disabled:opacity-50`}>
+          <button onClick={onClose} disabled={logic.isResolving} className={`${canResolve || isResolved ? 'flex-1' : 'w-full'} h-11 border border-[#e8e9e8] bg-white rounded-[8px] text-[#060606] font-medium hover:bg-gray-50 transition-colors disabled:opacity-50`}>
             Đóng
           </button>
           {canResolve && (
@@ -90,8 +93,29 @@ export default function ExceptionDetailDrawer({ selectedException, onClose, onCo
               Lưu Xử Lý
             </button>
           )}
+          {isResolved && selectedException.sessionStatus !== 'COMPLETED' && (
+            <button 
+              onClick={() => setShowCheckoutModal(true)} 
+              className="flex-[2] h-11 bg-[#A3E635] text-[#1A202C] font-bold rounded-[8px] hover:bg-[#84CC16] transition-colors shadow-sm"
+            >
+              Checkout trực tiếp
+            </button>
+          )}
         </div>
       </div>
+
+      {showCheckoutModal && (
+        <DirectCheckoutModal
+          isOpen={showCheckoutModal}
+          onClose={() => setShowCheckoutModal(false)}
+          sessionId={selectedException.sessionId}
+          onSuccess={() => {
+            setShowCheckoutModal(false);
+            if (onResolved) onResolved();
+            onClose();
+          }}
+        />
+      )}
     </div>
   );
 }

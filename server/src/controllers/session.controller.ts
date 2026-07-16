@@ -169,13 +169,14 @@ export class SessionController {
   static async checkOut(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const { gateOut } = req.body;
+      const { gateOut, checkOutImage } = req.body;
       const staffOutId = req.user!.userId;
 
       const session = await SessionService.checkOut({
         sessionId: id as string,
         gateOut: gateOut as string,
         staffOutId: staffOutId as string,
+        checkOutImage: checkOutImage as string,
       });
 
       res.status(200).json({ success: true, data: session });

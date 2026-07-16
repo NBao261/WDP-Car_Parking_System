@@ -98,11 +98,11 @@ export default function ExceptionsStaffPage() {
     setIsLoading(true);
     try {
       const currentFacilityId = sessionStorage.getItem('staff_facility_id');
-      const params: any = { 
-        sortBy: 'createdAt', 
-        sortOrder: 'desc', 
+      const params: any = {
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
         limit: 1000,
-        ...(currentFacilityId ? { facilityId: currentFacilityId } : {})
+        ...(currentFacilityId ? { facilityId: currentFacilityId } : {}),
       };
 
       // Sử dụng API thực tế thay vì mock data để có thể thấy sự cố mới tạo
