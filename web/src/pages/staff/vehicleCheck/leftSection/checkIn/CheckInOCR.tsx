@@ -31,7 +31,7 @@ export function CheckInOCR({
             <RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" />
           ) : (
             <div className="flex flex-col items-center">
-              <img src="/Logo_chu.png" alt="LYNC PARK" className="h-16 mb-2 object-contain" />
+              <img src="/Logo_chu.png" alt="LYNC PARK" className="h-24 mb-2 object-contain" />
               <ImagePlus className="w-4 h-4 text-[#aaa] mb-2" />
               <span className="text-[10px] font-semibold text-[#6b6b6b]">
                 Chụp / Upload ảnh biển số (OCR)

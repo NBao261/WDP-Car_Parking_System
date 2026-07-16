@@ -20,8 +20,8 @@ export default function TableSessionsPage({ onTotalChange }: { onTotalChange?: (
   const currentData = logic.filteredSessions.slice((logic.currentPage - 1) * logic.itemsPerPage, logic.currentPage * logic.itemsPerPage);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden relative">
-      <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap bg-white">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full overflow-hidden relative">
+      <div className="px-4 py-2.5 border-b border-gray-200 flex items-center justify-between gap-4 flex-wrap bg-[#f5f5f5]">
         <div className="relative max-w-sm w-full">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -30,12 +30,9 @@ export default function TableSessionsPage({ onTotalChange }: { onTotalChange?: (
             className="w-full pl-9 pr-4 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#9FE870] focus:ring-1 focus:ring-[#9FE870]/40 transition-colors"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <button className="p-1.5 border border-gray-200 rounded-lg text-[#060606] hover:bg-gray-50"><Filter className="w-4 h-4" /></button>
-        </div>
       </div>
 
-      <TableSessionsTable 
+      <TableSessionsTable
         currentData={currentData} loading={logic.loading} sortConfig={logic.sortConfig} handleSort={logic.handleSort}
         facilityVehicleTypes={logic.facilityVehicleTypes} filterVehicleTypeId={logic.filterVehicleTypeId} setFilterVehicleTypeId={logic.setFilterVehicleTypeId}
         uniqueLocations={uniqueLocations} filterLocation={logic.filterLocation} setFilterLocation={logic.setFilterLocation}
@@ -54,7 +51,7 @@ export default function TableSessionsPage({ onTotalChange }: { onTotalChange?: (
         </div>
       )}
 
-      <TableSessionsDetailModal selectedSession={logic.selectedSession} setSelectedSession={logic.setSelectedSession} />
+      <TableSessionsDetailModal selectedSession={logic.selectedSession} setSelectedSession={logic.setSelectedSession} setToastMessage={logic.setToastMessage} />
 
       {logic.showCheckoutModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95 duration-200">
