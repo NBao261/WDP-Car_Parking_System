@@ -6,17 +6,13 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
-  Platform,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Colors,
   Typography,
-  Spacing,
-  BorderRadius,
   Shadows,
 } from "../../src/constants/theme";
 import { useAuthStore } from "../../src/store/useAuthStore";
@@ -32,47 +28,32 @@ function getInitials(name?: string) {
     .toUpperCase();
 }
 
-interface MenuItemProps {
-  icon: any;
-  label: string;
-  subtitle?: string;
-  onPress: () => void;
-  color?: string;
-  chevron?: boolean;
-}
-
+/* ── Reusable menu item matching reference ProfileTab ── */
 function MenuItem({
   icon,
   label,
-  subtitle,
   onPress,
-  color = Colors.primary,
-  chevron = true,
-}: MenuItemProps) {
+}: {
+  icon: any;
+  label: string;
+  onPress: () => void;
+}) {
   return (
     <TouchableOpacity
       style={styles.menuItem}
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <View style={[styles.menuIconWrap, { backgroundColor: color + "15" }]}>
-        <Ionicons name={icon} size={20} color={color} />
+      <View style={styles.menuIconCircle}>
+        <Ionicons name={icon} size={16} color={Colors.brandDark} />
       </View>
-      <View style={styles.menuTextWrap}>
-        <Text style={styles.menuLabel}>{label}</Text>
-        {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
-      </View>
-      {chevron && (
-        <Ionicons
-          name="chevron-forward"
-          size={18}
-          color={Colors.textTertiary}
-        />
-      )}
+      <Text style={styles.menuLabel}>{label}</Text>
+      <Ionicons name="chevron-forward" size={16} color={Colors.brandGrayText} />
     </TouchableOpacity>
   );
 }
 
+/* ── Section wrapper ── */
 function MenuSection({
   title,
   children,
@@ -102,7 +83,7 @@ export default function AccountScreen() {
         } catch {}
       };
       loadCount();
-    }, [])
+    }, []),
   );
 
   const handleLogout = () => {
@@ -121,326 +102,308 @@ export default function AccountScreen() {
 
   return (
     <View style={styles.root}>
+      {/* ── White header: ← Profile ⚙ ── */}
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: Colors.white }}>
+        <View style={styles.headerBar}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              style={styles.headerBtn}
+              onPress={() => router.back()}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={18} color={Colors.brandDark} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Profile</Text>
+          </View>
+          <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7}>
+            <Ionicons name="settings-outline" size={18} color={Colors.brandDark} />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* ── Profile Hero ── */}
-        <View style={styles.heroWrapper}>
-          <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientMid]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <SafeAreaView edges={["top"]}>
-              <View style={styles.heroContent}>
-                <View style={styles.avatarLarge}>
-                  <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
-                </View>
-                <Text style={styles.heroName}>{user?.name || "Driver"}</Text>
-                <Text style={styles.heroEmail}>{user?.email}</Text>
-                <View style={styles.heroStatsRow}>
-                  <View style={styles.roleBadge}>
-                    <Ionicons
-                      name="car-sport"
-                      size={15}
-                      color={Colors.gradientAccent}
-                    />
-                    <Text style={styles.roleText}>Tài xế</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <TouchableOpacity
-                    style={styles.statBadge}
-                    onPress={() => router.push("/profile/my-vehicles" as any)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="car-outline" size={15} color={Colors.gradientAccent} />
-                    <Text style={styles.statText}>{vehicleCount} xe đã đăng ký</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </SafeAreaView>
-          </LinearGradient>
-        </View>
-
-        {/* ── Info Cards ── */}
-        <View style={styles.infoRow}>
-          <View style={styles.infoCard}>
-            <Ionicons name="call-outline" size={16} color={Colors.primary} />
-            <Text style={styles.infoLabel}>Điện thoại</Text>
-            <Text style={styles.infoValue}>{(user as any)?.phone || "—"}</Text>
+        {/* ── User identity row ── */}
+        <View style={styles.userRow}>
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
           </View>
-          <View style={[styles.infoCard, styles.infoCardRight]}>
-            <Ionicons name="mail-outline" size={16} color={Colors.secondary} />
-            <Text style={styles.infoLabel}>Email</Text>
-            <Text style={styles.infoValue} numberOfLines={1}>
-              {user?.email || "—"}
-            </Text>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{user?.name || "Driver"}</Text>
+            <Text style={styles.userEmail}>{user?.email}</Text>
           </View>
         </View>
 
-        {/* ── Bảo mật ── */}
-        <MenuSection title="Bảo mật">
-          <MenuItem
-            icon="lock-closed-outline"
-            label="Đổi mật khẩu"
-            subtitle="Cập nhật mật khẩu tài khoản"
-            onPress={() => router.push("/profile/change-password" as any)}
-            color={Colors.primary}
-          />
-        </MenuSection>
+        {/* ── Quick Stats: Dark card "Xe đã đăng ký" ── */}
+        <TouchableOpacity
+          style={styles.statsCard}
+          onPress={() => router.push("/profile/my-vehicles" as any)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.statsLeft}>
+            <View style={styles.statsIconCircle}>
+              <Ionicons name="car" size={18} color={Colors.brandDark} />
+            </View>
+            <View>
+              <Text style={styles.statsLabel}>Xe đã đăng ký</Text>
+              <Text style={styles.statsCount}>
+                {String(vehicleCount).padStart(2, "0")} Xe
+              </Text>
+            </View>
+          </View>
+          <View style={styles.statsChevron}>
+            <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.5)" />
+          </View>
+        </TouchableOpacity>
 
-        {/* ── Hoạt động ── */}
+        {/* ── HOẠT ĐỘNG section ── */}
         <MenuSection title="Hoạt động">
           <MenuItem
             icon="car-sport-outline"
             label="Xe của tôi"
-            subtitle="Quản lý xe đã đăng ký"
             onPress={() => router.push("/profile/my-vehicles" as any)}
-            color={Colors.primary}
           />
           <View style={styles.divider} />
           <MenuItem
-            icon="receipt-outline"
+            icon="time-outline"
             label="Lịch sử gửi xe"
-            subtitle="Xem lượt gửi đã hoàn thành"
-            onPress={() => router.push("/(main)/sessions?tab=history" as any)}
-            color={Colors.success}
+            onPress={() => router.push("/(driver)/sessions?tab=history" as any)}
           />
           <View style={styles.divider} />
           <MenuItem
-            icon="calendar-outline"
+            icon="bookmark-outline"
             label="Đặt chỗ của tôi"
-            subtitle="Quản lý chỗ đã đặt trước"
-            onPress={() => router.push("/(main)/sessions?tab=reserved" as any)}
-            color={Colors.secondary}
+            onPress={() =>
+              router.push("/(driver)/sessions?tab=reserved" as any)
+            }
           />
         </MenuSection>
 
-        {/* ── Hỗ trợ ── */}
+        {/* ── BẢO MẬT section ── */}
+        <MenuSection title="Bảo mật">
+          <MenuItem
+            icon="lock-closed-outline"
+            label="Đổi mật khẩu"
+            onPress={() => router.push("/profile/change-password" as any)}
+          />
+        </MenuSection>
+
+        {/* ── HỖ TRỢ section ── */}
         <MenuSection title="Hỗ trợ">
           <MenuItem
-            icon="chatbubble-ellipses-outline"
+            icon="chatbubble-outline"
             label="Gửi phản hồi"
-            subtitle="Báo cáo vấn đề hoặc góp ý"
             onPress={() => router.push("/feedback/create" as any)}
-            color={Colors.warning}
           />
           <View style={styles.divider} />
           <MenuItem
-            icon="list-outline"
+            icon="chatbubbles-outline"
             label="Phản hồi của tôi"
-            subtitle="Theo dõi trạng thái xử lý"
             onPress={() => router.push("/feedback" as any)}
-            color={Colors.info}
           />
         </MenuSection>
 
-        {/* ── Đăng xuất ── */}
+        {/* ── Đăng xuất — gray pill ── */}
         <TouchableOpacity
           style={styles.logoutBtn}
           onPress={handleLogout}
           activeOpacity={0.8}
         >
-          <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
+          <Ionicons name="log-out-outline" size={16} color={Colors.brandDark} />
           <Text style={styles.logoutText}>Đăng xuất</Text>
         </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
-  scrollContent: { paddingBottom: 40 },
+  root: { flex: 1, backgroundColor: Colors.white },
+  scrollContent: { paddingBottom: 24 },
 
-  // Hero
-  heroWrapper: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: 'hidden',
+  /* ── Header bar ── */
+  headerBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    height: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.brandGray,
   },
-  hero: {
-    paddingBottom: 28,
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
-  heroContent: { alignItems: "center", paddingVertical: 24 },
-  avatarLarge: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderWidth: 3,
-    borderColor: "rgba(255,255,255,0.4)",
+  headerBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.brandGray,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+  },
+  headerTitle: {
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
+  },
+
+  /* ── User identity row ── */
+  userRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  avatarCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.brandGray,
+    borderWidth: 2,
+    borderColor: Colors.brandGray,
+    alignItems: "center",
+    justifyContent: "center",
   },
   avatarText: {
-    fontSize: 28,
+    fontSize: 18,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
+    color: Colors.brandDark,
   },
-  heroName: {
-    fontSize: 22,
+  userInfo: { flex: 1 },
+  userName: {
+    fontSize: 17,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textOnDark,
-    marginBottom: 4,
+    color: Colors.brandDark,
+    lineHeight: 20,
   },
-  heroEmail: {
-    fontSize: 13,
-    color: Colors.textOnDarkMuted,
-    fontFamily: Typography.fontFamily.regular,
-    marginBottom: 10,
-  },
-  roleBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-  },
-  roleText: {
-    fontSize: 14,
-    color: Colors.gradientAccent,
-    fontFamily: Typography.fontFamily.semiBold,
-  },
-  heroStatsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  statDivider: {
-    width: 1,
-    height: 18,
-    backgroundColor: "rgba(255,255,255,0.25)",
-  },
-  statBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-  },
-  statText: {
-    fontSize: 14,
-    color: Colors.gradientAccent,
-    fontFamily: Typography.fontFamily.semiBold,
-  },
-
-  // Info row
-  infoRow: { flexDirection: "row", margin: 16, gap: 12 },
-  infoCard: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: '#5E8F25',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  infoCardRight: {},
-  infoLabel: {
-    fontSize: 11,
-    color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.medium,
-    marginTop: 6,
-    marginBottom: 2,
-  },
-  infoValue: {
-    fontSize: 13,
-    color: Colors.textPrimary,
-    fontFamily: Typography.fontFamily.semiBold,
-  },
-
-  // Menu
-  section: { marginHorizontal: 16, marginBottom: 12 },
-  sectionTitle: {
+  userEmail: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: Colors.brandGrayText,
     fontFamily: Typography.fontFamily.semiBold,
+    marginTop: 3,
+  },
+
+  /* ── Dark stats card ── */
+  statsCard: {
+    marginHorizontal: 20,
+    backgroundColor: Colors.brandDark,
+    borderRadius: 24,
+    padding: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  statsLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  statsIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: Colors.brandLime,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statsLabel: {
+    fontSize: 10,
+    fontFamily: Typography.fontFamily.bold,
+    color: "rgba(255,255,255,0.7)",
     textTransform: "uppercase",
     letterSpacing: 0.8,
+  },
+  statsCount: {
+    fontSize: 17,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.white,
+    marginTop: 2,
+  },
+  statsChevron: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  /* ── Menu section ── */
+  section: { marginHorizontal: 20, marginBottom: 16 },
+  sectionTitle: {
+    fontSize: 10,
+    color: Colors.brandGrayText,
+    fontFamily: Typography.fontFamily.bold,
+    textTransform: "uppercase",
+    letterSpacing: 1,
     marginBottom: 8,
     marginLeft: 4,
   },
   sectionCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 18,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.brandGray,
     overflow: "hidden",
-    shadowColor: '#5E8F25',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    ...Shadows.sm,
   },
+
+  /* ── Menu item ── */
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 14,
     gap: 12,
   },
-  menuIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+  menuIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: Colors.brandGray,
     alignItems: "center",
     justifyContent: "center",
   },
-  menuTextWrap: { flex: 1 },
   menuLabel: {
-    fontSize: 15,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
-  },
-  menuSubtitle: {
+    flex: 1,
     fontSize: 12,
-    color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.regular,
-    marginTop: 1,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
-  divider: { height: 1, backgroundColor: Colors.borderLight, marginLeft: 66 },
 
-  // Logout
+  /* ── Divider between menu items ── */
+  divider: {
+    height: 1,
+    backgroundColor: Colors.brandGray,
+    marginLeft: 60,
+  },
+
+  /* ── Logout button ── */
   logoutBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    marginHorizontal: 16,
-    marginTop: 8,
-    backgroundColor: Colors.dangerLight,
-    borderRadius: 14,
+    marginHorizontal: 20,
+    marginTop: 10,
+    backgroundColor: Colors.brandGray,
+    borderRadius: 9999,
     paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: Colors.danger + "30",
   },
   logoutText: {
-    fontSize: 15,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.danger,
-  },
-
-  version: {
-    textAlign: "center",
     fontSize: 12,
-    color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.regular,
-    marginTop: 16,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
 });

@@ -9,6 +9,7 @@ import { SessionService } from './session.service';
 import { AppError } from '../middlewares/error.middleware';
 import { getIO } from '../config/socket';
 import { UploadService } from './upload.service';
+import { addUploadJob } from '../queues/uploadQueue';
 
 export class PaymentService {
   /**
@@ -163,10 +164,14 @@ export class PaymentService {
           status: SlotStatus.AVAILABLE,
           facilityId: session.facilityId,
         });
+        getIO().to(`facility:${session.facilityId}`).emit('payment:completed', {
+          transactionCode: payment.transactionCode,
+          sessionId: session._id,
+        });
       } catch (e) {
         // Bỏ qua lỗi socket
       }
-      UploadService.processCompletedSessionImages(session._id.toString()).catch(console.error);
+      addUploadJob(session._id.toString()).catch(console.error);
 
     } catch (error) {
       await sessionMongoose.abortTransaction();

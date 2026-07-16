@@ -1,5 +1,5 @@
-import { CheckInContainer } from "./checkIn/CheckInContainer";
-import { CheckInConfirmPanel } from "./checkIn/CheckInConfirmPanel";
+import { CheckInContainer } from './checkIn/CheckInContainer';
+import { CheckInConfirmPanel } from './checkIn/CheckInConfirmPanel';
 
 interface LeftContainerProps {
   checkInResult: any;

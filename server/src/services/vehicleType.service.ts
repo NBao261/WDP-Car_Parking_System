@@ -3,6 +3,7 @@ import { Floor } from '../models/floor.model';
 import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
 import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { AppError } from '../middlewares/error.middleware';
+import { delPattern } from '../config/redis';
 
 import { normalizeVehicleTypeName } from '../utils/string.util';
 // (Note: To implement getSimilar, we might need fastest-levenshtein, but let's see if we can just use natural or fastest-levenshtein)
@@ -51,6 +52,10 @@ export class VehicleTypeService {
       );
     }
 
+    // Invalidate OperationsConfig Cache
+    await delPattern('cache:operationsConfig:*');
+    await delPattern('cache:public:available-slots:*');
+
     return newType;
   }
 
@@ -96,6 +101,10 @@ export class VehicleTypeService {
       }
     }
 
+    // Invalidate OperationsConfig Cache
+    await delPattern('cache:operationsConfig:*');
+    await delPattern('cache:public:available-slots:*');
+
     return vehicleType;
   }
 
@@ -140,6 +149,10 @@ export class VehicleTypeService {
 
     vehicleType.floors = [];
     await vehicleType.save();
+
+    // Invalidate OperationsConfig Cache
+    await delPattern('cache:operationsConfig:*');
+    await delPattern('cache:public:available-slots:*');
 
     return vehicleType;
   }

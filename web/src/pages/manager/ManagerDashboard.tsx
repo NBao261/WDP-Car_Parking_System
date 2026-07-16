@@ -124,13 +124,14 @@ export default function ManagerDashboard() {
     const { startDate, endDate, groupBy } = getDateRange(timeFilter);
     const facilityId = facilityFilter !== 'all' ? facilityFilter : undefined;
     try {
-      const [trafficRes, revenueRes, occupancyRes, peakRes, vehicleTypesRes] = await Promise.allSettled([
-        reportService.getTrafficReport({ startDate, endDate, groupBy, facilityId }),
-        reportService.getRevenueReport({ startDate, endDate, groupBy, facilityId }),
-        reportService.getOccupancyReport({ facilityId }),
-        reportService.getPeakHoursReport({ startDate, endDate, facilityId }),
-        vehicleTypeService.getAll({ limit: 100 }),
-      ]);
+      const [trafficRes, revenueRes, occupancyRes, peakRes, vehicleTypesRes] =
+        await Promise.allSettled([
+          reportService.getTrafficReport({ startDate, endDate, groupBy, facilityId }),
+          reportService.getRevenueReport({ startDate, endDate, groupBy, facilityId }),
+          reportService.getOccupancyReport({ facilityId }),
+          reportService.getPeakHoursReport({ startDate, endDate, facilityId }),
+          vehicleTypeService.getAll({ limit: 100 }),
+        ]);
       setTrafficData(trafficRes.status === 'fulfilled' ? trafficRes.value.data : null);
       setRevenueData(revenueRes.status === 'fulfilled' ? revenueRes.value.data : null);
       setOccupancyData(occupancyRes.status === 'fulfilled' ? occupancyRes.value.data : null);
@@ -233,7 +234,11 @@ export default function ManagerDashboard() {
               disabled={exporting || loading}
               className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-white border-[1.5px] border-gray-200 text-[#1a1a1a] text-[16px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {exporting ? <Loader2 size={17} className="animate-spin" /> : <FileSpreadsheet size={17} />}
+              {exporting ? (
+                <Loader2 size={17} className="animate-spin" />
+              ) : (
+                <FileSpreadsheet size={17} />
+              )}
               Excel
             </button>
             <button

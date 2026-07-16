@@ -5,6 +5,7 @@ import { AppError } from './error.middleware';
 import { UserRole, User } from '../models/user.model';
 import { Role } from '../models/role.model';
 import { DEFAULT_PERMISSIONS } from '../config/permissions';
+import { getCache, setCache } from '../config/redis';
 
 export interface AuthPayload {
   userId: string;
@@ -20,7 +21,7 @@ declare global {
   }
 }
 
-export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
+export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -28,6 +29,13 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
     }
 
     const token = authHeader.split(' ')[1];
+    
+    // Check if token is in Redis blacklist (FR-19)
+    const isBlacklisted = await getCache(`blacklist:${token}`);
+    if (isBlacklisted) {
+      throw new AppError('Token has been revoked', 401);
+    }
+
     const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as AuthPayload;
 
     req.user = decoded;
@@ -103,24 +111,37 @@ export const checkAnyPermission = (requiredPermissions: string[]) => {
 
 // ─── Helper: Merge permissions từ nhiều nguồn ─────────
 // Ưu tiên: customPermissions (user-level) > DB role permissions > DEFAULT_PERMISSIONS
+// Redis cache: permissions:user:{userId} — TTL 5 phút
 async function resolveUserPermissions(userId: string, userRole: UserRole): Promise<string[]> {
+  // 1. Try Redis cache first
+  const cacheKey = `permissions:user:${userId}`;
+  const cached = await getCache<string[]>(cacheKey);
+  if (cached) return cached;
+
+  // 2. Cache miss → query MongoDB
   const permissionSet = new Set<string>();
 
-  // 1. Default permissions theo role (fallback)
+  // 2a. Default permissions theo role (fallback)
   const defaults = DEFAULT_PERMISSIONS[userRole] || [];
   defaults.forEach((p) => permissionSet.add(p));
 
-  // 2. DB role permissions (có thể đã được admin customize qua FR-19.2)
+  // 2b. DB role permissions (có thể đã được admin customize qua FR-19.2)
   const role = await Role.findOne({ code: userRole });
   if (role && role.permissions.length > 0) {
     role.permissions.forEach((p) => permissionSet.add(p));
   }
 
-  // 3. User custom permissions (PQ-05: quyền bổ sung ngoài vai trò)
+  // 2c. User custom permissions (PQ-05: quyền bổ sung ngoài vai trò)
   const user = await User.findById(userId).select('customPermissions');
   if (user && user.customPermissions.length > 0) {
     user.customPermissions.forEach((p) => permissionSet.add(p));
   }
 
-  return Array.from(permissionSet);
+  const permissions = Array.from(permissionSet);
+
+  // 3. Cache vào Redis — TTL 5 phút
+  await setCache(cacheKey, permissions, 300);
+
+  return permissions;
 }
+

@@ -5,7 +5,6 @@ import {
 } from "react-native";
 import { useRouter, Stack, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors, Typography, Shadows } from "../../src/constants/theme";
 import { vehicleApi } from "../../src/services/api";
@@ -20,6 +19,101 @@ interface VehicleItem {
   inUseReason: string;
   vehicleTypeId: { _id: string; name: string; code: string; icon: string } | null;
 }
+
+const getVehicleIcon = (code?: string): any => {
+  if (!code) return "car-outline";
+  const lower = code.toLowerCase();
+  if (lower.includes("moto") || lower.includes("bike") || lower.includes("xm")) return "bicycle-outline";
+  if (lower.includes("truck")) return "bus-outline";
+  return "car-sport-outline";
+};
+
+const VehicleCard = React.memo(({
+  item,
+  onEdit,
+  onDelete,
+}: {
+  item: VehicleItem;
+  onEdit: (v: VehicleItem) => void;
+  onDelete: (v: VehicleItem) => void;
+}) => {
+  const vtName = item.vehicleTypeId?.name || "Không rõ";
+  const vtCode = item.vehicleTypeId?.code || "";
+
+  return (
+    <TouchableOpacity
+      style={[styles.card, item.isInUse && styles.cardInUse]}
+      activeOpacity={0.85}
+      onLongPress={() => onDelete(item)}
+      onPress={() => onEdit(item)}
+    >
+      {/* Image or icon */}
+      <View style={styles.cardImageWrap}>
+        {item.image ? (
+          <Image source={{ uri: item.image }} style={styles.cardImage} />
+        ) : (
+          <View style={styles.cardIconFallback}>
+            <Ionicons
+              name={getVehicleIcon(vtCode)}
+              size={28}
+              color={Colors.brandGrayText}
+            />
+          </View>
+        )}
+      </View>
+
+      <View style={styles.cardBody}>
+        {/* Plate */}
+        <Text style={styles.plateText}>{item.licensePlate}</Text>
+
+        {/* Type */}
+        <View style={styles.typeRow}>
+          <Ionicons name={getVehicleIcon(vtCode)} size={13} color={Colors.brandGrayText} />
+          <Text style={styles.typeText}>{vtName}</Text>
+        </View>
+
+        {/* Nickname */}
+        {!!item.nickname && (
+          <Text style={styles.nicknameText}>"{item.nickname}"</Text>
+        )}
+
+        {/* Badges */}
+        <View style={styles.badgesRow}>
+          {item.isDefault && (
+            <View style={styles.defaultBadge}>
+              <Ionicons name="star" size={10} color={Colors.brandDark} />
+              <Text style={styles.defaultBadgeText}>Mặc định</Text>
+            </View>
+          )}
+          {item.isInUse && (
+            <View style={styles.inUseBadge}>
+              <Ionicons name="lock-closed" size={10} color={Colors.brandDark} />
+              <Text style={styles.inUseBadgeText}>{item.inUseReason || 'Đang sử dụng'}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.cardActions}>
+        <TouchableOpacity
+          onPress={() => onEdit(item)}
+          style={styles.actionBtn}
+          disabled={item.isInUse}
+        >
+          <Ionicons name="create-outline" size={14} color={item.isInUse ? Colors.disabled : Colors.brandDark} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => onDelete(item)}
+          style={styles.actionBtn}
+          disabled={item.isInUse}
+        >
+          <Ionicons name="trash-outline" size={14} color={item.isInUse ? Colors.disabled : Colors.danger} />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+});
 
 export default function MyVehiclesScreen() {
   const router = useRouter();
@@ -40,14 +134,13 @@ export default function MyVehiclesScreen() {
     }
   }, []);
 
-  // Reload mỗi khi focus (VD: quay lại từ add-vehicle)
   useFocusEffect(
     useCallback(() => {
       loadVehicles();
     }, [loadVehicles])
   );
 
-  const handleDelete = (vehicle: VehicleItem) => {
+  const handleDelete = useCallback((vehicle: VehicleItem) => {
     if (vehicle.isInUse) {
       Alert.alert(
         "Không thể xoá",
@@ -74,7 +167,7 @@ export default function MyVehiclesScreen() {
         },
       ]
     );
-  };
+  }, []);
 
   const handleSetDefault = async (vehicle: VehicleItem) => {
     if (vehicle.isDefault) return;
@@ -88,7 +181,7 @@ export default function MyVehiclesScreen() {
     }
   };
 
-  const handleEdit = (vehicle: VehicleItem) => {
+  const handleEdit = useCallback((vehicle: VehicleItem) => {
     if (vehicle.isInUse) {
       Alert.alert(
         "Không thể chỉnh sửa",
@@ -97,108 +190,27 @@ export default function MyVehiclesScreen() {
       return;
     }
     router.push(`/profile/edit-vehicle?id=${vehicle._id}` as any);
-  };
+  }, [router]);
 
-  const getVehicleIcon = (code?: string): any => {
-    if (!code) return "car-outline";
-    const lower = code.toLowerCase();
-    if (lower.includes("moto") || lower.includes("bike") || lower.includes("xm")) return "bicycle-outline";
-    if (lower.includes("truck")) return "bus-outline";
-    return "car-sport-outline";
-  };
-
-  const renderVehicle = ({ item }: { item: VehicleItem }) => {
-    const vtName = item.vehicleTypeId?.name || "Không rõ";
-    const vtCode = item.vehicleTypeId?.code || "";
-
-    return (
-      <TouchableOpacity
-        style={[styles.card, item.isDefault && styles.cardDefault, item.isInUse && styles.cardInUse]}
-        activeOpacity={0.85}
-        onLongPress={() => handleDelete(item)}
-        onPress={() => handleEdit(item)}
-      >
-        {/* Ảnh xe hoặc icon fallback */}
-        <View style={styles.cardImageWrap}>
-          {item.image ? (
-            <Image source={{ uri: item.image }} style={styles.cardImage} />
-          ) : (
-            <View style={styles.cardIconFallback}>
-              <Ionicons
-                name={getVehicleIcon(vtCode)}
-                size={32}
-                color={Colors.primary}
-              />
-            </View>
-          )}
-        </View>
-
-        <View style={styles.cardBody}>
-          {/* Biển số */}
-          <Text style={styles.plateText}>{item.licensePlate}</Text>
-
-          {/* Loại xe */}
-          <View style={styles.typeRow}>
-            <Ionicons name={getVehicleIcon(vtCode)} size={14} color={Colors.textTertiary} />
-            <Text style={styles.typeText}>{vtName}</Text>
-          </View>
-
-          {/* Nickname */}
-          {!!item.nickname && (
-            <Text style={styles.nicknameText}>{item.nickname}</Text>
-          )}
-        </View>
-
-        {/* Badge & Actions */}
-        <View style={styles.cardActions}>
-          {item.isInUse && (
-            <View style={styles.inUseBadge}>
-              <Ionicons name="lock-closed" size={10} color={Colors.white} />
-              <Text style={styles.inUseBadgeText}>{item.inUseReason || 'Đang sử dụng'}</Text>
-            </View>
-          )}
-          {item.isDefault && (
-            <View style={styles.defaultBadge}>
-              <Ionicons name="star" size={10} color={Colors.white} />
-              <Text style={styles.defaultBadgeText}>Mặc định</Text>
-            </View>
-          )}
-          <View style={styles.cardActionsRow}>
-            <TouchableOpacity
-              onPress={() => handleEdit(item)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              disabled={item.isInUse}
-            >
-              <Ionicons name="create-outline" size={18} color={item.isInUse ? Colors.disabled : Colors.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleDelete(item)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              disabled={item.isInUse}
-            >
-              <Ionicons name="trash-outline" size={18} color={item.isInUse ? Colors.disabled : Colors.danger} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const renderVehicle = useCallback(({ item }: { item: VehicleItem }) => (
+    <VehicleCard item={item} onEdit={handleEdit} onDelete={handleDelete} />
+  ), [handleEdit, handleDelete]);
 
   const renderEmpty = () => (
     <View style={styles.emptyWrap}>
       <View style={styles.emptyIconWrap}>
-        <Ionicons name="car-outline" size={56} color={Colors.disabled} />
+        <Ionicons name="car-outline" size={48} color={Colors.brandGrayText} />
       </View>
       <Text style={styles.emptyTitle}>Chưa có xe nào</Text>
       <Text style={styles.emptySubtitle}>
-        Thêm xe của bạn để quản lý và đặt chỗ dễ dàng hơn
+        Thêm phương tiện để bắt đầu trải nghiệm đỗ xe thông minh.
       </Text>
       <TouchableOpacity
         style={styles.emptyBtn}
         onPress={() => router.push("/profile/add-vehicle" as any)}
         activeOpacity={0.85}
       >
-        <Ionicons name="add" size={18} color={Colors.white} />
+        <Ionicons name="add" size={16} color={Colors.brandDark} />
         <Text style={styles.emptyBtnText}>Thêm xe đầu tiên</Text>
       </TouchableOpacity>
     </View>
@@ -208,43 +220,26 @@ export default function MyVehiclesScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.root}>
-        {/* ── Gradient Header ── */}
-        <View style={styles.heroWrapper}>
-          <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientMid]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <SafeAreaView edges={["top"]}>
-              <View style={styles.heroNav}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                  <Ionicons name="arrow-back" size={22} color={Colors.white} />
-                </TouchableOpacity>
-                <Text style={styles.heroTitle}>Xe của tôi</Text>
-                <View style={{ width: 38 }} />
-              </View>
-              <View style={styles.heroBody}>
-                <View style={styles.heroIconWrap}>
-                  <Ionicons name="car-sport" size={22} color={Colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.heroSub}>
-                    Quản lý các xe đã đăng ký của bạn
-                  </Text>
-                  <Text style={styles.heroCount}>
-                    {vehicles.length} xe đã đăng ký
-                  </Text>
-                </View>
-              </View>
-            </SafeAreaView>
-          </LinearGradient>
-        </View>
+        {/* Header */}
+        <SafeAreaView edges={["top"]}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+              <Ionicons name="arrow-back" size={20} color={Colors.brandDark} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Xe của tôi</Text>
+            <TouchableOpacity
+              onPress={() => router.push("/profile/add-vehicle" as any)}
+              style={styles.addBtn}
+            >
+              <Ionicons name="add" size={20} color={Colors.brandDark} />
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
 
-        {/* ── Vehicle List ── */}
+        {/* Vehicle List */}
         {loading ? (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator size="large" color={Colors.primary} />
+            <ActivityIndicator size="large" color={Colors.brandLime} />
           </View>
         ) : (
           <FlatList
@@ -254,25 +249,11 @@ export default function MyVehiclesScreen() {
             ListEmptyComponent={renderEmpty}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            initialNumToRender={5}
+            maxToRenderPerBatch={5}
+            windowSize={5}
+            removeClippedSubviews={true}
           />
-        )}
-
-        {/* ── FAB ── */}
-        {!loading && vehicles.length > 0 && (
-          <TouchableOpacity
-            style={styles.fab}
-            onPress={() => router.push("/profile/add-vehicle" as any)}
-            activeOpacity={0.85}
-          >
-            <LinearGradient
-              colors={[Colors.gradientStart, Colors.gradientMid]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.fabGradient}
-            >
-              <Ionicons name="add" size={28} color={Colors.white} />
-            </LinearGradient>
-          </TouchableOpacity>
         )}
       </View>
     </>
@@ -280,31 +261,42 @@ export default function MyVehiclesScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: Colors.white },
 
-  // Hero
-  heroWrapper: {
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    overflow: "hidden",
-  },
-  hero: { paddingHorizontal: 16, paddingBottom: 24 },
-  heroNav: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingTop: 8, marginBottom: 16,
+  // Header
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    height: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.brandGray,
   },
   backBtn: {
-    width: 38, height: 38, alignItems: "center", justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.brandGray,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  heroTitle: { fontSize: 17, fontFamily: Typography.fontFamily.bold, color: Colors.white },
-  heroBody: { flexDirection: "row", alignItems: "center", gap: 12 },
-  heroIconWrap: {
-    width: 46, height: 46, borderRadius: 12, backgroundColor: Colors.white,
-    alignItems: "center", justifyContent: "center", ...Shadows.sm,
+  headerTitle: {
+    fontSize: 16,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
+    textAlign: "center",
+    flex: 1,
   },
-  heroSub: { fontSize: 13, color: Colors.textOnDarkMuted, fontFamily: Typography.fontFamily.regular },
-  heroCount: { fontSize: 14, color: Colors.gradientAccent, fontFamily: Typography.fontFamily.semiBold, marginTop: 2 },
+  addBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.brandLime,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadows.sm,
+  },
 
   // List
   listContent: { padding: 16, paddingBottom: 100 },
@@ -312,101 +304,148 @@ const styles = StyleSheet.create({
 
   // Card
   card: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: Colors.surface, borderRadius: 18,
-    padding: 14, marginBottom: 12,
-    borderWidth: 1, borderColor: Colors.borderLight,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: Colors.white,
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: Colors.brandGray,
     ...Shadows.sm,
   },
-  cardDefault: {
-    borderColor: Colors.primary + "40",
-    backgroundColor: Colors.primaryBg,
+  cardInUse: {
+    opacity: 0.6,
   },
   cardImageWrap: {
-    width: 64, height: 64, borderRadius: 14, overflow: "hidden",
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    overflow: "hidden",
     marginRight: 14,
+    borderWidth: 1,
+    borderColor: Colors.brandGray,
   },
-  cardImage: { width: 64, height: 64, borderRadius: 14 },
+  cardImage: { width: 56, height: 56, borderRadius: 14 },
   cardIconFallback: {
-    width: 64, height: 64, borderRadius: 14,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: "center", justifyContent: "center",
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: Colors.brandGray,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  cardBody: { flex: 1 },
+  cardBody: { flex: 1, gap: 2 },
   plateText: {
-    fontSize: 18, fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary, letterSpacing: 1,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
-  typeRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
+  typeRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   typeText: {
-    fontSize: 12, fontFamily: Typography.fontFamily.medium,
-    color: Colors.textTertiary,
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.brandGrayText,
   },
   nicknameText: {
-    fontSize: 12, fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary, marginTop: 2, fontStyle: "italic",
+    fontSize: 10,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.brandGrayText,
+    fontStyle: "italic",
   },
-  cardActions: { alignItems: "flex-end", gap: 8 },
-  cardActionsRow: { flexDirection: "row", alignItems: "center", gap: 14 },
+  badgesRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 4,
+  },
   defaultBadge: {
-    flexDirection: "row", alignItems: "center", gap: 3,
-    backgroundColor: Colors.primary, borderRadius: 10,
-    paddingHorizontal: 8, paddingVertical: 3,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: 'rgba(164, 255, 7, 0.20)',
+    borderRadius: 9999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   defaultBadgeText: {
-    fontSize: 10, fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.white,
+    fontSize: 9,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
   inUseBadge: {
-    flexDirection: "row", alignItems: "center", gap: 3,
-    backgroundColor: "#E65100", borderRadius: 10,
-    paddingHorizontal: 8, paddingVertical: 3,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: Colors.brandGray,
+    borderRadius: 9999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   inUseBadgeText: {
-    fontSize: 10, fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.white,
+    fontSize: 9,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.brandDark,
   },
-  cardInUse: {
-    opacity: 0.65,
-    borderColor: "#E65100" + "40",
+  cardActions: {
+    gap: 6,
+  },
+  actionBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.brandGray,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   // Empty
   emptyWrap: {
-    flex: 1, justifyContent: "center", alignItems: "center",
-    paddingHorizontal: 40, paddingTop: 60,
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+    paddingTop: 80,
   },
   emptyIconWrap: {
-    width: 100, height: 100, borderRadius: 50,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: "center", justifyContent: "center", marginBottom: 20,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.brandGray,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: 18, fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary, marginBottom: 8,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
+    marginBottom: 6,
   },
   emptySubtitle: {
-    fontSize: 14, fontFamily: Typography.fontFamily.regular,
-    color: Colors.textTertiary, textAlign: "center", lineHeight: 20, marginBottom: 24,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.brandGrayText,
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: 24,
+    maxWidth: 200,
   },
   emptyBtn: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: Colors.primary, borderRadius: 14,
-    paddingHorizontal: 24, paddingVertical: 14,
-    ...Shadows.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: Colors.brandLime,
+    borderRadius: 9999,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    ...Shadows.sm,
   },
   emptyBtnText: {
-    fontSize: 15, fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
-  },
-
-  // FAB
-  fab: {
-    position: "absolute", bottom: 24, right: 20,
-    ...Shadows.lg,
-  },
-  fabGradient: {
-    width: 58, height: 58, borderRadius: 29,
-    alignItems: "center", justifyContent: "center",
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
 });

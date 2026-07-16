@@ -1,9 +1,9 @@
-import { useEffect } from "react";
-import { useCheckOutLogic } from "./useCheckOutLogic";
-import { CheckOutHeader } from "./CheckOutHeader";
-import { CheckOutOCR } from "./CheckOutOCR";
-import { CheckOutForm } from "./CheckOutForm";
-import { CheckOutPayment } from "./CheckOutPayment";
+import { useEffect } from 'react';
+import { useCheckOutLogic } from './useCheckOutLogic';
+import { CheckOutHeader } from './CheckOutHeader';
+import { CheckOutOCR } from './CheckOutOCR';
+import { CheckOutForm } from './CheckOutForm';
+import { CheckOutPayment } from './CheckOutPayment';
 
 interface CheckOutContainerProps {
   plate: string;
@@ -13,13 +13,29 @@ interface CheckOutContainerProps {
   onFlagException?: (checkoutImageUrl?: string | null) => void;
 }
 
-export function CheckOutContainer({ plate, onChangePlate, onCheckOut, onSearch, onFlagException }: CheckOutContainerProps) {
+export function CheckOutContainer({
+  plate,
+  onChangePlate,
+  onCheckOut,
+  onSearch,
+  onFlagException,
+}: CheckOutContainerProps) {
   const logic = useCheckOutLogic(plate, onChangePlate, onCheckOut, onSearch);
 
   useEffect(() => {
     const onF10 = () => logic.handleReset();
-    const onF2 = (e: KeyboardEvent) => { if (logic.step === 'CONFIRM' && !logic.isSubmitting) { e.preventDefault(); logic.handleCashCheckOut(); } };
-    const onF3 = (e: KeyboardEvent) => { if (logic.step === 'CONFIRM' && !logic.isSubmitting && !logic.momoQR) { e.preventDefault(); logic.handleMomoCheckOut(); } };
+    const onF2 = (e: KeyboardEvent) => {
+      if (logic.step === 'CONFIRM' && !logic.isSubmitting) {
+        e.preventDefault();
+        logic.handleCashCheckOut();
+      }
+    };
+    const onF3 = (e: KeyboardEvent) => {
+      if (logic.step === 'CONFIRM' && !logic.isSubmitting && !logic.momoQR) {
+        e.preventDefault();
+        logic.handleMomoCheckOut();
+      }
+    };
     const onF9 = (e: KeyboardEvent) => {
       e.preventDefault();
       onFlagException?.(logic.checkoutImageUrl);
@@ -30,7 +46,8 @@ export function CheckOutContainer({ plate, onChangePlate, onCheckOut, onSearch, 
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
         e.preventDefault();
         if (logic.paymentSuccess) {
-          logic.setPaymentSuccess(false); logic.handleReset();
+          logic.setPaymentSuccess(false);
+          logic.handleReset();
           if (onCheckOut) onCheckOut(null);
         } else if (logic.step === 'SEARCH') {
           logic.handleSearch();
@@ -52,34 +69,102 @@ export function CheckOutContainer({ plate, onChangePlate, onCheckOut, onSearch, 
       window.removeEventListener('keydown', (e) => e.key === 'F3' && onF3(e));
       window.removeEventListener('keydown', (e) => e.key === 'F9' && onF9(e));
     };
-  }, [logic.step, logic.isSubmitting, logic.searchInput, logic.searchMode, logic.currentSession, plate, logic.plateIn, logic.momoQR, logic.paymentSuccess]);
+  }, [
+    logic.step,
+    logic.isSubmitting,
+    logic.searchInput,
+    logic.searchMode,
+    logic.currentSession,
+    plate,
+    logic.plateIn,
+    logic.momoQR,
+    logic.paymentSuccess,
+  ]);
 
   useEffect(() => {
     window.addEventListener('RESET_CHECKOUT', logic.handleReset);
     return () => window.removeEventListener('RESET_CHECKOUT', logic.handleReset);
   }, []);
 
-  const isMismatch = logic.step === 'CONFIRM' && !logic.isNoPlateVehicle && plate.toUpperCase() !== logic.plateIn.toUpperCase();
+  const isMismatch =
+    logic.step === 'CONFIRM' &&
+    !logic.isNoPlateVehicle &&
+    plate.toUpperCase() !== logic.plateIn.toUpperCase();
   const isException = logic.currentSession?.status === 'exception';
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (logic.paymentSuccess) { logic.setPaymentSuccess(false); logic.handleReset(); if (onCheckOut) onCheckOut(null); }
-      else if (logic.step === 'SEARCH') {
-        if (!logic.searchInput || !logic.ocrPreviewUrl) { logic.showMsg('Vui lòng chụp ảnh xe ra trước khi tìm kiếm!', 'warning'); return; }
+      if (logic.paymentSuccess) {
+        logic.setPaymentSuccess(false);
+        logic.handleReset();
+        if (onCheckOut) onCheckOut(null);
+      } else if (logic.step === 'SEARCH') {
+        if (!logic.searchInput || !logic.ocrPreviewUrl) {
+          logic.showMsg('Vui lòng chụp ảnh xe ra trước khi tìm kiếm!', 'warning');
+          return;
+        }
         logic.handleSearch();
-      } else { logic.handleCashCheckOut(); }
+      } else {
+        logic.handleCashCheckOut();
+      }
     }
   };
 
   return (
     <div className="flex flex-col h-full min-h-0 relative">
-      <CheckOutHeader building={logic.building} gateOut={logic.gateOut} currentSession={logic.currentSession} />
+      <CheckOutHeader
+        building={logic.building}
+        gateOut={logic.gateOut}
+        currentSession={logic.currentSession}
+      />
       <div className="flex flex-col gap-3 flex-1 min-h-0">
-        <CheckOutOCR step={logic.step} isMismatch={isMismatch} isNoPlateVehicle={logic.isNoPlateVehicle} currentSession={logic.currentSession} ocrPreviewUrl={logic.ocrPreviewUrl} isUploading={logic.isUploading} fileInputRef={logic.fileInputRef} clearOcrPreview={logic.clearOcrPreview} handleImageUpload={logic.handleImageUpload} />
-        <CheckOutForm plateIn={logic.plateIn} plate={plate} isNoPlateVehicle={logic.isNoPlateVehicle} onChangePlate={onChangePlate} handleKeyDown={handleKeyDown} step={logic.step} isSubmitting={logic.isSubmitting} isException={isException} isMismatch={isMismatch} searchMode={logic.searchMode} setSearchMode={logic.setSearchMode} setSearchInput={logic.setSearchInput} searchInputRef={logic.searchInputRef} searchInput={logic.searchInput} vehicleTypeName={logic.vehicleTypeName} />
-        <CheckOutPayment paymentSuccess={logic.paymentSuccess} panelMsg={logic.panelMsg} setPanelMsg={logic.setPanelMsg} step={logic.step} isMismatch={isMismatch} isNoPlateVehicle={logic.isNoPlateVehicle} isSubmitting={logic.isSubmitting} onFlagException={() => onFlagException?.(logic.checkoutImageUrl)} handleCashCheckOut={logic.handleCashCheckOut} handleMomoCheckOut={logic.handleMomoCheckOut} setPaymentSuccess={logic.setPaymentSuccess} handleReset={logic.handleReset} onCheckOut={onCheckOut} momoQR={logic.momoQR} pollIntervalRef={logic.pollIntervalRef} setMomoQR={logic.setMomoQR} />
+        <CheckOutOCR
+          step={logic.step}
+          isMismatch={isMismatch}
+          isNoPlateVehicle={logic.isNoPlateVehicle}
+          currentSession={logic.currentSession}
+          ocrPreviewUrl={logic.ocrPreviewUrl}
+          isUploading={logic.isUploading}
+          fileInputRef={logic.fileInputRef}
+          clearOcrPreview={logic.clearOcrPreview}
+          handleImageUpload={logic.handleImageUpload}
+        />
+        <CheckOutForm
+          plateIn={logic.plateIn}
+          plate={plate}
+          isNoPlateVehicle={logic.isNoPlateVehicle}
+          onChangePlate={onChangePlate}
+          handleKeyDown={handleKeyDown}
+          step={logic.step}
+          isSubmitting={logic.isSubmitting}
+          isException={isException}
+          isMismatch={isMismatch}
+          searchMode={logic.searchMode}
+          setSearchMode={logic.setSearchMode}
+          setSearchInput={logic.setSearchInput}
+          searchInputRef={logic.searchInputRef}
+          searchInput={logic.searchInput}
+          vehicleTypeName={logic.vehicleTypeName}
+        />
+        <CheckOutPayment
+          paymentSuccess={logic.paymentSuccess}
+          panelMsg={logic.panelMsg}
+          setPanelMsg={logic.setPanelMsg}
+          step={logic.step}
+          isMismatch={isMismatch}
+          isNoPlateVehicle={logic.isNoPlateVehicle}
+          isSubmitting={logic.isSubmitting}
+          onFlagException={() => onFlagException?.(logic.checkoutImageUrl)}
+          handleCashCheckOut={logic.handleCashCheckOut}
+          handleMomoCheckOut={logic.handleMomoCheckOut}
+          setPaymentSuccess={logic.setPaymentSuccess}
+          handleReset={logic.handleReset}
+          onCheckOut={onCheckOut}
+          momoQR={logic.momoQR}
+          pollIntervalRef={logic.pollIntervalRef}
+          setMomoQR={logic.setMomoQR}
+        />
       </div>
     </div>
   );

@@ -1,58 +1,101 @@
-import React from 'react';
+import { useState } from 'react';
 import { useAuthStore } from '../../../store';
-import { motion } from 'framer-motion';
-import { RefreshCw, LayoutDashboard, Calendar } from 'lucide-react';
-import { useDashboard } from './hooks/useDashboard';
+import {
+  RefreshCw,
+  Download,
+  FileSpreadsheet,
+  Loader2,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { useDashboard, TIME_FILTER_OPTIONS, TimeFilter } from './hooks/useDashboard';
 import { DashboardCards } from './components/DashboardCards';
 import { DashboardCharts } from './components/DashboardCharts';
-import { Skeleton } from '../../../components/ui/Skeleton';
+import { SystemStatsWidget } from './components/SystemStatsWidget';
+import { RevenueBreakdownWidget } from './components/RevenueBreakdownWidget';
+import { FacilityLeaderboardWidget } from './components/FacilityLeaderboardWidget';
+import { SystemAlertsWidget } from './components/SystemAlertsWidget';
+import { CustomDropdown } from '../../../components/ui/CustomDropdown';
+import { reportService } from '../../../services/report.service';
+import { format, subDays, startOfMonth, startOfYear } from 'date-fns';
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-};
+/* ── Helpers ── */
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 300, damping: 24 }
+function getExportDateRange(filter: TimeFilter): {
+  startDate: string;
+  endDate: string;
+  groupBy: 'day' | 'week' | 'month';
+} {
+  const now = new Date();
+  const endDate = format(now, 'yyyy-MM-dd');
+  switch (filter) {
+    case 'today':
+      return { startDate: endDate, endDate, groupBy: 'day' };
+    case 'month':
+      return { startDate: format(startOfMonth(now), 'yyyy-MM-dd'), endDate, groupBy: 'day' };
+    case 'year':
+      return { startDate: format(startOfYear(now), 'yyyy-MM-dd'), endDate, groupBy: 'month' };
+    case 'week':
+    default:
+      return { startDate: format(subDays(now, 6), 'yyyy-MM-dd'), endDate, groupBy: 'day' };
   }
-};
+}
+
+/* ── Main Page ── */
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
   const {
     isLoading,
+    timeFilter,
+    setTimeFilter,
     trafficData,
     revenueData,
     occupancyData,
+    peakHoursData,
+    userStats,
     fetchData,
   } = useDashboard();
 
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async (fmt: 'excel' | 'pdf') => {
+    try {
+      setExporting(true);
+      toast.info(`Đang xuất báo cáo ra ${fmt === 'pdf' ? 'PDF' : 'Excel'}...`);
+      const { startDate, endDate, groupBy } = getExportDateRange(timeFilter);
+      const blob = await reportService.exportReport({
+        reportType: 'comprehensive',
+        format: fmt,
+        startDate,
+        endDate,
+        groupBy,
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `dashboard_admin_${Date.now()}.${fmt === 'pdf' ? 'pdf' : 'xlsx'}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Xuất báo cáo thành công!');
+    } catch {
+      toast.error('Lỗi khi xuất báo cáo');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 space-y-8 pb-12"
-    >
-      {/* Header Section */}
-      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="min-h-screen">
+      {/* ═══ HEADER BAR ═══ */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#062F28] flex items-center justify-center shadow-lg shadow-[#062F28]/20">
-              <LayoutDashboard className="text-white" size={20} />
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Tổng quan hệ thống</h1>
-          </div>
-          <p className="text-gray-500 text-sm md:text-base max-w-2xl">
-            Xin chào, <span className="font-semibold text-[#062F28]">{user?.name}</span> —{' '}
-            {new Date().toLocaleDateString('vi-VN', {
+          <h1 className="text-[#1a1a1a] font-bold text-[22px] tracking-tight">Tổng quan hệ thống</h1>
+          <p className="text-[13px] text-[#6b7280] mt-0.5">
+            Xin chào,{' '}
+            <span className="font-semibold text-[#062F28]">{user?.name}</span>
+            {' '}— {new Date().toLocaleDateString('vi-VN', {
               weekday: 'long',
               year: 'numeric',
               month: 'long',
@@ -61,51 +104,82 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="flex items-center bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm text-sm flex-1 sm:flex-none">
-            <Calendar size={16} className="text-gray-400 mr-2" />
-            <span className="text-gray-600 font-medium">7 ngày qua</span>
-          </div>
-          
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Time Filter */}
+          <CustomDropdown
+            value={timeFilter}
+            onChange={(v) => setTimeFilter(v as TimeFilter)}
+            options={TIME_FILTER_OPTIONS as unknown as { value: string; label: string }[]}
+          />
+
+          {/* Refresh */}
           <button
             onClick={fetchData}
             disabled={isLoading}
-            className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Tải lại dữ liệu"
+            className="h-10 w-10 flex items-center justify-center bg-white border border-gray-200 text-gray-600 rounded-[10px] hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
+            <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} />
           </button>
-        </div>
-      </motion.div>
 
-      {isLoading ? (
-        <motion.div variants={itemVariants} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-32 rounded-2xl" />
-            ))}
+          {/* Export Buttons */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleExport('excel')}
+              disabled={exporting || isLoading}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-white border-[1.5px] border-gray-200 text-[#1a1a1a] text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exporting ? <Loader2 size={17} className="animate-spin" /> : <FileSpreadsheet size={17} />}
+              Excel
+            </button>
+            <button
+              onClick={() => handleExport('pdf')}
+              disabled={exporting || isLoading}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-[#062F28] text-white text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exporting ? <Loader2 size={17} className="animate-spin" /> : <Download size={17} />}
+              PDF
+            </button>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-             <Skeleton className="h-[400px] rounded-2xl" />
-             <Skeleton className="h-[400px] rounded-2xl" />
-          </div>
-        </motion.div>
-      ) : (
-        <>
-          <motion.div variants={itemVariants}>
-            <DashboardCards 
-              trafficData={trafficData} 
-              revenueData={revenueData} 
-              occupancyData={occupancyData} 
-            />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <DashboardCharts 
+        </div>
+      </header>
+
+      {/* ═══ CONTENT ═══ */}
+      <div className="space-y-4">
+        {/* ── System Status Panel (Redesigned) ── */}
+        <DashboardCards
+          trafficData={trafficData}
+          revenueData={revenueData}
+          occupancyData={occupancyData}
+          isLoading={isLoading}
+        />
+
+        {/* ── Main Grid: 2/3 Charts + 1/3 Right Sidebar ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Left 2/3 — Tabbed Charts */}
+          <div className="lg:col-span-2">
+            <DashboardCharts
               trafficData={trafficData}
               revenueData={revenueData}
+              occupancyData={occupancyData}
+              peakHoursData={peakHoursData}
+              isLoading={isLoading}
             />
-          </motion.div>
-        </>
-      )}
-    </motion.div>
+          </div>
+
+          {/* Right 1/3 — 2 admin-exclusive widgets */}
+          <div className="flex flex-col gap-4">
+            <SystemStatsWidget userStats={userStats} />
+            <RevenueBreakdownWidget revenueData={revenueData} />
+          </div>
+        </div>
+
+        {/* ── Additional Admin Data Grid ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <FacilityLeaderboardWidget occupancyData={occupancyData} />
+          <SystemAlertsWidget />
+        </div>
+      </div>
+    </div>
   );
 }

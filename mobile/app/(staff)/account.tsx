@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Colors,
@@ -32,19 +31,15 @@ function getInitials(name?: string) {
 interface MenuItemProps {
   icon: any;
   label: string;
-  subtitle?: string;
   onPress: () => void;
-  color?: string;
-  chevron?: boolean;
+  iconBg?: string;
 }
 
 function MenuItem({
   icon,
   label,
-  subtitle,
   onPress,
-  color = Colors.primary,
-  chevron = true,
+  iconBg = Colors.surfaceElevated,
 }: MenuItemProps) {
   return (
     <TouchableOpacity
@@ -52,36 +47,16 @@ function MenuItem({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <View style={[styles.menuIconWrap, { backgroundColor: color + "15" }]}>
-        <Ionicons name={icon} size={20} color={color} />
+      <View style={[styles.menuIconWrap, { backgroundColor: iconBg }]}>
+        <Ionicons name={icon} size={18} color={Colors.brandDark} />
       </View>
-      <View style={styles.menuTextWrap}>
-        <Text style={styles.menuLabel}>{label}</Text>
-        {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
-      </View>
-      {chevron && (
-        <Ionicons
-          name="chevron-forward"
-          size={18}
-          color={Colors.textTertiary}
-        />
-      )}
+      <Text style={styles.menuLabel}>{label}</Text>
+      <Ionicons
+        name="chevron-forward"
+        size={16}
+        color={Colors.textTertiary}
+      />
     </TouchableOpacity>
-  );
-}
-
-function MenuSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.sectionCard}>{children}</View>
-    </View>
   );
 }
 
@@ -101,7 +76,7 @@ export default function StaffAccountScreen() {
   })();
 
   const handleLogout = () => {
-    Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
+    Alert.alert("Xác nhận đăng xuất", "Bạn có chắc chắn muốn đăng xuất khỏi phiên làm việc?", [
       { text: "Hủy", style: "cancel" },
       {
         text: "Đăng xuất",
@@ -120,243 +95,277 @@ export default function StaffAccountScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* ── Profile Hero ── */}
-        <View style={styles.heroWrapper}>
-          <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientMid]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <SafeAreaView edges={["top"]}>
-              <View style={styles.heroContent}>
-                <View style={styles.avatarLarge}>
-                  <Text style={styles.avatarText}>
-                    {getInitials(user?.name)}
-                  </Text>
-                </View>
-                <Text style={styles.heroName}>{user?.name || "Staff"}</Text>
-                <Text style={styles.heroEmail}>{user?.email}</Text>
-                <View style={styles.heroStatsRow}>
-                  <View style={styles.roleBadge}>
-                    <Ionicons
-                      name="briefcase"
-                      size={15}
-                      color={Colors.gradientAccent}
-                    />
-                    <Text style={styles.roleText}>
-                      {user?.role?.toUpperCase() || "NHÂN VIÊN"}
-                    </Text>
-                  </View>
-                </View>
+        <SafeAreaView edges={["top"]}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Cá nhân</Text>
+            <Text style={styles.versionText}>Ver 1.0.4</Text>
+          </View>
+
+          {/* Profile Info */}
+          <View style={styles.profileSection}>
+            <View style={styles.avatarWrap}>
+              <View style={styles.avatarLarge}>
+                <Text style={styles.avatarText}>
+                  {getInitials(user?.name)}
+                </Text>
               </View>
-            </SafeAreaView>
-          </LinearGradient>
-        </View>
-
-        {/* ── Info Cards ── */}
-        <View style={styles.infoRow}>
-          <View style={styles.infoCard}>
-            <Ionicons name="call-outline" size={16} color={Colors.primary} />
-            <Text style={styles.infoLabel}>Điện thoại</Text>
-            <Text style={styles.infoValue}>{(user as any)?.phone || "—"}</Text>
-          </View>
-          <View style={[styles.infoCard, styles.infoCardRight]}>
-            <Ionicons name="mail-outline" size={16} color={Colors.secondary} />
-            <Text style={styles.infoLabel}>Email</Text>
-            <Text style={styles.infoValue} numberOfLines={1}>
-              {user?.email || "—"}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>Thông tin làm việc</Text>
-          <View style={styles.menuItem}>
-            <View style={styles.menuIconWrap}>
-              <Ionicons name="business" size={20} color={Colors.primary} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.menuLabel}>Toà nhà đang trực</Text>
-              <Text
-                style={{
-                  fontSize: 13,
-                  color: Colors.textTertiary,
-                  marginTop: 2,
-                }}
-              >
-                {facilityName}
+
+            <Text style={styles.profileName}>{user?.name || "Staff"}</Text>
+
+            {/* Role Badge */}
+            <View style={styles.roleBadge}>
+              <Ionicons
+                name="briefcase"
+                size={14}
+                color={Colors.primary}
+              />
+              <Text style={styles.roleText}>
+                {user?.role?.toUpperCase() || "NHÂN VIÊN"}
               </Text>
             </View>
-            <TouchableOpacity
-              style={styles.changeButton}
-              onPress={() => setSelectedFacilityId(null)}
-            >
-              <Text style={styles.changeButtonText}>Đổi</Text>
-            </TouchableOpacity>
+
+            <Text style={styles.empId}>
+              {user?.email}
+            </Text>
           </View>
-        </View>
 
-        {/* ── Bảo mật ── */}
-        <MenuSection title="Bảo mật">
-          <MenuItem
-            icon="lock-closed-outline"
-            label="Đổi mật khẩu"
-            subtitle="Cập nhật mật khẩu tài khoản"
-            onPress={() => router.push("/profile/change-password" as any)}
-            color={Colors.primary}
-          />
-        </MenuSection>
+          {/* Work Info Card */}
+          <View style={styles.workCard}>
+            <View style={styles.workCardContent}>
+              <View style={styles.workCardLeft}>
+                <View style={styles.workIconCircle}>
+                  <Ionicons name="business" size={20} color={Colors.brandDark} />
+                </View>
+                <View style={styles.workInfo}>
+                  <Text style={styles.workLabel}>TOÀ NHÀ ĐANG TRỰC</Text>
+                  <Text style={styles.workName} numberOfLines={1}>
+                    {facilityName}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.changeButton}
+                onPress={() => setSelectedFacilityId(null)}
+              >
+                <Text style={styles.changeButtonText}>Thay đổi</Text>
+              </TouchableOpacity>
+            </View>
+            {/* Decorative blur circle */}
+            <View style={styles.blurDecor} />
+          </View>
 
-        {/* ── Hỗ trợ ── */}
-        <MenuSection title="Hỗ trợ">
-          <MenuItem
-            icon="chatbubble-ellipses-outline"
-            label="Gửi phản hồi"
-            subtitle="Báo cáo vấn đề hoặc góp ý"
-            onPress={() => router.push("/feedback/create" as any)}
-            color={Colors.warning}
-          />
-          <View style={styles.divider} />
-          <MenuItem
-            icon="list-outline"
-            label="Phản hồi của tôi"
-            subtitle="Theo dõi trạng thái xử lý"
-            onPress={() => router.push("/feedback" as any)}
-            color={Colors.info}
-          />
-        </MenuSection>
+          {/* Security Section */}
+          <View style={styles.menuSection}>
+            <Text style={styles.sectionTitle}>BẢO MẬT</Text>
+            <View style={styles.sectionCard}>
+              <MenuItem
+                icon="lock-closed-outline"
+                label="Đổi mật khẩu"
+                onPress={() => router.push("/profile/change-password" as any)}
+              />
+            </View>
+          </View>
 
-        {/* ── Đăng xuất ── */}
-        <TouchableOpacity
-          style={styles.logoutBtn}
-          onPress={handleLogout}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
-          <Text style={styles.logoutText}>Đăng xuất</Text>
-        </TouchableOpacity>
+          {/* Support Section */}
+          <View style={styles.menuSection}>
+            <Text style={styles.sectionTitle}>HỖ TRỢ & Ý KIẾN</Text>
+            <View style={styles.sectionCard}>
+              <MenuItem
+                icon="chatbubble-ellipses-outline"
+                label="Gửi phản hồi đóng góp"
+                onPress={() => router.push("/feedback/create" as any)}
+              />
+              <View style={styles.divider} />
+              <MenuItem
+                icon="list-outline"
+                label="Lịch sử phản hồi của tôi"
+                onPress={() => router.push("/feedback" as any)}
+              />
+            </View>
+          </View>
+
+          {/* Logout Button */}
+          <TouchableOpacity
+            style={styles.logoutBtn}
+            onPress={handleLogout}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="log-out-outline" size={18} color={Colors.textSecondary} />
+            <Text style={styles.logoutText}>Đăng xuất tài khoản</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: Colors.white },
   scrollContent: { paddingBottom: 40 },
 
-  // Hero
-  heroWrapper: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: "hidden",
-  },
-  hero: {
-    paddingBottom: 28,
-  },
-  heroContent: { alignItems: "center", paddingVertical: 24 },
-  avatarLarge: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderWidth: 3,
-    borderColor: "rgba(255,255,255,0.4)",
+  // Header
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
-  avatarText: {
-    fontSize: 28,
-    fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
-  },
-  heroName: {
+  headerTitle: {
     fontSize: 22,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textOnDark,
-    marginBottom: 4,
+    color: Colors.brandDark,
   },
-  heroEmail: {
-    fontSize: 13,
-    color: Colors.textOnDarkMuted,
-    fontFamily: Typography.fontFamily.regular,
-    marginBottom: 10,
+  versionText: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textTertiary,
+    letterSpacing: 0.5,
+  },
+
+  // Profile
+  profileSection: {
+    alignItems: "center",
+    paddingVertical: 16,
+  },
+  avatarWrap: {
+    marginBottom: 14,
+  },
+  avatarLarge: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: Colors.brandDark,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 4,
+    borderColor: "rgba(164, 255, 7, 0.25)",
+    ...Shadows.md,
+  },
+  avatarText: {
+    fontSize: 32,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.primary,
+  },
+  profileName: {
+    fontSize: 22,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
+    marginBottom: 8,
   },
   roleBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    borderRadius: 20,
+    backgroundColor: Colors.brandDark,
+    borderRadius: 9999,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
+    marginBottom: 6,
   },
   roleText: {
-    fontSize: 14,
-    color: Colors.gradientAccent,
-    fontFamily: Typography.fontFamily.semiBold,
+    fontSize: 12,
+    color: Colors.white,
+    fontFamily: Typography.fontFamily.bold,
+    letterSpacing: 1,
   },
-  heroStatsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-
-  // Info row
-  infoRow: { flexDirection: "row", margin: 16, gap: 12 },
-  infoCard: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: "#5E8F25",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  infoCardRight: {},
-  infoLabel: {
-    fontSize: 11,
-    color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.medium,
-    marginTop: 6,
-    marginBottom: 2,
-  },
-  infoValue: {
-    fontSize: 13,
-    color: Colors.textPrimary,
-    fontFamily: Typography.fontFamily.semiBold,
-  },
-
-  // Menu
-  menuSection: { marginHorizontal: 16, marginBottom: 12 },
-  section: { marginHorizontal: 16, marginBottom: 12 },
-  sectionTitle: {
+  empId: {
     fontSize: 12,
     color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.semiBold,
-    textTransform: "uppercase",
+    fontFamily: Typography.fontFamily.bold,
+    letterSpacing: 0.5,
+  },
+
+  // Work Info Card
+  workCard: {
+    backgroundColor: Colors.brandDark,
+    borderRadius: 22,
+    padding: 20,
+    marginHorizontal: 24,
+    marginBottom: 24,
+    marginTop: 8,
+    overflow: "hidden",
+    ...Shadows.md,
+  },
+  workCardContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  workCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  workIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  workInfo: {
+    flex: 1,
+  },
+  workLabel: {
+    fontSize: 10,
+    color: Colors.textTertiary,
+    fontFamily: Typography.fontFamily.bold,
     letterSpacing: 0.8,
-    marginBottom: 8,
+    marginBottom: 2,
+  },
+  workName: {
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.white,
+  },
+  changeButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  changeButtonText: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.primary,
+  },
+  blurDecor: {
+    position: "absolute",
+    right: -24,
+    top: -24,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(164, 255, 7, 0.08)",
+  },
+
+  // Menu Sections
+  menuSection: {
+    marginHorizontal: 24,
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 10,
+    color: Colors.textTertiary,
+    fontFamily: Typography.fontFamily.bold,
+    letterSpacing: 1,
+    marginBottom: 10,
     marginLeft: 4,
   },
   sectionCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 18,
     borderWidth: 1,
     borderColor: Colors.border,
     overflow: "hidden",
-    shadowColor: "#5E8F25",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
   },
   menuItem: {
     flexDirection: "row",
@@ -368,23 +377,21 @@ const styles = StyleSheet.create({
   menuIconWrap: {
     width: 38,
     height: 38,
-    borderRadius: 10,
+    borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
   },
-  menuTextWrap: { flex: 1 },
   menuLabel: {
+    flex: 1,
     fontSize: 15,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
-  menuSubtitle: {
-    fontSize: 12,
-    color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.regular,
-    marginTop: 1,
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginLeft: 66,
   },
-  divider: { height: 1, backgroundColor: Colors.borderLight, marginLeft: 66 },
 
   // Logout
   logoutBtn: {
@@ -392,28 +399,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    marginHorizontal: 16,
-    marginTop: 8,
-    backgroundColor: Colors.dangerLight,
-    borderRadius: 14,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: Colors.danger + "30",
+    marginHorizontal: 24,
+    marginTop: 4,
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 9999,
+    paddingVertical: 15,
   },
   logoutText: {
-    fontSize: 15,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.danger,
-  },
-  changeButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: Colors.primary + "15",
-    borderRadius: 8,
-  },
-  changeButtonText: {
-    fontSize: 13,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.primary,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textSecondary,
   },
 });
+

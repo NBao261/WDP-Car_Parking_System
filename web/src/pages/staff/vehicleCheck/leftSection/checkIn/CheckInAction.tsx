@@ -48,8 +48,11 @@ export function CheckInAction({
         }
         return (
           <button
-            onClick={handleCheckInClick}
-            disabled={isSubmitting}
+            onClick={() => {
+              if (pendingClear) return;
+              handleCheckInClick();
+            }}
+            disabled={isSubmitting || pendingClear}
             className={`w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all ${pendingClear
               ? 'bg-[#1d7a4a] text-white'
               : isSubmitting
@@ -58,7 +61,7 @@ export function CheckInAction({
                   ? 'bg-[#fcfcfc] border border-[#e8e9e8] text-[#9b9b9b]'
                   : 'bg-[#a3c965] hover:bg-[#9cbd5a] text-[#2c4015] border border-[#a3c965]'
               }`}>
-            {isSubmitting ? 'Đang xử lý...' : pendingClear ? 'Mở chắn' : !plate ? '—' : 'Cho xe qua'}
+            {isSubmitting ? 'Đang xử lý...' : pendingClear ? 'Đang mở chắn...' : !plate ? '—' : 'Cho xe qua'}
           </button>
         );
       })()}

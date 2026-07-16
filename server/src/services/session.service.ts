@@ -12,6 +12,8 @@ import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { generateSessionCode, generateCardCode } from '../utils/codeGenerator';
 import { getIO } from '../config/socket';
 import { UploadService } from './upload.service';
+import { addUploadJob } from '../queues/uploadQueue';
+import { getCache, setCache, delCache, sIsMember, sAdd, sRem, getRedlock } from '../config/redis';
 
 interface CheckConditionsResult {
   eligible: boolean;
@@ -35,6 +37,7 @@ interface CheckInData {
   slotId?: string;
   reservationCode?: string;
   checkInImage?: string;
+  cardCode?: string;
 }
 
 export class SessionService {
@@ -176,8 +179,57 @@ export class SessionService {
       throw new AppError('Thiếu thông tin bắt buộc: facilityId, vehicleTypeId', 400);
     }
 
-    // Kiểm tra loại xe có yêu cầu biển số không
-    const vehicleType = await VehicleType.findById(data.vehicleTypeId);
+    const pricingCacheKey = `pricing:active:${data.facilityId}:${data.vehicleTypeId}`;
+
+    // Thực hiện truy vấn DB song song để giảm latency (Parallelize)
+    const earlyWindow = 15 * 60 * 1000;
+    const [
+      staffUser,
+      vehicleType,
+      facility,
+      floorsServingVehicle,
+      hasAvailableSlot,
+      existingSession,
+      cachedPricingPlan,
+      autoMatchReservation,
+      isCardActiveDB
+    ] = await Promise.all([
+      User.findById(data.staffInId).select('assignedFacilities role name email').lean(),
+      VehicleType.findById(data.vehicleTypeId).lean(),
+      ParkingFacility.findById(data.facilityId).lean(),
+      Floor.find({
+        facilityId: data.facilityId,
+        allowedVehicleTypes: data.vehicleTypeId,
+        isDeleted: false,
+        status: 'active',
+      }).lean(),
+      ParkingSlot.exists({
+        facilityId: data.facilityId,
+        vehicleTypeId: data.vehicleTypeId,
+        status: SlotStatus.AVAILABLE,
+        isDeleted: false,
+      }),
+      data.licensePlate ? ParkingSession.findOne({
+        licensePlate: data.licensePlate.toUpperCase(),
+        status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] },
+      }).lean() : Promise.resolve(null),
+      getCache(pricingCacheKey),
+      (!matchedReservation && data.licensePlate) ? Reservation.findOne({
+        licensePlate: data.licensePlate.toUpperCase(),
+        facilityId: data.facilityId,
+        vehicleTypeId: data.vehicleTypeId,
+        status: ReservationStatus.CONFIRMED,
+        startTime: {
+          $gte: new Date(Date.now() - earlyWindow),
+          $lte: new Date(Date.now() + earlyWindow),
+        },
+      }).lean() : Promise.resolve(null),
+      data.cardCode ? ParkingSession.exists({ 
+        cardCode: data.cardCode, 
+        status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } 
+      }) : Promise.resolve(false)
+    ]);
+
     if (!vehicleType || vehicleType.isDeleted) {
       throw new AppError('Loại phương tiện không hợp lệ', 400);
     }
@@ -188,203 +240,219 @@ export class SessionService {
       throw new AppError('Thiếu thông tin bắt buộc: licensePlate', 400);
     }
 
-    // Auto-gen biển số cho xe không có biển
-    if (isNoPlateVehicle) {
+    // Auto-gen biển số cho xe không có biển (nếu chưa có trong request)
+    if (isNoPlateVehicle && !data.licensePlate) {
       data.licensePlate = `NOPLATE-${Date.now()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
     }
 
-    // 1. Kiểm tra điều kiện
-    const conditions = await this.checkConditions(data.facilityId, data.vehicleTypeId);
-    if (!conditions.eligible) {
-      throw new AppError(conditions.reason || 'Không đủ điều kiện vào bãi', 400);
+    // 1. Kiểm tra điều kiện (Check Conditions)
+    if (!facility || facility.status !== 'active') {
+      throw new AppError('Bãi xe không hoạt động hoặc không tồn tại', 400);
     }
 
-    // 2. Validate staff được phân công tại facility này (FR-18.6)
-    const staffUser = await User.findById(data.staffInId).select('assignedFacilities role');
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    if (facility.openTime !== facility.closeTime) {
+      let isClosed = false;
+      if (facility.openTime < facility.closeTime) {
+        isClosed = currentTime < facility.openTime || currentTime >= facility.closeTime;
+      } else {
+        isClosed = currentTime < facility.openTime && currentTime >= facility.closeTime;
+      }
+      if (isClosed) {
+        throw new AppError(`Bãi xe đang đóng. Giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, 400);
+      }
+    }
+
+    if (floorsServingVehicle.length === 0) {
+      throw new AppError(`Bãi xe không phục vụ loại xe "${vehicleType.name}"`, 400);
+    }
+
+    if (!hasAvailableSlot) {
+      throw new AppError(`Bãi đầy cho loại xe "${vehicleType.name}"`, 400);
+    }
+
+    // 2. Validate staff
     if (!staffUser) {
       throw new AppError('Staff user not found', 404);
     }
-    const isAssigned = staffUser.assignedFacilities.some(
-      (fId) => fId.toString() === data.facilityId
-    );
+    const isAssigned = staffUser.assignedFacilities.some((fId: any) => fId.toString() === data.facilityId);
     if (!isAssigned) {
       throw new AppError('Bạn không được phân công tại bãi xe này', 403);
     }
 
-    // 3. Kiểm tra xe đang có session active hoặc exception (biển số trùng)
-    // Bỏ qua cho xe không biển số vì biển auto-gen luôn unique
-    if (!isNoPlateVehicle) {
-      const existingSession = await ParkingSession.findOne({
-        licensePlate: data.licensePlate!.toUpperCase(),
-        status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] },
-      });
-
-      if (existingSession) {
-        if (existingSession.status === SessionStatus.EXCEPTION) {
-          throw new AppError(`Xe biển số "${data.licensePlate}" đang có sự cố ngoại lệ cần xử lý (${existingSession.code}), không được phép vào gửi.`, 400);
-        }
-        throw new AppError(`Xe biển số "${data.licensePlate}" đang có lượt gửi chưa kết thúc (${existingSession.code})`, 400);
+    // 3. Kiểm tra xe đang có session active (chỉ áp dụng nếu yêu cầu biển số)
+    if (!isNoPlateVehicle && existingSession) {
+      if (existingSession.status === SessionStatus.EXCEPTION) {
+        throw new AppError(`Xe biển số "${data.licensePlate}" đang có sự cố ngoại lệ cần xử lý (${existingSession.code}), không được phép vào gửi.`, 400);
       }
+      throw new AppError(`Xe biển số "${data.licensePlate}" đang có lượt gửi chưa kết thúc (${existingSession.code})`, 400);
     }
 
-    // 4. Tìm bảng giá active (lấy bảng giá mới nhất nếu có nhiều active)
-    const pricingPlan = await PricingPlan.findOne({
-      facilityId: data.facilityId,
-      vehicleTypeId: data.vehicleTypeId,
-      status: 'active',
-      isDeleted: false,
-    }).sort({ createdAt: -1 });
-
+    // 4. Tìm bảng giá active
+    let pricingPlan = cachedPricingPlan;
     if (!pricingPlan) {
-      throw new AppError('Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này', 400);
-    }
-
-    // 5. Tìm slot — dùng slot từ reservation nếu có, không thì auto-assign
-    let slot;
-
-    // Nếu có reservation → dùng slot đã reserved
-    if (matchedReservation && matchedReservation.slotId) {
-      slot = await ParkingSlot.findOne({
-        _id: matchedReservation.slotId,
-        status: SlotStatus.RESERVED,
-        isDeleted: false,
-      });
-      // Nếu slot reserved bị lỗi → fallback auto-assign bên dưới
-    }
-
-    // Nếu không có reservationCode → kiểm tra xem có reservation nào match theo biển số không
-    if (!matchedReservation) {
-      const earlyWindow = 15 * 60 * 1000;
-      const autoMatchReservation = await Reservation.findOne({
-        licensePlate: data.licensePlate!.toUpperCase(),
+      pricingPlan = await PricingPlan.findOne({
         facilityId: data.facilityId,
-        vehicleTypeId: data.vehicleTypeId, // Phải khớp đúng loại xe
-        status: ReservationStatus.CONFIRMED,
-        startTime: { 
-          $gte: new Date(Date.now() - earlyWindow), // Không lấy các reservation đã quá hạn 15p
-          $lte: new Date(Date.now() + earlyWindow), // Không lấy các reservation chưa tới giờ (quá 15p)
-        },
-      });
+        vehicleTypeId: data.vehicleTypeId,
+        status: 'active',
+        isDeleted: false,
+      }).sort({ createdAt: -1 }).lean();
 
-      if (autoMatchReservation && autoMatchReservation.slotId) {
-        matchedReservation = autoMatchReservation;
-        slot = await ParkingSlot.findOne({
-          _id: autoMatchReservation.slotId,
-          status: SlotStatus.RESERVED,
-          isDeleted: false,
-        });
+      if (!pricingPlan) {
+        throw new AppError('Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này', 400);
       }
+      setCache(pricingCacheKey, pricingPlan, 900).catch(() => {});
     }
 
-    // Nếu vẫn chưa có slot (không có reservation hoặc slot reserved bị lỗi) → fallback
-    if (!slot) {
-      if (data.slotId) {
-        // User chọn slot cụ thể
-        slot = await ParkingSlot.findOne({
-          _id: data.slotId,
-          facilityId: data.facilityId,
-          vehicleTypeId: data.vehicleTypeId,
-          status: SlotStatus.AVAILABLE,
-          isDeleted: false,
-        });
+    if (autoMatchReservation) {
+      matchedReservation = autoMatchReservation;
+    }
 
+    // 5. Atomic Slot Assignment (Không cần Redlock vì findOneAndUpdate là atomic)
+    const sessionId = new mongoose.Types.ObjectId();
+    let slot: any = null;
+
+    try {
+      // Nếu có reservation → dùng slot đã reserved
+      if (matchedReservation && matchedReservation.slotId) {
+        slot = await ParkingSlot.findOneAndUpdate(
+          { _id: matchedReservation.slotId, status: SlotStatus.RESERVED, isDeleted: false },
+          { status: SlotStatus.OCCUPIED, currentSessionId: sessionId },
+          { new: true }
+        );
         if (!slot) {
-          throw new AppError('Slot đã chọn không khả dụng', 400);
+          throw new AppError('Slot đã đặt trước không khả dụng', 400);
+        }
+      } else if (data.slotId) {
+        // Manual slot assignment
+        slot = await ParkingSlot.findOneAndUpdate(
+          { _id: data.slotId, facilityId: data.facilityId, vehicleTypeId: data.vehicleTypeId, status: SlotStatus.AVAILABLE, isDeleted: false },
+          { status: SlotStatus.OCCUPIED, currentSessionId: sessionId },
+          { new: true }
+        );
+        if (!slot) {
+          throw new AppError('Slot đã chọn không khả dụng hoặc đã có xe khác vào', 400);
         }
       } else {
-        // Auto-assign: tim slot available nhanh nhat bang findOne
-        slot = await ParkingSlot.findOne({
-          facilityId: data.facilityId,
-          vehicleTypeId: data.vehicleTypeId,
-          status: SlotStatus.AVAILABLE,
-          isDeleted: false,
-          ...(data.floorId ? { floorId: data.floorId } : {}),
-        }).sort({ code: 1 });
-
+        // Auto slot assignment (Atomic)
+        slot = await ParkingSlot.findOneAndUpdate(
+          { 
+            facilityId: data.facilityId, 
+            vehicleTypeId: data.vehicleTypeId, 
+            status: SlotStatus.AVAILABLE, 
+            isDeleted: false,
+            ...(data.floorId ? { floorId: data.floorId } : {}) 
+          },
+          { status: SlotStatus.OCCUPIED, currentSessionId: sessionId },
+          { new: true, sort: { code: 1 } }
+        );
         if (!slot) {
           throw new AppError('Không còn slot trống phù hợp', 400);
         }
       }
-    }
 
-    // 5. Sinh mã session + mã thẻ xe (đảm bảo unique)
-    let sessionCode = generateSessionCode();
-    // Nếu có reservation → dùng reservation code làm cardCode (thẻ ảo, không cần thẻ vật lý)
-    let cardCode = matchedReservation
-      ? matchedReservation.code   // VD: RSV-20260623-AB12
-      : generateCardCode();       // Walk-in: sinh thẻ vật lý bình thường
+      // Sinh mã session + thẻ
+      let sessionCode = generateSessionCode();
 
-    // Retry nếu trùng (unlikely nhưng phòng)
-    let retries = 5;
-    while (retries > 0) {
-      const codeExists = await ParkingSession.findOne({ $or: [{ code: sessionCode }, { cardCode }] });
-      if (!codeExists) break;
-      sessionCode = generateSessionCode();
-      // Chỉ re-gen cardCode cho walk-in; reservation code là cố định
-      if (!matchedReservation) cardCode = generateCardCode();
-      retries--;
-    }
+      if (data.cardCode) {
+        const isCardActive = await sIsMember('activeCards', data.cardCode);
+        if (isCardActive) {
+          throw new AppError('Thẻ NFC này đang được sử dụng cho một xe khác (Chưa check-out)', 400);
+        }
+        if (isCardActiveDB) {
+          await sAdd('activeCards', data.cardCode);
+          throw new AppError('Thẻ NFC này đang được sử dụng cho một xe khác (Chưa check-out)', 400);
+        }
+      }
 
-    if (retries === 0) {
-      throw new AppError('Không thể tạo mã lượt gửi xe. Vui lòng thử lại.', 500);
-    }
+      let cardCode = matchedReservation
+        ? matchedReservation.code
+        : data.cardCode || generateCardCode();
 
-    // 6. Tạo session
-    const session = new ParkingSession({
-      code: sessionCode,
-      licensePlate: data.licensePlate!.toUpperCase(),
-      vehicleTypeId: data.vehicleTypeId,
-      facilityId: data.facilityId,
-      floorId: slot.floorId,
-      slotId: slot._id,
-      pricingPlanId: pricingPlan._id,
-      checkInTime: new Date(),
-      gateIn: data.gateIn,
-      staffInId: data.staffInId,
-      cardCode,
-      status: SessionStatus.ACTIVE,
-      driverId: matchedReservation ? matchedReservation.userId : null,
-      reservationId: matchedReservation ? matchedReservation._id : null,
-      checkInImage: data.checkInImage || null,
-    });
+      // Removed redundant retry loop for collision, as collisions for 16^4 combinations alongside time are negligible
+      // MongoDB's unique index on `code` will throw an error if a collision actually happens (extremely rare).
 
-    await session.save();
-
-    // 7. Cập nhật slot → Occupied
-    slot.status = SlotStatus.OCCUPIED;
-    slot.currentSessionId = session._id as mongoose.Types.ObjectId;
-    await slot.save();
-
-    // 8. BR-6.6: Nếu check-in từ reservation → chuyển reservation sang USED
-    if (matchedReservation) {
-      matchedReservation.status = ReservationStatus.USED;
-      await matchedReservation.save();
-    }
-
-    // 8. Return session populated (Loi b? image l>n ` t`i u network & DB read latency)
-    const populatedSession = await ParkingSession.findById(session._id)
-      .select('-checkInImage -checkOutImage')
-      .populate('vehicleTypeId', 'name code icon')
-      .populate('facilityId', 'name address')
-      .populate('floorId', 'name')
-      .populate('slotId', 'code')
-      .populate('staffInId', 'name email');
-
-    // Emit socket event
-    try {
-      getIO().to(`facility:${data.facilityId}`).emit('slot:statusChanged', {
-        slotId: slot._id,
-        status: SlotStatus.OCCUPIED,
+      // 6. Tạo session
+      const session = new ParkingSession({
+        _id: sessionId,
+        code: sessionCode,
+        licensePlate: data.licensePlate!.toUpperCase(),
+        vehicleTypeId: data.vehicleTypeId,
         facilityId: data.facilityId,
+        floorId: slot.floorId,
+        slotId: slot._id,
+        pricingPlanId: pricingPlan._id,
+        checkInTime: new Date(),
+        gateIn: data.gateIn,
+        staffInId: data.staffInId,
+        cardCode,
+        status: SessionStatus.ACTIVE,
+        driverId: matchedReservation ? matchedReservation.userId : null,
+        reservationId: matchedReservation ? matchedReservation._id : null,
+        checkInImage: data.checkInImage || null,
       });
-    } catch (err) {
-      // Ignore if socket is not initialized
+
+      // 7. Lưu session và xử lý rollback slot nếu lỗi
+      try {
+        const saveOps: any[] = [session.save()];
+        if (matchedReservation) {
+          matchedReservation.status = ReservationStatus.USED;
+          saveOps.push(matchedReservation.save());
+        }
+        await Promise.all(saveOps);
+      } catch (err) {
+        // Rollback slot
+        await ParkingSlot.updateOne(
+          { _id: slot._id },
+          { status: matchedReservation ? SlotStatus.RESERVED : SlotStatus.AVAILABLE, $unset: { currentSessionId: "" } }
+        );
+        throw new AppError('Lỗi khi tạo lượt gửi xe, vui lòng thử lại', 500);
+      }
+
+      if (!isNoPlateVehicle && session.licensePlate) {
+        delCache(`session:plate:${session.licensePlate}`).catch(() => {});
+      }
+      if (session.cardCode) {
+        sAdd('activeCards', session.cardCode).catch(() => {});
+      }
+
+      // Emit socket event
+      try {
+        getIO().to(`facility:${data.facilityId}`).emit('slot:statusChanged', {
+          slotId: slot._id,
+          status: SlotStatus.OCCUPIED,
+          facilityId: data.facilityId,
+        });
+      } catch (err) {}
+
+      // 8. Tạo populated session object mà không cần query lại DB (Tránh DB read latency)
+      const floorInfo = floorsServingVehicle.find((f: any) => f._id.toString() === slot.floorId.toString());
+      
+      const populatedSession = {
+        ...session.toObject(),
+        vehicleTypeId: { _id: vehicleType._id, name: vehicleType.name, code: vehicleType.code, icon: vehicleType.icon },
+        facilityId: { _id: facility._id, name: facility.name, address: facility.address },
+        floorId: { _id: slot.floorId, name: floorInfo ? floorInfo.name : '' },
+        slotId: { _id: slot._id, code: slot.code },
+        staffInId: { _id: staffUser._id, name: staffUser.name, email: staffUser.email },
+      };
+      delete populatedSession.checkInImage;
+      delete populatedSession.checkOutImage;
+      // Invalidate public available slots cache
+      await delCache(`cache:public:available-slots:${data.facilityId}`);
+
+      return populatedSession as any;
+    } catch (error) {
+      // Rollback slot if slot was assigned
+      if (slot && slot._id) {
+        await ParkingSlot.updateOne(
+          { _id: slot._id },
+          { status: matchedReservation ? SlotStatus.RESERVED : SlotStatus.AVAILABLE, $unset: { currentSessionId: "" } }
+        ).catch(() => {});
+      }
+      throw error;
     }
-
-    // 9. Defer Background Upload: Ảnh local được giữ lại, sẽ đẩy lên Cloudinary cùng ảnh checkOut (trọn gói khi xe ra khỏi bãi)
-    // UploadService.uploadLocalImageToCloudinary(session._id.toString(), session.checkInImage).catch(console.error);
-
-    return populatedSession!;
   }
 
   /**
@@ -460,14 +528,22 @@ export class SessionService {
   static async searchSession(query: { cardCode?: string; licensePlate?: string; code?: string }): Promise<IParkingSession> {
     const searchConditions: any = { status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } };
 
+    let cacheKey = '';
     if (query.cardCode) {
       searchConditions.cardCode = query.cardCode;
+      cacheKey = `session:card:${query.cardCode}`;
     } else if (query.licensePlate) {
       searchConditions.licensePlate = query.licensePlate.toUpperCase();
+      cacheKey = `session:plate:${searchConditions.licensePlate}`;
     } else if (query.code) {
       searchConditions.code = query.code;
     } else {
       throw new AppError('Cần ít nhất 1 tham số tìm kiếm (cardCode, licensePlate, hoặc code)', 400);
+    }
+
+    if (cacheKey) {
+      const cachedSession = await getCache<IParkingSession>(cacheKey);
+      if (cachedSession) return cachedSession as any;
     }
 
     const session = await ParkingSession.findOne(searchConditions)
@@ -480,6 +556,10 @@ export class SessionService {
 
     if (!session) {
       throw new AppError('Không tìm thấy lượt gửi xe', 404);
+    }
+
+    if (cacheKey) {
+      await setCache(cacheKey, session, 30); // 30s TTL
     }
 
     return session;
@@ -516,11 +596,12 @@ export class SessionService {
         .skip(skip)
         .limit(Number(limit))
         .populate('vehicleTypeId', 'name code icon')
-        .populate('facilityId', 'name address')
+        .populate('facilityId', 'name')
         .populate('floorId', 'name')
         .populate('slotId', 'code status')
-        .populate('pricingPlanId', 'name feeType rates')
-        .populate('staffInId', 'name email'),
+        .populate('pricingPlanId', 'name feeType')
+        .populate('staffInId', 'name')
+        .lean(),
       ParkingSession.countDocuments(filter)
     ]);
 
@@ -573,11 +654,13 @@ export class SessionService {
     const [data, total] = await Promise.all([
       ParkingSession.find(filter)
         .sort(sort)
+        .limit(50)
         .populate('vehicleTypeId', 'name code icon')
         .populate('facilityId', 'name address')
         .populate('floorId', 'name')
         .populate('slotId', 'code status')
-        .populate('pricingPlanId', 'name feeType rates'),
+        .populate('pricingPlanId', 'name feeType rates')
+        .lean(),
       ParkingSession.countDocuments(filter)
     ]);
 
@@ -588,14 +671,27 @@ export class SessionService {
    * FR-10.2: Tính phí tự động
    * Hỗ trợ 3 phương thức: flat_rate, duration_based, time_window
    */
-  static async calculateFee(sessionId: string, checkOutTime: Date = new Date()): Promise<{ totalFee: number, details: any }> {
-    const session = await ParkingSession.findById(sessionId).populate('pricingPlanId');
+  static async calculateFee(sessionIdOrSession: any, checkOutTime: Date = new Date()): Promise<{ totalFee: number, details: any }> {
+    let session: any;
+    let sessionId: string;
+    
+    if (typeof sessionIdOrSession === 'string' || sessionIdOrSession instanceof mongoose.Types.ObjectId) {
+      sessionId = sessionIdOrSession.toString();
+      session = await ParkingSession.findById(sessionIdOrSession).populate('pricingPlanId');
+    } else {
+      session = sessionIdOrSession;
+      sessionId = session._id.toString();
+      // If it's a mongoose document, use populate if needed. If it's from Redis, it's already an object.
+      if (typeof session.populate === 'function' && !session.populated('pricingPlanId')) {
+        await session.populate('pricingPlanId');
+      }
+    }
     if (!session) throw new AppError('Session không tồn tại', 404);
 
     const pricingPlan: any = session.pricingPlanId;
     if (!pricingPlan) throw new AppError('Không tìm thấy bảng giá cho session này', 400);
 
-    const checkInTime = session.checkInTime;
+    const checkInTime = new Date(session.checkInTime); // Parse in case it's a string from Redis
     const durationMs = checkOutTime.getTime() - checkInTime.getTime();
     if (durationMs < 0) {
       throw new AppError('Thời gian ra phải sau thời gian vào', 400);
@@ -933,7 +1029,10 @@ export class SessionService {
     sessionMongoose.startTransaction();
 
     try {
+      // Execute sequentially because MongoDB does not support concurrent operations on the same transaction session
       const session = await ParkingSession.findById(data.sessionId).session(sessionMongoose);
+      const staffUser = await User.findById(data.staffOutId).select('assignedFacilities').session(sessionMongoose);
+
       if (!session) throw new AppError('Session không tồn tại', 404);
       if (session.status === SessionStatus.COMPLETED) {
         throw new AppError('Lượt gửi xe đã kết thúc', 400);
@@ -943,7 +1042,6 @@ export class SessionService {
       }
 
       // Validate staff được phân công tại facility của session này (FR-18.6)
-      const staffUser = await User.findById(data.staffOutId).select('assignedFacilities').session(sessionMongoose);
       if (!staffUser) throw new AppError('Staff user not found', 404);
       const isAssigned = staffUser.assignedFacilities.some(
         (fId) => fId.toString() === session.facilityId.toString()
@@ -953,8 +1051,8 @@ export class SessionService {
       }
 
       const checkOutTime = new Date();
-      // Không truyền session vào calculateFee vì nó chỉ đọc dữ liệu
-      const feeResult = await this.calculateFee(data.sessionId, checkOutTime);
+      // Pass session object instead of ID to avoid a DB query inside calculateFee
+      const feeResult = await this.calculateFee(session, checkOutTime);
 
       // IMPORT ĐỘNG TRÁNH CIRCULAR DEPENDENCY VỚI MODEL/PAYMENT NẾU CẦN
       const { Payment, PaymentMethod, PaymentStatus } = require('../models/payment.model');
@@ -1015,10 +1113,20 @@ export class SessionService {
         // Ignore if socket is not initialized
       }
 
-      // 🔥 Background Upload: Đẩy cả ảnh checkIn và checkOut lên Cloudinary
-      UploadService.processCompletedSessionImages(session._id.toString()).catch(console.error);
+      // Invalidate search caches & remove from active set
+      if (session.licensePlate) {
+        await delCache(`session:plate:${session.licensePlate}`);
+      }
+      if (session.cardCode) {
+        await delCache(`session:card:${session.cardCode}`);
+        await sRem('activeCards', session.cardCode);
+      }
 
+      // Defer Background Upload (Push to BullMQ)
+      addUploadJob(session._id.toString()).catch(console.error);
 
+      // Invalidate public available slots cache
+      await delCache(`cache:public:available-slots:${session.facilityId}`);
 
       return populatedSession!;
     } catch (error) {

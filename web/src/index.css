@@ -56,7 +56,7 @@
 @layer base {
   /* Global reset */
   * {
-    @apply border-border;
+    border-color: var(--color-border);
   }
 
   html {

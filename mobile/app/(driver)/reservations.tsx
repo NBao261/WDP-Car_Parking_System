@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useFocusEffect } from "expo-router";
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
 import {
   View,
   Text,
@@ -54,7 +54,7 @@ export default function ReservationsScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchReservations();
-    }, [])
+    }, []),
   );
 
   const onRefresh = useCallback(() => {
@@ -79,7 +79,12 @@ export default function ReservationsScreen() {
 
   const renderEmptyState = (title: string, subtitle: string) => (
     <View style={styles.emptyState}>
-      <Ionicons name="calendar-outline" size={64} color={Colors.disabled} style={{ marginBottom: Spacing.md }} />
+      <Ionicons
+        name="calendar-outline"
+        size={64}
+        color={Colors.brandGrayText}
+        style={{ marginBottom: 16 }}
+      />
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptySubtitle}>{subtitle}</Text>
     </View>
@@ -87,7 +92,7 @@ export default function ReservationsScreen() {
 
   const renderContent = () => {
     if (loading && !refreshing) {
-      return <ActivityIndicator style={styles.loader} color={Colors.primary} />;
+      return <ActivityIndicator style={styles.loader} color={Colors.brandDark} />;
     }
 
     const currentData = activeTab === "upcoming" ? upcoming : history;
@@ -178,49 +183,40 @@ export default function ReservationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.white,
   },
   segmentContainer: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.divider,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   segmentControl: {
     flexDirection: "row",
-    backgroundColor: Colors.divider,
-    borderRadius: 8,
-    padding: 2,
+    backgroundColor: Colors.brandGray,
+    borderRadius: 9999,
+    padding: 3,
   },
   segmentButton: {
     flex: 1,
-    paddingVertical: Spacing.sm,
+    paddingVertical: 8,
     alignItems: "center",
-    borderRadius: 6,
+    borderRadius: 9999,
   },
   segmentButtonActive: {
-    backgroundColor: Colors.white,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: Colors.brandDark,
   },
   segmentText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandGrayText,
   },
   segmentTextActive: {
-    color: Colors.primary,
-    fontWeight: Typography.fontWeight.semiBold,
+    color: Colors.brandLime,
   },
   content: {
     flex: 1,
   },
   listContent: {
-    padding: Spacing.lg,
+    padding: 16,
   },
   emptyScroll: {
     flexGrow: 1,
@@ -229,24 +225,25 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: Spacing.xl,
-    marginTop: Spacing["3xl"],
+    padding: 32,
+    marginTop: 40,
   },
   emptyTitle: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.textPrimary,
+    fontSize: 16,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
   },
   emptySubtitle: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textTertiary,
-    marginTop: Spacing.xs,
+    fontSize: 12,
+    color: Colors.brandGrayText,
+    marginTop: 6,
     textAlign: "center",
+    maxWidth: 240,
   },
   loader: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: Spacing["3xl"],
+    marginTop: 40,
   },
 });

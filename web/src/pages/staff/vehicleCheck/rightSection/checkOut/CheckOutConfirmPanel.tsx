@@ -1,4 +1,4 @@
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from 'lucide-react';
 
 interface CheckOutConfirmPanelProps {
   data?: {
@@ -24,9 +24,19 @@ export function CheckOutConfirmPanel({ data, isMismatch = false }: CheckOutConfi
     );
   }
 
-  const { owner = "—", checkInTime = "—", checkOutTime = "—", checkInDate = "—", checkOutDate = "—", gateIn = "—", fee = 0, rawCheckInTime, zone = "—" } = data || {};
+  const {
+    owner = '—',
+    checkInTime = '—',
+    checkOutTime = '—',
+    checkInDate = '—',
+    checkOutDate = '—',
+    gateIn = '—',
+    fee = 0,
+    rawCheckInTime,
+    zone = '—',
+  } = data || {};
 
-  let durationStr = "";
+  let durationStr = '';
   if (rawCheckInTime) {
     const checkIn = new Date(rawCheckInTime);
     const checkOut = new Date();
@@ -79,10 +89,14 @@ export function CheckOutConfirmPanel({ data, isMismatch = false }: CheckOutConfi
       <div className="w-[1px] bg-[#e8e9e8] my-4 shrink-0"></div>
       <div className="w-[150px] p-4 flex flex-col items-end justify-center shrink-0">
         <span className="text-[10px] font-semibold text-[#888] mb-1">Tổng tiền (VNĐ):</span>
-        <span className={`text-[22px] font-bold leading-none mb-1 text-right ${isMismatch ? 'text-[#bbb]' : 'text-[#060606]'}`}>
-          {isMismatch ? "_" : `${fee.toLocaleString('vi-VN')} đ`}
+        <span
+          className={`text-[22px] font-bold leading-none mb-1 text-right ${isMismatch ? 'text-[#bbb]' : 'text-[#060606]'}`}
+        >
+          {isMismatch ? '_' : `${fee.toLocaleString('vi-VN')} đ`}
         </span>
-        <div className={`w-8 h-[1px] mt-1 mb-2 rounded-full self-end ${isMismatch ? 'bg-[#bbb]' : 'bg-[#EF4444]'}`}></div>
+        <div
+          className={`w-8 h-[1px] mt-1 mb-2 rounded-full self-end ${isMismatch ? 'bg-[#bbb]' : 'bg-[#EF4444]'}`}
+        ></div>
         {durationStr && (
           <div className="flex flex-col items-end mt-1">
             <span className="text-[9px] font-medium text-[#888]">Thời gian gửi:</span>

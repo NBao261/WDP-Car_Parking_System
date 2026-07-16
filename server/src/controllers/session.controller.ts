@@ -39,7 +39,7 @@ export class SessionController {
    */
   static async checkIn(req: Request, res: Response, next: NextFunction) {
     try {
-      const { facilityId, vehicleTypeId, licensePlate, gateIn, floorId, slotId, reservationCode, checkInImage } = req.body;
+      const { facilityId, vehicleTypeId, licensePlate, gateIn, floorId, slotId, reservationCode, checkInImage, cardCode } = req.body;
       const staffInId = req.user!.userId;
 
       const session = await SessionService.checkIn({
@@ -52,6 +52,7 @@ export class SessionController {
         slotId,
         reservationCode,
         checkInImage,
+        cardCode,
       });
 
       
@@ -117,7 +118,12 @@ export class SessionController {
         licensePlate: licensePlate as string,
         code: code as string,
       });
-      res.status(200).json({ success: true, data: session });
+
+      // Optimize: Calculate fee immediately so client doesn't need a second network roundtrip
+      const feeResult = await SessionService.calculateFee(session);
+      const sessionData = typeof (session as any).toObject === 'function' ? (session as any).toObject() : session;
+      
+      res.status(200).json({ success: true, data: { ...sessionData, feeResult } });
     } catch (error) {
       next(error);
     }

@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -7,9 +8,9 @@ import {
   Modal,
   Text,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import {
   Colors,
   Typography,
@@ -37,10 +38,18 @@ function TabIcon({
 
 export default function StaffLayout() {
   const { user, selectedFacilityId, setSelectedFacilityId } = useAuthStore();
+  const [pendingFacilityId, setPendingFacilityId] = useState<string | null>(null);
 
   // /users/me already populates assignedFacilities with full objects
   // e.g. [{_id: "abc", name: "Building A", address: "..."}]
   const facilities = (user?.assignedFacilities || []) as any[];
+
+  const handleConfirm = () => {
+    if (pendingFacilityId) {
+      setSelectedFacilityId(pendingFacilityId);
+      setPendingFacilityId(null);
+    }
+  };
 
   return (
     <>
@@ -50,71 +59,102 @@ export default function StaffLayout() {
         presentationStyle="pageSheet"
       >
         <View style={styles.modalContainer}>
-          <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientMid]}
-            style={styles.modalHeaderGradient}
-          >
-            <SafeAreaView edges={["top"]} style={styles.modalHeaderSafe}>
-              <View style={styles.iconCircle}>
-                <Ionicons name="business" size={32} color={Colors.primary} />
-              </View>
-              <Text style={styles.modalTitle}>Vị Trí Làm Việc</Text>
-              <Text style={styles.modalSubtitle}>
-                Chọn toà nhà bạn sẽ trực trong ca này
-              </Text>
-            </SafeAreaView>
-          </LinearGradient>
-
-          <View style={styles.modalContent}>
-            {facilities.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Ionicons
-                  name="alert-circle-outline"
-                  size={48}
-                  color={Colors.danger}
-                />
-                <Text style={styles.emptyText}>
-                  Bạn chưa được phân công tại toà nhà nào. Vui lòng liên hệ
-                  Admin.
+          <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Header Section — centered icon + titles */}
+              <View style={styles.modalHeaderSection}>
+                <View style={styles.iconBlock}>
+                  <Ionicons name="business" size={36} color={Colors.primary} />
+                </View>
+                <Text style={styles.modalTitle}>Vị Trí Làm Việc</Text>
+                <Text style={styles.modalSubtitle}>
+                  Chọn toà nhà bạn sẽ trực trong ca này
                 </Text>
               </View>
-            ) : (
-              <View style={styles.facilityList}>
-                {facilities.map((f) => (
-                  <TouchableOpacity
-                    key={f._id}
-                    style={styles.facilityCard}
-                    onPress={() => setSelectedFacilityId(f._id)}
-                    activeOpacity={0.8}
-                  >
-                    <View
-                      style={[
-                        styles.facilityIconWrap,
-                        { backgroundColor: Colors.primaryBg },
-                      ]}
-                    >
-                      <Ionicons
-                        name="business"
-                        size={24}
-                        color={Colors.primary}
-                      />
-                    </View>
-                    <View style={styles.facilityInfo}>
-                      <Text style={styles.facilityName}>{f.name}</Text>
-                      <Text style={styles.facilityAddress} numberOfLines={1}>
-                        {f.address}
-                      </Text>
-                    </View>
+
+              {/* Facility List */}
+              {facilities.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <View style={styles.emptyIconWrap}>
                     <Ionicons
-                      name="chevron-forward"
-                      size={20}
-                      color={Colors.textTertiary}
+                      name="alert-circle-outline"
+                      size={40}
+                      color={Colors.danger}
                     />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
+                  </View>
+                  <Text style={styles.emptyText}>
+                    Bạn chưa được phân công tại toà nhà nào. Vui lòng liên hệ
+                    Admin.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.facilityList}>
+                  {facilities.map((f) => {
+                    const isSelected = pendingFacilityId === f._id;
+                    return (
+                      <TouchableOpacity
+                        key={f._id}
+                        style={[
+                          styles.facilityCard,
+                          isSelected && styles.facilityCardSelected,
+                        ]}
+                        onPress={() => setPendingFacilityId(f._id)}
+                        activeOpacity={0.8}
+                      >
+                        <View style={styles.facilityIconCircle}>
+                          <Ionicons
+                            name="business"
+                            size={22}
+                            color={Colors.brandDark}
+                          />
+                        </View>
+                        <View style={styles.facilityInfo}>
+                          <Text style={styles.facilityName}>{f.name}</Text>
+                          <Text
+                            style={styles.facilityAddress}
+                            numberOfLines={1}
+                          >
+                            {f.address}
+                          </Text>
+                        </View>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={18}
+                          color={Colors.textTertiary}
+                        />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+            </ScrollView>
+
+            {/* Continue Button — fixed at bottom */}
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[
+                  styles.continueButton,
+                  !pendingFacilityId && styles.continueButtonDisabled,
+                ]}
+                onPress={handleConfirm}
+                disabled={!pendingFacilityId}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.continueButtonText,
+                    !pendingFacilityId && styles.continueButtonTextDisabled,
+                  ]}
+                >
+                  Tiếp Tục
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
         </View>
       </Modal>
 
@@ -227,97 +267,137 @@ const styles = StyleSheet.create({
   iconWrapActive: {
     backgroundColor: Colors.primaryBg,
   },
+
+  // ── Location Select Modal ──
   modalContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
-  },
-  modalContent: {
-    flex: 1,
-    padding: Spacing.xl,
-    paddingTop: Spacing.lg,
-  },
-  modalHeaderGradient: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    paddingBottom: 30,
-  },
-  modalHeaderSafe: {
-    alignItems: "center",
-    marginTop: Platform.OS === "ios" ? 0 : 40,
-  },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
     backgroundColor: Colors.white,
+  },
+  modalScrollContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    flexGrow: 1,
+  },
+  modalHeaderSection: {
+    alignItems: "center",
+    marginTop: 24,
+    marginBottom: 32,
+  },
+  iconBlock: {
+    width: 72,
+    height: 72,
+    borderRadius: 22,
+    backgroundColor: Colors.brandDark,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
-    ...Shadows.sm,
+    marginBottom: 20,
+    ...Shadows.md,
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.white,
-    marginBottom: 6,
+    color: Colors.brandDark,
+    marginBottom: 8,
+    letterSpacing: -0.3,
   },
   modalSubtitle: {
-    fontSize: Typography.fontSize.sm,
-    fontFamily: Typography.fontFamily.regular,
-    color: Colors.white,
-    opacity: 0.9,
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.medium,
+    color: Colors.textTertiary,
     textAlign: "center",
   },
+
+  // ── Facility Cards ──
   facilityList: {
-    gap: 16,
+    gap: 14,
+    flex: 1,
   },
   facilityCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceElevated,
     padding: 16,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: "#5E8F25",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: "transparent",
   },
-  facilityIconWrap: {
+  facilityCardSelected: {
+    backgroundColor: Colors.surfaceElevated,
+    borderColor: Colors.primary,
+    ...Shadows.sm,
+  },
+  facilityIconCircle: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: 24,
+    backgroundColor: Colors.white,
     alignItems: "center",
     justifyContent: "center",
+    ...Shadows.sm,
   },
   facilityInfo: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: 14,
+    marginRight: 8,
   },
   facilityName: {
-    fontSize: Typography.fontSize.md,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    fontSize: 16,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
+    marginBottom: 2,
   },
   facilityAddress: {
-    fontSize: Typography.fontSize.sm,
-    fontFamily: Typography.fontFamily.regular,
+    fontSize: 13,
+    fontFamily: Typography.fontFamily.medium,
     color: Colors.textTertiary,
-    marginTop: 4,
   },
+
+  // ── Continue Button ──
+  modalFooter: {
+    paddingHorizontal: 24,
+    paddingBottom: Platform.OS === "ios" ? 12 : 20,
+    paddingTop: 12,
+  },
+  continueButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 16,
+    borderRadius: 9999,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadows.sm,
+  },
+  continueButtonDisabled: {
+    backgroundColor: Colors.disabled,
+  },
+  continueButtonText: {
+    fontSize: 17,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
+  },
+  continueButtonTextDisabled: {
+    color: Colors.textTertiary,
+  },
+
+  // ── Empty state ──
   emptyState: {
     alignItems: "center",
     marginTop: 60,
     padding: 20,
   },
+  emptyIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.dangerLight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
   emptyText: {
-    fontSize: Typography.fontSize.md,
+    fontSize: 15,
     fontFamily: Typography.fontFamily.medium,
     color: Colors.danger,
     textAlign: "center",
-    marginTop: 16,
     lineHeight: 24,
   },
 });
