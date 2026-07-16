@@ -4,6 +4,7 @@ import { env } from './config/env';
 import { logger } from './config/logger';
 import { createSocketServer } from './config/socket';
 import { getRedis } from './config/redis';
+import { initUploadQueue } from './queues/uploadQueue';
 import http from 'http';
 
 const startServer = async (): Promise<void> => {
@@ -22,6 +23,9 @@ const startServer = async (): Promise<void> => {
     // Initialize Socket.IO
     createSocketServer(server);
     logger.info('✅ Socket.IO initialized');
+
+    // Initialize Background Queues
+    initUploadQueue();
 
     // Start listening
     server.listen(env.PORT, () => {

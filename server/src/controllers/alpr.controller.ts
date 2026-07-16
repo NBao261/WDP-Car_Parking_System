@@ -14,7 +14,8 @@ const normalizeLicensePlate = (raw: string): string => {
   s = s.replace(/[*#@]/g, '-');
   s = s.replace(/\s*-\s*/g, '-');
   s = s.replace(/[^A-Z0-9\s.\-]/g, '');
-  s = s.replace(/^(\d{2})([A-Z])/, '$1-$2');
+  // Remove errant dash after province code if it exists (e.g., 66-F1 -> 66F1)
+  s = s.replace(/^(\d{2})-([A-Z])/, '$1$2');
   s = s.replace(/\s+/g, ' ').trim();
   return s;
 };

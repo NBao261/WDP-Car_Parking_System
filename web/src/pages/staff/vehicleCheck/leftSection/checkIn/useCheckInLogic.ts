@@ -1,8 +1,6 @@
-import { useEffect } from "react";
 import { toast } from "sonner";
 import { apiClient } from "../../../../../services/api";
 import { sessionService } from "../../../../../services/session.service";
-import { facilityService } from "../../../../../services/facility.service";
 import { useCheckInState } from "./useCheckInState";
 import { formatPlate } from "../../../../../utils/format";
 
@@ -119,13 +117,21 @@ export function useCheckInLogic(onCheckIn: (data: any) => void) {
           gate: state.gateIn, zone: `${floorName} - Slot: ${slotCode}`,
           ...(state.reservationCode ? { fromReservation: true, reservationCode: state.reservationCode } : {}),
         });
-        toast.success(`Đã cấp phát: ${floorName} - Slot: ${slotCode}. Bấm Enter để mở chắn!`);
+        toast.success(`Đã cấp phát: ${floorName} - Slot: ${slotCode}. Đang tự động mở chắn...`);
         state.setPendingClear(true);
 
         if (isNoPlate) {
           const defaultType = state.vehicleTypes.find(v => v.requiresPlate !== false) || state.vehicleTypes[0];
           if (defaultType) state.setSelectedVehicleTypeId(defaultType._id);
         }
+
+        // AUTO CLEAR after 1.5s
+        setTimeout(() => {
+          state.setPlate(""); state.setCheckInImage(null); state.setPreviewUrl(null); state.setOcrSuccess(false);
+          state.setReservationCode(""); state.setReservationInfo(null); state.setPlateMatchStatus('idle');
+          state.setPendingClear(false); state.setCheckInError(null);
+          onCheckIn(null);
+        }, 1500);
       }
     } catch (error: any) {
       state.setCheckInError(error.message || "Lỗi khi tạo phiên đỗ xe!");
@@ -135,17 +141,8 @@ export function useCheckInLogic(onCheckIn: (data: any) => void) {
   };
 
   const handleCheckInClick = () => {
-    if (state.pendingClear) {
-      toast.success("Mở chắn thành công!");
-      setTimeout(() => {
-        state.setPlate(""); state.setCheckInImage(null); state.setPreviewUrl(null); state.setOcrSuccess(false);
-        state.setReservationCode(""); state.setReservationInfo(null); state.setPlateMatchStatus('idle');
-        state.setPendingClear(false); state.setCheckInError(null);
-        onCheckIn(null);
-      }, 2000);
-    } else {
-      handleCheckIn();
-    }
+    if (state.pendingClear) return; // Prevent multiple clicks while auto-clearing
+    handleCheckIn();
   };
 
   // Hoisting the remaining `useEffect` hooks and functions...

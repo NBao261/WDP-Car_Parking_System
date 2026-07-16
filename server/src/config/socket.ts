@@ -2,6 +2,8 @@ import { Server as HttpServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
 import { env } from './env';
 import { logger } from './logger';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { getRedis, isRedisConnected } from './redis';
 
 let io: SocketServer;
 
@@ -12,6 +14,16 @@ export const createSocketServer = (httpServer: HttpServer): SocketServer => {
       methods: ['GET', 'POST'],
     },
   });
+
+  const redisClient = getRedis();
+  if (redisClient && isRedisConnected()) {
+    const pubClient = redisClient.duplicate();
+    const subClient = redisClient.duplicate();
+    io.adapter(createAdapter(pubClient, subClient));
+    logger.info('[Socket.IO] Redis adapter enabled');
+  } else {
+    logger.warn('[Socket.IO] Redis adapter skipped (Redis not connected)');
+  }
 
   io.on('connection', (socket) => {
     logger.info(`Socket connected: ${socket.id}`);

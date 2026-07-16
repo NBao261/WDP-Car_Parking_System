@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import Redlock from 'redlock';
 import { env } from './env';
 import { logger } from './logger';
 
@@ -46,6 +47,22 @@ export function getRedis(): Redis | null {
 
 export function isRedisConnected(): boolean {
   return isConnected && redis !== null;
+}
+
+let redlock: Redlock | null = null;
+export function getRedlock(): Redlock | null {
+  if (redlock) return redlock;
+  const client = getRedis();
+  if (client && isConnected) {
+    redlock = new Redlock([client], {
+      driftFactor: 0.01,
+      retryCount: 10,
+      retryDelay: 200, // time in ms
+      retryJitter: 200, // time in ms
+    });
+    return redlock;
+  }
+  return null;
 }
 
 // ─── Cache Helpers (graceful fallback khi Redis down) ────

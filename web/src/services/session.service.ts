@@ -24,6 +24,7 @@ export interface ParkingSession {
   cardCode: string;
   totalFee: number;
   checkInImage?: string;
+  feeResult?: { totalFee: number; details: any };
 }
 
 export interface CheckInPayload {

@@ -21,7 +21,7 @@ declare global {
   }
 }
 
-export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
+export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -29,6 +29,13 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
     }
 
     const token = authHeader.split(' ')[1];
+    
+    // Check if token is in Redis blacklist (FR-19)
+    const isBlacklisted = await getCache(`blacklist:${token}`);
+    if (isBlacklisted) {
+      throw new AppError('Token has been revoked', 401);
+    }
+
     const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as AuthPayload;
 
     req.user = decoded;

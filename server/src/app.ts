@@ -9,6 +9,8 @@ import { env } from './config/env';
 import { errorHandler } from './middlewares/error.middleware';
 import { notFoundHandler } from './middlewares/notFound.middleware';
 import { setupSwagger } from './config/swagger';
+import { RedisStore } from 'rate-limit-redis';
+import { getRedis, isRedisConnected } from './config/redis';
 
 // Import routes
 import authRoutes from './routes/auth.routes';
@@ -46,6 +48,16 @@ app.use(
     max: 2000, // Increased from 100 to 2000 to prevent 429 in development/dashboard navigation
     standardHeaders: true,
     legacyHeaders: false,
+    store: new RedisStore({
+      sendCommand: async (...args: string[]): Promise<any> => {
+        const client = getRedis();
+        if (client) {
+          return (client.call as any)(...args);
+        }
+        // Fallback or throw if Redis is disconnected. rate-limit-redis handles errors gracefully by default.
+        throw new Error('Redis not connected');
+      },
+    }),
   })
 );
 

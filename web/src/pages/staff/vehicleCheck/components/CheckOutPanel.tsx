@@ -214,13 +214,24 @@ export default function CheckOutPanel({
         setCheckInTimeDisplay(checkInTimeStr);
         // toast.success(searchMode === "plate" ? "Đã tìm thấy thông tin đỗ xe qua Biển số!" : "Đã tìm thấy thông tin vé!");
 
-        // Fetch fee immediately
-        const feeRes = await sessionService.calculateFee(session._id);
+        // Dùng feeResult được trả về từ searchSession (đã gộp chung để tiết kiệm API call)
         let fee = 0;
         let feeDetails = null;
-        if (feeRes.success) {
-          fee = feeRes.data.totalFee;
-          feeDetails = (feeRes.data as any).details ?? null;
+
+        if (session.feeResult) {
+          fee = session.feeResult.totalFee;
+          feeDetails = session.feeResult.details ?? null;
+        } else {
+          // Fallback an toàn phòng khi backend chưa update
+          try {
+            const feeRes = await sessionService.calculateFee(session._id);
+            if (feeRes.success) {
+              fee = feeRes.data.totalFee;
+              feeDetails = (feeRes.data as any).details ?? null;
+            }
+          } catch (e) {
+            console.error('Lỗi tính phí:', e);
+          }
         }
 
         const checkOutTimeStr = new Date().toLocaleTimeString('vi-VN', {
@@ -306,6 +317,13 @@ export default function CheckOutPanel({
     }));
 
     setPaymentSuccess(true);
+    
+    // Auto-clear just like check-in
+    setTimeout(() => {
+      setPaymentSuccess(false);
+      handleReset();
+      if (onCheckOut) onCheckOut(null);
+    }, 1500);
   };
 
   const validateMismatch = () => {
@@ -399,11 +417,8 @@ export default function CheckOutPanel({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (paymentSuccess) {
-        setPaymentSuccess(false);
-        handleReset();
-        if (onCheckOut) onCheckOut(null);
-      } else if (step === 'SEARCH') {
+      if (paymentSuccess) return; // Prevent double trigger while auto-clearing
+      if (step === 'SEARCH') {
         if (!searchInput || !ocrPreviewUrl) {
           showMsg('Vui lòng chụp ảnh xe ra trước khi tìm kiếm!', 'warning');
           return;
@@ -704,14 +719,10 @@ export default function CheckOutPanel({
           <div className="flex flex-col gap-1.5 mt-2">
             <label className="block text-[10px] font-semibold text-[#060606]">Trạng thái</label>
             <button
-               onClick={() => {
-                 setPaymentSuccess(false);
-                 handleReset();
-                 if (onCheckOut) onCheckOut(null);
-               }}
-               className="w-full h-9 bg-[#A3E635] text-[#1A202C] font-bold text-[14px] flex items-center justify-center rounded-[6px] hover:bg-[#84CC16] transition-colors cursor-pointer"
+               disabled
+               className="w-full h-9 bg-[#A3E635] text-[#1A202C] font-bold text-[14px] flex items-center justify-center rounded-[6px] cursor-not-allowed opacity-90 transition-colors"
             >
-              Mời xe ra (Bấm Enter mở chắn)
+              Đang tự động mở chắn...
             </button>
           </div>
         )}

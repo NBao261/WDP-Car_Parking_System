@@ -6,7 +6,6 @@ import {
   Clock,
   Download,
   Loader2,
-  ChevronDown,
   FileSpreadsheet,
 } from 'lucide-react';
 import { userService } from '../../services/user.service';
@@ -20,11 +19,12 @@ import {
   OccupancyReportData,
   PeakHoursReportData,
 } from '../../services/report.service';
+import { vehicleTypeService, VehicleType } from '../../services/vehicleType.service';
 import { toast } from 'sonner';
 
 import { FacilityListWidget } from './components/FacilityListWidget';
-import { DashboardCharts } from './components/DashboardCharts';
-import { OccupancyDonutWidget } from './components/OccupancyDonutWidget';
+import { TrafficChartWidget } from './components/DashboardCharts';
+import { TabbedInsightWidget } from './components/TabbedInsightWidget';
 import { AIChatWidget } from './components/AIChatWidget';
 import { CustomDropdown } from '../../components/ui/CustomDropdown';
 
@@ -111,6 +111,7 @@ export default function ManagerDashboard() {
   const [facilityFilter, setFacilityFilter] = useState('all');
 
   const [staffList, setStaffList] = useState<User[]>([]);
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
   const [trafficData, setTrafficData] = useState<TrafficReportData | null>(null);
   const [revenueData, setRevenueData] = useState<RevenueReportData | null>(null);
   const [occupancyData, setOccupancyData] = useState<OccupancyReportData | null>(null);
@@ -119,13 +120,17 @@ export default function ManagerDashboard() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
-  /* ── Fetch Staff ── */
-  const fetchStaff = useCallback(async () => {
+  /* ── Fetch Initial Data ── */
+  const fetchInitialData = useCallback(async () => {
     try {
-      const res = await userService.getAllUsers({ role: UserRole.STAFF, limit: 100 });
-      setStaffList(res.data ?? []);
+      const [staffRes, vtRes] = await Promise.all([
+        userService.getAllUsers({ role: UserRole.STAFF, limit: 100 }),
+        vehicleTypeService.getAll({ limit: 100 }),
+      ]);
+      setStaffList(staffRes.data ?? []);
+      setVehicleTypes(vtRes.data ?? []);
     } catch (err) {
-      console.error('Failed to fetch staff', err);
+      console.error('Failed to fetch initial data', err);
     }
   }, []);
 
@@ -153,8 +158,8 @@ export default function ManagerDashboard() {
   }, [timeFilter, facilityFilter]);
 
   useEffect(() => {
-    fetchStaff();
-  }, [fetchStaff]);
+    fetchInitialData();
+  }, [fetchInitialData]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -243,7 +248,11 @@ export default function ManagerDashboard() {
               disabled={exporting || loading}
               className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-white border-[1.5px] border-gray-200 text-[#1a1a1a] text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {exporting ? <Loader2 size={17} className="animate-spin" /> : <FileSpreadsheet size={17} />}
+              {exporting ? (
+                <Loader2 size={17} className="animate-spin" />
+              ) : (
+                <FileSpreadsheet size={17} />
+              )}
               Excel
             </button>
             <button
@@ -296,20 +305,24 @@ export default function ManagerDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left 2/3 */}
           <div className="lg:col-span-2">
-            <DashboardCharts
+            <TrafficChartWidget
               trafficData={trafficData}
-              revenueData={revenueData}
               peakHoursData={peakHoursData}
-              occupancyData={occupancyData}
               loading={loading}
             />
           </div>
 
           {/* Right 1/3 */}
           <div className="flex flex-col gap-4">
-            <OccupancyDonutWidget occupancyData={occupancyData} />
+            <TabbedInsightWidget
+              vehicleTypes={vehicleTypes}
+              revenueData={revenueData}
+              occupancyData={occupancyData}
+              facilityFilter={facilityFilter}
+              loading={loading}
+            />
             <div className="flex-1 min-h-0">
-              <FacilityListWidget managerFacilities={managerFacilities} staffList={staffList} />
+              <FacilityListWidget managerFacilities={managerFacilities} staffList={staffList} revenueData={revenueData} />
             </div>
           </div>
         </div>

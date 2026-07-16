@@ -9,6 +9,8 @@ import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
 import { Feedback, FeedbackStatus } from '../models/feedback.model';
 import { AppError } from '../middlewares/error.middleware';
 import mongoose from 'mongoose';
+import crypto from 'crypto';
+import { getCache, setCache } from '../config/redis';
 
 // ─── Types ────────────────────────────────────────────────
 
@@ -609,6 +611,24 @@ export class ChatbotService {
     const convId = conversationId || `conv_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
     try {
+      // --- AI Caching (FR-19) ---
+      let cacheKey = '';
+      if (isNewConversation) {
+        const normalizedMsg = message.toLowerCase().replace(/[^\w\s\u00C0-\u1EF9]/gi, '').trim();
+        const scopeKey = facilityScope ? facilityScope.sort().join(',') : 'ALL';
+        cacheKey = `ai_cache:${crypto.createHash('md5').update(normalizedMsg + '_' + scopeKey).digest('hex')}`;
+        
+        const cachedResponse = await getCache(cacheKey);
+        if (cachedResponse) {
+          logger.info(`[Chatbot] Cache HIT for message: "${message}"`);
+          return {
+            ...cachedResponse,
+            conversationId: convId,
+            processingTimeMs: Date.now() - startTime,
+          };
+        }
+      }
+      
       // Xây dựng system prompt động theo scope Manager
       const systemPrompt = await buildSystemPrompt(facilityScope);
 
@@ -726,6 +746,15 @@ export class ChatbotService {
         });
       } catch (saveErr: any) {
         logger.error('[Chatbot] Failed to save chat history', { error: saveErr.message, userId });
+      }
+
+      // Save to cache (TTL 5 mins) if new conversation to save Gemini quota
+      if (isNewConversation && cacheKey) {
+        await setCache(cacheKey, {
+          answer,
+          data: accumulatedData,
+          chartType,
+        }, 300);
       }
 
       return {
