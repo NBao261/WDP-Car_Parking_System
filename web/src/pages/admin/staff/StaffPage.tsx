@@ -58,7 +58,7 @@ export default function StaffPage() {
 
   return (
     <motion.div
-      className="space-y-6 max-w-[1400px] mx-auto pb-12"
+      className="space-y-6 pb-12"
       initial="hidden"
       animate="visible"
       variants={containerVariants}

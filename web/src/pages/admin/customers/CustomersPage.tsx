@@ -60,7 +60,7 @@ export default function CustomersPage() {
 
   return (
     <motion.div
-      className="max-w-7xl mx-auto space-y-6"
+      className="space-y-6"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
