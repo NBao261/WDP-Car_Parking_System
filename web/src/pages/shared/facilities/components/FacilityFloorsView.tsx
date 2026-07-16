@@ -156,6 +156,7 @@ export function FacilityFloorsView({
         onRemove={removeFloorLocal}
         onRefresh={fetchAll}
         onViewMap={handleViewMap}
+        onViewDetail={setDetailFloor}
         isFacilityActive={viewFacility.status !== 'inactive'}
       />
 

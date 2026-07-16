@@ -1,9 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { X, Layers, Calendar, Lock, Car } from 'lucide-react';
+import { X, Layers, Calendar, Lock, } from 'lucide-react';
 import { Floor } from '../../../../services/floor.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { ICON_MAP } from '../../../shared/vehicles/components/constants';
+import { ICON_MAP, DEFAULT_ICON } from '../../../shared/vehicles/components/constants';
 
 function getBarTextColor(pct: number) {
   if (pct > 85) return 'text-[#E24B4A]';
@@ -83,7 +83,6 @@ export function FloorDetailModal({
                         fontSize: 11,
                         padding: '3px 10px',
                         borderRadius: 20,
-                        fontWeight: 'bold',
                         display: 'flex',
                         alignItems: 'center',
                         gap: 5,
@@ -139,7 +138,7 @@ export function FloorDetailModal({
                           const id = typeof vId === 'string' ? vId : vId._id;
                           const v = typeof vId === 'string' ? vehicleTypes.find(vt => vt._id === id) : vId;
                           if (!v) return null;
-                          const IconComp = v.icon && ICON_MAP[v.icon] ? ICON_MAP[v.icon] : Car;
+                          const IconComp = v.icon && ICON_MAP[v.icon] ? ICON_MAP[v.icon] : ICON_MAP[DEFAULT_ICON];
                           const idx = Math.max(0, vehicleTypes.findIndex(vt => vt._id === id));
                           const colors = [
                             { bg: '#F3F4F6', text: '#4B5563' },
@@ -173,7 +172,7 @@ export function FloorDetailModal({
                   <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-2">
                     Thống kê sức chứa
                   </p>
-                  <div className="flex items-center justify-between border border-gray-100 rounded-xl p-3 bg-white shadow-sm flex-wrap gap-y-4">
+                  <div className="flex items-center justify-between border border-[#9FE870] rounded-xl p-3 bg-white shadow-sm flex-wrap gap-y-4">
                     <div className="text-center flex-[1_1_25%]">
                       <div className="text-xl tabular-nums font-semibold text-[#062F28]">
                         {floor.totalSlots || 0}

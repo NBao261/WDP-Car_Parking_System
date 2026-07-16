@@ -164,7 +164,7 @@ export function FacilityFormModal({
           latitude: lat && lat !== 0 ? lat : null,
           longitude: lng && lng !== 0 ? lng : null,
         });
-        setAddressQuery(facility.address || '');
+        setAddressQuery(facility.address || '', true);
         if (lat && lng && lat !== 0 && lng !== 0) {
           setMapTarget({ lat, lng });
         }

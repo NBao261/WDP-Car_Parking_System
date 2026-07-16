@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { X, Loader2, Check, Car } from 'lucide-react';
-import { ICON_MAP } from '../../../shared/vehicles/components/constants';
+import { X, Loader2, Check, } from 'lucide-react';
+import { ICON_MAP, DEFAULT_ICON } from '../../../shared/vehicles/components/constants';
 import { slotService } from '../../../../services/slot.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
 
@@ -75,6 +75,30 @@ export function SlotFormModal({
   const [prefix, setPrefix] = useState('');
   const [startNumber, setStartNumber] = useState<number | string>('');
   const [count, setCount] = useState<number | string>('');
+
+  // Auto-fill code khi chọn loại xe (mode single)
+  useEffect(() => {
+    if (!vehicleType || mode !== 'single') return;
+    const vtSlots = existingSlots.filter(s => s.vehicleTypeId === vehicleType);
+    const vt = vehicleTypes.find(v => v._id === vehicleType);
+    if (!vt) return;
+    // Tìm prefix từ existing slots hoặc dùng tên loại xe viết hoa không dấu
+    let codePrefix = '';
+    if (vtSlots.length > 0) {
+      const match = vtSlots[0].code.match(/^([A-Za-z]+)/);
+      if (match) codePrefix = match[1];
+    }
+    if (!codePrefix) {
+      codePrefix = vt.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').replace(/\s+/g, '').toUpperCase();
+    }
+    let maxNum = 0;
+    vtSlots.forEach(s => {
+      const numPart = s.code.replace(/^[A-Za-z]+/, '');
+      const num = parseInt(numPart, 10);
+      if (!isNaN(num) && num > maxNum) maxNum = num;
+    });
+    setCode(`${codePrefix}${maxNum + 1}`);
+  }, [vehicleType, mode, existingSlots, vehicleTypes]);
 
   // Compute slot info per vehicle type from existing slots
   const vtSlotInfo = useMemo(() => {
@@ -165,7 +189,7 @@ export function SlotFormModal({
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
           <div>
             <h2 className="text-lg font-bold text-[#062F28]">Gán Xe</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{singleOnly ? 'Gán loại xe cho slot trống' : 'Gán xe cho các slot mới'}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{singleOnly ? 'Gán loại xe cho vị trí trống' : 'Gán xe cho các vị trí mới'}</p>
           </div>
           <button
             onClick={onClose}
@@ -177,7 +201,6 @@ export function SlotFormModal({
 
         <div className="p-6 overflow-y-auto flex-1 flex flex-col justify-between">
           <div className="space-y-4">
-            <div className="space-y-4">
               {!singleOnly && (
               <div className="flex bg-gray-100 p-1 rounded-xl mb-2 mt-2">
                 <button
@@ -187,7 +210,7 @@ export function SlotFormModal({
                   }}
                   className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors ${mode === 'single' ? 'bg-[#9FE870] shadow-sm text-[#062F28]' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  Gán 1 Slot
+                  Gán 1 Vị Trí
                 </button>
                 <button
                   onClick={() => {
@@ -196,7 +219,7 @@ export function SlotFormModal({
                   }}
                   className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors ${mode === 'bulk' ? 'bg-[#9FE870] shadow-sm text-[#062F28]' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  Gán Nhiều Slot
+                  Gán Nhiều Vị Trí
                 </button>
               </div>
               )}
@@ -207,12 +230,68 @@ export function SlotFormModal({
                 }`}>
                   <span>Sức chứa tầng:</span>
                   <span className="font-semibold">
-                    {currentSlotCount} / {totalSlots} slot{' '}
+                    {currentSlotCount} / {totalSlots} vị trí{' '}
                     {currentSlotCount >= totalSlots ? '— Đã đầy' : `(còn ${totalSlots - currentSlotCount})`}
                   </span>
                 </div>
               )}
 
+            {/* Vehicle Type Selection — FIRST */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-2">
+                  Loại Xe <span className="text-red-500">*</span>
+                </label>
+
+                {vehicleTypes.length === 0 ? (
+                  <p className="text-xs text-red-500 bg-red-50 p-3 rounded-xl border border-red-100">
+                    Tầng này chưa được cấu hình loại xe cho phép. Vui lòng cấu hình ở phần chỉnh sửa
+                    tầng trước.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {vehicleTypes.map((vt) => {
+                      const isSelected = vehicleType === vt._id;
+                      const Icon = vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : ICON_MAP[DEFAULT_ICON];
+                      const info = vtSlotInfo[vt._id];
+                      return (
+                        <button
+                          key={vt._id}
+                          type="button"
+                          onClick={() => {
+                            setVehicleType(vt._id);
+                            if (errors.vehicleType) setErrors({ ...errors, vehicleType: '' });
+                          }}
+                          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all w-full text-left ${
+                            isSelected
+                              ? 'bg-[#9FE870] text-[#062F28] border-[#9FE870] scale-[1.01]'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-[#9FE870]'
+                          }`}
+                        >
+                          <Icon size={16} className="shrink-0" />
+                          <span className="flex-1">
+                            {vt.name}
+                            {info && (
+                              <span className={`text-xs font-normal ml-2 ${isSelected ? 'text-[#062F28]/60' : 'text-gray-400'}`}>
+                                Hiện tại có: <span className="font-bold">{info.codes[0]} - {info.codes[info.codes.length - 1]}</span>
+                              </span>
+                            )}
+                          </span>
+                          {isSelected && <Check size={14} className="shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {errors.vehicleType && (
+                  <p className="text-xs text-red-500 mt-1.5">{errors.vehicleType}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Slot Code / Bulk — AFTER vehicle type */}
+            {vehicleType && (
+            <div className="space-y-4">
               {mode === 'single' ? (
                 <div className="mb-4">
                   <label className="text-sm font-medium text-gray-700 block mb-1">
@@ -306,59 +385,7 @@ export function SlotFormModal({
                 </div>
               )}
             </div>
-
-            {/* Vehicle Type Selection */}
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-semibold text-gray-700 block mb-2">
-                  Loại Xe <span className="text-red-500">*</span>
-                </label>
-
-                {vehicleTypes.length === 0 ? (
-                  <p className="text-xs text-red-500 bg-red-50 p-3 rounded-xl border border-red-100">
-                    Tầng này chưa được cấu hình loại xe cho phép. Vui lòng cấu hình ở phần chỉnh sửa
-                    tầng trước.
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {vehicleTypes.map((vt) => {
-                      const isSelected = vehicleType === vt._id;
-                      const Icon = vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : Car;
-                      const info = vtSlotInfo[vt._id];
-                      return (
-                        <button
-                          key={vt._id}
-                          type="button"
-                          onClick={() => {
-                            setVehicleType(vt._id);
-                            if (errors.vehicleType) setErrors({ ...errors, vehicleType: '' });
-                          }}
-                          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all w-full text-left ${
-                            isSelected
-                              ? 'bg-[#9FE870] text-[#062F28] border-[#9FE870] scale-[1.01]'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-[#9FE870]'
-                          }`}
-                        >
-                          <Icon size={16} className="shrink-0" />
-                          <span className="flex-1">
-                            {vt.name}
-                            {info && (
-                              <span className={`text-xs font-normal ml-2 ${isSelected ? 'text-[#062F28]/60' : 'text-gray-400'}`}>
-                                Hiện tại có: <span className="font-bold">{info.codes[0]} - {info.codes[info.codes.length - 1]}</span>
-                              </span>
-                            )}
-                          </span>
-                          {isSelected && <Check size={14} className="shrink-0" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-                {errors.vehicleType && (
-                  <p className="text-xs text-red-500 mt-1.5">{errors.vehicleType}</p>
-                )}
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="pt-4 mt-6 flex justify-end gap-3 border-t border-gray-100 shrink-0">
@@ -375,7 +402,7 @@ export function SlotFormModal({
               className="px-5 py-2.5 text-sm font-bold text-[#062F28] bg-[#9FE870] rounded-xl hover:bg-[#062F28]/90 transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
-              {mode === 'single' ? 'Gán Xe' : 'Gán Nhiều Slot'}
+              {mode === 'single' ? 'Gán Xe' : 'Gán Nhiều Vị Trí'}
             </button>
           </div>
         </div>

@@ -8,6 +8,7 @@ import {
   CheckCircle,
   Trash2,
   Pencil,
+  Eye,
   Map,
   Plus,
   Layers,
@@ -34,6 +35,7 @@ interface FloorCardProps {
   onUpdate: (updated: Floor) => void;
   onRemove: (id: string) => void;
   onViewMap: (floor: Floor) => void;
+  onViewDetail?: (floor: Floor) => void;
   isFacilityActive?: boolean;
 }
 
@@ -49,6 +51,7 @@ interface FloorGridProps {
   onRemove: (id: string) => void;
   onRefresh: () => void; // only needed for create/edit
   onViewMap: (floor: Floor) => void;
+  onViewDetail?: (floor: Floor) => void;
   isFacilityActive?: boolean;
 }
 
@@ -98,6 +101,7 @@ export const FloorCard = React.memo(function FloorCard({
   onUpdate,
   onRemove,
   onViewMap,
+  onViewDetail,
   isFacilityActive = true,
 }: FloorCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -287,6 +291,21 @@ export const FloorCard = React.memo(function FloorCard({
                         setMenuOpen(false);
                       }}
                     />
+                    {onViewDetail && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onViewDetail(floor);
+                            setMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <Eye size={14} /> Xem chi tiết
+                        </button>
+                        <div className="h-px bg-gray-100 mx-2 my-1" />
+                      </>
+                    )}
                     {isActive && (
                       <>
                         <button
@@ -437,6 +456,7 @@ export function FloorGrid({
   onUpdate,
   onRemove,
   onViewMap,
+  onViewDetail,
   isFacilityActive = true,
 }: FloorGridProps) {
   if (isLoading) {
@@ -490,6 +510,7 @@ export function FloorGrid({
           onUpdate={onUpdate}
           onRemove={onRemove}
           onViewMap={onViewMap}
+          onViewDetail={onViewDetail}
           isFacilityActive={isFacilityActive}
         />
       ))}

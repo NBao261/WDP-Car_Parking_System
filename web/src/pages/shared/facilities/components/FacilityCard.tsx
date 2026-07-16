@@ -8,6 +8,7 @@ import {
   Layers,
   MoreVertical,
   Edit,
+  Eye,
   PowerOff,
   CheckCircle,
   Loader2,
@@ -262,6 +263,18 @@ export function FacilityCard({
                       setMenuOpen(false);
                     }}
                   />
+                  {onViewDetail && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewDetail(facility);
+                        setMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <Eye size={14} /> Xem chi tiết
+                    </button>
+                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
