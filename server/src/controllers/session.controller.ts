@@ -118,7 +118,12 @@ export class SessionController {
         licensePlate: licensePlate as string,
         code: code as string,
       });
-      res.status(200).json({ success: true, data: session });
+
+      // Optimize: Calculate fee immediately so client doesn't need a second network roundtrip
+      const feeResult = await SessionService.calculateFee(session);
+      const sessionData = typeof (session as any).toObject === 'function' ? (session as any).toObject() : session;
+      
+      res.status(200).json({ success: true, data: { ...sessionData, feeResult } });
     } catch (error) {
       next(error);
     }

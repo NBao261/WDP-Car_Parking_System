@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { User, IUser, UserRole, UserStatus } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 import { env } from '../config/env';
+import { setCache } from '../config/redis';
 
 export class AuthService {
   static generateTokens(user: IUser) {
@@ -97,6 +98,20 @@ export class AuthService {
       return this.generateTokens(user);
     } catch (error) {
       throw new AppError('Invalid refresh token', 401);
+    }
+  }
+
+  static async logout(accessToken: string): Promise<void> {
+    try {
+      const decoded = jwt.decode(accessToken) as jwt.JwtPayload;
+      if (decoded && decoded.exp) {
+        const expiresIn = decoded.exp - Math.floor(Date.now() / 1000);
+        if (expiresIn > 0) {
+          await setCache(`blacklist:${accessToken}`, 'revoked', expiresIn);
+        }
+      }
+    } catch (error) {
+      // Ignore errors if token is malformed
     }
   }
 }
