@@ -83,7 +83,7 @@ export default function RoleListPage() {
           
           <div className="relative z-10 mb-4 flex-1 flex items-center">
              <div className="text-[48px] leading-none font-black flex items-baseline gap-2 tracking-tight">
-               {roles.length} <span className="text-[15px] font-bold opacity-90 tracking-normal">ROLES</span>
+               {roles.length} <span className="text-[15px] font-bold opacity-90 tracking-normal">VAI TRÒ</span>
              </div>
           </div>
           
