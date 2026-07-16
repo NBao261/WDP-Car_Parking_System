@@ -56,9 +56,6 @@ export function DashboardCards({
           <h3 className="text-[11px] font-bold text-[#6b7280] tracking-wider uppercase flex items-center gap-1.5">
             <TrendingUp size={14} className="text-[#062F28]" /> Doanh thu hệ thống
           </h3>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#f0fdf4] text-[#166534] border border-[#dcfce7]">
-            +12.5%
-          </span>
         </div>
         
         <div>
