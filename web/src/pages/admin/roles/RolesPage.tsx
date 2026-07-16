@@ -26,7 +26,6 @@ const itemVariants = {
 export default function RoleListPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
 
   // Permission Matrix modal
   const [isPermModalOpen, setIsPermModalOpen] = useState(false);
@@ -58,11 +57,7 @@ export default function RoleListPage() {
     setIsPermModalOpen(true);
   }, []);
 
-  const filteredRoles = roles.filter(
-    (role) =>
-      role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      role.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+
 
   return (
     <motion.div
@@ -94,7 +89,7 @@ export default function RoleListPage() {
           
           <div className="relative z-10 flex gap-3 mt-auto">
             <div className="bg-white/95 text-black px-4 py-2.5 rounded-full text-[13px] font-bold flex-1 flex justify-center items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.06)] backdrop-blur-md">
-              {filteredRoles.length} Vai trò mặc định 
+              {roles.length} Vai trò mặc định 
               <div className="w-4 h-4 rounded-full bg-[#9FE870] flex items-center justify-center">
                 <ArrowDown size={10} className="text-[#062F28]" strokeWidth={3}/>
               </div>
@@ -108,9 +103,9 @@ export default function RoleListPage() {
             <h3 className="font-bold text-[14px] text-[#062F28]">Phân quyền & Truy cập</h3>
           </div>
           
-          <div className="flex flex-col md:flex-row gap-5 relative z-10 h-full">
+          <div className="relative z-10 h-full w-full">
             {/* Info text */}
-            <div className="p-4 bg-white rounded-[20px] border-2 border-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.04)] flex-[3] flex flex-col justify-center relative overflow-hidden">
+            <div className="p-4 bg-white rounded-[20px] border-2 border-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.04)] w-full h-full flex flex-col justify-center relative overflow-hidden">
               <div className="absolute -right-6 -top-6 w-24 h-24 bg-[#9FE870]/10 rounded-full blur-xl pointer-events-none"></div>
               <div className="flex items-center gap-3 mb-2 relative z-10">
                 <div className="w-9 h-9 rounded-xl bg-[#9FE870]/20 flex items-center justify-center border border-[#9FE870]/30 shrink-0">
@@ -120,24 +115,10 @@ export default function RoleListPage() {
                   <h4 className="font-bold text-[13px] text-[#062F28] uppercase tracking-wide">Cấu trúc Phân Quyền</h4>
                 </div>
               </div>
-              <p className="text-[#6b6b6b] text-[12px] leading-relaxed font-medium relative z-10">
+              <p className="text-[#6b6b6b] text-[12px] leading-relaxed font-medium relative z-10 max-w-xl">
                 Sử dụng <span className="font-bold text-[#062F28]">Vai trò cố định</span> cho nghiệp vụ lõi. 
                 Để phân quyền đặc thù, hãy cấu hình <span className="font-bold text-[#062F28]">Quyền tùy chỉnh</span> trực tiếp trên từng Nhân sự.
               </p>
-            </div>
-            
-            {/* Search */}
-            <div className="flex-[2] flex flex-col justify-end">
-              <div className="relative w-full">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm vai trò theo tên/mã..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl text-[14px] focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:border-transparent transition-all shadow-[0_4px_16px_rgba(0,0,0,0.04)] font-medium"
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -151,13 +132,13 @@ export default function RoleListPage() {
         </div>
       ) : (
         <motion.div variants={containerVariants} className="space-y-6">
-          {filteredRoles.length > 0 && (
+          {roles.length > 0 && (
             <div>
               <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">
-                Danh sách vai trò hệ thống ({filteredRoles.length})
+                Danh sách vai trò hệ thống ({roles.length})
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredRoles.map((role) => (
+                {roles.map((role) => (
                   <RoleCard
                     key={role._id}
                     role={role}
@@ -169,11 +150,9 @@ export default function RoleListPage() {
             </div>
           )}
 
-          {filteredRoles.length === 0 && (
+          {roles.length === 0 && (
             <div className="py-12 text-center text-gray-400 bg-white rounded-2xl border border-gray-100 border-dashed">
-              {searchTerm
-                ? `Không tìm thấy vai trò nào phù hợp với "${searchTerm}".`
-                : 'Chưa có vai trò nào.'}
+              Chưa có vai trò nào.
             </div>
           )}
         </motion.div>
