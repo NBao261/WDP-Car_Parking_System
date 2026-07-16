@@ -224,9 +224,9 @@ export class SessionService {
           $lte: new Date(Date.now() + earlyWindow),
         },
       }).lean() : Promise.resolve(null),
-      data.cardCode ? ParkingSession.exists({ 
-        cardCode: data.cardCode, 
-        status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } 
+      data.cardCode ? ParkingSession.exists({
+        cardCode: data.cardCode,
+        status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] }
       }) : Promise.resolve(false)
     ]);
 
@@ -268,7 +268,9 @@ export class SessionService {
       throw new AppError(`Bãi xe không phục vụ loại xe "${vehicleType.name}"`, 400);
     }
 
-    if (!hasAvailableSlot) {
+    // Nếu có reservation đã giữ slot (RESERVED) → bỏ qua check AVAILABLE
+    // Vì slot đã RESERVED cho user này, không cần kiểm tra slot AVAILABLE khác
+    if (!hasAvailableSlot && !(matchedReservation && matchedReservation.slotId)) {
       throw new AppError(`Bãi đầy cho loại xe "${vehicleType.name}"`, 400);
     }
 
@@ -302,7 +304,7 @@ export class SessionService {
       if (!pricingPlan) {
         throw new AppError('Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này', 400);
       }
-      setCache(pricingCacheKey, pricingPlan, 900).catch(() => {});
+      setCache(pricingCacheKey, pricingPlan, 900).catch(() => { });
     }
 
     if (autoMatchReservation) {
@@ -337,12 +339,12 @@ export class SessionService {
       } else {
         // Auto slot assignment (Atomic)
         slot = await ParkingSlot.findOneAndUpdate(
-          { 
-            facilityId: data.facilityId, 
-            vehicleTypeId: data.vehicleTypeId, 
-            status: SlotStatus.AVAILABLE, 
+          {
+            facilityId: data.facilityId,
+            vehicleTypeId: data.vehicleTypeId,
+            status: SlotStatus.AVAILABLE,
             isDeleted: false,
-            ...(data.floorId ? { floorId: data.floorId } : {}) 
+            ...(data.floorId ? { floorId: data.floorId } : {})
           },
           { status: SlotStatus.OCCUPIED, currentSessionId: sessionId },
           { new: true, sort: { code: 1 } }
@@ -411,10 +413,10 @@ export class SessionService {
       }
 
       if (!isNoPlateVehicle && session.licensePlate) {
-        delCache(`session:plate:${session.licensePlate}`).catch(() => {});
+        delCache(`session:plate:${session.licensePlate}`).catch(() => { });
       }
       if (session.cardCode) {
-        sAdd('activeCards', session.cardCode).catch(() => {});
+        sAdd('activeCards', session.cardCode).catch(() => { });
       }
 
       // Emit socket event
@@ -424,11 +426,11 @@ export class SessionService {
           status: SlotStatus.OCCUPIED,
           facilityId: data.facilityId,
         });
-      } catch (err) {}
+      } catch (err) { }
 
       // 8. Tạo populated session object mà không cần query lại DB (Tránh DB read latency)
       const floorInfo = floorsServingVehicle.find((f: any) => f._id.toString() === slot.floorId.toString());
-      
+
       const populatedSession = {
         ...session.toObject(),
         vehicleTypeId: { _id: vehicleType._id, name: vehicleType.name, code: vehicleType.code, icon: vehicleType.icon },
@@ -449,7 +451,7 @@ export class SessionService {
         await ParkingSlot.updateOne(
           { _id: slot._id },
           { status: matchedReservation ? SlotStatus.RESERVED : SlotStatus.AVAILABLE, $unset: { currentSessionId: "" } }
-        ).catch(() => {});
+        ).catch(() => { });
       }
       throw error;
     }
@@ -641,9 +643,20 @@ export class SessionService {
 
   /**
    * Lấy danh sách lượt gửi của tài khoản Customer (Driver)
+   * Tìm theo driverId HOẶC biển số xe đã đăng ký (cho walk-in sessions không có driverId)
    */
   static async getMySessions(driverId: string, query: any): Promise<{ data: IParkingSession[], total: number }> {
-    const filter: any = { driverId };
+    // Lấy danh sách biển số xe đã đăng ký của user
+    const { Vehicle } = require('../models/vehicle.model');
+    const userVehicles = await Vehicle.find({ userId: driverId, isDeleted: false }).select('licensePlate').lean();
+    const userPlates = userVehicles.map((v: any) => v.licensePlate.toUpperCase());
+
+    // Tìm sessions thuộc về user theo driverId HOẶC biển số xe đã đăng ký
+    const orConditions: any[] = [{ driverId }];
+    if (userPlates.length > 0) {
+      orConditions.push({ licensePlate: { $in: userPlates }, driverId: null });
+    }
+    const filter: any = { $or: orConditions };
 
     if (query.status) {
       filter.status = query.status; // e.g., 'active' or 'completed'
@@ -674,7 +687,7 @@ export class SessionService {
   static async calculateFee(sessionIdOrSession: any, checkOutTime: Date = new Date()): Promise<{ totalFee: number, details: any }> {
     let session: any;
     let sessionId: string;
-    
+
     if (typeof sessionIdOrSession === 'string' || sessionIdOrSession instanceof mongoose.Types.ObjectId) {
       sessionId = sessionIdOrSession.toString();
       session = await ParkingSession.findById(sessionIdOrSession).populate('pricingPlanId');

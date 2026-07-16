@@ -31,7 +31,7 @@ export interface IFeedback extends Document {
 const feedbackSchema = new Schema<IFeedback>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    facilityId: { type: Schema.Types.ObjectId, ref: 'Facility', required: true },
+    facilityId: { type: Schema.Types.ObjectId, ref: 'ParkingFacility', required: true },
     sessionId: { type: Schema.Types.ObjectId, ref: 'ParkingSession', required: true },
     type: { type: String, enum: Object.values(FeedbackType), required: true },
     description: { type: String, required: true },
