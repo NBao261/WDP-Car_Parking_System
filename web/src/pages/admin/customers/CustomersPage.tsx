@@ -124,7 +124,7 @@ export default function CustomersPage() {
       {/* Overview Info Cards */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Tổng quan khách hàng (Left, Green Card) */}
-        <div className="bg-[#9FE870] p-6 rounded-[24px] shadow-sm text-[#062F28] flex flex-col justify-between relative overflow-hidden min-h-[220px]">
+        <div className="bg-[#9FE870] p-6 rounded-[24px] shadow-sm text-[#062F28] flex flex-col justify-between relative overflow-hidden min-h-[180px]">
           {/* Decorative background shapes */}
           <div className="absolute -bottom-24 -left-12 w-64 h-64 rounded-full border-[30px] border-white/20 blur-[2px] pointer-events-none"></div>
           <div className="absolute -bottom-32 -right-10 w-80 h-80 rounded-full border-[40px] border-white/10 blur-[2px] pointer-events-none"></div>
@@ -139,9 +139,9 @@ export default function CustomersPage() {
             </button>
           </div>
 
-          <div className="relative z-10 mt-2 mb-8">
+          <div className="relative z-10 mt-2 mb-4">
             <div className="text-[44px] leading-none font-bold flex items-baseline gap-2">
-              {pagination.total} <span className="text-[16px] font-medium opacity-90">USERS</span>
+              {pagination.total} <span className="text-[16px] font-medium opacity-90">KHÁCH HÀNG</span>
             </div>
           </div>
 
