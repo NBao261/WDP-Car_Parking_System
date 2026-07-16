@@ -122,15 +122,15 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
   };
 
   return (
-    <div className="flex items-center justify-between gap-4 py-3.5 border-b border-gray-50 last:border-0 group">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 py-3.5 border-b border-gray-50 last:border-0 group">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-[#1a1a1a]">
           {config.key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
         </p>
         {config.description && (
-          <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{config.description}</p>
+          <p className="text-xs text-gray-400 mt-0.5 line-clamp-2 sm:line-clamp-1">{config.description}</p>
         )}
-        <p className="text-xs text-gray-300 font-mono mt-0.5">{config.key}</p>
+        <p className="text-xs text-gray-300 font-mono mt-0.5 truncate">{config.key}</p>
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
@@ -148,13 +148,13 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
           </button>
         ) : (
           /* Text / Number input */
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-none">
               <input
                 type={isNumber ? 'number' : isSecret && !showPassword ? 'password' : 'text'}
                 value={editValue}
                 onChange={(e) => handleChange(e.target.value)}
-                className={`w-64 md:w-80 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#72d645] transition-all ${isDirty ? 'border-[#72d645] bg-[#72d645]/5' : 'border-gray-200 bg-gray-50'
+                className={`w-full sm:w-52 md:w-72 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#72d645] transition-all ${isDirty ? 'border-[#72d645] bg-[#72d645]/5' : 'border-gray-200 bg-gray-50'
                   }`}
               />
               {isSecret && (
@@ -171,7 +171,7 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex items-center gap-1 px-3 py-1.5 bg-[#132c20] text-white text-xs font-bold rounded-lg hover:bg-[#72d645] hover:text-[#132c20] border border-[#132c20] hover:border-[#72d645] transition-colors disabled:opacity-60 disabled:hover:bg-[#132c20] disabled:hover:text-white disabled:hover:border-[#132c20]"
+                className="flex items-center gap-1 px-3 py-1.5 bg-[#132c20] text-white text-xs font-bold rounded-lg hover:bg-[#72d645] hover:text-[#132c20] border border-[#132c20] hover:border-[#72d645] transition-colors disabled:opacity-60 disabled:hover:bg-[#132c20] disabled:hover:text-white disabled:hover:border-[#132c20] whitespace-nowrap"
               >
                 {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                 Lưu
@@ -351,9 +351,9 @@ export default function ConfigPage() {
           <Lock size={20} className="text-[#72d645]" />
         </div>
         <div>
-          <h3 className="font-bold text-white mb-1">Audit Log</h3>
+          <h3 className="font-bold text-white mb-1">Nhật ký kiểm toán</h3>
           <p className="text-gray-400 text-sm leading-relaxed">
-            Mọi thay đổi cấu hình đều được ghi lại trong Audit Log kèm người thực hiện và thời gian.
+            Mọi thay đổi cấu hình đều được ghi lại trong Nhật ký kiểm toán kèm người thực hiện và thời gian.
             Chỉ Admin mới có quyền thay đổi cấu hình hệ thống.
           </p>
         </div>
