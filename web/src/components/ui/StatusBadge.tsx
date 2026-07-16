@@ -13,19 +13,19 @@ export function StatusBadge({ status }: StatusBadgeProps) {
     case 'active':
       return (
         <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-[#ffffff] text-[#9FE870] border border-[#9FE870]">
-          Active
+          Hoạt động
         </span>
       );
     case 'inactive':
       return (
         <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-[#ffffff] text-[#060606] border border-[#060606]">
-          Inactive
+          Ngừng hoạt động
         </span>
       );
     case 'locked':
       return (
         <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-[#ffffff] text-[#060606] border border-[#060606]">
-          Locked
+          Đã khóa
         </span>
       );
     default:
