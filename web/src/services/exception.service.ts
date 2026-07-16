@@ -64,6 +64,7 @@ export interface IException {
   oldSlot?: { _id: string; name: string } | string;
   newSlot?: { _id: string; name: string } | string;
   checkInImage?: string;
+  checkOutImage?: string;
   createdAt: string;
   updatedAt: string;
 }
