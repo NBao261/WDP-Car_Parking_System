@@ -23,6 +23,15 @@ export interface ParkingSessionPopulated {
   checkInImage?: string;
 }
 
+export interface ReservationInfo {
+  _id: string;
+  code: string;
+  licensePlate: string;
+  startTime: string;
+  status: 'pending' | 'confirmed';
+  user: { _id: string; name: string; email: string; phone?: string } | string;
+}
+
 export interface ParkingSlot {
   _id: string;
   code: string;
@@ -35,6 +44,7 @@ export interface ParkingSlot {
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
+  reservationInfo?: ReservationInfo;
 }
 
 export interface SlotListResponse {

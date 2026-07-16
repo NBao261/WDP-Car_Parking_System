@@ -8,7 +8,6 @@ import {
   Loader2,
   Search,
   AlertTriangle,
-  Car,
   ChevronRight,
   ChevronLeft,
   Lock,
@@ -16,7 +15,7 @@ import {
 import { floorService, Floor } from '../../../../services/floor.service';
 import { slotService } from '../../../../services/slot.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { ICON_MAP } from '../../../shared/vehicles/components/constants';
+import { ICON_MAP, DEFAULT_ICON } from '../../../shared/vehicles/components/constants';
 
 interface FloorModalProps {
   isOpen: boolean;
@@ -531,7 +530,7 @@ export function FloorFormModal({
                                 <span className="mr-1">
                                   {(() => {
                                     const IconComp =
-                                      vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : Car;
+                                      vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : ICON_MAP[DEFAULT_ICON];
                                     return <IconComp size={16} />;
                                   })()}
                                 </span>
@@ -610,7 +609,7 @@ export function FloorFormModal({
                           const Icon =
                             group.vehicleTypeIcon && ICON_MAP[group.vehicleTypeIcon]
                               ? ICON_MAP[group.vehicleTypeIcon]
-                              : Car;
+                              : ICON_MAP[DEFAULT_ICON];
 
                           return (
                             <div

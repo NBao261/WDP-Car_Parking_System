@@ -61,4 +61,14 @@ export class VehicleTypeController {
       next(error);
     }
   }
+
+  static async getSimilar(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { name, icon } = req.query;
+      const vehicleTypes = await VehicleTypeService.getSimilarVehicleTypes(name as string, icon as string);
+      res.status(200).json({ success: true, data: vehicleTypes });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

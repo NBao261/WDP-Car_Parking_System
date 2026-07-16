@@ -1,5 +1,6 @@
 import { ParkingSlot, IParkingSlot } from '../models/parkingSlot.model';
 import { Floor } from '../models/floor.model';
+import { Reservation } from '../models/reservation.model';
 import { AppError } from '../middlewares/error.middleware';
 
 export class SlotService {
@@ -158,26 +159,89 @@ export class SlotService {
     await slot.save();
   }
 
-  static async getSlotById(id: string): Promise<IParkingSlot | null> {
+  static async getSlotById(id: string): Promise<any> {
     const slot = await ParkingSlot.findById(id)
       .populate('vehicleTypeId')
       .populate({
         path: 'currentSessionId',
         populate: { path: 'pricingPlanId' }
-      });
+      })
+      .lean();
     if (!slot) {
       throw new AppError('Slot not found', 404);
     }
+
+    // Gắn reservationInfo nếu slot đang reserved
+    if (slot.status === 'reserved') {
+      const reservation = await Reservation.findOne({
+        slotId: slot._id,
+        status: { $in: ['pending', 'confirmed'] },
+      })
+        .populate('userId', 'name email phone')
+        .lean();
+
+      if (reservation) {
+        (slot as any).reservationInfo = {
+          _id: reservation._id,
+          code: reservation.code,
+          licensePlate: reservation.licensePlate,
+          startTime: reservation.startTime,
+          status: reservation.status,
+          user: reservation.userId,
+        };
+      }
+    }
+
     return slot;
   }
 
-  static async getSlotsByFloor(floorId: string): Promise<IParkingSlot[]> {
-    return ParkingSlot.find({ floorId, isDeleted: false })
+  static async getSlotsByFloor(floorId: string): Promise<any[]> {
+    const slots = await ParkingSlot.find({ floorId, isDeleted: false })
       .populate('vehicleTypeId')
       .populate({
         path: 'currentSessionId',
         populate: { path: 'pricingPlanId' }
       })
-      .sort({ code: 1 });
+      .sort({ code: 1 })
+      .lean();
+
+    // Tìm reservation active cho các slot reserved
+    const reservedSlotIds = slots
+      .filter(s => s.status === 'reserved' && s._id)
+      .map(s => s._id);
+
+    if (reservedSlotIds.length > 0) {
+      const reservations = await Reservation.find({
+        slotId: { $in: reservedSlotIds },
+        status: { $in: ['pending', 'confirmed'] },
+      })
+        .populate('userId', 'name email phone')
+        .lean();
+
+      // Map reservation theo slotId
+      const reservationMap = new Map<string, any>();
+      for (const r of reservations) {
+        if (r.slotId) {
+          reservationMap.set(r.slotId.toString(), r);
+        }
+      }
+
+      // Gắn reservationInfo vào slot
+      for (const slot of slots) {
+        const reservation = reservationMap.get(slot._id.toString());
+        if (reservation) {
+          (slot as any).reservationInfo = {
+            _id: reservation._id,
+            code: reservation.code,
+            licensePlate: reservation.licensePlate,
+            startTime: reservation.startTime,
+            status: reservation.status,
+            user: reservation.userId,
+          };
+        }
+      }
+    }
+
+    return slots;
   }
 }

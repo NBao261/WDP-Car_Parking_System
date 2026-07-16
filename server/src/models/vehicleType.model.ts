@@ -5,6 +5,7 @@ export interface IVehicleType extends Document {
   code: string;
   description: string;
   icon: string;
+  color: string;
   requiresPlate: boolean;
   floors: mongoose.Types.ObjectId[]; 
   isDeleted: boolean;
@@ -18,6 +19,7 @@ const vehicleTypeSchema = new Schema<IVehicleType>(
     code: { type: String, required: true, unique: true, uppercase: true, trim: true },
     description: { type: String, default: '' },
     icon: { type: String, default: '' },
+    color: { type: String, default: '' },
     requiresPlate: { type: Boolean, default: true },
     floors: [{ type: Schema.Types.ObjectId, ref: 'Floor' }], 
     isDeleted: { type: Boolean, default: false },

@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   Trash2,
   MoreVertical,
-  Car,
   Moon,
   Clock,
   CreditCard,
@@ -20,7 +19,7 @@ import { pricingService, type PricingPlan } from '../../../../services/pricing.s
 import { type Facility } from '../../../../services/facility.service';
 import { type VehicleType } from '../../../../services/vehicleType.service';
 import { FEE_TYPE_LABELS, mapToUiType } from './constants';
-import { ICON_MAP } from '../../../shared/vehicles/components/constants';
+import { ICON_MAP, getVehicleColorTheme, DEFAULT_ICON } from '../../../shared/vehicles/components/constants';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
 
 interface PlanCardProps {
@@ -96,7 +95,7 @@ export function PlanCard({
 
   const uiFeeType = mapToUiType(plan.feeType, plan.feeMethod || '');
 
-  const VtIcon = vtIconKey && ICON_MAP[vtIconKey] ? ICON_MAP[vtIconKey] : Car;
+  const VtIcon = vtIconKey && ICON_MAP[vtIconKey] ? ICON_MAP[vtIconKey] : ICON_MAP[DEFAULT_ICON];
   const isActive = plan.status === 'active';
   const fmt = (n: number) => n.toLocaleString('vi-VN') + ' đ';
 

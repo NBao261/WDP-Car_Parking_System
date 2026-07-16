@@ -261,7 +261,9 @@ export default function ManagerDashboard() {
             id={`tab-${id}`}
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2.5 text-[15px] font-medium transition-all relative ${
-              activeTab === id ? 'text-[#132c20]' : 'text-[#6b7280] hover:text-[#1a1a1a]'
+              activeTab === id
+                ? 'text-[#132c20]'
+                : 'text-[#6b7280] hover:text-[#1a1a1a]'
             }`}
           >
             <Icon size={15} />
@@ -275,6 +277,7 @@ export default function ManagerDashboard() {
 
       {/* ═══ TAB CONTENT ═══ */}
       <div className="space-y-4">
+
         {/* ━━━ TAB: Tổng quan ━━━ */}
         {activeTab === 'overview' && (
           <>
@@ -284,22 +287,10 @@ export default function ManagerDashboard() {
               <div className="col-span-2 xl:col-span-1 relative overflow-hidden bg-gradient-to-br from-[#9ee671] to-[#72d645] rounded-xl p-5 text-black flex flex-col justify-between h-[160px] shadow-sm">
                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
                   <svg viewBox="0 0 400 160" preserveAspectRatio="none" className="w-full h-full">
-                    <path
-                      d="M 120 160 Q 280 -20 440 160 Q 280 40 120 160 Z"
-                      fill="rgba(255,255,255,0.2)"
-                    />
-                    <path
-                      d="M 150 160 Q 280 -40 410 160 Q 280 20 150 160 Z"
-                      fill="rgba(255,255,255,0.1)"
-                    />
-                    <path
-                      d="M -20 160 Q 80 40 180 160 Q 80 90 -20 160 Z"
-                      fill="rgba(255,255,255,0.15)"
-                    />
-                    <path
-                      d="M -40 160 Q 60 20 160 160 Q 60 70 -40 160 Z"
-                      fill="rgba(255,255,255,0.05)"
-                    />
+                    <path d="M 120 160 Q 280 -20 440 160 Q 280 40 120 160 Z" fill="rgba(255,255,255,0.2)" />
+                    <path d="M 150 160 Q 280 -40 410 160 Q 280 20 150 160 Z" fill="rgba(255,255,255,0.1)" />
+                    <path d="M -20 160 Q 80 40 180 160 Q 80 90 -20 160 Z" fill="rgba(255,255,255,0.15)" />
+                    <path d="M -40 160 Q 60 20 160 160 Q 60 70 -40 160 Z" fill="rgba(255,255,255,0.05)" />
                   </svg>
                 </div>
                 <div className="relative z-10">
@@ -307,14 +298,8 @@ export default function ManagerDashboard() {
                 </div>
                 <div className="relative z-10">
                   <div className="flex items-baseline gap-1.5 text-[#0a1a12]">
-                    <div
-                      className={`font-bold leading-none tracking-tight tabular-nums ${loading ? '' : getRevenueFontSize(grandTotal)}`}
-                    >
-                      {loading ? (
-                        <Loader2 size={28} className="animate-spin" />
-                      ) : (
-                        grandTotal.toLocaleString('vi-VN')
-                      )}
+                    <div className={`font-bold leading-none tracking-tight tabular-nums ${loading ? '' : getRevenueFontSize(grandTotal)}`}>
+                      {loading ? <Loader2 size={28} className="animate-spin" /> : grandTotal.toLocaleString('vi-VN')}
                     </div>
                     {!loading && grandTotal > 0 && (
                       <div className="text-[16px] font-medium opacity-70">đ</div>
@@ -335,11 +320,7 @@ export default function ManagerDashboard() {
                       <span className="text-[14px] text-gray-500 font-medium">Xe vào</span>
                     </div>
                     <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
-                      {loading ? (
-                        <Loader2 size={20} className="animate-spin" />
-                      ) : (
-                        totalCheckIn.toLocaleString('vi-VN')
-                      )}
+                      {loading ? <Loader2 size={20} className="animate-spin" /> : totalCheckIn.toLocaleString('vi-VN')}
                     </div>
                   </div>
                   <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
@@ -350,11 +331,7 @@ export default function ManagerDashboard() {
                       <span className="text-[14px] text-gray-500 font-medium">Xe ra</span>
                     </div>
                     <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
-                      {loading ? (
-                        <Loader2 size={20} className="animate-spin" />
-                      ) : (
-                        totalCheckOut.toLocaleString('vi-VN')
-                      )}
+                      {loading ? <Loader2 size={20} className="animate-spin" /> : totalCheckOut.toLocaleString('vi-VN')}
                     </div>
                   </div>
                   <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
@@ -365,11 +342,7 @@ export default function ManagerDashboard() {
                       <span className="text-[14px] text-gray-500 font-medium">Đang gửi</span>
                     </div>
                     <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
-                      {loading ? (
-                        <Loader2 size={20} className="animate-spin" />
-                      ) : (
-                        currentlyParked.toLocaleString('vi-VN')
-                      )}
+                      {loading ? <Loader2 size={20} className="animate-spin" /> : currentlyParked.toLocaleString('vi-VN')}
                     </div>
                   </div>
                 </div>
@@ -379,9 +352,7 @@ export default function ManagerDashboard() {
               <div className="col-span-2 xl:col-span-1 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between h-[160px] overflow-hidden">
                 <div className="text-[16px] font-bold text-gray-900">Tỷ lệ lấp đầy</div>
                 <div>
-                  <div className="text-[14px] text-gray-400 font-medium mb-1">
-                    Trạng thái bãi đỗ
-                  </div>
+                  <div className="text-[14px] text-gray-400 font-medium mb-1">Trạng thái bãi đỗ</div>
                   <div className="flex justify-between items-end mb-3">
                     <div className="text-[26px] font-bold text-[#0a2012] tracking-tight truncate">
                       {loading ? <Loader2 size={20} className="animate-spin" /> : occupancyStatus}
@@ -403,11 +374,7 @@ export default function ManagerDashboard() {
             {/* ROW 2: Visual Insights */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               <div className="lg:col-span-7">
-                <TrafficChartWidget
-                  trafficData={trafficData}
-                  peakHoursData={peakHoursData}
-                  loading={loading}
-                />
+                <TrafficChartWidget trafficData={trafficData} peakHoursData={peakHoursData} loading={loading} />
               </div>
               <div className="lg:col-span-5">
                 <TabbedInsightWidget
@@ -444,6 +411,7 @@ export default function ManagerDashboard() {
             <AuditLogWidget />
           </div>
         )}
+
       </div>
 
       {/* ── Floating AI Chatbot ── */}

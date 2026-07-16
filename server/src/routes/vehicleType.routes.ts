@@ -11,6 +11,7 @@ const router = Router();
 router.use(verifyToken);
 
 // Xem loại phương tiện (Tất cả các role đều cần xem)
+router.get('/similar', checkRole([UserRole.ADMIN, UserRole.MANAGER]), checkPermission(PERMISSIONS.VEHICLE_TYPE_READ), VehicleTypeController.getSimilar);
 router.get('/', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF, UserRole.DRIVER]), checkPermission(PERMISSIONS.VEHICLE_TYPE_READ), VehicleTypeController.getAllVehicleTypes);
 router.get('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF, UserRole.DRIVER]), checkPermission(PERMISSIONS.VEHICLE_TYPE_READ), VehicleTypeController.getVehicleTypeById);
 
