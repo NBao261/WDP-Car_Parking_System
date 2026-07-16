@@ -166,6 +166,8 @@ export class ExceptionService {
         .populate('staffId', 'name')
         .populate('resolvedByStaffId', 'name')
         .populate('managerId', 'name')
+        .populate('oldSlot', 'name')
+        .populate('newSlot', 'name')
         .populate({
           path: 'sessionId',
           select: 'code licensePlate status facilityId',
@@ -258,6 +260,8 @@ export class ExceptionService {
       }
 
       const oldSlotId = session.slotId;
+      exception.oldSlot = oldSlotId as mongoose.Types.ObjectId;
+      exception.newSlot = newSlot._id as mongoose.Types.ObjectId;
 
       // Lưu trạng thái gốc của slot mới TRƯỚC khi thay đổi
       const newSlotWasLocked = newSlot.status === SlotStatus.LOCKED;
@@ -321,6 +325,8 @@ export class ExceptionService {
       .populate('staffId', 'name email')
       .populate('resolvedByStaffId', 'name email')
       .populate('managerId', 'name email')
+      .populate('oldSlot', 'name')
+      .populate('newSlot', 'name')
       .populate('sessionId');
 
     try {

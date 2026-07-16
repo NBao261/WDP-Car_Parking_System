@@ -59,6 +59,11 @@ export interface IException {
   managerNote: string;
   surcharge: number;
   status: ExceptionStatus;
+  actualPlate?: string;
+  expectedPlate?: string;
+  oldSlot?: { _id: string; name: string } | string;
+  newSlot?: { _id: string; name: string } | string;
+  checkInImage?: string;
   createdAt: string;
   updatedAt: string;
 }

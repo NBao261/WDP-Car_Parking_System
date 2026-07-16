@@ -156,20 +156,34 @@ export function ExceptionReviewModal({
             )}
             {exception.expectedPlate && (
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <span className="block text-xs font-medium text-gray-500 mb-1">Biển hệ thống</span>
+                <span className="block text-xs font-medium text-gray-500 mb-1">
+                  {exception.type === ExceptionType.WRONG_PLATE ? 'Biển số ban đầu' : 'Biển hệ thống'}
+                </span>
                 <span className="font-semibold text-blue-600">{exception.expectedPlate}</span>
               </div>
             )}
             {exception.actualPlate && (
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <span className="block text-xs font-medium text-gray-500 mb-1">Biển thực tế (OCR)</span>
+                <span className="block text-xs font-medium text-gray-500 mb-1">
+                  {exception.type === ExceptionType.WRONG_PLATE ? 'Biển số sau khi sửa' : 'Biển thực tế (OCR)'}
+                </span>
                 <span className="font-semibold text-gray-800">{exception.actualPlate}</span>
               </div>
             )}
-            {exception.cardCode && (
+            {exception.oldSlot && (
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <span className="block text-xs font-medium text-gray-500 mb-1">Mã thẻ RFID</span>
-                <span className="font-semibold text-gray-800">{exception.cardCode}</span>
+                <span className="block text-xs font-medium text-gray-500 mb-1">Chỗ đỗ ban đầu</span>
+                <span className="font-semibold text-blue-600">
+                  {typeof exception.oldSlot === 'object' ? exception.oldSlot.name : exception.oldSlot}
+                </span>
+              </div>
+            )}
+            {exception.newSlot && (
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">Chỗ đỗ sau sửa</span>
+                <span className="font-semibold text-gray-800">
+                  {typeof exception.newSlot === 'object' ? exception.newSlot.name : exception.newSlot}
+                </span>
               </div>
             )}
           </div>
