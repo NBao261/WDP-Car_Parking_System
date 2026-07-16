@@ -34,7 +34,20 @@ export function useExceptionDetailLogic({ selectedException, onClose, onResolved
     setIsLoadingFloors(true);
     try {
       const res = await floorService.getAll({ facilityId, limit: 100 });
-      if (res.success) setFloors(res.data);
+      if (res.success) {
+        let floorsData = res.data;
+        if (selectedException?.vehicleTypeIdStr) {
+          const vId = selectedException.vehicleTypeIdStr;
+          floorsData = floorsData.filter((f: any) => {
+            if (!f.allowedVehicleTypes || f.allowedVehicleTypes.length === 0) return true;
+            return f.allowedVehicleTypes.some((av: any) => {
+              const id = typeof av === 'object' ? av._id : av;
+              return id === vId;
+            });
+          });
+        }
+        setFloors(floorsData);
+      }
     } catch { toast.error("Không thể tải danh sách tầng"); }
     finally { setIsLoadingFloors(false); }
   };
