@@ -22,12 +22,12 @@ export class UploadService {
 
       let updatedFields: any = {};
 
-      if (session.checkInImage && session.checkInImage.startsWith('/uploads/alpr/')) {
+      if (session.checkInImage && session.checkInImage.startsWith('/uploads/')) {
         const cloudUrl = await this._uploadAndDeleteLocal(session.checkInImage);
         if (cloudUrl) updatedFields.checkInImage = cloudUrl;
       }
 
-      if (session.checkOutImage && session.checkOutImage.startsWith('/uploads/alpr/')) {
+      if (session.checkOutImage && session.checkOutImage.startsWith('/uploads/')) {
         const cloudUrl = await this._uploadAndDeleteLocal(session.checkOutImage);
         if (cloudUrl) updatedFields.checkOutImage = cloudUrl;
       }
@@ -59,12 +59,12 @@ export class UploadService {
 
       let updatedFields: any = {};
 
-      if (exception.checkInImage && exception.checkInImage.startsWith('/uploads/alpr/')) {
+      if (exception.checkInImage && exception.checkInImage.startsWith('/uploads/')) {
         const cloudUrl = await this._uploadAndDeleteLocal(exception.checkInImage);
         if (cloudUrl) updatedFields.checkInImage = cloudUrl;
       }
 
-      if (exception.checkOutImage && exception.checkOutImage.startsWith('/uploads/alpr/')) {
+      if (exception.checkOutImage && exception.checkOutImage.startsWith('/uploads/')) {
         const cloudUrl = await this._uploadAndDeleteLocal(exception.checkOutImage);
         if (cloudUrl) updatedFields.checkOutImage = cloudUrl;
       }
@@ -81,7 +81,8 @@ export class UploadService {
 
   private static async _uploadAndDeleteLocal(localUrl: string): Promise<string | null> {
     const filename = path.basename(localUrl);
-    const localFilePath = path.join(__dirname, '../../public/uploads/alpr', filename);
+    const relativePath = localUrl.startsWith('/') ? localUrl.substring(1) : localUrl;
+    const localFilePath = path.join(__dirname, '../../public', relativePath);
 
     console.log(`[UploadService] Looking for file: ${localFilePath} (exists: ${fs.existsSync(localFilePath)})`);
     if (!fs.existsSync(localFilePath)) return null;

@@ -438,6 +438,11 @@ export class SessionService {
         sAdd('activeCards', session.cardCode).catch(() => {});
       }
 
+      // Upload ảnh check-in lên Cloudinary trong background
+      if (session.checkInImage) {
+        addUploadJob(session._id.toString()).catch(err => console.error('[CheckIn] Upload job failed:', err));
+      }
+
       // Emit socket event
       try {
         getIO().to(`facility:${data.facilityId}`).emit('slot:statusChanged', {

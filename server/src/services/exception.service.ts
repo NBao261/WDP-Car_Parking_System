@@ -92,8 +92,8 @@ export class ExceptionService {
 
     // Upload ảnh exception lên Cloudinary (background)
     if (
-      (exception.checkInImage && exception.checkInImage.startsWith('/uploads/alpr/')) ||
-      (exception.checkOutImage && exception.checkOutImage.startsWith('/uploads/alpr/'))
+      (exception.checkInImage && exception.checkInImage.startsWith('/uploads/')) ||
+      (exception.checkOutImage && exception.checkOutImage.startsWith('/uploads/'))
     ) {
       addExceptionUploadJob((exception._id as any).toString()).catch(console.error);
     }
