@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Edit, PowerOff, CheckCircle2, Trash2, Car, MoreVertical, ArrowUpDown } from 'lucide-react';
+import { Edit, PowerOff, CheckCircle2, Trash2, MoreVertical, ArrowUpDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { pricingService, type PricingPlan } from '../../../../services/pricing.service';
 import { type Facility } from '../../../../services/facility.service';
 import { type VehicleType } from '../../../../services/vehicleType.service';
 import { FEE_TYPE_LABELS, mapToUiType } from './constants';
-import { ICON_MAP, getVehicleColorTheme } from '../../../shared/vehicles/components/constants';
+import { ICON_MAP, getVehicleColorTheme, DEFAULT_ICON } from '../../../shared/vehicles/components/constants';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
 
 interface PlanTableProps {
@@ -248,7 +248,7 @@ export function PlanTableView({
                   ? plan.vehicleTypeId?.icon
                   : (vehicleTypes.find((v) => v._id === vtId)?.icon ?? '');
               const uiFeeType = mapToUiType(plan.feeType, plan.feeMethod || '');
-              const VtIcon = vtIconKey && ICON_MAP[vtIconKey] ? ICON_MAP[vtIconKey] : Car;
+              const VtIcon = vtIconKey && ICON_MAP[vtIconKey] ? ICON_MAP[vtIconKey] : ICON_MAP[DEFAULT_ICON];
               const isActive = plan.status === 'active';
 
               const baseRate = plan.rates[0];

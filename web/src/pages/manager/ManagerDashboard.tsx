@@ -74,9 +74,9 @@ const TIME_LABELS: Record<string, string> = {
 function getRevenueFontSize(value: number): string {
   const formatted = value.toLocaleString('vi-VN');
   const len = formatted.length;
-  if (len <= 7) return 'text-[32px] xl:text-[36px]';
-  if (len <= 11) return 'text-[26px] xl:text-[30px]';
-  return 'text-[22px] xl:text-[26px]';
+  if (len <= 7) return 'text-[36px] xl:text-[40px]';
+  if (len <= 11) return 'text-[30px] xl:text-[34px]';
+  return 'text-[26px] xl:text-[30px]';
 }
 
 /* ── Tab config ─────────────────────────────────────────── */
@@ -201,8 +201,8 @@ export default function ManagerDashboard() {
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-[#1a1a1a] font-bold text-[22px] tracking-tight">Tổng quan</h1>
-            <p className="text-[13px] text-[#6b7280] mt-0.5">
+            <h1 className="text-[#1a1a1a] font-bold text-[26px] tracking-tight">Tổng quan</h1>
+            <p className="text-[15px] text-[#6b7280] mt-0.5">
               Theo dõi và phân tích các chỉ số hoạt động của bãi đỗ xe
             </p>
           </div>
@@ -231,7 +231,7 @@ export default function ManagerDashboard() {
             <button
               onClick={() => handleExport('excel')}
               disabled={exporting || loading}
-              className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-white border-[1.5px] border-gray-200 text-[#1a1a1a] text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-white border-[1.5px] border-gray-200 text-[#1a1a1a] text-[16px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {exporting ? <Loader2 size={17} className="animate-spin" /> : <FileSpreadsheet size={17} />}
               Excel
@@ -239,7 +239,7 @@ export default function ManagerDashboard() {
             <button
               onClick={() => handleExport('pdf')}
               disabled={exporting || loading}
-              className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[#a6e676] text-[#132c20] border-none text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[#a6e676] text-[#132c20] border-none text-[16px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {exporting ? <Loader2 size={17} className="animate-spin" /> : <Download size={17} />}
               PDF
@@ -255,7 +255,7 @@ export default function ManagerDashboard() {
             key={id}
             id={`tab-${id}`}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium transition-all relative ${
+            className={`flex items-center gap-2 px-4 py-2.5 text-[15px] font-medium transition-all relative ${
               activeTab === id
                 ? 'text-[#132c20]'
                 : 'text-[#6b7280] hover:text-[#1a1a1a]'
@@ -289,7 +289,7 @@ export default function ManagerDashboard() {
                   </svg>
                 </div>
                 <div className="relative z-10">
-                  <div className="text-[14px] font-medium text-[#1a2e22]/80">Tổng doanh thu</div>
+                  <div className="text-[16px] font-medium text-[#1a2e22]/80">Tổng doanh thu</div>
                 </div>
                 <div className="relative z-10">
                   <div className="flex items-baseline gap-1.5 text-[#0a1a12]">
@@ -297,7 +297,7 @@ export default function ManagerDashboard() {
                       {loading ? <Loader2 size={28} className="animate-spin" /> : grandTotal.toLocaleString('vi-VN')}
                     </div>
                     {!loading && grandTotal > 0 && (
-                      <div className="text-[14px] font-medium opacity-70">đ</div>
+                      <div className="text-[16px] font-medium opacity-70">đ</div>
                     )}
                   </div>
                 </div>
@@ -305,16 +305,16 @@ export default function ManagerDashboard() {
 
               {/* Card 2: Activity Stats */}
               <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col h-[160px] overflow-hidden">
-                <div className="text-[14px] font-bold text-gray-900 mb-3">Thống kê hoạt động</div>
+                <div className="text-[16px] font-bold text-gray-900 mb-3">Thống kê hoạt động</div>
                 <div className="flex gap-3 flex-1 min-h-0">
                   <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-7 h-7 rounded-md bg-[#f0f9eb] border border-gray-100 shadow-sm flex items-center justify-center text-[#72d645]">
                         <ArrowDownRight size={14} />
                       </div>
-                      <span className="text-[12px] text-gray-500 font-medium">Xe vào</span>
+                      <span className="text-[14px] text-gray-500 font-medium">Xe vào</span>
                     </div>
-                    <div className="text-[24px] font-bold text-gray-900 leading-none tabular-nums truncate">
+                    <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
                       {loading ? <Loader2 size={20} className="animate-spin" /> : totalCheckIn.toLocaleString('vi-VN')}
                     </div>
                   </div>
@@ -323,9 +323,9 @@ export default function ManagerDashboard() {
                       <div className="w-7 h-7 rounded-md bg-[#f0f9eb] border border-gray-100 shadow-sm flex items-center justify-center text-[#72d645]">
                         <ArrowUpRight size={14} />
                       </div>
-                      <span className="text-[12px] text-gray-500 font-medium">Xe ra</span>
+                      <span className="text-[14px] text-gray-500 font-medium">Xe ra</span>
                     </div>
-                    <div className="text-[24px] font-bold text-gray-900 leading-none tabular-nums truncate">
+                    <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
                       {loading ? <Loader2 size={20} className="animate-spin" /> : totalCheckOut.toLocaleString('vi-VN')}
                     </div>
                   </div>
@@ -334,9 +334,9 @@ export default function ManagerDashboard() {
                       <div className="w-7 h-7 rounded-md bg-[#f0f9eb] border border-gray-100 shadow-sm flex items-center justify-center text-[#72d645]">
                         <Clock size={14} />
                       </div>
-                      <span className="text-[12px] text-gray-500 font-medium">Đang gửi</span>
+                      <span className="text-[14px] text-gray-500 font-medium">Đang gửi</span>
                     </div>
-                    <div className="text-[24px] font-bold text-gray-900 leading-none tabular-nums truncate">
+                    <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
                       {loading ? <Loader2 size={20} className="animate-spin" /> : currentlyParked.toLocaleString('vi-VN')}
                     </div>
                   </div>
@@ -345,14 +345,14 @@ export default function ManagerDashboard() {
 
               {/* Card 3: Tỷ lệ lấp đầy */}
               <div className="col-span-2 xl:col-span-1 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between h-[160px] overflow-hidden">
-                <div className="text-[14px] font-bold text-gray-900">Tỷ lệ lấp đầy</div>
+                <div className="text-[16px] font-bold text-gray-900">Tỷ lệ lấp đầy</div>
                 <div>
-                  <div className="text-[12px] text-gray-400 font-medium mb-1">Trạng thái bãi đỗ</div>
+                  <div className="text-[14px] text-gray-400 font-medium mb-1">Trạng thái bãi đỗ</div>
                   <div className="flex justify-between items-end mb-3">
-                    <div className="text-[22px] font-bold text-[#0a2012] tracking-tight truncate">
+                    <div className="text-[26px] font-bold text-[#0a2012] tracking-tight truncate">
                       {loading ? <Loader2 size={20} className="animate-spin" /> : occupancyStatus}
                     </div>
-                    <div className="text-[24px] font-semibold text-gray-700 tabular-nums">
+                    <div className="text-[28px] font-semibold text-gray-700 tabular-nums">
                       {loading ? '' : `${occupancyRate}%`}
                     </div>
                   </div>

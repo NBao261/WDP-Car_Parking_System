@@ -729,7 +729,7 @@ export function PricingFormModal({
                         placeholder="1"
                         readOnly={hasActiveSessions}
                       />
-                      <p className="text-[10px] text-gray-400 mt-1">Số giờ cho giá bậc 1</p>
+                      <p className="text-[10px] text-gray-400 mt-1">Số giờ đầu tiên áp dụng mức giá 'Giờ đầu'</p>
                     </div>
                   )}
 
