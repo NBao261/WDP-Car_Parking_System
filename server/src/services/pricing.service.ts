@@ -3,6 +3,7 @@ import { VehicleType } from '../models/vehicleType.model';
 import { ParkingFacility } from '../models/parkingFacility.model';
 import { ParkingSession } from '../models/parkingSession.model';
 import { AppError } from '../middlewares/error.middleware';
+import { delCache } from '../config/redis';
 
 // ── Helper: Validate time_window rates phủ kín giờ hoạt động ──
 function getTimeWindowIntervals(rates: Array<{ startTime?: string; endTime?: string }>): Array<[number, number]> {
@@ -118,6 +119,11 @@ export class PricingService {
 
     const newPlan = new PricingPlan(data);
     await newPlan.save();
+
+    if (newPlan.status === 'active') {
+      await delCache(`pricing:active:${newPlan.facilityId}:${newPlan.vehicleTypeId}`);
+    }
+
     return newPlan;
   }
 
@@ -185,6 +191,9 @@ export class PricingService {
     if (!updatedPlan) {
       throw new AppError('Pricing plan not found', 404);
     }
+
+    await delCache(`pricing:active:${updatedPlan.facilityId}:${updatedPlan.vehicleTypeId}`);
+
     return updatedPlan;
   }
 
@@ -210,6 +219,9 @@ export class PricingService {
     if (!plan) {
       throw new AppError('Pricing plan not found', 404);
     }
+
+    await delCache(`pricing:active:${plan.facilityId}:${plan.vehicleTypeId}`);
+
     return plan;
   }
 
