@@ -5,10 +5,8 @@ import {
   StyleSheet,
   FlatList,
   RefreshControl,
-  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Typography } from "../../src/constants/theme";
 import { exceptionApi } from "../../src/services/api";
@@ -27,25 +25,28 @@ const EXCEPTION_CONFIG: Record<
 
 const STATUS_CONFIG: Record<
   string,
-  { label: string; color: string; icon: any; bg: string }
+  { label: string; color: string; icon: any; bg: string; dotColor: string }
 > = {
   PENDING: {
     label: "Đang chờ",
-    color: "#ff9800",
+    color: Colors.brandDark,
     icon: "time-outline",
-    bg: "#fff3e0",
+    bg: Colors.surfaceElevated,
+    dotColor: "#6B7260",
   },
   RESOLVED: {
     label: "Đã giải quyết",
-    color: "#4caf50",
+    color: "#2E7D32",
     icon: "checkmark-circle-outline",
-    bg: "#e8f5e9",
+    bg: "#E8F5E9",
+    dotColor: "#2E7D32",
   },
   REJECTED: {
     label: "Từ chối",
-    color: "#f44336",
+    color: "#9E9E9E",
     icon: "close-circle-outline",
-    bg: "#ffebee",
+    bg: Colors.surfaceElevated,
+    dotColor: "#9E9E9E",
   },
 };
 
@@ -61,7 +62,7 @@ function EmptyState({
   return (
     <View style={styles.emptyWrap}>
       <View style={styles.emptyIcon}>
-        <Ionicons name={icon} size={32} color={Colors.textTertiary} />
+        <Ionicons name={icon} size={32} color={Colors.disabled} />
       </View>
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptySubtitle}>{subtitle}</Text>
@@ -107,60 +108,41 @@ export default function ExceptionsScreen() {
     const typeConfig = EXCEPTION_CONFIG[item.type] || EXCEPTION_CONFIG.OTHER;
     const statusConfig =
       STATUS_CONFIG[item.status.toUpperCase()] || STATUS_CONFIG.PENDING;
-    const date = new Date(item.createdAt).toLocaleString("vi-VN", {
+    const createdDate = new Date(item.createdAt);
+    const time = createdDate.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const date = createdDate.toLocaleDateString("vi-VN", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
 
     return (
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={styles.cardLeft}>
-            <View
-              style={[styles.plateWrap, { backgroundColor: Colors.primaryBg }]}
-            >
-              <Text style={styles.plateText}>
-                {item.actualPlate || item.expectedPlate || "Không rõ"}
-              </Text>
-            </View>
-          </View>
-          <Text style={styles.cardTime}>{date.split(" ")[1]}</Text>
+        {/* Row 1: Plate + Time */}
+        <View style={styles.cardRow1}>
+          <Text style={styles.cardPlate}>
+            {item.actualPlate || item.expectedPlate || "Không rõ"}
+          </Text>
+          <Text style={styles.cardTime}>{time}</Text>
         </View>
 
-        <View style={styles.cardDetails}>
-          <View style={styles.cardDetail}>
-            <Ionicons
-              name="alert-circle-outline"
-              size={14}
-              color={typeConfig.color}
-            />
+        {/* Category pill */}
+        <View style={styles.categoryRow}>
+          <View
+            style={[styles.categoryPill, { backgroundColor: typeConfig.bg }]}
+          >
             <Text
-              style={[
-                styles.cardDetailText,
-                {
-                  color: typeConfig.color,
-                  fontFamily: Typography.fontFamily.semiBold,
-                },
-              ]}
+              style={[styles.categoryText, { color: typeConfig.color }]}
             >
               {typeConfig.label}
             </Text>
           </View>
-          <View style={styles.cardDetail}>
-            <Ionicons
-              name="time-outline"
-              size={14}
-              color={Colors.textTertiary}
-            />
-            <Text style={styles.cardDetailText}>
-              Ngày: {date.split(" ")[0]}
-            </Text>
-          </View>
         </View>
 
+        {/* Description */}
         {item.description ? (
           <View style={styles.descWrap}>
             <Text style={styles.descText} numberOfLines={2}>
@@ -169,14 +151,27 @@ export default function ExceptionsScreen() {
           </View>
         ) : null}
 
-        <View style={styles.footerWrap}>
-          <View style={[styles.badge, { backgroundColor: statusConfig.bg }]}>
+        {/* Footer: Date + Status Badge */}
+        <View style={styles.footerRow}>
+          <View style={styles.dateWrap}>
             <Ionicons
-              name={statusConfig.icon}
-              size={12}
-              color={statusConfig.color}
+              name="calendar-outline"
+              size={13}
+              color={Colors.textTertiary}
             />
-            <Text style={[styles.badgeText, { color: statusConfig.color }]}>
+            <Text style={styles.dateText}>{date}</Text>
+          </View>
+
+          <View
+            style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}
+          >
+            <View
+              style={[
+                styles.statusDot,
+                { backgroundColor: statusConfig.dotColor },
+              ]}
+            />
+            <Text style={[styles.statusText, { color: statusConfig.color }]}>
               {statusConfig.label}
             </Text>
           </View>
@@ -188,28 +183,16 @@ export default function ExceptionsScreen() {
   return (
     <View style={styles.root}>
       {/* Header */}
-      <View style={styles.headerWrapper}>
-        <LinearGradient
-          colors={[Colors.gradientStart, Colors.gradientMid]}
-          style={styles.header}
-        >
-          <SafeAreaView edges={["top"]}>
-            <Image
-              source={require("../../assets/images/logo.png")}
-              style={{
-                width: 100,
-                height: 28,
-                resizeMode: "contain",
-                marginTop: 12,
-              }}
-            />
-            <Text style={styles.headerTitle}>Sự cố</Text>
+      <SafeAreaView edges={["top"]} style={styles.headerSafe}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>Báo cáo Sự cố</Text>
             <Text style={styles.headerSub}>
-              Theo dõi và xử lý sự cố trong ca trực
+              Quản lý và giải quyết sự cố tại bãi đỗ
             </Text>
-          </SafeAreaView>
-        </LinearGradient>
-      </View>
+          </View>
+        </View>
+      </SafeAreaView>
 
       <FlatList
         data={exceptions}
@@ -228,7 +211,7 @@ export default function ExceptionsScreen() {
             <EmptyState
               icon="shield-checkmark-outline"
               title="Không có sự cố nào"
-              subtitle="Chưa có sự cố nào được ghi nhận"
+              subtitle="Hệ thống đang hoạt động ổn định, không có báo cáo cần xử lý."
             />
           ) : null
         }
@@ -238,27 +221,30 @@ export default function ExceptionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: Colors.white },
 
-  headerWrapper: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: "hidden",
+  headerSafe: {
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 22,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 22,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textOnDark,
-    marginTop: 8,
+    color: Colors.brandDark,
   },
   headerSub: {
     fontSize: 13,
-    color: Colors.textOnDarkMuted,
-    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textTertiary,
+    fontFamily: Typography.fontFamily.medium,
     marginTop: 3,
   },
 
@@ -266,110 +252,134 @@ const styles = StyleSheet.create({
 
   // Card
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.white,
     borderRadius: 18,
-    padding: 16,
+    padding: 18,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: Colors.border,
-    shadowColor: "#5E8F25",
+    shadowColor: "#14161C",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.04,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 1,
   },
-  cardHeader: {
+  cardRow1: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
+    alignItems: "flex-start",
+    marginBottom: 8,
   },
-  cardLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
-  plateWrap: {
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  plateText: {
-    fontSize: 14,
+  cardPlate: {
+    fontSize: 16,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.primary,
-    letterSpacing: 1.5,
+    color: Colors.brandDark,
+    letterSpacing: 0.5,
   },
   cardTime: {
-    fontSize: 12,
-    color: Colors.textTertiary,
-    fontFamily: Typography.fontFamily.medium,
-  },
-
-  cardDetails: { gap: 4 },
-  cardDetail: { flexDirection: "row", alignItems: "center", gap: 6 },
-  cardDetailText: {
     fontSize: 13,
-    color: Colors.textSecondary,
-    fontFamily: Typography.fontFamily.regular,
-    flex: 1,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textTertiary,
   },
 
+  // Category pill
+  categoryRow: {
+    marginBottom: 10,
+  },
+  categoryPill: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 9999,
+  },
+  categoryText: {
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.bold,
+  },
+
+  // Description
   descWrap: {
-    marginTop: 10,
-    backgroundColor: Colors.surfaceElevated,
-    padding: 10,
-    borderRadius: 8,
+    marginBottom: 12,
   },
   descText: {
     fontSize: 13,
     color: Colors.textSecondary,
     fontFamily: Typography.fontFamily.regular,
+    lineHeight: 20,
   },
 
-  footerWrap: {
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-    paddingTop: 10,
+  // Footer
+  footerRow: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
   },
-
-  // Badge
-  badge: {
+  dateWrap: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: 5,
   },
-  badgeText: { fontSize: 11, fontFamily: Typography.fontFamily.semiBold },
+  dateText: {
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textTertiary,
+  },
+
+  // Status badge
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 9999,
+    gap: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.bold,
+  },
 
   // Empty
   emptyWrap: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 32,
-    marginTop: 60,
+    marginTop: 40,
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderStyle: "dashed",
   },
   emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: Colors.surfaceElevated,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.white,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   emptyTitle: {
-    fontSize: 16,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: Colors.textTertiary,
     textAlign: "center",
     lineHeight: 20,
+    maxWidth: 240,
   },
 });
+

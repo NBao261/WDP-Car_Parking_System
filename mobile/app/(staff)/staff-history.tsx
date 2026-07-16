@@ -6,10 +6,8 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
-  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { Colors, Typography } from "../../src/constants/theme";
 import { sessionApi } from "../../src/services/api";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,7 +26,7 @@ function EmptyState({
   return (
     <View style={styles.emptyWrap}>
       <View style={styles.emptyIcon}>
-        <Ionicons name={icon} size={32} color={Colors.textTertiary} />
+        <Ionicons name={icon} size={32} color={Colors.disabled} />
       </View>
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptySubtitle}>{subtitle}</Text>
@@ -39,13 +37,10 @@ function EmptyState({
 function SessionCard({ item }: { item: any }) {
   return (
     <View style={styles.card}>
+      {/* Row 1: Plate + Time */}
       <View style={styles.cardHeader}>
-        <View style={styles.cardLeft}>
-          <View
-            style={[styles.plateWrap, { backgroundColor: Colors.primaryBg }]}
-          >
-            <Text style={styles.plateText}>{item.licensePlate}</Text>
-          </View>
+        <View style={styles.plateWrap}>
+          <Text style={styles.plateText}>{item.licensePlate}</Text>
         </View>
         <Text style={styles.cardTime}>
           {new Date(item.startTime || item.checkInTime).toLocaleTimeString(
@@ -54,24 +49,31 @@ function SessionCard({ item }: { item: any }) {
           )}
         </Text>
       </View>
-      <View style={styles.cardDetails}>
-        <View style={styles.cardDetail}>
-          <Ionicons name="time-outline" size={13} color={Colors.textTertiary} />
-          <Text style={styles.cardDetailText} numberOfLines={1}>
-            Vào:{" "}
-            {new Date(item.startTime || item.checkInTime).toLocaleDateString(
-              "vi-VN",
-            )}
-          </Text>
-        </View>
+
+      {/* Row 2: Date */}
+      <View style={styles.cardDetail}>
+        <Ionicons name="time-outline" size={14} color={Colors.primary} />
+        <Text style={styles.cardDetailText}>
+          {new Date(item.startTime || item.checkInTime).toLocaleDateString(
+            "vi-VN",
+          )}
+        </Text>
+      </View>
+
+      {/* Row 3: Floor + Slot */}
+      <View style={styles.cardFooter}>
         <View style={styles.cardDetail}>
           <Ionicons
-            name="location-outline"
-            size={13}
+            name="layers-outline"
+            size={14}
             color={Colors.textTertiary}
           />
-          <Text style={styles.cardDetailText}>
-            Tầng {item.floorId?.name || "---"} • Ô {item.slotId?.code || "---"}
+          <Text style={styles.cardSlotText}>
+            Tầng {item.floorId?.name || "---"}
+          </Text>
+          <Text style={styles.cardDot}>•</Text>
+          <Text style={styles.cardSlotText}>
+            Ô {item.slotId?.code || "---"}
           </Text>
         </View>
       </View>
@@ -115,27 +117,20 @@ export default function StaffHistoryScreen() {
 
   return (
     <View style={styles.root}>
-      {/* Header */}
-      <View style={styles.headerWrapper}>
-        <LinearGradient
-          colors={[Colors.gradientStart, Colors.gradientMid]}
-          style={styles.header}
-        >
-          <SafeAreaView edges={["top"]}>
-            <Image
-              source={require("../../assets/images/logo.png")}
-              style={{
-                width: 100,
-                height: 28,
-                resizeMode: "contain",
-                marginTop: 12,
-              }}
-            />
-            <Text style={styles.headerTitle}>Lịch sử</Text>
-            <Text style={styles.headerSub}>Các xe đang đỗ trong toà nhà</Text>
-          </SafeAreaView>
-        </LinearGradient>
-      </View>
+      <SafeAreaView edges={["top"]} style={styles.headerSafe}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Lịch sử đỗ xe</Text>
+        </View>
+
+        {/* Subtitle label */}
+        <View style={styles.subtitleWrap}>
+          <Text style={styles.subtitleText}>Các xe đang đỗ trong toà nhà</Text>
+          <View style={styles.countBadge}>
+            <Text style={styles.countText}>{sessions.length} xe</Text>
+          </View>
+        </View>
+      </SafeAreaView>
 
       {/* Content */}
       <View style={styles.content}>
@@ -146,13 +141,17 @@ export default function StaffHistoryScreen() {
             data={sessions}
             keyExtractor={(item) => item._id}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={Colors.primary}
+              />
             }
             ListEmptyComponent={
               <EmptyState
                 icon="car-outline"
-                title="Chưa có xe nào"
-                subtitle="Chưa có lượt gửi xe nào đang hoạt động"
+                title="Không tìm thấy xe nào"
+                subtitle="Vui lòng kiểm tra lại hoặc quét xe mới ở tab Quét!"
               />
             }
             renderItem={({ item }) => <SessionCard item={item} />}
@@ -165,46 +164,64 @@ export default function StaffHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: Colors.white },
 
-  headerWrapper: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: "hidden",
+  headerSafe: {
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 22,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 22,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textOnDark,
-    marginTop: 8,
-  },
-  headerSub: {
-    fontSize: 13,
-    color: Colors.textOnDarkMuted,
-    fontFamily: Typography.fontFamily.regular,
-    marginTop: 3,
+    color: Colors.brandDark,
   },
 
-  content: { flex: 1 },
+  subtitleWrap: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingBottom: 14,
+  },
+  subtitleText: {
+    fontSize: 13,
+    color: Colors.textTertiary,
+    fontFamily: Typography.fontFamily.medium,
+  },
+  countBadge: {
+    backgroundColor: Colors.primaryBg,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  countText: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.primary,
+  },
+
+  content: { flex: 1, backgroundColor: Colors.white },
   list: { padding: 16, paddingBottom: 32 },
 
   // Card
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.white,
     borderRadius: 18,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: Colors.border,
-    shadowColor: "#5E8F25",
+    shadowColor: "#14161C",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.04,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 1,
   },
   cardHeader: {
     flexDirection: "row",
@@ -212,60 +229,88 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-  cardLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
   plateWrap: {
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   plateText: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.primary,
-    letterSpacing: 1.5,
+    color: Colors.brandDark,
+    letterSpacing: 2,
   },
   cardTime: {
-    fontSize: 12,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
+  },
+
+  cardDetail: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 4,
+  },
+  cardDetailText: {
+    fontSize: 13,
     color: Colors.textTertiary,
     fontFamily: Typography.fontFamily.medium,
   },
 
-  cardDetails: { gap: 4 },
-  cardDetail: { flexDirection: "row", alignItems: "center", gap: 5 },
-  cardDetailText: {
+  cardFooter: {
+    marginTop: 8,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  cardSlotText: {
     fontSize: 13,
+    fontFamily: Typography.fontFamily.semiBold,
     color: Colors.textSecondary,
-    fontFamily: Typography.fontFamily.regular,
-    flex: 1,
+  },
+  cardDot: {
+    fontSize: 13,
+    color: Colors.disabled,
+    marginHorizontal: 2,
   },
 
   // Empty
   emptyWrap: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 32,
-    marginTop: 60,
+    marginTop: 40,
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderStyle: "dashed",
   },
   emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: Colors.surfaceElevated,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.white,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   emptyTitle: {
-    fontSize: 16,
-    fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: Colors.textTertiary,
     textAlign: "center",
     lineHeight: 20,
+    maxWidth: 220,
   },
 });
+
