@@ -12,7 +12,6 @@ import {
   Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -410,36 +409,6 @@ export default function StaffScanScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerWrapper}>
-        <LinearGradient
-          colors={[Colors.gradientStart, Colors.gradientMid]}
-          style={styles.header}
-        >
-          <SafeAreaView edges={["top"]}>
-            <View style={styles.headerTop}>
-              <Image
-                source={require("../../assets/images/logo.png")}
-                style={{ width: 100, height: 28, resizeMode: "contain" }}
-              />
-              <TouchableOpacity
-                onPress={() => setExceptionModalVisible(true)}
-                style={styles.iconButton}
-              >
-                <Ionicons
-                  name="alert-circle-outline"
-                  size={24}
-                  color={Colors.white}
-                />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.headerTitle}>Quét Biển Số</Text>
-            <Text style={styles.headerSub}>
-              Tự động nhận diện biển số xe ra vào
-            </Text>
-          </SafeAreaView>
-        </LinearGradient>
-      </View>
-
       {scannedImage ? (
         <View style={styles.previewContainer}>
           <Image source={{ uri: scannedImage }} style={styles.preview} />
@@ -453,35 +422,93 @@ export default function StaffScanScreen() {
       ) : (
         <View style={{ flex: 1 }}>
           <CameraView style={styles.camera} facing="back" ref={cameraRef} />
+
+          {/* Overlay on camera */}
           <View style={[styles.overlay, StyleSheet.absoluteFillObject]}>
-            <View style={styles.guideBox} />
-            <Text style={styles.guideText}>
-              Căn chỉnh biển số xe vào khung hình
-            </Text>
+            {/* Header overlay */}
+            <SafeAreaView edges={["top"]} style={styles.headerOverlay}>
+              <View>
+                <Text style={styles.headerTitle}>Quét Biển Số</Text>
+                <Text style={styles.headerSub}>
+                  Tự động nhận diện biển số xe
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setExceptionModalVisible(true)}
+                style={styles.iconButton}
+              >
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={22}
+                  color={Colors.white}
+                />
+              </TouchableOpacity>
+            </SafeAreaView>
+
+            {/* Corner brackets viewfinder */}
+            <View style={styles.viewfinderArea}>
+              <View style={styles.guideBox}>
+                {/* Top-left corner */}
+                <View style={[styles.corner, styles.cornerTL]} />
+                {/* Top-right corner */}
+                <View style={[styles.corner, styles.cornerTR]} />
+                {/* Bottom-left corner */}
+                <View style={[styles.corner, styles.cornerBL]} />
+                {/* Bottom-right corner */}
+                <View style={[styles.corner, styles.cornerBR]} />
+              </View>
+              <View style={styles.hintBox}>
+                <Text style={styles.guideText}>
+                  {isProcessing
+                    ? "Đang xử lý hình ảnh..."
+                    : "Đặt biển số vào giữa khung hình"}
+                </Text>
+              </View>
+            </View>
+
+            {/* Shutter button area */}
+            <View style={styles.controls}>
+              <TouchableOpacity
+                style={styles.captureButton}
+                onPress={takePicture}
+                disabled={isProcessing}
+                activeOpacity={0.8}
+              >
+                <View style={styles.captureInner}>
+                  {isProcessing ? (
+                    <ActivityIndicator size="small" color={Colors.primary} />
+                  ) : (
+                    <Ionicons name="camera" size={28} color={Colors.primary} />
+                  )}
+                </View>
+              </TouchableOpacity>
+              <Text style={styles.tapLabel}>
+                {isProcessing ? "Đang Quét..." : "CHẠM ĐỂ QUÉT"}
+              </Text>
+            </View>
           </View>
         </View>
       )}
 
-      <View style={styles.controls}>
-        {!scannedImage && (
-          <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-            <View style={styles.captureInner} />
-          </TouchableOpacity>
-        )}
-      </View>
-
+      {/* Check-in Modal */}
       <Modal visible={showCheckInModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            {/* Drag handle */}
+            <View style={styles.dragHandle} />
+
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Xác nhận Check-in</Text>
-              <TouchableOpacity onPress={resetScan}>
-                <Ionicons name="close" size={24} color={Colors.textTertiary} />
+              <TouchableOpacity onPress={resetScan} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={20} color={Colors.textTertiary} />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.modalLabel}>Biển số nhận diện:</Text>
-            <Text style={styles.modalPlateText}>{plateData?.plate}</Text>
+            {/* Plate display */}
+            <View style={styles.plateDisplayWrap}>
+              <Text style={styles.plateDisplayLabel}>BIỂN SỐ NHẬN DIỆN</Text>
+              <Text style={styles.plateDisplayText}>{plateData?.plate}</Text>
+            </View>
 
             <Text style={styles.modalLabel}>Chọn loại xe:</Text>
             <View style={styles.vehicleTypeContainer}>
@@ -520,7 +547,7 @@ export default function StaffScanScreen() {
                   <Ionicons
                     name="radio-outline"
                     size={20}
-                    color={Colors.white}
+                    color={Colors.brandDark}
                   />
                   <Text style={styles.nfcButtonText}>
                     {isScanningNfc ? "Đang chờ thẻ..." : "Quét thẻ NFC"}
@@ -529,36 +556,50 @@ export default function StaffScanScreen() {
               )}
             </View>
 
-            <TouchableOpacity
-              style={[
-                styles.primaryButton,
-                (!selectedVehicleType || isProcessing) && styles.disabledButton,
-              ]}
-              onPress={handleCheckIn}
-              disabled={!selectedVehicleType || isProcessing}
-            >
-              {isProcessing ? (
-                <ActivityIndicator color={Colors.white} />
-              ) : (
-                <Text style={styles.primaryButtonText}>Tạo lượt gửi</Text>
-              )}
-            </TouchableOpacity>
+            {/* Action buttons */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={resetScan}
+              >
+                <Text style={styles.cancelButtonText}>Hủy bỏ</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.primaryButton,
+                  (!selectedVehicleType || isProcessing) && styles.disabledButton,
+                ]}
+                onPress={handleCheckIn}
+                disabled={!selectedVehicleType || isProcessing}
+              >
+                {isProcessing ? (
+                  <ActivityIndicator color={Colors.brandDark} />
+                ) : (
+                  <Text style={styles.primaryButtonText}>Xác Nhận Vào</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
 
+      {/* Check-out Modal */}
       <Modal visible={showCheckOutModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <View style={styles.dragHandle} />
+
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Xác nhận Check-out</Text>
-              <TouchableOpacity onPress={resetScan}>
-                <Ionicons name="close" size={24} color={Colors.textTertiary} />
+              <TouchableOpacity onPress={resetScan} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={20} color={Colors.textTertiary} />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.modalLabel}>Biển số nhận diện:</Text>
-            <Text style={styles.modalPlateText}>{plateData?.plate}</Text>
+            <View style={styles.plateDisplayWrap}>
+              <Text style={styles.plateDisplayLabel}>BIỂN SỐ NHẬN DIỆN</Text>
+              <Text style={styles.plateDisplayText}>{plateData?.plate}</Text>
+            </View>
 
             {checkoutSession && (
               <View style={styles.sessionDetails}>
@@ -582,7 +623,7 @@ export default function StaffScanScreen() {
                       style={{
                         width: "100%",
                         height: 120,
-                        borderRadius: 8,
+                        borderRadius: 12,
                         resizeMode: "cover",
                       }}
                     />
@@ -628,7 +669,7 @@ export default function StaffScanScreen() {
                   <Ionicons
                     name="radio-outline"
                     size={20}
-                    color={Colors.white}
+                    color={Colors.brandDark}
                   />
                   <Text style={styles.nfcButtonText}>
                     {isScanningNfc ? "Đang chờ thẻ..." : "Quét thẻ NFC"}
@@ -637,33 +678,42 @@ export default function StaffScanScreen() {
               )}
             </View>
 
-            <TouchableOpacity
-              style={[
-                styles.primaryButton,
-                (isCalculatingFee ||
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={resetScan}
+              >
+                <Text style={styles.cancelButtonText}>Hủy bỏ</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.primaryButton,
+                  (isCalculatingFee ||
+                    isProcessing ||
+                    !!(nfcUid && nfcUid !== checkoutSession?.cardCode)) &&
+                    styles.disabledButton,
+                ]}
+                onPress={handleCheckOut}
+                disabled={
+                  isCalculatingFee ||
                   isProcessing ||
-                  !!(nfcUid && nfcUid !== checkoutSession?.cardCode)) &&
-                  styles.disabledButton,
-              ]}
-              onPress={handleCheckOut}
-              disabled={
-                isCalculatingFee ||
-                isProcessing ||
-                !!(nfcUid && nfcUid !== checkoutSession?.cardCode)
-              }
-            >
-              {isProcessing ? (
-                <ActivityIndicator color={Colors.white} />
-              ) : (
-                <Text style={styles.primaryButtonText}>
-                  Thu tiền mặt & Check-out
-                </Text>
-              )}
-            </TouchableOpacity>
+                  !!(nfcUid && nfcUid !== checkoutSession?.cardCode)
+                }
+              >
+                {isProcessing ? (
+                  <ActivityIndicator color={Colors.brandDark} />
+                ) : (
+                  <Text style={styles.primaryButtonText}>
+                    Thu tiền & Check-out
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
 
+      {/* Exception Report Modal */}
       <Modal
         visible={exceptionModalVisible}
         animationType="slide"
@@ -672,24 +722,36 @@ export default function StaffScanScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <View style={styles.dragHandle} />
+
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Báo cáo sự cố</Text>
-              <TouchableOpacity onPress={() => setExceptionModalVisible(false)}>
-                <Ionicons name="close" size={24} />
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Ionicons name="alert-circle" size={22} color={Colors.warning} />
+                <Text style={styles.modalTitle}>Báo cáo sự cố</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setExceptionModalVisible(false)}
+                style={styles.modalCloseBtn}
+              >
+                <Ionicons name="close" size={20} color={Colors.textTertiary} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.modalLabel}>Biển số</Text>
+
+            <Text style={styles.modalLabel}>BIỂN SỐ XE (NẾU CÓ)</Text>
             <TextInput
               style={styles.modalInput}
-              placeholder="Nhập biển số xe..."
+              placeholder="E.g., 29A-123.45"
               value={exceptionPlate}
               onChangeText={(text) => setExceptionPlate(formatPlate(text))}
+              placeholderTextColor={Colors.placeholder}
             />
-            <Text style={styles.modalLabel}>Loại sự cố</Text>
+
+            <Text style={styles.modalLabel}>LOẠI SỰ CỐ</Text>
             <View style={styles.pickerWrap}>
               <Picker
                 selectedValue={exceptionType}
                 onValueChange={(val) => setExceptionType(val)}
+                style={{ color: Colors.brandDark }}
               >
                 <Picker.Item label="Mất vé" value="LOST_CARD" />
                 <Picker.Item label="Sai biển số" value="WRONG_PLATE" />
@@ -697,23 +759,30 @@ export default function StaffScanScreen() {
                 <Picker.Item label="Khác" value="OTHER" />
               </Picker>
             </View>
-            <Text style={styles.modalLabel}>Ghi chú</Text>
+
+            <Text style={styles.modalLabel}>CHI TIẾT SỰ CỐ</Text>
             <TextInput
-              style={[styles.modalInput, { height: 80 }]}
-              placeholder="Mô tả sự cố..."
+              style={[styles.modalInput, { height: 80, textAlignVertical: "top" }]}
+              placeholder="Mô tả cụ thể diễn biến sự cố..."
               multiline
               value={exceptionDesc}
               onChangeText={setExceptionDesc}
+              placeholderTextColor={Colors.placeholder}
             />
+
             <TouchableOpacity
-              style={styles.primaryButton}
+              style={[
+                styles.primaryButton,
+                { flex: 0, width: "100%", marginTop: 8 },
+                submittingException && styles.disabledButton,
+              ]}
               onPress={submitException}
               disabled={submittingException}
             >
               {submittingException ? (
-                <ActivityIndicator color="white" />
+                <ActivityIndicator color={Colors.brandDark} />
               ) : (
-                <Text style={styles.primaryButtonText}>Gửi báo cáo</Text>
+                <Text style={styles.primaryButtonText}>Gửi Báo Cáo</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -728,41 +797,7 @@ const GUIDE_BOX_WIDTH = SCREEN_WIDTH * 0.9;
 const GUIDE_BOX_HEIGHT = GUIDE_BOX_WIDTH * 0.75;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  headerWrapper: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: "hidden",
-    marginBottom: -20,
-    zIndex: 10,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 42,
-    paddingTop: 12,
-  },
-  headerTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  iconButton: {
-    padding: Spacing.xs,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 20,
-  },
-  headerTitle: {
-    fontSize: 26,
-    fontFamily: Typography.fontFamily.bold,
-    color: Colors.textOnDark,
-    marginTop: 16,
-  },
-  headerSub: {
-    fontSize: 13,
-    color: Colors.textOnDarkMuted,
-    fontFamily: Typography.fontFamily.regular,
-    marginTop: 3,
-  },
+  container: { flex: 1, backgroundColor: Colors.black },
   message: { textAlign: "center", padding: 20, color: Colors.textPrimary },
   camera: { flex: 1 },
   previewContainer: { flex: 1, position: "relative" },
@@ -781,30 +816,104 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
+    justifyContent: "space-between",
+  },
+
+  // ── Header Overlay ──
+  headerOverlay: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.white,
+  },
+  headerSub: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.7)",
+    fontFamily: Typography.fontFamily.regular,
+    marginTop: 2,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.4)",
     alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+
+  // ── Viewfinder ──
+  viewfinderArea: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   guideBox: {
     width: GUIDE_BOX_WIDTH,
     height: GUIDE_BOX_HEIGHT,
-    borderWidth: 2,
-    borderColor: Colors.primary,
     backgroundColor: "transparent",
-    borderRadius: BorderRadius.md,
+    position: "relative",
+  },
+  corner: {
+    position: "absolute",
+    width: 24,
+    height: 24,
+    borderColor: Colors.primary,
+  },
+  cornerTL: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderTopLeftRadius: 12,
+  },
+  cornerTR: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+    borderTopRightRadius: 12,
+  },
+  cornerBL: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderBottomLeftRadius: 12,
+  },
+  cornerBR: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderBottomRightRadius: 12,
+  },
+  hintBox: {
+    marginTop: 24,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
   },
   guideText: {
     color: Colors.white,
-    marginTop: Spacing.xl,
-    fontSize: Typography.fontSize.md,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.medium,
+    textAlign: "center",
   },
+
+  // ── Shutter Controls ──
   controls: {
-    height: 120,
-    flexDirection: "row",
-    justifyContent: "space-around",
     alignItems: "center",
-    backgroundColor: Colors.black,
-    paddingBottom: 20,
+    paddingBottom: 32,
   },
   button: {
     backgroundColor: Colors.primary,
@@ -818,167 +927,241 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.semiBold,
   },
   captureButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 4,
+    borderColor: Colors.white,
+    backgroundColor: "transparent",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  captureInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(164, 255, 7, 0.25)",
     justifyContent: "center",
     alignItems: "center",
   },
-  captureInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: Colors.white,
+  tapLabel: {
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.bold,
+    color: "rgba(255,255,255,0.7)",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
   },
 
-  // Modal Styles
+  // ── Modal Styles (Bottom Sheet) ──
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
   },
   modalContent: {
     backgroundColor: Colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     padding: 24,
     paddingBottom: 40,
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: Colors.disabled,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 16,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.surfaceElevated,
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalTitle: {
-    fontSize: Typography.fontSize.xl,
+    fontSize: 18,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: Colors.brandDark,
   },
   modalLabel: {
-    fontSize: Typography.fontSize.md,
-    color: Colors.textSecondary,
-    marginTop: 10,
-    fontFamily: Typography.fontFamily.medium,
+    fontSize: 10,
+    color: Colors.textTertiary,
+    marginTop: 12,
+    marginBottom: 6,
+    fontFamily: Typography.fontFamily.bold,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   modalInput: {
+    backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: BorderRadius.md,
-    padding: 12,
-    fontSize: 16,
-    marginTop: 8,
+    borderRadius: 14,
+    padding: 14,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.brandDark,
   },
   pickerWrap: {
+    backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: BorderRadius.md,
-    marginTop: 8,
+    borderRadius: 14,
     overflow: "hidden",
   },
-  modalPlateText: {
-    fontFamily: Typography.fontFamily.semiBold,
-    fontSize: 24,
-    color: Colors.primary,
-    marginBottom: 20,
-    textAlign: "center",
+
+  // ── Plate Display ──
+  plateDisplayWrap: {
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 4,
   },
+  plateDisplayLabel: {
+    fontSize: 10,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textTertiary,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  plateDisplayText: {
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: 24,
+    color: Colors.brandDark,
+    letterSpacing: 2,
+  },
+
+  // ── NFC ──
   nfcSection: {
-    marginBottom: 20,
+    marginBottom: 16,
     alignItems: "center",
     width: "100%",
   },
   nfcButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.secondary,
+    backgroundColor: Colors.surfaceElevated,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: BorderRadius.full,
+    borderRadius: 14,
     justifyContent: "center",
     width: "100%",
-    ...Shadows.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: 8,
   },
   nfcButtonText: {
     fontFamily: Typography.fontFamily.medium,
-    fontSize: 16,
-    color: Colors.white,
-    marginLeft: 8,
+    fontSize: 14,
+    color: Colors.brandDark,
   },
   nfcUidText: {
     fontFamily: Typography.fontFamily.semiBold,
-    fontSize: 18,
+    fontSize: 16,
     color: Colors.primary,
     textAlign: "center",
     marginTop: 8,
   },
+
+  // ── Vehicle Type ──
   vehicleTypeContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
-    marginTop: 10,
-    marginBottom: 24,
+    gap: 8,
+    marginBottom: 12,
   },
   vtButton: {
     paddingVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: Colors.border,
+    backgroundColor: Colors.surfaceElevated,
   },
   vtButtonActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: Colors.brandDark,
+    borderColor: Colors.brandDark,
   },
   vtButtonText: {
-    fontFamily: Typography.fontFamily.medium,
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: 13,
     color: Colors.textPrimary,
   },
   vtButtonTextActive: { color: Colors.white },
 
+  // ── Session / Fee ──
   sessionDetails: {
-    backgroundColor: Colors.background,
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 12,
+    backgroundColor: Colors.surfaceElevated,
+    padding: 14,
+    borderRadius: 14,
+    marginVertical: 8,
   },
   detailText: {
-    fontSize: Typography.fontSize.md,
+    fontSize: 14,
     color: Colors.textSecondary,
     fontFamily: Typography.fontFamily.medium,
   },
-
   feeContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginVertical: 20,
+    marginVertical: 12,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
-    paddingTop: 20,
+    paddingTop: 16,
   },
   feeLabel: {
-    fontSize: Typography.fontSize.lg,
+    fontSize: 16,
     fontFamily: Typography.fontFamily.bold,
     color: Colors.textPrimary,
   },
   feeValue: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: Typography.fontFamily.bold,
     color: Colors.danger,
   },
 
-  primaryButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
+  // ── Actions ──
+  modalActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 9999,
+    backgroundColor: Colors.surfaceElevated,
     alignItems: "center",
   },
-  disabledButton: { opacity: 0.6 },
+  cancelButtonText: {
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textSecondary,
+  },
+  primaryButton: {
+    flex: 1,
+    backgroundColor: Colors.primary,
+    paddingVertical: 14,
+    borderRadius: 9999,
+    alignItems: "center",
+  },
+  disabledButton: { opacity: 0.5 },
   primaryButtonText: {
-    color: Colors.white,
-    fontSize: Typography.fontSize.lg,
+    color: Colors.brandDark,
+    fontSize: 14,
     fontFamily: Typography.fontFamily.bold,
   },
 });
