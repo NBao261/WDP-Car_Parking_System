@@ -22,7 +22,7 @@ export function DirectCheckoutModal({
   const [feeData, setFeeData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingType, setSubmittingType] = useState<'cash' | 'momo' | null>(null);
   const [checkoutImage, setCheckoutImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -111,7 +111,7 @@ export function DirectCheckoutModal({
   };
 
   const handleCashCheckOut = async () => {
-    setIsSubmitting(true);
+    setSubmittingType('cash');
     try {
       const gateOut = sessionStorage.getItem('staff_gate_name') || 'Cổng Ra';
       const res = await paymentService.cashCheckout({
@@ -127,12 +127,12 @@ export function DirectCheckoutModal({
     } catch (error: any) {
       toast.error(error.message || 'Lỗi khi checkout');
     } finally {
-      setIsSubmitting(false);
+      setSubmittingType(null);
     }
   };
 
   const handleMomoCheckOut = async () => {
-    setIsSubmitting(true);
+    setSubmittingType('momo');
     try {
       const gateOut = sessionStorage.getItem('staff_gate_name') || 'Cổng Ra';
       const res = await paymentService.createIntent({ 
@@ -152,7 +152,7 @@ export function DirectCheckoutModal({
     } catch (error: any) { 
       toast.error(error.message || 'Lỗi khi tạo giao dịch Momo'); 
     } finally { 
-      setIsSubmitting(false); 
+      setSubmittingType(null);
     }
   };
 
@@ -274,23 +274,29 @@ export function DirectCheckoutModal({
             <div className="py-8 text-center text-red-500">Không thể lấy thông tin phí</div>
           )}
         </div>
-
         <div className="p-6 border-t border-gray-100 flex gap-2">
           <button
-            onClick={handleCashCheckOut}
-            disabled={isSubmitting || isLoading || !feeData || isUploading}
-            className={`flex-1 h-12 font-bold rounded-xl transition-colors text-sm shadow-sm flex items-center justify-center gap-2 ${feeData?.totalFee === 0 ? 'bg-[#A3E635] hover:bg-[#84CC16] text-[#1A202C]' : 'bg-[#dcdcdc] hover:bg-[#c9c9c9] text-[#333]'}`}
+            onClick={onClose}
+            disabled={submittingType !== null}
+            className="flex-[0.5] h-12 border border-gray-200 bg-white rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
-            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+            Hủy
+          </button>
+          <button
+            onClick={handleCashCheckOut}
+            disabled={submittingType !== null || isLoading || !feeData || isUploading}
+            className={`flex-[1] h-12 font-bold rounded-xl transition-colors text-sm shadow-sm flex items-center justify-center gap-2 ${feeData?.totalFee === 0 ? 'bg-[#A3E635] hover:bg-[#84CC16] text-[#1A202C]' : 'bg-[#dcdcdc] hover:bg-[#c9c9c9] text-[#333]'}`}
+          >
+            {submittingType === 'cash' ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
             {feeData?.totalFee === 0 ? 'Mở barie (0đ)' : 'Tiền Mặt'}
           </button>
           <button
             onClick={handleMomoCheckOut}
-            disabled={isSubmitting || isLoading || !feeData || feeData.totalFee === 0 || isUploading}
+            disabled={submittingType !== null || isLoading || !feeData || feeData.totalFee === 0 || isUploading}
             title={feeData?.totalFee === 0 ? "Không thể tạo QR Momo cho hóa đơn 0đ" : ""}
             className={`flex-1 h-12 font-bold rounded-xl transition-colors text-sm shadow-sm flex items-center justify-center gap-2 ${feeData?.totalFee === 0 ? 'bg-[#fcfcfc] border border-[#e8e9e8] text-[#9b9b9b] cursor-not-allowed' : 'bg-[#A3E635] hover:bg-[#84CC16] text-[#1A202C]'}`}
           >
-            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+            {submittingType === 'momo' ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
             QR MoMo
           </button>
         </div>
