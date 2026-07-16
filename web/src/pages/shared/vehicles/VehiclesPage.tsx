@@ -202,14 +202,6 @@ export default function VehiclesPage() {
             Quản lý các loại phương tiện được hỗ trợ trong hệ thống
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleAdd}
-            className="bg-[#062F28] text-white hover:bg-[#062F28]/80 px-5 py-2.5 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-sm"
-          >
-            <Plus size={20} /> Thêm Loại Xe
-          </button>
-        </div>
       </motion.div>
 
       {/* Search */}
