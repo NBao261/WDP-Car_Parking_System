@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { UserPlus, ArrowDown, ArrowUpRight, Users, UserCheck } from 'lucide-react';
-import { User as UserType } from '../../../../types/user.types';
+import { User as UserType } from '../../../types/user.types';
 import { CustomerFilterBar } from './components/CustomerFilterBar';
 import { CustomerTable } from './components/CustomerTable';
 import { CustomerFormModal } from './components/CustomerFormModal';

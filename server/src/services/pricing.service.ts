@@ -155,8 +155,14 @@ export class PricingService {
             break;
           }
         } else {
-          // So sánh các trường primitive (number, string)
-          if (String(data[field]) !== String(planToUpdate[field as keyof IPricingPlan])) {
+          // Normalize values for comparison
+          let newVal = data[field];
+          let oldVal = planToUpdate[field as keyof IPricingPlan];
+          
+          if (newVal === '' || newVal === null) newVal = undefined;
+          if (oldVal === null) oldVal = undefined;
+          
+          if (String(newVal) !== String(oldVal)) {
             isModifyingPricing = true;
             break;
           }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { MoreVertical, Search, Edit, Lock, Unlock, KeyRound, Trash2, User, ArrowUpDown } from 'lucide-react';
@@ -76,7 +76,7 @@ export function CustomerTable({
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-visible relative">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-[#FAFAFA] text-[#6b6b6b] text-[13px] border-b border-gray-100 font-semibold uppercase tracking-wider">
+            <thead className="bg-[#9FE870] text-[#062F28] text-[13px] border-b border-[#9FE870] font-semibold uppercase tracking-wider">
               <tr>
                 <th 
                   className="px-4 py-4 rounded-tl-2xl w-[5%] text-center"
@@ -89,9 +89,9 @@ export function CustomerTable({
                 >
                   <span className="flex items-center gap-1.5">
                     Khách hàng
-                    <ArrowUpDown size={14} className={sortField === 'name' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'name' ? 'text-white' : 'text-[#062F28]/40'} />
                     {sortField === 'name' && (
-                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                      <span className="text-[10px] text-white font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
                     )}
                   </span>
                 </th>
@@ -102,9 +102,9 @@ export function CustomerTable({
                 >
                   <span className="flex items-center gap-1.5">
                     Ngày tham gia
-                    <ArrowUpDown size={14} className={sortField === 'createdAt' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'createdAt' ? 'text-white' : 'text-[#062F28]/40'} />
                     {sortField === 'createdAt' && (
-                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
+                      <span className="text-[10px] text-white font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
                     )}
                   </span>
                 </th>
@@ -115,9 +115,9 @@ export function CustomerTable({
                 >
                   <span className="flex items-center gap-1.5">
                     Đăng nhập
-                    <ArrowUpDown size={14} className={sortField === 'lastLogin' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'lastLogin' ? 'text-white' : 'text-[#062F28]/40'} />
                     {sortField === 'lastLogin' && (
-                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
+                      <span className="text-[10px] text-white font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
                     )}
                   </span>
                 </th>
@@ -142,11 +142,13 @@ export function CustomerTable({
                   </td>
                 </tr>
               ) : (
-                sortedUsers.map((user, idx) => (
+                <AnimatePresence mode="popLayout">
+                {sortedUsers.map((user, idx) => (
                   <motion.tr
                     layout
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     key={user._id}
                     className="hover:bg-[#9FE870]/10 transition-colors group"
                   >
@@ -256,7 +258,8 @@ export function CustomerTable({
                       </DropdownMenu.Root>
                     </td>
                   </motion.tr>
-                ))
+                ))}
+                </AnimatePresence>
               )}
             </tbody>
           </table>

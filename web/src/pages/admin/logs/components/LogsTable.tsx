@@ -30,9 +30,9 @@ function SortIcon({
 }) {
   return (
     <span className="flex items-center gap-1.5">
-      <ArrowUpDown size={14} className={active ? 'text-[#9FE870]' : 'text-gray-300'} />
+      <ArrowUpDown size={14} className={active ? 'text-white' : 'text-[#062F28]/40'} />
       {active && (
-        <span className="text-[10px] text-[#9FE870] font-bold">
+        <span className="text-[10px] text-white font-bold">
           {field === 'createdAt' ? (dir === 'desc' ? '↓ Mới' : '↑ Cũ') : dir === 'asc' ? 'A-Z' : 'Z-A'}
         </span>
       )}
@@ -89,7 +89,7 @@ export function LogsTable({ logs, isLoading, indexOffset }: LogsTableProps) {
     return (
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-[#FAFAFA] text-[#6b6b6b] text-[13px] border-b border-gray-100 font-semibold uppercase tracking-wider">
+          <thead className="bg-[#9FE870] text-[#062F28] text-[13px] border-b border-[#9FE870] font-semibold uppercase tracking-wider">
             <tr>
               <th className="px-6 py-4 w-[5%] text-center rounded-tl-2xl">STT</th>
               <th className="px-6 py-4 w-[20%]">Thời gian</th>
@@ -129,7 +129,7 @@ export function LogsTable({ logs, isLoading, indexOffset }: LogsTableProps) {
     return (
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-[#FAFAFA] text-[#6b6b6b] text-[13px] border-b border-gray-100 font-semibold uppercase tracking-wider">
+          <thead className="bg-[#9FE870] text-[#062F28] text-[13px] border-b border-[#9FE870] font-semibold uppercase tracking-wider">
             <tr>
               <th className="px-6 py-4 w-[5%] text-center rounded-tl-2xl">STT</th>
               <th className="px-6 py-4 w-[20%]">Thời gian</th>
@@ -159,7 +159,7 @@ export function LogsTable({ logs, isLoading, indexOffset }: LogsTableProps) {
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-[#FAFAFA] text-[#6b6b6b] text-[13px] border-b border-gray-100 font-semibold uppercase tracking-wider">
+          <thead className="bg-[#9FE870] text-[#062F28] text-[13px] border-b border-[#9FE870] font-semibold uppercase tracking-wider">
             <tr>
               <th className="px-6 py-4 rounded-tl-2xl w-[5%] text-center">STT</th>
               {/* Sortable: Thời gian */}
@@ -197,107 +197,110 @@ export function LogsTable({ logs, isLoading, indexOffset }: LogsTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {sorted.map((log, index) => {
-              const isExpanded = expandedLogId === log._id;
-              return (
-                <React.Fragment key={log._id}>
-                  <motion.tr
-                    layout
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className={`hover:bg-gray-50/50 transition-colors cursor-pointer ${isExpanded ? 'bg-gray-50/50' : ''}`}
-                    onClick={() => setExpandedLogId(isExpanded ? null : log._id)}
-                  >
-                    {/* STT */}
-                    <td className="px-6 py-4 text-center text-[13px] text-gray-400 font-medium">
-                      {indexOffset + index + 1}
-                    </td>
-                    {/* Thời gian */}
-                    <td className="px-6 py-4">
-                      <div className="text-[13px] font-semibold text-gray-800">
-                        {format(new Date(log.createdAt), 'HH:mm:ss')}
-                      </div>
-                      <div className="text-[11px] text-gray-400 mt-0.5">
-                        {format(new Date(log.createdAt), 'dd/MM/yyyy')}
-                      </div>
-                    </td>
-                    {/* Người thực hiện */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-[#132c20]/10 flex items-center justify-center shrink-0">
-                          <User size={14} className="text-[#132c20]" />
+            <AnimatePresence mode="popLayout">
+              {sorted.map((log, index) => {
+                const isExpanded = expandedLogId === log._id;
+                return (
+                  <React.Fragment key={log._id}>
+                    <motion.tr
+                      layout
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className={`hover:bg-gray-50/50 transition-colors cursor-pointer ${isExpanded ? 'bg-gray-50/50' : ''}`}
+                      onClick={() => setExpandedLogId(isExpanded ? null : log._id)}
+                    >
+                      {/* STT */}
+                      <td className="px-6 py-4 text-center text-[13px] text-gray-400 font-medium">
+                        {indexOffset + index + 1}
+                      </td>
+                      {/* Thời gian */}
+                      <td className="px-6 py-4">
+                        <div className="text-[13px] font-semibold text-gray-800">
+                          {format(new Date(log.createdAt), 'HH:mm:ss')}
                         </div>
-                        <div>
-                          <div className="text-[13px] font-semibold text-gray-900 leading-tight">
-                            {log.userId?.name || 'Hệ thống'}
+                        <div className="text-[11px] text-gray-400 mt-0.5">
+                          {format(new Date(log.createdAt), 'dd/MM/yyyy')}
+                        </div>
+                      </td>
+                      {/* Người thực hiện */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-[#132c20]/10 flex items-center justify-center shrink-0">
+                            <User size={14} className="text-[#132c20]" />
                           </div>
-                          <div className="text-[11px] text-gray-400 mt-0.5">
-                            {log.userId?.role || 'SYSTEM'}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    {/* Hành động badge */}
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-semibold ${
-                          ACTION_STYLE[log.action] ?? 'bg-gray-100 text-gray-600'
-                        }`}
-                      >
-                        {ACTION_LABEL[log.action] ?? log.action}
-                      </span>
-                    </td>
-                    {/* Đối tượng */}
-                    <td className="px-6 py-4">
-                      <div className="text-[13px] font-semibold text-gray-800">{log.entity}</div>
-                      {log.entityId && (
-                        <div className="text-[11px] text-gray-400 font-mono mt-0.5">
-                          #{log.entityId.slice(-8)}
-                        </div>
-                      )}
-                    </td>
-                    {/* Expand toggle */}
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExpandedLogId(isExpanded ? null : log._id);
-                        }}
-                        className="p-2 text-gray-400 hover:text-[#132c20] hover:bg-[#132c20]/5 rounded-xl transition-colors"
-                      >
-                        {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                      </button>
-                    </td>
-                  </motion.tr>
-
-                  {/* Expanded payload row */}
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.tr
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="bg-gray-50/40 border-b border-gray-100"
-                      >
-                        <td colSpan={6} className="px-6 pb-4 pt-2">
-                          <div className="bg-gray-900 rounded-xl p-4 overflow-x-auto relative">
-                            <div className="absolute top-4 right-4 flex items-center gap-2 text-gray-400">
-                              <FileJson size={15} />
-                              <span className="text-[11px] font-medium uppercase tracking-wider">Payload</span>
+                          <div>
+                            <div className="text-[13px] font-semibold text-gray-900 leading-tight">
+                              {log.userId?.name || 'Hệ thống'}
                             </div>
-                            <pre className="text-sm text-emerald-400 font-mono mt-1 leading-relaxed">
-                              {log.changes
-                                ? JSON.stringify(log.changes, null, 2)
-                                : '// Không có dữ liệu thay đổi'}
-                            </pre>
+                            <div className="text-[11px] text-gray-400 mt-0.5">
+                              {log.userId?.role || 'SYSTEM'}
+                            </div>
                           </div>
-                        </td>
-                      </motion.tr>
-                    )}
-                  </AnimatePresence>
-                </React.Fragment>
+                        </div>
+                      </td>
+                      {/* Hành động badge */}
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-semibold ${
+                            ACTION_STYLE[log.action] ?? 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {ACTION_LABEL[log.action] ?? log.action}
+                        </span>
+                      </td>
+                      {/* Đối tượng */}
+                      <td className="px-6 py-4">
+                        <div className="text-[13px] font-semibold text-gray-800">{log.entity}</div>
+                        {log.entityId && (
+                          <div className="text-[11px] text-gray-400 font-mono mt-0.5">
+                            #{log.entityId.slice(-8)}
+                          </div>
+                        )}
+                      </td>
+                      {/* Expand toggle */}
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedLogId(isExpanded ? null : log._id);
+                          }}
+                          className="p-2 text-gray-400 hover:text-[#132c20] hover:bg-[#132c20]/5 rounded-xl transition-colors"
+                        >
+                          {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                        </button>
+                      </td>
+                    </motion.tr>
+
+                    {/* Expanded payload row */}
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.tr
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="bg-gray-50/40 border-b border-gray-100"
+                        >
+                          <td colSpan={6} className="px-6 pb-4 pt-2">
+                            <div className="bg-gray-900 rounded-xl p-4 overflow-x-auto relative">
+                              <div className="absolute top-4 right-4 flex items-center gap-2 text-gray-400">
+                                <FileJson size={15} />
+                                <span className="text-[11px] font-medium uppercase tracking-wider">Payload</span>
+                              </div>
+                              <pre className="text-sm text-emerald-400 font-mono mt-1 leading-relaxed">
+                                {log.changes
+                                  ? JSON.stringify(log.changes, null, 2)
+                                  : '// Không có dữ liệu thay đổi'}
+                              </pre>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      )}
+                    </AnimatePresence>
+                  </React.Fragment>
               );
             })}
+            </AnimatePresence>
           </tbody>
         </table>
       </div>

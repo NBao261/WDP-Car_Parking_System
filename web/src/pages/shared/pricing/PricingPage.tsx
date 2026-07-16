@@ -556,10 +556,17 @@ export default function PricingPage() {
                 .filter(Boolean) as VehicleType[];
             }
 
+            // Filter facilities to only include those with floors, plus the currently selected/edited one
+            const validFacilities = facilities.filter(f => 
+              floors.some(fl => fl.facilityId === f._id) || 
+              (editingPlan && (typeof editingPlan.facilityId === 'object' ? editingPlan.facilityId._id : editingPlan.facilityId) === f._id) ||
+              (selectedFacility && selectedFacility._id === f._id)
+            );
+
               return (
               <PricingFormModal
                 plan={editingPlan}
-                facilities={facilities}
+                facilities={validFacilities}
                 vehicleTypes={allowedVehicleTypes}
                 existingPlans={plans}
                 onClose={() => setModalOpen(false)}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+
 import {
   ShieldAlert,
   AlertCircle,
@@ -9,7 +9,9 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  ArrowUpDown,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   exceptionService,
@@ -33,6 +35,19 @@ export default function ExceptionsManagerPage() {
   const [filterType, setFilterType] = useState<ExceptionType | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<ExceptionStatus | 'all'>('all');
   const [sortValue, setSortValue] = useState('createdAt_desc');
+
+  const toggleSort = (field: string) => {
+    const [currentField, currentOrder] = sortValue.split('_');
+    if (currentField === field) {
+      if (currentOrder === 'desc') setSortValue(`${field}_asc`);
+      else setSortValue('createdAt_desc');
+    } else {
+      setSortValue(`${field}_${field === 'createdAt' ? 'desc' : 'asc'}`);
+    }
+  };
+
+  const [sortField, sortDir] = sortValue.split('_');
+
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const LIMIT = 10;
@@ -101,6 +116,11 @@ export default function ExceptionsManagerPage() {
     }
   };
 
+  const handleViewDetails = (ex: IException) => {
+    setSelectedException(ex);
+    setIsModalOpen(true);
+  };
+
   const getStatusColor = (status: ExceptionStatus) => {
     switch (status) {
       case ExceptionStatus.NEW:
@@ -114,16 +134,6 @@ export default function ExceptionsManagerPage() {
       default:
         return 'bg-gray-50 text-gray-700 border-gray-200';
     }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0 },
   };
 
   return (
@@ -191,73 +201,149 @@ export default function ExceptionsManagerPage() {
           ) : (
             <div className="w-full">
               <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-rose-50/50 text-rose-700 font-semibold border-b border-rose-100/50">
+                <thead className="bg-[#9FE870] text-[#062F28] text-[13px] border-b border-[#9FE870] font-semibold uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-4 rounded-tl-2xl w-[15%]">Mã lượt gửi</th>
-                    <th className="px-6 py-4 w-[15%]">Xe</th>
+                    <th
+                      className="px-6 py-4 rounded-tl-2xl w-[15%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                      onClick={() => toggleSort('sessionId')}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        Mã lượt gửi
+                        <ArrowUpDown
+                          size={14}
+                          className={sortField === 'sessionId' ? 'text-white' : 'text-[#062F28]/40'}
+                        />
+                        {sortField === 'sessionId' && (
+                          <span className="text-[10px] text-white font-bold">
+                            {sortDir === 'asc' ? 'A-Z' : 'Z-A'}
+                          </span>
+                        )}
+                      </span>
+                    </th>
+                    <th
+                      className="px-6 py-4 w-[15%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                      onClick={() => toggleSort('licensePlate')}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        Xe
+                        <ArrowUpDown
+                          size={14}
+                          className={
+                            sortField === 'licensePlate' ? 'text-white' : 'text-[#062F28]/40'
+                          }
+                        />
+                        {sortField === 'licensePlate' && (
+                          <span className="text-[10px] text-white font-bold">
+                            {sortDir === 'asc' ? 'A-Z' : 'Z-A'}
+                          </span>
+                        )}
+                      </span>
+                    </th>
                     <th className="px-6 py-4 w-[15%]">Loại ngoại lệ</th>
-                    <th className="px-6 py-4 w-[15%]">Người tạo</th>
-                    <th className="px-6 py-4 w-[15%]">Ngày tạo</th>
+                    <th
+                      className="px-6 py-4 w-[15%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                      onClick={() => toggleSort('staffId')}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        Người tạo
+                        <ArrowUpDown
+                          size={14}
+                          className={sortField === 'staffId' ? 'text-white' : 'text-[#062F28]/40'}
+                        />
+                        {sortField === 'staffId' && (
+                          <span className="text-[10px] text-white font-bold">
+                            {sortDir === 'asc' ? 'A-Z' : 'Z-A'}
+                          </span>
+                        )}
+                      </span>
+                    </th>
+                    <th
+                      className="px-6 py-4 w-[15%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                      onClick={() => toggleSort('createdAt')}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        Ngày tạo
+                        <ArrowUpDown
+                          size={14}
+                          className={sortField === 'createdAt' ? 'text-white' : 'text-[#062F28]/40'}
+                        />
+                        {sortField === 'createdAt' && (
+                          <span className="text-[10px] text-white font-bold">
+                            {sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}
+                          </span>
+                        )}
+                      </span>
+                    </th>
                     <th className="px-6 py-4 w-[15%]">Trạng thái</th>
                     <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {exceptions.map((ex) => {
-                    const sessionCode =
-                      typeof ex.sessionId === 'object' && ex.sessionId
-                        ? ex.sessionId.code
-                        : ex.sessionId || 'N/A';
-                    const licensePlate =
-                      typeof ex.sessionId === 'object' && ex.sessionId
-                        ? ex.sessionId.licensePlate
-                        : '';
-                    const staffName =
-                      typeof ex.staffId === 'object' && ex.staffId
-                        ? ex.staffId.name
-                        : ex.staffId || 'Hệ thống';
+                  <AnimatePresence mode="popLayout">
+                    {exceptions.map((ex) => {
+                      const sessionCode =
+                        typeof ex.sessionId === 'object' && ex.sessionId
+                          ? ex.sessionId.code
+                          : ex.sessionId || 'N/A';
+                      const licensePlate =
+                        typeof ex.sessionId === 'object' && ex.sessionId
+                          ? ex.sessionId.licensePlate
+                          : '';
+                      const staffName =
+                        typeof ex.staffId === 'object' && ex.staffId
+                          ? ex.staffId.name
+                          : ex.staffId || 'Hệ thống';
 
-                    return (
-                      <tr key={ex._id} className="hover:bg-gray-50/50 transition-colors group">
-                        <td className="px-6 py-4 font-medium text-gray-800">{sessionCode}</td>
-                        <td className="px-6 py-4 text-gray-700">{licensePlate || '-'}</td>
-                        <td className="px-6 py-4">
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 font-medium">
-                            {EXCEPTION_TYPE_LABELS[ex.type]}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-gray-700">{staffName}</td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {new Date(ex.createdAt).toLocaleString('vi-VN')}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(ex.status)}`}
-                          >
-                            {EXCEPTION_STATUS_LABELS[ex.status]}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => {
-                              setSelectedException(ex);
-                              setIsModalOpen(true);
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
-                          >
-                            <FileText size={16} />
-                            Xem lại
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                      return (
+                        <motion.tr
+                          layout
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          key={ex._id}
+                          className="hover:bg-[#9FE870]/10 transition-colors group cursor-pointer"
+                          onClick={() => handleViewDetails(ex)}
+                        >
+                          <td className="px-6 py-4 font-medium text-gray-800">{sessionCode}</td>
+                          <td className="px-6 py-4 text-gray-700">{licensePlate || '-'}</td>
+                          <td className="px-6 py-4">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 font-medium">
+                              {EXCEPTION_TYPE_LABELS[ex.type]}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-gray-700">{staffName}</td>
+                          <td className="px-6 py-4 text-gray-600">
+                            {new Date(ex.createdAt).toLocaleString('vi-VN')}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(ex.status)}`}
+                            >
+                              {EXCEPTION_STATUS_LABELS[ex.status]}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              onClick={() => {
+                                setSelectedException(ex);
+                                setIsModalOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                              <FileText size={16} />
+                              Xem lại
+                            </button>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </AnimatePresence>
                 </tbody>
               </table>
 
               {/* Pagination */}
               {!loading && !error && totalPages > 1 && (
-                <div className="px-6 py-4 border-t border-rose-100/50 flex items-center justify-between bg-rose-50/50 rounded-b-2xl">
+                <div className="px-6 py-4 border-t border-lime-100/50 flex items-center justify-between bg-lime-50/50 rounded-b-2xl">
                   <p className="text-sm text-gray-500">
                     Hiển thị{' '}
                     <span className="font-medium text-gray-900">{(page - 1) * LIMIT + 1}</span> đến{' '}
@@ -307,7 +393,7 @@ export default function ExceptionsManagerPage() {
                             p === '...'
                               ? 'text-gray-400 bg-transparent cursor-default'
                               : page === p
-                                ? 'bg-rose-500 text-white border border-rose-600 font-bold shadow-sm'
+                                ? 'bg-[#9FE870] text-[#062F28] border border-[#9FE870]/70 font-bold shadow-sm'
                                 : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                           }`}
                         >

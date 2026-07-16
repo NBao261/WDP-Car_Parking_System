@@ -55,12 +55,12 @@ function mapApiException(exc: any, pricingMap?: Map<string, number>): ExceptionD
     vehicleType: (session?.vehicleTypeId as any)?.name || '—',
     checkInTime: session?.checkInTime
       ? new Date(session.checkInTime).toLocaleString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
       : '—',
     slotCode: (session?.slotId as any)?.code || '—',
     floorName: (session?.floorId as any)?.name || '—',
@@ -69,6 +69,7 @@ function mapApiException(exc: any, pricingMap?: Map<string, number>): ExceptionD
     vehicleTypeIdStr: (session?.vehicleTypeId as any)?._id || '',
     gateIn: session?.gateIn || '—',
     sessionId: session?._id || (typeof exc.sessionId === 'string' ? exc.sessionId : ''),
+    sessionStatus: session?.status || 'UNKNOWN',
     updatedAt: new Date(exc.updatedAt).toLocaleString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
@@ -126,7 +127,7 @@ export default function ExceptionsStaffPage() {
         setExceptionsList(listData.map((exc: any) => mapApiException(exc, pricingMap)));
       }
     } catch (error: any) {
-      toast.error(error.message || "Không thể tải danh sách sự cố!");
+      toast.error(error.message || 'Không thể tải danh sách sự cố!');
       setExceptionsList([]);
     } finally {
       setIsLoading(false);

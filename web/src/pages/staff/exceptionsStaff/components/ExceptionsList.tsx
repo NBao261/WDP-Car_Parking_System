@@ -9,7 +9,7 @@ export interface ExceptionData {
   resolvedByStaffName: string | null; staffNote: string; managerName: string | null;
   managerNote: string | null; surcharge: number; description: string; vehicleType: string;
   checkInTime: string; slotCode: string; floorName: string; facilityName: string;
-  facilityId: string; vehicleTypeIdStr: string; gateIn: string; sessionId: string; updatedAt: string;
+  facilityId: string; vehicleTypeIdStr: string; gateIn: string; sessionId: string; sessionStatus: string; updatedAt: string;
   actualPlate?: string; expectedPlate?: string; checkInImage?: string; checkOutImage?: string; excCardCode?: string;
 }
 

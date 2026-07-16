@@ -176,13 +176,7 @@ export function PricingFacilityFilterBar({
   sortValue,
   onSortChange,
 }: PricingFacilityFilterBarProps) {
-  const hasActiveFilters =
-    search !== '' ||
-    statusFilter !== 'all' ||
-    (sortValue &&
-      sortValue !== 'none' &&
-      sortValue !== 'default' &&
-      sortValue !== 'createdAt_desc');
+  const hasActiveFilters = search !== '' || statusFilter !== 'all';
 
   const clearFilters = () => {
     setSearch('');

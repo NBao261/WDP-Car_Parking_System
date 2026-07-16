@@ -2,7 +2,7 @@ import React from 'react';
 import { useHistory } from './hooks/useHistory';
 import { BoardingPassTicket } from './components/BoardingPassTicket';
 import { ConfirmModal } from '../../../components/ConfirmModal';
-import { Skeleton } from '../../../components/ui/Skeleton';
+import { Skeleton } from '../../../components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 

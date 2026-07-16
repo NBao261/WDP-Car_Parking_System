@@ -225,7 +225,7 @@ function StaffRow({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
+      className="hover:bg-[#9FE870]/10 transition-colors group cursor-pointer"
       onClick={() => onViewClick(staff)}
     >
       <td className="px-6 py-4">
@@ -334,7 +334,20 @@ export function StaffManagementTab({
 }: StaffManagementTabProps) {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterFacility, setFilterFacility] = useState<string>('all');
-  const [sortOrder, setSortOrder] = useState<string>('none');
+  const [sortField, setSortField] = useState<'name' | 'email' | 'none'>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (field: 'name' | 'email') => {
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir('asc');
+    } else if (sortDir === 'asc') {
+      setSortDir('desc');
+    } else {
+      setSortField('none');
+      setSortDir('asc');
+    }
+  };
 
   const [detailStaff, setDetailStaff] = useState<User | undefined>();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -344,7 +357,7 @@ export function StaffManagementTab({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterStatus, filterFacility, sortOrder]);
+  }, [searchTerm, filterStatus, filterFacility, sortField, sortDir]);
 
   const filteredStaff = staffList
     .filter((s) => {
@@ -366,10 +379,11 @@ export function StaffManagementTab({
       return matchesSearch && matchesStatus && matchesFacility;
     })
     .sort((a, b) => {
-      if (sortOrder === 'name_asc') return a.name.localeCompare(b.name);
-      if (sortOrder === 'name_desc') return b.name.localeCompare(a.name);
-      if (sortOrder === 'email_asc') return a.email.localeCompare(b.email);
-      if (sortOrder === 'email_desc') return b.email.localeCompare(a.email);
+      if (sortField === 'none') return 0;
+      let aVal = a[sortField].toLowerCase();
+      let bVal = b[sortField].toLowerCase();
+      if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
       return 0;
     });
 
@@ -381,7 +395,7 @@ export function StaffManagementTab({
   );
 
   const hasActiveFilter =
-    searchTerm !== '' || filterStatus !== 'all' || filterFacility !== 'all' || sortOrder !== 'none';
+    searchTerm !== '' || filterStatus !== 'all' || filterFacility !== 'all';
 
   return (
     <motion.div
@@ -429,30 +443,12 @@ export function StaffManagementTab({
           width={180}
         />
 
-        <div className="w-px h-8 bg-gray-200 mx-1 hidden sm:block" />
-        <span className="text-sm font-medium text-gray-500 hidden sm:block">Sắp xếp:</span>
-
-        <DropFilter
-          value={sortOrder}
-          onChange={setSortOrder}
-          options={[
-            { value: 'none', label: 'Mặc định' },
-            { value: 'name_asc', label: 'Tên (A-Z)' },
-            { value: 'name_desc', label: 'Tên (Z-A)' },
-            { value: 'email_asc', label: 'Email (A-Z)' },
-            { value: 'email_desc', label: 'Email (Z-A)' },
-          ]}
-          width={160}
-          icon={ArrowUpDown}
-        />
-
         {hasActiveFilter && (
           <button
             onClick={() => {
               setSearchTerm('');
               setFilterStatus('all');
               setFilterFacility('all');
-              setSortOrder('none');
             }}
             className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors text-sm font-medium whitespace-nowrap border border-red-100"
           >
@@ -514,9 +510,20 @@ export function StaffManagementTab({
         ) : (
           <div className="w-full">
             <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-lime-50/50 text-lime-700 font-semibold border-b border-lime-100/50">
+              <thead className="bg-[#9FE870] text-[#062F28] text-[13px] border-b border-[#9FE870] font-semibold uppercase tracking-wider">
                 <tr>
-                  <th className="px-6 py-4 rounded-tl-2xl w-[25%]">Nhân viên</th>
+                  <th 
+                    className="px-6 py-4 rounded-tl-2xl w-[25%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                    onClick={() => toggleSort('name')}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      Nhân viên
+                      <ArrowUpDown size={14} className={sortField === 'name' ? 'text-white' : 'text-[#062F28]/40'} />
+                      {sortField === 'name' && (
+                        <span className="text-[10px] text-white font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                      )}
+                    </span>
+                  </th>
                   <th className="px-6 py-4 w-[50%]">Tòa nhà được phân công</th>
                   <th className="px-6 py-4 w-[15%]">Trạng thái</th>
                   <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Thao tác</th>
@@ -602,7 +609,7 @@ export function StaffManagementTab({
                           p === '...'
                             ? 'text-gray-400 bg-transparent cursor-default'
                             : currentPage === p
-                              ? 'bg-[#d7ee46] text-[#060606] border border-[#c4dc32] font-bold shadow-sm'
+                              ? 'bg-[#9FE870] text-[#062F28] border border-[#9FE870]/70 font-bold shadow-sm'
                               : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                         }`}
                       >
