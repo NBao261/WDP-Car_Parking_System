@@ -154,7 +154,7 @@ export function ExceptionDetailCheckOutBlock({
     );
   }
 
-  if (paymentSuccess || selectedException.sessionStatus === 'COMPLETED') {
+  if (paymentSuccess || selectedException.sessionStatus === 'completed') {
     return (
       <div className="p-4 bg-[#ECFCCB] rounded-xl border border-[#A3E635] flex items-center gap-3">
         <CheckCircle className="w-6 h-6 text-[#65a30d]" />
