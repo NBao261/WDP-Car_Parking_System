@@ -276,16 +276,9 @@ export function DirectCheckoutModal({
         </div>
         <div className="p-6 border-t border-gray-100 flex gap-2">
           <button
-            onClick={onClose}
-            disabled={submittingType !== null}
-            className="flex-[0.5] h-12 border border-gray-200 bg-white rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            Hủy
-          </button>
-          <button
             onClick={handleCashCheckOut}
             disabled={submittingType !== null || isLoading || !feeData || isUploading}
-            className={`flex-[1] h-12 font-bold rounded-xl transition-colors text-sm shadow-sm flex items-center justify-center gap-2 ${feeData?.totalFee === 0 ? 'bg-[#A3E635] hover:bg-[#84CC16] text-[#1A202C]' : 'bg-[#dcdcdc] hover:bg-[#c9c9c9] text-[#333]'}`}
+            className={`flex-1 h-12 font-bold rounded-xl transition-colors text-sm shadow-sm flex items-center justify-center gap-2 ${feeData?.totalFee === 0 ? 'bg-[#A3E635] hover:bg-[#84CC16] text-[#1A202C]' : 'bg-[#dcdcdc] hover:bg-[#c9c9c9] text-[#333]'}`}
           >
             {submittingType === 'cash' ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
             {feeData?.totalFee === 0 ? 'Mở barie (0đ)' : 'Tiền Mặt'}
