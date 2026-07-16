@@ -236,7 +236,7 @@ export class SessionService {
           $gte: new Date(Date.now() - earlyWindow),
           $lte: new Date(Date.now() + earlyWindow),
         },
-      }).lean() : Promise.resolve(null),
+      }).populate('userId', 'name email phone').lean() : Promise.resolve(null),
       data.cardCode ? ParkingSession.exists({ 
         cardCode: data.cardCode, 
         status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } 
@@ -454,6 +454,7 @@ export class SessionService {
         floorId: { _id: slot.floorId, name: floorInfo ? floorInfo.name : '' },
         slotId: { _id: slot._id, code: slot.code },
         staffInId: { _id: staffUser._id, name: staffUser.name, email: staffUser.email },
+        ...(matchedReservation && matchedReservation.userId && typeof matchedReservation.userId === 'object' ? { driverId: matchedReservation.userId } : {})
       };
       delete populatedSession.checkInImage;
       delete populatedSession.checkOutImage;
@@ -565,7 +566,8 @@ export class SessionService {
       .populate('floorId', 'name')
       .populate('slotId', 'code status')
       .populate('pricingPlanId', 'name feeType rates')
-      .populate('staffInId', 'name email');
+      .populate('staffInId', 'name email')
+      .populate('driverId', 'name email phone');
 
     if (!session) {
       throw new AppError('Không tìm thấy lượt gửi xe', 404);
@@ -614,6 +616,7 @@ export class SessionService {
         .populate('slotId', 'code status')
         .populate('pricingPlanId', 'name feeType')
         .populate('staffInId', 'name')
+        .populate('driverId', 'name email phone')
         .lean(),
       ParkingSession.countDocuments(filter)
     ]);
