@@ -12,7 +12,7 @@ export class SessionController {
    */
   static async checkConditions(req: Request, res: Response, next: NextFunction) {
     try {
-      const { facilityId, vehicleTypeId } = req.body;
+      const { facilityId, vehicleTypeId, licensePlate } = req.body;
 
       // Validate staff được phân công tại facility này (FR-18.6)
       const staffUser = await User.findById(req.user!.userId).select('assignedFacilities');
@@ -25,7 +25,7 @@ export class SessionController {
         return next(new AppError('Bạn không được phân công tại bãi xe này', 403));
       }
 
-      const result = await SessionService.checkConditions(facilityId, vehicleTypeId);
+      const result = await SessionService.checkConditions(facilityId, vehicleTypeId, licensePlate);
       res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);

@@ -293,7 +293,8 @@ export class ReservationService {
       .populate('facilityId', 'name address')
       .populate('vehicleTypeId', 'name')
       .populate('slotId', 'code floorId')
-      .populate('userId', 'fullName email phone');
+      .populate('userId', 'fullName email phone')
+      .lean() as any;
 
     if (!reservation) throw new AppError('\u0110\u1eb7t ch\u1ed7 kh\u00f4ng t\u1ed3n t\u1ea1i', 404);
     return reservation;
@@ -309,7 +310,8 @@ export class ReservationService {
       .populate('vehicleTypeId', 'name requiresPlate')
       .populate('slotId', 'code floorId')
       .populate({ path: 'slotId', populate: { path: 'floorId', select: 'name' } })
-      .populate('userId', 'fullName email phone');
+      .populate('userId', 'fullName name email phone')
+      .lean() as any;
 
     if (!reservation) throw new AppError('Không tìm thấy mã đặt chỗ', 404);
 

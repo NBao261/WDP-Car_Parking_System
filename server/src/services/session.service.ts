@@ -18,6 +18,7 @@ import { getCache, setCache, delCache, sIsMember, sAdd, sRem, getRedlock } from 
 interface CheckConditionsResult {
   eligible: boolean;
   reason?: string;
+  ownerName?: string;
 }
 
 interface SuggestedFloor {
@@ -48,7 +49,7 @@ export class SessionService {
    * (3) Trong giờ hoạt động không
    * (4) Xe có trong blacklist không (placeholder)
    */
-  static async checkConditions(facilityId: string, vehicleTypeId: string): Promise<CheckConditionsResult> {
+  static async checkConditions(facilityId: string, vehicleTypeId: string, licensePlate?: string): Promise<CheckConditionsResult> {
     // 1. Kiểm tra facility tồn tại + active
     const facility = await ParkingFacility.findById(facilityId);
     if (!facility || facility.status !== 'active') {
@@ -109,7 +110,27 @@ export class SessionService {
     // 6. Blacklist check (placeholder — chưa có model Blacklist)
     // TODO: Implement blacklist check when Blacklist model is available
 
-    return { eligible: true };
+    // 7. Check reservation for owner name
+    let ownerName = undefined;
+    if (licensePlate) {
+      const earlyWindow = 15 * 60 * 1000;
+      const reservation = await Reservation.findOne({
+        licensePlate: licensePlate.toUpperCase(),
+        facilityId,
+        vehicleTypeId,
+        status: ReservationStatus.CONFIRMED,
+        startTime: {
+          $gte: new Date(Date.now() - earlyWindow),
+          $lte: new Date(Date.now() + earlyWindow),
+        },
+      }).populate('userId', 'name').lean() as any;
+      
+      if (reservation && reservation.userId && reservation.userId.name) {
+        ownerName = reservation.userId.name;
+      }
+    }
+
+    return { eligible: true, ownerName };
   }
 
   /**

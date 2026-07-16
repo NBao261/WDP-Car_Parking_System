@@ -5,6 +5,7 @@ import { ParkingSlot, SlotStatus } from '../models/parkingSlot.model';
 import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 import { getIO } from '../config/socket';
+import { addExceptionUploadJob } from '../queues/uploadQueue';
 
 interface CreateExceptionDto {
   sessionId: string;
@@ -87,6 +88,14 @@ export class ExceptionService {
       });
     } catch (e) {
       // Bỏ qua lỗi socket
+    }
+
+    // Upload ảnh exception lên Cloudinary (background)
+    if (
+      (exception.checkInImage && exception.checkInImage.startsWith('/uploads/alpr/')) ||
+      (exception.checkOutImage && exception.checkOutImage.startsWith('/uploads/alpr/'))
+    ) {
+      addExceptionUploadJob((exception._id as any).toString()).catch(console.error);
     }
 
     return exception;

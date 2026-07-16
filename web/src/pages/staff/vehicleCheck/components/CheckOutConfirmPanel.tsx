@@ -15,7 +15,10 @@ interface CheckOutConfirmPanelProps {
   isMismatch?: boolean;
 }
 
-export default function CheckOutConfirmPanel({ data, isMismatch = false }: CheckOutConfirmPanelProps) {
+export default function CheckOutConfirmPanel({
+  data,
+  isMismatch = false,
+}: CheckOutConfirmPanelProps) {
   if (!data) {
     return (
       <div className="w-full h-[170px] border-2 border-[#A3E635] rounded-[8px] flex items-center justify-center bg-white mt-2 shrink-0">
@@ -25,19 +28,19 @@ export default function CheckOutConfirmPanel({ data, isMismatch = false }: Check
   }
 
   const {
-    owner = "—",
-    checkInTime = "—",
-    checkOutTime = "—",
-    checkInDate = "—",
-    checkOutDate = "—",
-    gateIn = "—",
+    owner = '—',
+    checkInTime = '—',
+    checkOutTime = '—',
+    checkInDate = '—',
+    checkOutDate = '—',
+    gateIn = '—',
     fee = 0,
     rawCheckInTime,
-    zone = "—",
+    zone = '—',
   } = data || {};
 
   // Calculate parked duration
-  let durationStr = "";
+  let durationStr = '';
   if (rawCheckInTime) {
     const checkIn = new Date(rawCheckInTime);
     const checkOut = new Date();
@@ -105,16 +108,18 @@ export default function CheckOutConfirmPanel({ data, isMismatch = false }: Check
       {/* Right Content (Fee) */}
       <div className="w-[150px] p-4 flex flex-col items-end justify-center shrink-0">
         <span className="text-[10px] font-semibold text-[#888] mb-1">Tổng tiền (VNĐ):</span>
-        <span className={`text-[22px] font-bold leading-none mb-1 text-right ${isMismatch ? 'text-[#bbb]' : 'text-[#060606]'}`}>
-          {isMismatch ? "_" : `${fee.toLocaleString('vi-VN')} đ`}
+        <span
+          className={`text-[22px] font-bold leading-none mb-1 text-right ${isMismatch ? 'text-[#bbb]' : 'text-[#060606]'}`}
+        >
+          {isMismatch ? '_' : `${fee.toLocaleString('vi-VN')} đ`}
         </span>
-        <div className={`w-8 h-[1px] mt-1 mb-2 rounded-full self-end ${isMismatch ? 'bg-[#bbb]' : 'bg-[#EF4444]'}`}></div>
+        <div
+          className={`w-8 h-[1px] mt-1 mb-2 rounded-full self-end ${isMismatch ? 'bg-[#bbb]' : 'bg-[#EF4444]'}`}
+        ></div>
         {durationStr && (
           <div className="flex flex-col items-end mt-1">
             <span className="text-[9px] font-medium text-[#888]">Thời gian gửi:</span>
-            <span className="text-[11px] font-bold text-[#333] text-right">
-              {durationStr}
-            </span>
+            <span className="text-[11px] font-bold text-[#333] text-right">{durationStr}</span>
           </div>
         )}
       </div>

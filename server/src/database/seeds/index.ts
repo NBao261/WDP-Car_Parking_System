@@ -30,6 +30,7 @@ const seed = async () => {
             'staff1@smartparking.com',
             'staff2@smartparking.com',
             'staff@smartparking.com',
+            'driver@smartparking.com',
           ],
         },
       }),
@@ -80,6 +81,13 @@ const seed = async () => {
         permissions: DEFAULT_PERMISSIONS[UserRole.STAFF],
         isDefault: true,
       },
+      {
+        code: UserRole.DRIVER,
+        name: 'Parking Driver',
+        description: 'Người dùng gửi xe, có thể tìm chỗ, đặt chỗ và thanh toán trực tuyến',
+        permissions: DEFAULT_PERMISSIONS[UserRole.DRIVER],
+        isDefault: true,
+      },
 
     ];
 
@@ -128,6 +136,15 @@ const seed = async () => {
         phone: '0900000003',
         password: hashedPassword,
         role: UserRole.STAFF,
+        status: UserStatus.ACTIVE,
+        mustChangePassword: false,
+      },
+      {
+        name: 'Nguyễn Văn Tài Xế',
+        email: 'driver@smartparking.com',
+        phone: '0999999999',
+        password: hashedPassword,
+        role: UserRole.DRIVER,
         status: UserStatus.ACTIVE,
         mustChangePassword: false,
       },

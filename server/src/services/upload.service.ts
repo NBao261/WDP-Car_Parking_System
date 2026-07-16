@@ -2,6 +2,7 @@ import cloudinary from '../config/cloudinary';
 import fs from 'fs';
 import path from 'path';
 import { ParkingSession } from '../models/parkingSession.model';
+import { Exception } from '../models/exception.model';
 
 export class UploadService {
   /**
@@ -38,6 +39,43 @@ export class UploadService {
     } catch (error) {
       console.error(`[UploadService] [FAIL] Sync background thất bại cho session ${sessionId}:`, error);
       throw error; // Throw so BullMQ can retry
+    }
+  }
+
+  /**
+   * Background task: Upload ảnh exception (checkInImage, checkOutImage) lên Cloudinary
+   * Gọi khi tạo exception mới có ảnh local
+   */
+  static async processExceptionImages(exceptionId: string): Promise<void> {
+    try {
+      console.log(`[UploadService] Starting upload for exception ${exceptionId}`);
+      if (!process.env.CLOUDINARY_CLOUD_NAME) {
+        console.warn('[UploadService] CLOUDINARY_CLOUD_NAME not set, skipping exception upload');
+        return;
+      }
+
+      const exception = await Exception.findById(exceptionId);
+      if (!exception) return;
+
+      let updatedFields: any = {};
+
+      if (exception.checkInImage && exception.checkInImage.startsWith('/uploads/alpr/')) {
+        const cloudUrl = await this._uploadAndDeleteLocal(exception.checkInImage);
+        if (cloudUrl) updatedFields.checkInImage = cloudUrl;
+      }
+
+      if (exception.checkOutImage && exception.checkOutImage.startsWith('/uploads/alpr/')) {
+        const cloudUrl = await this._uploadAndDeleteLocal(exception.checkOutImage);
+        if (cloudUrl) updatedFields.checkOutImage = cloudUrl;
+      }
+
+      if (Object.keys(updatedFields).length > 0) {
+        await Exception.findByIdAndUpdate(exceptionId, updatedFields);
+        console.log(`[UploadService] [OK] Đã sync Cloudinary thành công cho exception ${exceptionId}`);
+      }
+    } catch (error) {
+      console.error(`[UploadService] [FAIL] Sync background thất bại cho exception ${exceptionId}:`, error);
+      throw error;
     }
   }
 

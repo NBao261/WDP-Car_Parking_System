@@ -158,6 +158,8 @@ export const DEFAULT_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.AI_CHATBOT,
     PERMISSIONS.AI_PRICING_SUGGESTION,
     PERMISSIONS.AI_MANAGE,
+    // Audit logs (xem)
+    PERMISSIONS.LOG_VIEW,
   ],
 
   // ACT-02: Parking Staff — vận hành trực tiếp tại bãi xe

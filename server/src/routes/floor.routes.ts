@@ -10,9 +10,9 @@ const router = Router();
 
 router.use(verifyToken);
 
-// Xem tầng (Admin + Manager)
-router.get('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), checkPermission(PERMISSIONS.FLOOR_MANAGE), FloorController.getAllFloors);
-router.get('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), checkPermission(PERMISSIONS.FLOOR_MANAGE), FloorController.getFloorById);
+// Xem tầng (Admin + Manager + Staff)
+router.get('/', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), checkPermission(PERMISSIONS.FACILITY_READ), FloorController.getAllFloors);
+router.get('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), checkPermission(PERMISSIONS.FACILITY_READ), FloorController.getFloorById);
 
 // Quản lý tầng (SRS 3.1: Admin + Manager)
 router.post('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(createFloorSchema), checkPermission(PERMISSIONS.FLOOR_MANAGE), FloorController.createFloor);
