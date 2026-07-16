@@ -137,17 +137,14 @@ export class ExceptionService {
         .sort(sort)
         .skip(skip)
         .limit(Number(limit))
-        .populate('staffId', 'name email')
-        .populate('resolvedByStaffId', 'name email')
-        .populate('managerId', 'name email')
+        .populate('staffId', 'name')
+        .populate('resolvedByStaffId', 'name')
+        .populate('managerId', 'name')
         .populate({
           path: 'sessionId',
-          populate: [
-            { path: 'vehicleTypeId', select: 'name code' },
-            { path: 'slotId', select: 'code' },
-            { path: 'floorId', select: 'name' }
-          ]
-        }),
+          select: 'code licensePlate status'
+        })
+        .lean(),
       Exception.countDocuments(filter)
     ]);
 

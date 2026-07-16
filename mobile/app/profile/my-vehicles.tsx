@@ -20,6 +20,101 @@ interface VehicleItem {
   vehicleTypeId: { _id: string; name: string; code: string; icon: string } | null;
 }
 
+const getVehicleIcon = (code?: string): any => {
+  if (!code) return "car-outline";
+  const lower = code.toLowerCase();
+  if (lower.includes("moto") || lower.includes("bike") || lower.includes("xm")) return "bicycle-outline";
+  if (lower.includes("truck")) return "bus-outline";
+  return "car-sport-outline";
+};
+
+const VehicleCard = React.memo(({
+  item,
+  onEdit,
+  onDelete,
+}: {
+  item: VehicleItem;
+  onEdit: (v: VehicleItem) => void;
+  onDelete: (v: VehicleItem) => void;
+}) => {
+  const vtName = item.vehicleTypeId?.name || "Không rõ";
+  const vtCode = item.vehicleTypeId?.code || "";
+
+  return (
+    <TouchableOpacity
+      style={[styles.card, item.isInUse && styles.cardInUse]}
+      activeOpacity={0.85}
+      onLongPress={() => onDelete(item)}
+      onPress={() => onEdit(item)}
+    >
+      {/* Image or icon */}
+      <View style={styles.cardImageWrap}>
+        {item.image ? (
+          <Image source={{ uri: item.image }} style={styles.cardImage} />
+        ) : (
+          <View style={styles.cardIconFallback}>
+            <Ionicons
+              name={getVehicleIcon(vtCode)}
+              size={28}
+              color={Colors.brandGrayText}
+            />
+          </View>
+        )}
+      </View>
+
+      <View style={styles.cardBody}>
+        {/* Plate */}
+        <Text style={styles.plateText}>{item.licensePlate}</Text>
+
+        {/* Type */}
+        <View style={styles.typeRow}>
+          <Ionicons name={getVehicleIcon(vtCode)} size={13} color={Colors.brandGrayText} />
+          <Text style={styles.typeText}>{vtName}</Text>
+        </View>
+
+        {/* Nickname */}
+        {!!item.nickname && (
+          <Text style={styles.nicknameText}>"{item.nickname}"</Text>
+        )}
+
+        {/* Badges */}
+        <View style={styles.badgesRow}>
+          {item.isDefault && (
+            <View style={styles.defaultBadge}>
+              <Ionicons name="star" size={10} color={Colors.brandDark} />
+              <Text style={styles.defaultBadgeText}>Mặc định</Text>
+            </View>
+          )}
+          {item.isInUse && (
+            <View style={styles.inUseBadge}>
+              <Ionicons name="lock-closed" size={10} color={Colors.brandDark} />
+              <Text style={styles.inUseBadgeText}>{item.inUseReason || 'Đang sử dụng'}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.cardActions}>
+        <TouchableOpacity
+          onPress={() => onEdit(item)}
+          style={styles.actionBtn}
+          disabled={item.isInUse}
+        >
+          <Ionicons name="create-outline" size={14} color={item.isInUse ? Colors.disabled : Colors.brandDark} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => onDelete(item)}
+          style={styles.actionBtn}
+          disabled={item.isInUse}
+        >
+          <Ionicons name="trash-outline" size={14} color={item.isInUse ? Colors.disabled : Colors.danger} />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+});
+
 export default function MyVehiclesScreen() {
   const router = useRouter();
   const [vehicles, setVehicles] = useState<VehicleItem[]>([]);
@@ -45,7 +140,7 @@ export default function MyVehiclesScreen() {
     }, [loadVehicles])
   );
 
-  const handleDelete = (vehicle: VehicleItem) => {
+  const handleDelete = useCallback((vehicle: VehicleItem) => {
     if (vehicle.isInUse) {
       Alert.alert(
         "Không thể xoá",
@@ -72,7 +167,7 @@ export default function MyVehiclesScreen() {
         },
       ]
     );
-  };
+  }, []);
 
   const handleSetDefault = async (vehicle: VehicleItem) => {
     if (vehicle.isDefault) return;
@@ -86,7 +181,7 @@ export default function MyVehiclesScreen() {
     }
   };
 
-  const handleEdit = (vehicle: VehicleItem) => {
+  const handleEdit = useCallback((vehicle: VehicleItem) => {
     if (vehicle.isInUse) {
       Alert.alert(
         "Không thể chỉnh sửa",
@@ -95,94 +190,11 @@ export default function MyVehiclesScreen() {
       return;
     }
     router.push(`/profile/edit-vehicle?id=${vehicle._id}` as any);
-  };
+  }, [router]);
 
-  const getVehicleIcon = (code?: string): any => {
-    if (!code) return "car-outline";
-    const lower = code.toLowerCase();
-    if (lower.includes("moto") || lower.includes("bike") || lower.includes("xm")) return "bicycle-outline";
-    if (lower.includes("truck")) return "bus-outline";
-    return "car-sport-outline";
-  };
-
-  const renderVehicle = ({ item }: { item: VehicleItem }) => {
-    const vtName = item.vehicleTypeId?.name || "Không rõ";
-    const vtCode = item.vehicleTypeId?.code || "";
-
-    return (
-      <TouchableOpacity
-        style={[styles.card, item.isInUse && styles.cardInUse]}
-        activeOpacity={0.85}
-        onLongPress={() => handleDelete(item)}
-        onPress={() => handleEdit(item)}
-      >
-        {/* Image or icon */}
-        <View style={styles.cardImageWrap}>
-          {item.image ? (
-            <Image source={{ uri: item.image }} style={styles.cardImage} />
-          ) : (
-            <View style={styles.cardIconFallback}>
-              <Ionicons
-                name={getVehicleIcon(vtCode)}
-                size={28}
-                color={Colors.brandGrayText}
-              />
-            </View>
-          )}
-        </View>
-
-        <View style={styles.cardBody}>
-          {/* Plate */}
-          <Text style={styles.plateText}>{item.licensePlate}</Text>
-
-          {/* Type */}
-          <View style={styles.typeRow}>
-            <Ionicons name={getVehicleIcon(vtCode)} size={13} color={Colors.brandGrayText} />
-            <Text style={styles.typeText}>{vtName}</Text>
-          </View>
-
-          {/* Nickname */}
-          {!!item.nickname && (
-            <Text style={styles.nicknameText}>"{item.nickname}"</Text>
-          )}
-
-          {/* Badges */}
-          <View style={styles.badgesRow}>
-            {item.isDefault && (
-              <View style={styles.defaultBadge}>
-                <Ionicons name="star" size={10} color={Colors.brandDark} />
-                <Text style={styles.defaultBadgeText}>Mặc định</Text>
-              </View>
-            )}
-            {item.isInUse && (
-              <View style={styles.inUseBadge}>
-                <Ionicons name="lock-closed" size={10} color={Colors.brandDark} />
-                <Text style={styles.inUseBadgeText}>{item.inUseReason || 'Đang sử dụng'}</Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.cardActions}>
-          <TouchableOpacity
-            onPress={() => handleEdit(item)}
-            style={styles.actionBtn}
-            disabled={item.isInUse}
-          >
-            <Ionicons name="create-outline" size={14} color={item.isInUse ? Colors.disabled : Colors.brandDark} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => handleDelete(item)}
-            style={styles.actionBtn}
-            disabled={item.isInUse}
-          >
-            <Ionicons name="trash-outline" size={14} color={item.isInUse ? Colors.disabled : Colors.danger} />
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const renderVehicle = useCallback(({ item }: { item: VehicleItem }) => (
+    <VehicleCard item={item} onEdit={handleEdit} onDelete={handleDelete} />
+  ), [handleEdit, handleDelete]);
 
   const renderEmpty = () => (
     <View style={styles.emptyWrap}>
@@ -237,6 +249,10 @@ export default function MyVehiclesScreen() {
             ListEmptyComponent={renderEmpty}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            initialNumToRender={5}
+            maxToRenderPerBatch={5}
+            windowSize={5}
+            removeClippedSubviews={true}
           />
         )}
       </View>

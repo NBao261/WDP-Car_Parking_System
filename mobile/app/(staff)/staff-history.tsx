@@ -34,7 +34,7 @@ function EmptyState({
   );
 }
 
-function SessionCard({ item }: { item: any }) {
+const SessionCard = React.memo(({ item }: { item: any }) => {
   return (
     <View style={styles.card}>
       {/* Row 1: Plate + Time */}
@@ -79,22 +79,30 @@ function SessionCard({ item }: { item: any }) {
       </View>
     </View>
   );
-}
+});
 
 export default function StaffHistoryScreen() {
   const { selectedFacilityId } = useAuthStore();
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchActiveSessions = async () => {
+  const fetchActiveSessions = async (pageNum = 1, isLoadMore = false) => {
     try {
       if (!selectedFacilityId) return;
       const response = await sessionApi.getActiveSessions({
         facilityId: selectedFacilityId,
+        page: pageNum,
+        limit: 10,
       });
       if (response.data) {
-        setSessions(response.data);
+        setSessions(prev => isLoadMore ? [...prev, ...response.data] : response.data);
+        setTotalPages(response.totalPages || 1);
+        setTotalCount(response.total || 0);
+        setPage(pageNum);
       }
     } catch (error) {
       console.log("Error fetching staff history", error);
@@ -106,14 +114,23 @@ export default function StaffHistoryScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchActiveSessions();
+      setLoading(true);
+      fetchActiveSessions(1, false);
     }, [selectedFacilityId]),
   );
 
-  const onRefresh = () => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchActiveSessions();
+    fetchActiveSessions(1, false);
+  }, [selectedFacilityId]);
+
+  const loadMore = () => {
+    if (page < totalPages && !loading && !refreshing) {
+      fetchActiveSessions(page + 1, true);
+    }
   };
+
+  const renderItem = useCallback(({ item }: { item: any }) => <SessionCard item={item} />, []);
 
   return (
     <View style={styles.root}>
@@ -127,14 +144,14 @@ export default function StaffHistoryScreen() {
         <View style={styles.subtitleWrap}>
           <Text style={styles.subtitleText}>Các xe đang đỗ trong toà nhà</Text>
           <View style={styles.countBadge}>
-            <Text style={styles.countText}>{sessions.length} xe</Text>
+            <Text style={styles.countText}>{totalCount} xe</Text>
           </View>
         </View>
       </SafeAreaView>
 
       {/* Content */}
       <View style={styles.content}>
-        {loading ? (
+        {loading && !refreshing && sessions.length === 0 ? (
           <ActivityIndicator color={Colors.primary} style={{ marginTop: 60 }} />
         ) : (
           <FlatList
@@ -154,8 +171,14 @@ export default function StaffHistoryScreen() {
                 subtitle="Vui lòng kiểm tra lại hoặc quét xe mới ở tab Quét!"
               />
             }
-            renderItem={({ item }) => <SessionCard item={item} />}
+            renderItem={renderItem}
             contentContainerStyle={styles.list}
+            removeClippedSubviews={true}
+            initialNumToRender={8}
+            maxToRenderPerBatch={8}
+            windowSize={5}
+            onEndReached={loadMore}
+            onEndReachedThreshold={0.5}
           />
         )}
       </View>

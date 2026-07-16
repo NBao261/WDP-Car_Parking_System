@@ -596,11 +596,12 @@ export class SessionService {
         .skip(skip)
         .limit(Number(limit))
         .populate('vehicleTypeId', 'name code icon')
-        .populate('facilityId', 'name address')
+        .populate('facilityId', 'name')
         .populate('floorId', 'name')
         .populate('slotId', 'code status')
-        .populate('pricingPlanId', 'name feeType rates')
-        .populate('staffInId', 'name email'),
+        .populate('pricingPlanId', 'name feeType')
+        .populate('staffInId', 'name')
+        .lean(),
       ParkingSession.countDocuments(filter)
     ]);
 
@@ -653,11 +654,13 @@ export class SessionService {
     const [data, total] = await Promise.all([
       ParkingSession.find(filter)
         .sort(sort)
+        .limit(50)
         .populate('vehicleTypeId', 'name code icon')
         .populate('facilityId', 'name address')
         .populate('floorId', 'name')
         .populate('slotId', 'code status')
-        .populate('pricingPlanId', 'name feeType rates'),
+        .populate('pricingPlanId', 'name feeType rates')
+        .lean(),
       ParkingSession.countDocuments(filter)
     ]);
 
