@@ -1,4 +1,4 @@
-import { TrendingUp, CarFront, GaugeCircle, ShieldCheck, Loader2 } from 'lucide-react';
+import { TrendingUp, CarFront, GaugeCircle, ArrowDownRight, ArrowUpRight, Clock } from 'lucide-react';
 import { TrafficReportData, RevenueReportData, OccupancyReportData } from '../../../../services/report.service';
 
 interface DashboardCardsProps {
@@ -6,6 +6,17 @@ interface DashboardCardsProps {
   revenueData: RevenueReportData | null;
   occupancyData: OccupancyReportData | null;
   isLoading?: boolean;
+}
+
+function Skeleton({ className }: { className?: string }) {
+  return <div className={`animate-pulse bg-white/30 rounded-md ${className ?? ''}`} />;
+}
+
+function getRevenueFontSize(value: number): string {
+  const len = value.toLocaleString('vi-VN').length;
+  if (len <= 7) return 'text-[38px] xl:text-[44px]';
+  if (len <= 11) return 'text-[30px] xl:text-[36px]';
+  return 'text-[24px] xl:text-[28px]';
 }
 
 export function DashboardCards({
@@ -23,7 +34,7 @@ export function DashboardCards({
     return value.toLocaleString('vi-VN');
   };
 
-  // ── Data Computations ──
+  // ── Data ──
   const totalRevenue = revenueData?.summary.grandTotal ?? 0;
   const avgRevenue = revenueData?.summary.avgRevenuePerDay ?? 0;
   const totalTransactions = revenueData?.summary.totalTransactions ?? 0;
@@ -34,127 +45,150 @@ export function DashboardCards({
 
   const checkIn = trafficData?.summary.totalCheckIn ?? 0;
   const checkOut = trafficData?.summary.totalCheckOut ?? 0;
-  const totalTraffic = checkIn + checkOut;
+  const currentlyParked = trafficData?.summary.currentlyParked ?? totalOccupied;
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl border border-[#e5e7eb] shadow-sm p-8 flex items-center justify-center min-h-[160px]">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 size={24} className="animate-spin text-[#062F28]" />
-          <p className="text-[13px] text-[#6b7280] font-medium">Đang tải dữ liệu hệ thống...</p>
-        </div>
-      </div>
-    );
-  }
+  let occupancyStatus = 'Trống';
+  if (occupancyRate > 90) occupancyStatus = 'Quá tải';
+  else if (occupancyRate > 70) occupancyStatus = 'Khá đông';
+  else if (occupancyRate > 40) occupancyStatus = 'Bình thường';
 
   return (
-    <div className="bg-white rounded-xl border border-[#e5e7eb] shadow-sm flex flex-col lg:flex-row overflow-hidden">
-      
-      {/* ─── Column 1: Revenue (Business Core) ─── */}
-      <div className="flex-1 p-6 flex flex-col justify-between relative group">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[11px] font-bold text-[#6b7280] tracking-wider uppercase flex items-center gap-1.5">
-            <TrendingUp size={14} className="text-[#062F28]" /> Doanh thu hệ thống
-          </h3>
+    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 xl:gap-4">
+
+      {/* ── Card 1: Tổng doanh thu — Hero Green Gradient ── */}
+      <div className="col-span-2 xl:col-span-1 relative overflow-hidden bg-gradient-to-br from-[#9ee671] to-[#72d645] rounded-xl p-5 text-black flex flex-col justify-between h-[168px] shadow-sm">
+        {/* Decorative SVG waves */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <svg viewBox="0 0 400 170" preserveAspectRatio="none" className="w-full h-full">
+            <path d="M 120 170 Q 280 -20 440 170 Q 280 40 120 170 Z" fill="rgba(255,255,255,0.2)" />
+            <path d="M 150 170 Q 280 -40 410 170 Q 280 20 150 170 Z" fill="rgba(255,255,255,0.1)" />
+            <path d="M -20 170 Q 80 40 180 170 Q 80 90 -20 170 Z" fill="rgba(255,255,255,0.15)" />
+          </svg>
         </div>
-        
+
+        <div className="relative z-10 flex items-center gap-2">
+          <TrendingUp size={15} className="text-[#0a1a12]/60" />
+          <span className="text-[13px] font-semibold text-[#0a1a12]/70 uppercase tracking-wide">Tổng doanh thu</span>
+        </div>
+
+        <div className="relative z-10">
+          {loading ? (
+            <Skeleton className="h-10 w-32 mb-2" />
+          ) : (
+            <div className={`font-bold leading-none tracking-tight tabular-nums text-[#0a1a12] ${getRevenueFontSize(totalRevenue)}`}>
+              {totalRevenue.toLocaleString('vi-VN')}
+              {totalRevenue > 0 && <span className="text-[18px] font-medium opacity-60 ml-1">đ</span>}
+            </div>
+          )}
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-[10px] text-[#0a1a12]/50 font-medium">TB/ngày</p>
+              {loading ? <Skeleton className="h-4 w-12 mt-0.5" /> : (
+                <p className="text-[13px] font-bold text-[#0a1a12]/80 tabular-nums">{formatCompactVND(avgRevenue)}</p>
+              )}
+            </div>
+            <div>
+              <p className="text-[10px] text-[#0a1a12]/50 font-medium">Giao dịch</p>
+              {loading ? <Skeleton className="h-4 w-10 mt-0.5" /> : (
+                <p className="text-[13px] font-bold text-[#0a1a12]/80 tabular-nums">{totalTransactions.toLocaleString('vi-VN')}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Card 2: Thống kê hoạt động ── */}
+      <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col h-[168px]">
+        <div className="text-[15px] font-bold text-gray-900 mb-3 flex items-center gap-2">
+          <CarFront size={16} className="text-[#72d645]" />
+          Thống kê hoạt động
+        </div>
+        <div className="flex gap-3 flex-1 min-h-0">
+          {/* Xe vào */}
+          <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-md bg-[#f0fdf4] border border-gray-100 flex items-center justify-center text-[#72d645]">
+                <ArrowDownRight size={14} />
+              </div>
+              <span className="text-[13px] text-gray-500 font-medium">Xe vào</span>
+            </div>
+            {loading ? (
+              <Skeleton className="h-7 w-16" />
+            ) : (
+              <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
+                {checkIn.toLocaleString('vi-VN')}
+              </div>
+            )}
+          </div>
+          {/* Xe ra */}
+          <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-md bg-[#f0fdf4] border border-gray-100 flex items-center justify-center text-[#72d645]">
+                <ArrowUpRight size={14} />
+              </div>
+              <span className="text-[13px] text-gray-500 font-medium">Xe ra</span>
+            </div>
+            {loading ? (
+              <Skeleton className="h-7 w-16" />
+            ) : (
+              <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
+                {checkOut.toLocaleString('vi-VN')}
+              </div>
+            )}
+          </div>
+          {/* Đang gửi */}
+          <div className="flex-1 border border-gray-100 rounded-lg p-3 flex flex-col justify-center bg-gray-50/50">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-md bg-[#f0fdf4] border border-gray-100 flex items-center justify-center text-[#72d645]">
+                <Clock size={14} />
+              </div>
+              <span className="text-[13px] text-gray-500 font-medium">Đang gửi</span>
+            </div>
+            {loading ? (
+              <Skeleton className="h-7 w-16" />
+            ) : (
+              <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
+                {currentlyParked.toLocaleString('vi-VN')}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Card 3: Tỷ lệ lấp đầy ── */}
+      <div className="col-span-2 xl:col-span-1 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between h-[168px]">
+        <div className="text-[15px] font-bold text-gray-900 flex items-center gap-2">
+          <GaugeCircle size={16} className="text-[#72d645]" />
+          Tỷ lệ lấp đầy
+        </div>
         <div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-[32px] font-bold text-[#062F28] tracking-tight tabular-nums leading-none">
-              {formatCompactVND(totalRevenue)}
-            </span>
-            <span className="text-[16px] font-semibold text-[#6b7280]">VNĐ</span>
+          <p className="text-[12px] text-gray-400 font-medium mb-1">Trạng thái bãi đỗ</p>
+          <div className="flex justify-between items-end mb-3">
+            {loading ? (
+              <Skeleton className="h-7 w-24" />
+            ) : (
+              <div className="text-[24px] font-bold text-[#0a2012] tracking-tight truncate">{occupancyStatus}</div>
+            )}
+            {loading ? (
+              <Skeleton className="h-7 w-12" />
+            ) : (
+              <div className="text-[26px] font-semibold text-gray-700 tabular-nums">{occupancyRate}%</div>
+            )}
           </div>
-          
-          <div className="mt-4 grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-[11px] text-[#9ca3af] font-medium mb-0.5">TB mỗi ngày</p>
-              <p className="text-[14px] font-semibold text-[#1a1a1a] tabular-nums">{formatCompactVND(avgRevenue)}</p>
-            </div>
-            <div>
-              <p className="text-[11px] text-[#9ca3af] font-medium mb-0.5">Lượt giao dịch</p>
-              <p className="text-[14px] font-semibold text-[#1a1a1a] tabular-nums">{totalTransactions.toLocaleString('vi-VN')}</p>
-            </div>
+          {/* Progress bar — Manager style */}
+          <div className="flex h-4 rounded-md overflow-hidden bg-[#a6e676]/30">
+            <div
+              className="bg-[#132c20] h-full transition-all duration-700"
+              style={{ width: loading ? '0%' : `${occupancyRate}%` }}
+            />
           </div>
-        </div>
-      </div>
-
-      <div className="hidden lg:block w-[1px] bg-[#e5e7eb] my-4" />
-      <div className="block lg:hidden h-[1px] bg-[#e5e7eb] mx-4" />
-
-      {/* ─── Column 2: Traffic & Capacity (Operation) ─── */}
-      <div className="flex-1 p-6 flex flex-col justify-between">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[11px] font-bold text-[#6b7280] tracking-wider uppercase flex items-center gap-1.5">
-            <CarFront size={14} className="text-[#062F28]" /> Lưu lượng & Sức chứa
-          </h3>
-        </div>
-
-        <div>
-          {/* Capacity Progress */}
-          <div className="mb-4">
-            <div className="flex justify-between items-end mb-1.5">
-              <span className="text-[13px] font-semibold text-[#1a1a1a]">
-                <span className="text-[#062F28] text-[20px] tabular-nums">{totalOccupied.toLocaleString('vi-VN')}</span>
-                <span className="text-[#9ca3af] text-[13px] font-normal mx-1">/</span>
-                <span className="text-[#6b7280] text-[15px] tabular-nums">{totalSlots.toLocaleString('vi-VN')} xe</span>
-              </span>
-            </div>
-            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden flex">
-              <div 
-                className="h-full bg-[#062F28] rounded-l-full transition-all duration-1000 ease-out"
-                style={{ width: `${occupancyRate}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100">
-            <div>
-              <p className="text-[11px] text-[#9ca3af] font-medium">Tổng ra/vào</p>
-              <p className="text-[13px] font-bold text-[#1a1a1a] tabular-nums">{totalTraffic.toLocaleString('vi-VN')}</p>
-            </div>
-            <div>
-              <p className="text-[11px] text-[#9ca3af] font-medium">Xe vào</p>
-              <p className="text-[13px] font-bold text-[#16a34a] tabular-nums">+{checkIn.toLocaleString('vi-VN')}</p>
-            </div>
-            <div>
-              <p className="text-[11px] text-[#9ca3af] font-medium">Xe ra</p>
-              <p className="text-[13px] font-bold text-[#ea580c] tabular-nums">-{checkOut.toLocaleString('vi-VN')}</p>
-            </div>
+          <div className="flex justify-between mt-1.5">
+            <span className="text-[10px] text-gray-400">{totalOccupied.toLocaleString('vi-VN')} xe</span>
+            <span className="text-[10px] text-gray-400">/ {totalSlots.toLocaleString('vi-VN')} chỗ</span>
           </div>
         </div>
       </div>
 
-      <div className="hidden lg:block w-[1px] bg-[#e5e7eb] my-4" />
-      <div className="block lg:hidden h-[1px] bg-[#e5e7eb] mx-4" />
-
-      {/* ─── Column 3: Efficiency & Status ─── */}
-      <div className="w-full lg:w-[30%] p-6 flex flex-col justify-between bg-gray-50/50">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[11px] font-bold text-[#6b7280] tracking-wider uppercase flex items-center gap-1.5">
-            <GaugeCircle size={14} className="text-[#062F28]" /> Hiệu suất lấp đầy
-          </h3>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <div className="flex items-end gap-1">
-            <span className="text-[36px] font-bold text-[#1a1a1a] tracking-tight tabular-nums leading-none">
-              {occupancyRate.toFixed(1)}
-            </span>
-            <span className="text-[20px] font-semibold text-[#6b7280]">%</span>
-          </div>
-
-          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#e5e7eb] rounded-lg shadow-sm">
-            <ShieldCheck size={16} className="text-[#16a34a]" />
-            <div className="flex flex-col">
-              <span className="text-[12px] font-bold text-[#1a1a1a]">Trạng thái ổn định</span>
-              <span className="text-[10px] text-[#6b7280]">Hệ thống hoạt động bình thường</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
     </div>
   );
 }
-
