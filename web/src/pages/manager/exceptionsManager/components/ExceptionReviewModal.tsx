@@ -65,6 +65,22 @@ export function ExceptionReviewModal({
       ? exception.staffId.name
       : exception.staffId || 'Hệ thống';
 
+  const staffOutName =
+    typeof exception.resolvedByStaffId === 'object' && exception.resolvedByStaffId
+      ? (exception.resolvedByStaffId as any).name
+      : (exception.resolvedByStaffId || 'Chưa xử lý');
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleString('vi-VN', {
+      hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+  };
+
   const getImageUrl = (path: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
@@ -99,7 +115,7 @@ export function ExceptionReviewModal({
         {/* Content */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
           {/* Info Grid */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
               <span className="block text-xs font-medium text-gray-500 mb-1">Mã lượt gửi</span>
               <span className="font-semibold text-gray-800">{sessionCode}</span>
@@ -111,10 +127,6 @@ export function ExceptionReviewModal({
               </span>
             </div>
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-              <span className="block text-xs font-medium text-gray-500 mb-1">Nhân viên tạo</span>
-              <span className="font-medium text-gray-800">{staffName}</span>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
               <span className="block text-xs font-medium text-gray-500 mb-1">Trạng thái</span>
               <span
                 className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(exception.status)}`}
@@ -122,6 +134,44 @@ export function ExceptionReviewModal({
                 {EXCEPTION_STATUS_LABELS[exception.status]}
               </span>
             </div>
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <span className="block text-xs font-medium text-gray-500 mb-1">Thời gian báo cáo</span>
+              <span className="font-medium text-gray-800">{formatDate(exception.createdAt.toString())}</span>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <span className="block text-xs font-medium text-gray-500 mb-1">Nhân viên báo cáo</span>
+              <span className="font-medium text-gray-800">{staffName}</span>
+            </div>
+            {exception.status === ExceptionStatus.RESOLVED && (
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">Nhân viên xử lý</span>
+                <span className="font-medium text-gray-800">{staffOutName}</span>
+              </div>
+            )}
+            {(exception.surcharge !== undefined && exception.surcharge > 0) && (
+              <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                <span className="block text-xs font-medium text-amber-600 mb-1">Phụ phí thu thêm</span>
+                <span className="font-semibold text-amber-700">{formatCurrency(exception.surcharge)}</span>
+              </div>
+            )}
+            {exception.expectedPlate && (
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">Biển hệ thống</span>
+                <span className="font-semibold text-blue-600">{exception.expectedPlate}</span>
+              </div>
+            )}
+            {exception.actualPlate && (
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">Biển thực tế (OCR)</span>
+                <span className="font-semibold text-gray-800">{exception.actualPlate}</span>
+              </div>
+            )}
+            {exception.cardCode && (
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">Mã thẻ RFID</span>
+                <span className="font-semibold text-gray-800">{exception.cardCode}</span>
+              </div>
+            )}
           </div>
 
           {/* Images */}
