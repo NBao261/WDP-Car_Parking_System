@@ -124,7 +124,7 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
   return (
     <div className="flex items-center justify-between gap-4 py-3.5 border-b border-gray-50 last:border-0 group">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-[#062F28]">
+        <p className="text-sm font-semibold text-[#1a1a1a]">
           {config.key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
         </p>
         {config.description && (
@@ -139,7 +139,7 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
           <button
             onClick={() => handleToggle(!config.value)}
             disabled={isSaving}
-            className={`relative w-11 h-6 rounded-full transition-colors ${config.value ? 'bg-[#9FE870]' : 'bg-gray-200'
+            className={`relative w-11 h-6 rounded-full transition-colors ${config.value ? 'bg-[#72d645]' : 'bg-gray-200'
               } disabled:opacity-60`}
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${config.value ? 'translate-x-5' : 'translate-x-0'
@@ -154,7 +154,7 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
                 type={isNumber ? 'number' : isSecret && !showPassword ? 'password' : 'text'}
                 value={editValue}
                 onChange={(e) => handleChange(e.target.value)}
-                className={`w-64 md:w-80 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9FE870] transition-all ${isDirty ? 'border-[#9FE870] bg-[#9FE870]/5' : 'border-gray-200 bg-gray-50'
+                className={`w-64 md:w-80 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#72d645] transition-all ${isDirty ? 'border-[#72d645] bg-[#72d645]/5' : 'border-gray-200 bg-gray-50'
                   }`}
               />
               {isSecret && (
@@ -171,7 +171,7 @@ function ConfigRow({ config, onSave }: ConfigRowProps) {
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex items-center gap-1 px-3 py-1.5 bg-[#062F28] text-white text-xs font-bold rounded-lg hover:bg-[#9FE870] hover:text-[#062F28] border border-[#062F28] hover:border-[#9FE870] transition-colors disabled:opacity-60 disabled:hover:bg-[#062F28] disabled:hover:text-white disabled:hover:border-[#062F28]"
+                className="flex items-center gap-1 px-3 py-1.5 bg-[#132c20] text-white text-xs font-bold rounded-lg hover:bg-[#72d645] hover:text-[#132c20] border border-[#132c20] hover:border-[#72d645] transition-colors disabled:opacity-60 disabled:hover:bg-[#132c20] disabled:hover:text-white disabled:hover:border-[#132c20]"
               >
                 {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                 Lưu
@@ -225,7 +225,7 @@ export default function ConfigPage() {
 
   return (
     <motion.div
-      className="w-full max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 pb-12 space-y-6"
+      className="space-y-6 w-full pb-12"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -236,7 +236,7 @@ export default function ConfigPage() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-2xl font-bold text-[#062F28]">Cấu hình Hệ thống</h1>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">Cấu hình Hệ thống</h1>
           <p className="text-gray-500 text-sm mt-1">
             Quản lý các thông số hoạt động của Smart Parking
           </p>
@@ -298,11 +298,11 @@ export default function ConfigPage() {
               >
                 {/* Group header */}
                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#9FE870]/20 text-[#062F28] flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-[#f0fdf4] text-[#72d645] flex items-center justify-center">
                     {group.icon}
                   </div>
                   <div>
-                    <h2 className="font-bold text-[#062F28] text-sm">{group.label}</h2>
+                    <h2 className="font-bold text-[#1a1a1a] text-sm">{group.label}</h2>
                     <p className="text-xs text-gray-400">{group.description}</p>
                   </div>
                 </div>
@@ -328,7 +328,7 @@ export default function ConfigPage() {
                   <Settings size={18} />
                 </div>
                 <div>
-                  <h2 className="font-bold text-[#062F28] text-sm">Cấu hình khác</h2>
+                  <h2 className="font-bold text-[#1a1a1a] text-sm">Cấu hình khác</h2>
                   <p className="text-xs text-gray-400">Các thông số bổ sung</p>
                 </div>
               </div>
@@ -345,10 +345,10 @@ export default function ConfigPage() {
       {/* Info box */}
       <motion.div
         variants={itemVariants}
-        className="bg-[#062F28] rounded-2xl p-6 flex items-start gap-4"
+        className="bg-[#132c20] rounded-2xl p-6 flex items-start gap-4"
       >
-        <div className="w-10 h-10 rounded-xl bg-[#9FE870]/20 flex items-center justify-center flex-shrink-0">
-          <Lock size={20} className="text-[#9FE870]" />
+        <div className="w-10 h-10 rounded-xl bg-[#72d645]/20 flex items-center justify-center flex-shrink-0">
+          <Lock size={20} className="text-[#72d645]" />
         </div>
         <div>
           <h3 className="font-bold text-white mb-1">Audit Log</h3>
