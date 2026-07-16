@@ -15,7 +15,6 @@ import { SystemStatsWidget } from './components/SystemStatsWidget';
 import { RevenueBreakdownWidget } from './components/RevenueBreakdownWidget';
 import { FacilityLeaderboardWidget } from './components/FacilityLeaderboardWidget';
 import { SystemAlertsWidget } from './components/SystemAlertsWidget';
-import { ExportConfirmModal } from './components/ExportConfirmModal';
 import { CustomDropdown } from '../../../components/ui/CustomDropdown';
 import { reportService } from '../../../services/report.service';
 import { format, subDays, startOfMonth, startOfYear } from 'date-fns';
@@ -76,18 +75,8 @@ export default function DashboardPage() {
   } = useDashboard();
 
   const [exporting, setExporting] = useState(false);
-  const [exportModalState, setExportModalState] = useState<{
-    isOpen: boolean;
-    format: 'excel' | 'pdf' | null;
-  }>({ isOpen: false, format: null });
 
-  const handleOpenExportModal = (fmt: 'excel' | 'pdf') => {
-    setExportModalState({ isOpen: true, format: fmt });
-  };
-
-  const confirmExport = async () => {
-    if (!exportModalState.format) return;
-    const fmt = exportModalState.format;
+  const handleExport = async (fmt: 'excel' | 'pdf') => {
     try {
       setExporting(true);
       toast.info(`Đang xuất báo cáo ra ${fmt === 'pdf' ? 'PDF' : 'Excel'}...`);
@@ -108,7 +97,6 @@ export default function DashboardPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       toast.success('Xuất báo cáo thành công!');
-      setExportModalState({ isOpen: false, format: null });
     } catch {
       toast.error('Lỗi khi xuất báo cáo');
     } finally {
@@ -160,7 +148,7 @@ export default function DashboardPage() {
           {/* Export Buttons */}
           <div className="flex gap-3">
             <button
-              onClick={() => handleOpenExportModal('excel')}
+              onClick={() => handleExport('excel')}
               disabled={exporting || isLoading}
               className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-white border-[1.5px] border-gray-200 text-[#1a1a1a] text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -168,7 +156,7 @@ export default function DashboardPage() {
               Excel
             </button>
             <button
-              onClick={() => handleOpenExportModal('pdf')}
+              onClick={() => handleExport('pdf')}
               disabled={exporting || isLoading}
               className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-[#a6e676] text-[#132c20] text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -215,15 +203,6 @@ export default function DashboardPage() {
           <SystemAlertsWidget />
         </div>
       </motion.div>
-
-      {/* Export Confirmation Modal */}
-      <ExportConfirmModal
-        isOpen={exportModalState.isOpen}
-        format={exportModalState.format}
-        isExporting={exporting}
-        onClose={() => setExportModalState({ ...exportModalState, isOpen: false })}
-        onConfirm={confirmExport}
-      />
     </motion.div>
   );
 }
