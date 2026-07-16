@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Layers, Calendar, Lock, } from 'lucide-react';
 import { Floor } from '../../../../services/floor.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { ICON_MAP, DEFAULT_ICON } from '../../../shared/vehicles/components/constants';
+import { ICON_MAP, DEFAULT_ICON, getVehicleColorTheme } from '../../../shared/vehicles/components/constants';
 
 function getBarTextColor(pct: number) {
   if (pct > 85) return 'text-[#E24B4A]';
@@ -139,14 +139,7 @@ export function FloorDetailModal({
                           const v = typeof vId === 'string' ? vehicleTypes.find(vt => vt._id === id) : vId;
                           if (!v) return null;
                           const IconComp = v.icon && ICON_MAP[v.icon] ? ICON_MAP[v.icon] : ICON_MAP[DEFAULT_ICON];
-                          const idx = Math.max(0, vehicleTypes.findIndex(vt => vt._id === id));
-                          const colors = [
-                            { bg: '#F3F4F6', text: '#4B5563' },
-                            { bg: '#EAF5E4', text: '#062F28' },
-                            { bg: '#9FE870', text: '#062F28' },
-                            { bg: '#062F28', text: '#9FE870' },
-                          ];
-                          const color = colors[Math.min(idx, colors.length - 1)];
+                          const color = getVehicleColorTheme(v.code || v.name, v.icon);
                           return (
                           <span
                             key={id}

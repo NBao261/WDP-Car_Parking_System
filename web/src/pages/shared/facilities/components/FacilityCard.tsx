@@ -331,7 +331,7 @@ export function FacilityCard({
 
       {/* 3 Stats Box */}
       <div className="px-5 pb-5">
-        <div className="flex items-center justify-between border border-gray-100 rounded-xl p-3 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+        <div className="flex items-center justify-between border border-[#9FE870] rounded-xl p-3 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
           <div className="text-center flex-1">
             <div className="text-[11px] text-[#7B7B7B] mb-1">Tổng slot</div>
             <div className="text-[15px] font-bold text-[#062F28]">{totalSlots}</div>
