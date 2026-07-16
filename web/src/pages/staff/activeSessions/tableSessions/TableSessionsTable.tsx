@@ -15,7 +15,7 @@ export function TableSessionsTable({
   currentPage, itemsPerPage
 }: any) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-auto flex-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
       <table className="w-full min-w-[1040px] table-fixed text-left text-sm whitespace-nowrap">
         <thead className="sticky top-0 bg-white z-10">
           <tr className="bg-[#f5f5f5] border-b border-[#e8e9e8] text-left">
@@ -51,20 +51,20 @@ export function TableSessionsTable({
                 key={session._id}
                 className="hover:bg-[#9FE870]/10 transition-colors group"
               >
-                  <td className="px-4 py-4 text-[#6b6b6b] text-[13px] text-center font-medium truncate">{globalIndex}</td>
-                  <td className="px-4 py-4 text-[#060606] font-medium text-sm truncate">{session.cardCode || session.code}</td>
-                  <td className="px-4 py-4 font-mono font-bold text-[14px] text-[#060606] truncate">{session.licensePlate}</td>
-                  <td className="px-4 py-4 text-[#060606] text-[13px] truncate">{session.vehicleTypeId?.name || 'N/A'}</td>
-                  <td className="px-4 py-4 text-[#060606] text-[13px] truncate">{session.floorId && session.slotId ? `${session.floorId.name} - ${session.slotId.code}` : '—'}</td>
-                  <td className="px-4 py-4 text-[#060606] text-[13px] truncate">{session.gateIn || 'N/A'}</td>
-                  <td className="px-4 py-4 text-[#6b6b6b] text-[12px] tabular-nums truncate">{new Date(session.checkInTime).toLocaleString('vi-VN')}</td>
-                  <td className="px-4 py-4 text-[#060606] text-[13px] font-medium tabular-nums truncate">{calculateDuration(session.checkInTime)}</td>
-                  <td className="px-4 py-4 truncate">
+                  <td className="px-3 py-2.5 text-[#6b6b6b] text-[13px] text-center font-medium truncate">{globalIndex}</td>
+                  <td className="px-3 py-2.5 text-[#060606] font-medium text-sm truncate">{session.cardCode || session.code}</td>
+                  <td className="px-3 py-2.5 font-mono font-bold text-[14px] text-[#060606] truncate">{session.licensePlate}</td>
+                  <td className="px-3 py-2.5 text-[#060606] text-[13px] truncate">{session.vehicleTypeId?.name || 'N/A'}</td>
+                  <td className="px-3 py-2.5 text-[#060606] text-[13px] truncate">{session.floorId && session.slotId ? `${session.floorId.name} - ${session.slotId.code}` : '—'}</td>
+                  <td className="px-3 py-2.5 text-[#060606] text-[13px] truncate">{session.gateIn || 'N/A'}</td>
+                  <td className="px-3 py-2.5 text-[#6b6b6b] text-[12px] tabular-nums truncate">{new Date(session.checkInTime).toLocaleString('vi-VN')}</td>
+                  <td className="px-3 py-2.5 text-[#060606] text-[13px] font-medium tabular-nums truncate">{calculateDuration(session.checkInTime)}</td>
+                  <td className="px-3 py-2.5 truncate">
                     <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] uppercase font-bold tracking-wide border ${session.status === 'exception' ? 'bg-[#fee2e2] text-[#991b1b] border-[#fca5a5]/60' : getActiveBadgeClasses(session.checkInTime)}`}>
                       {session.status === 'active' ? 'Hoạt động' : session.status === 'exception' ? 'Sự cố' : session.status === 'completed' ? 'Đã hoàn thành' : session.status === 'pending_payment' ? 'Chờ thanh toán' : session.status}
                     </span>
                   </td>
-                  <td className="px-4 py-4 flex items-center justify-center">
+                  <td className="px-3 py-2.5 flex items-center justify-center">
                     <button onClick={() => setSelectedSession(session)} className="px-3 py-1 bg-white border border-gray-200 text-[#060606] font-medium rounded-lg hover:bg-[#f5ffe8] hover:border-[#9FE870] transition-all text-xs shadow-sm">
                       Chi tiết
                     </button>
