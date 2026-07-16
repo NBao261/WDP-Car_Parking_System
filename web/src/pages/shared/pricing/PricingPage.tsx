@@ -260,17 +260,17 @@ export default function PricingPage() {
                 <p className="text-gray-500 text-sm">Chọn một tòa nhà để xem bảng giá</p>
               )}
               {selectedFacility?.address && (
-                <div className="flex items-center gap-4 mt-1.5">
-                  <div className="flex items-center gap-1.5 text-gray-500 text-sm">
-                    <MapPin size={14} />
-                    <span>{selectedFacility.address}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-gray-500 text-sm">
-                    <Clock size={14} />
-                    <span>
-                      {selectedFacility.openTime} - {selectedFacility.closeTime}
-                    </span>
-                  </div>
+                <div className="flex items-center gap-1.5 text-gray-500 text-sm mt-1">
+                  <MapPin size={14} className="shrink-0" />
+                  <span>{selectedFacility.address}</span>
+                </div>
+              )}
+              {selectedFacility && (
+                <div className="flex items-center gap-1.5 text-gray-500 text-sm mt-1">
+                  <Clock size={14} className="shrink-0" />
+                  <span>
+                    {selectedFacility.openTime} - {selectedFacility.closeTime}
+                  </span>
                 </div>
               )}
             </div>

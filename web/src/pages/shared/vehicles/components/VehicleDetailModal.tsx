@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Car, Building2, Loader2 } from 'lucide-react';
+import { X, Building2, Loader2 } from 'lucide-react';
 import { VehicleType } from '../../../../services/vehicleType.service';
 import { floorService, Floor } from '../../../../services/floor.service';
 import { facilityService, Facility } from '../../../../services/facility.service';
-import { ICON_MAP, getVehicleColorTheme } from './constants';
+import { ICON_MAP, getVehicleColorTheme, DEFAULT_ICON } from './constants';
 import * as Dialog from '@radix-ui/react-dialog';
 
 interface DetailModalProps {
@@ -110,7 +110,7 @@ export function VehicleDetailModal({ isOpen, onClose, vehicle, allVehicles = [] 
                         {(() => {
                           if (!vehicle) return null;
                           const colorTheme = getVehicleColorTheme(vehicle.code, vehicle.icon);
-                          const Icon = vehicle.icon && ICON_MAP[vehicle.icon] ? ICON_MAP[vehicle.icon] : Car;
+                          const Icon = vehicle.icon && ICON_MAP[vehicle.icon] ? ICON_MAP[vehicle.icon] : ICON_MAP[DEFAULT_ICON];
                           return (
                             <div
                               className="w-16 h-16 rounded-2xl flex items-center justify-center border-[1.5px] border-[#f0f0f0] shadow-sm shrink-0"

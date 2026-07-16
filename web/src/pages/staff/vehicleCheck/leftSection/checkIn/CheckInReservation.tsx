@@ -160,7 +160,7 @@ export function CheckInReservation({
               onClick={toggleQrScanner}
               style={{ cursor: 'pointer' }}
             >
-              <img src="/Logo_chu.png" alt="LYNC PARK" className="h-16 mb-2 object-contain" />
+              <img src="/Logo_chu.png" alt="LYNC PARK" className="h-24 mb-2 object-contain" />
               <QrCode className="w-4 h-4 text-[#aaa] mb-2" />
               <span className="text-[10px] font-semibold text-[#6b6b6b]">
                 Quét QR được cấp khi đặt chỗ

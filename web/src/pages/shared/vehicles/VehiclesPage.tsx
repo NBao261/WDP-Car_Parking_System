@@ -202,14 +202,6 @@ export default function VehiclesPage() {
             Quản lý các loại phương tiện được hỗ trợ trong hệ thống
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleAdd}
-            className="bg-[#062F28] text-white hover:bg-[#062F28]/80 px-5 py-2.5 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-sm"
-          >
-            <Plus size={20} /> Thêm Loại Xe
-          </button>
-        </div>
       </motion.div>
 
       {/* Search */}
@@ -236,7 +228,7 @@ export default function VehiclesPage() {
       >
         <div className="w-full">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-[#FAFAFA] text-[#6b6b6b] text-[13px] border-b border-gray-100 font-semibold uppercase tracking-wider">
+            <thead className="bg-[#9FE870] text-[#062F28] text-[13px] border-b border-[#9FE870] font-semibold uppercase tracking-wider">
               <tr>
                 <th className="px-6 py-4 rounded-tl-2xl w-[5%] text-center">STT</th>
                 <th
@@ -249,9 +241,9 @@ export default function VehiclesPage() {
                 >
                   <span className="flex items-center gap-1.5">
                     Loại Xe
-                    <ArrowUpDown size={14} className={sortField === 'name' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'name' ? 'text-white' : 'text-[#062F28]/40'} />
                     {sortField === 'name' && (
-                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                      <span className="text-[10px] text-white font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
                     )}
                   </span>
                 </th>
@@ -265,9 +257,9 @@ export default function VehiclesPage() {
                 >
                   <span className="flex items-center gap-1.5">
                     Mã Xe
-                    <ArrowUpDown size={14} className={sortField === 'code' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'code' ? 'text-white' : 'text-[#062F28]/40'} />
                     {sortField === 'code' && (
-                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                      <span className="text-[10px] text-white font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
                     )}
                   </span>
                 </th>
@@ -281,9 +273,9 @@ export default function VehiclesPage() {
                 >
                   <span className="flex items-center gap-1.5">
                     Ngày Giờ Tạo
-                    <ArrowUpDown size={14} className={sortField === 'createdAt' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'createdAt' ? 'text-white' : 'text-[#062F28]/40'} />
                     {sortField === 'createdAt' && (
-                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
+                      <span className="text-[10px] text-white font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
                     )}
                   </span>
                 </th>

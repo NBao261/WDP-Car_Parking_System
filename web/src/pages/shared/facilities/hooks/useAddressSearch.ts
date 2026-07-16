@@ -106,12 +106,13 @@ export function useAddressSearch(): UseAddressSearchReturn {
   }, []);
 
   // ─── Set query with debounce ──────────────────────────────────────────
-  const setQuery = useCallback((q: string) => {
+  const setQuery = useCallback((q: string, skipSearch = false) => {
     setQueryState(q);
 
-    // If this was a manual set (from selecting a suggestion), don't re-search
-    if (isManualSet.current) {
+    // If skipSearch or manual set (from selecting a suggestion), don't re-search
+    if (skipSearch || isManualSet.current) {
       isManualSet.current = false;
+      setShowDropdown(false);
       return;
     }
 

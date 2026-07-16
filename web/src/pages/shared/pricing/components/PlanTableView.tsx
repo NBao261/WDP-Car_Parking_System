@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Edit, PowerOff, CheckCircle2, Trash2, Car, MoreVertical, ArrowUpDown } from 'lucide-react';
+import { Edit, PowerOff, CheckCircle2, Trash2, MoreVertical, ArrowUpDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { pricingService, type PricingPlan } from '../../../../services/pricing.service';
 import { type Facility } from '../../../../services/facility.service';
 import { type VehicleType } from '../../../../services/vehicleType.service';
 import { FEE_TYPE_LABELS, mapToUiType } from './constants';
-import { ICON_MAP, getVehicleColorTheme } from '../../../shared/vehicles/components/constants';
+import { ICON_MAP, getVehicleColorTheme, DEFAULT_ICON } from '../../../shared/vehicles/components/constants';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
 
 interface PlanTableProps {
@@ -157,7 +157,7 @@ export function PlanTableView({
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col relative">
       <div className="w-full min-h-[160px]">
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-[#f5f5f5] text-[#6b6b6b] text-[13px] border-b border-[#e8e9e8] font-semibold uppercase tracking-wider">
+          <thead className="bg-[#9FE870] text-[#062F28] text-[13px] border-b border-[#9FE870] font-semibold uppercase tracking-wider">
             <tr>
               <th className="px-3 py-4 text-center rounded-tl-2xl">STT</th>
               <th
@@ -171,9 +171,9 @@ export function PlanTableView({
               >
                 <span className="flex items-center gap-1.5">
                   Tên bảng giá
-                  <ArrowUpDown size={13} className={sortName !== 'default' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  <ArrowUpDown size={13} className={sortName !== 'default' ? 'text-white' : 'text-[#062F28]/40'} />
                   {sortName !== 'default' && (
-                    <span className="text-[10px] text-[#9FE870] font-bold">{sortName === 'name_asc' ? 'A-Z' : 'Z-A'}</span>
+                    <span className="text-[10px] text-white font-bold">{sortName === 'name_asc' ? 'A-Z' : 'Z-A'}</span>
                   )}
                 </span>
               </th>
@@ -188,9 +188,9 @@ export function PlanTableView({
               >
                 <span className="flex items-center gap-1.5">
                   Loại xe
-                  <ArrowUpDown size={13} className={sortVehicle !== 'default' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  <ArrowUpDown size={13} className={sortVehicle !== 'default' ? 'text-white' : 'text-[#062F28]/40'} />
                   {sortVehicle !== 'default' && (
-                    <span className="text-[10px] text-[#9FE870] font-bold">{sortVehicle === 'vt_asc' ? 'A-Z' : 'Z-A'}</span>
+                    <span className="text-[10px] text-white font-bold">{sortVehicle === 'vt_asc' ? 'A-Z' : 'Z-A'}</span>
                   )}
                 </span>
               </th>
@@ -206,9 +206,9 @@ export function PlanTableView({
               >
                 <span className="flex items-center gap-1.5">
                   Đơn giá cơ bản
-                  <ArrowUpDown size={13} className={sortPrice !== 'default' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  <ArrowUpDown size={13} className={sortPrice !== 'default' ? 'text-white' : 'text-[#062F28]/40'} />
                   {sortPrice !== 'default' && (
-                    <span className="text-[10px] text-[#9FE870] font-bold">{sortPrice === 'price_desc' ? '↓ Cao' : '↑ Thấp'}</span>
+                    <span className="text-[10px] text-white font-bold">{sortPrice === 'price_desc' ? '↓ Cao' : '↑ Thấp'}</span>
                   )}
                 </span>
               </th>
@@ -225,9 +225,9 @@ export function PlanTableView({
               >
                 <span className="flex items-center justify-end gap-1.5">
                   Thao tác
-                  <ArrowUpDown size={13} className={sortDate !== 'default' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  <ArrowUpDown size={13} className={sortDate !== 'default' ? 'text-white' : 'text-[#062F28]/40'} />
                   {sortDate !== 'default' && (
-                    <span className="text-[10px] text-[#9FE870] font-bold">{sortDate === 'created_desc' ? '↓ Mới' : '↑ Cũ'}</span>
+                    <span className="text-[10px] text-white font-bold">{sortDate === 'created_desc' ? '↓ Mới' : '↑ Cũ'}</span>
                   )}
                 </span>
               </th>
@@ -248,7 +248,7 @@ export function PlanTableView({
                   ? plan.vehicleTypeId?.icon
                   : (vehicleTypes.find((v) => v._id === vtId)?.icon ?? '');
               const uiFeeType = mapToUiType(plan.feeType, plan.feeMethod || '');
-              const VtIcon = vtIconKey && ICON_MAP[vtIconKey] ? ICON_MAP[vtIconKey] : Car;
+              const VtIcon = vtIconKey && ICON_MAP[vtIconKey] ? ICON_MAP[vtIconKey] : ICON_MAP[DEFAULT_ICON];
               const isActive = plan.status === 'active';
 
               const baseRate = plan.rates[0];

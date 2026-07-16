@@ -54,7 +54,7 @@ export function CheckInAction({
             }}
             disabled={isSubmitting || pendingClear}
             className={`w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all ${pendingClear
-              ? 'bg-[#1d7a4a] text-white'
+              ? 'bg-[#062F28] text-white'
               : isSubmitting
                 ? 'bg-gray-400 text-white cursor-not-allowed'
                 : !plate

@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
-import { Car } from 'lucide-react';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { ICON_MAP, getVehicleColorTheme } from './constants';
+import { ICON_MAP, getVehicleColorTheme, DEFAULT_ICON } from './constants';
 
 interface VehicleRowProps {
   vehicle: VehicleType;
@@ -34,7 +33,7 @@ export function VehicleRow({ vehicle, index, globalIndex, onEdit, onView, onDele
         <div className="flex items-center gap-3">
           {(() => {
             const colorTheme = getVehicleColorTheme(vehicle.code, vehicle.icon);
-            const Icon = vehicle.icon && ICON_MAP[vehicle.icon] ? ICON_MAP[vehicle.icon] : Car;
+            const Icon = vehicle.icon && ICON_MAP[vehicle.icon] ? ICON_MAP[vehicle.icon] : ICON_MAP[DEFAULT_ICON];
             return (
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center border border-[#f0f0f0] shadow-sm shrink-0"
