@@ -1,5 +1,10 @@
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit-table';
+import path from 'path';
+
+// ── Font paths for Vietnamese diacritics support ────────────────────────
+const FONT_REGULAR = path.join(__dirname, '..', 'assets', 'fonts', 'Roboto-Regular.ttf');
+const FONT_BOLD = path.join(__dirname, '..', 'assets', 'fonts', 'Roboto-Bold.ttf');
 
 // ── Interfaces for type-safety ──────────────────────────────────────────
 
@@ -63,6 +68,19 @@ interface ComprehensiveReportData {
 }
 
 type ReportData = RevenueReportData | TrafficReportData | OccupancyReportData | PeakHoursReportData;
+
+// ── Shared table options to force Vietnamese-compatible font ────────────
+const TABLE_OPTIONS = {
+  prepareHeader: function(this: any) { this.font('Roboto-Bold').fontSize(8); },
+  prepareRow: function(this: any) { this.font('Roboto').fontSize(8); },
+};
+
+/** Helper to create a TitleObject with Vietnamese-compatible font */
+const makeTitle = (label: string) => ({
+  label,
+  fontFamily: 'Roboto-Bold',
+  fontSize: 12,
+});
 
 // ── Export Service ──────────────────────────────────────────────────────
 
@@ -175,62 +193,66 @@ export class ExportService {
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
-      doc.font('Helvetica-Bold').fontSize(18).text('BAO CAO TONG HOP', { align: 'center' });
-      doc.font('Helvetica').fontSize(10).text(`Ngay xuat: ${new Date().toLocaleDateString('vi-VN')}`, { align: 'center' });
+      // Register Vietnamese-compatible fonts
+      doc.registerFont('Roboto', FONT_REGULAR);
+      doc.registerFont('Roboto-Bold', FONT_BOLD);
+
+      doc.font('Roboto-Bold').fontSize(18).text('BÁO CÁO TỔNG HỢP', { align: 'center' });
+      doc.font('Roboto').fontSize(10).text(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`, { align: 'center' });
       doc.moveDown(1.5);
 
       // Section 1: Doanh Thu
       if (data.revenue?.byTimePeriod && data.revenue.byTimePeriod.length > 0) {
         const table1 = {
-          title: "1. DOANH THU THEO THOI GIAN",
-          headers: ["Thoi gian", "Tong doanh thu", "Giao dich", "Trung binh"],
+          title: makeTitle("1. DOANH THU THEO THỜI GIAN"),
+          headers: ["Thời gian", "Tổng doanh thu", "Giao dịch", "Trung bình"],
           rows: data.revenue.byTimePeriod.map((r: any) => [r.label, String(r.totalRevenue), String(r.transactionCount), String(r.avgRevenue)])
         };
-        doc.table(table1, { width: 500 });
+        doc.table(table1, { width: 500, ...TABLE_OPTIONS });
         doc.moveDown();
       }
 
       // Section 2: Theo Hình Thức TT
       if (data.revenue?.byMethod && data.revenue.byMethod.length > 0) {
         const table2 = {
-          title: "2. DOANH THU THEO HINH THUC THANH TOAN",
-          headers: ["Phuong thuc", "Tong doanh thu", "So giao dich"],
+          title: makeTitle("2. DOANH THU THEO HÌNH THỨC THANH TOÁN"),
+          headers: ["Phương thức", "Tổng doanh thu", "Số giao dịch"],
           rows: data.revenue.byMethod.map((r: any) => [r.method, String(r.totalRevenue), String(r.count)])
         };
-        doc.table(table2, { width: 500 });
+        doc.table(table2, { width: 500, ...TABLE_OPTIONS });
         doc.moveDown();
       }
 
       // Section 3: Lượt Xe
       if (data.traffic?.data && data.traffic.data.length > 0) {
         const table3 = {
-          title: "3. LUOT XE VAO RA",
-          headers: ["Thoi gian", "Xe vao", "Xe ra"],
+          title: makeTitle("3. LƯỢT XE VÀO RA"),
+          headers: ["Thời gian", "Xe vào", "Xe ra"],
           rows: data.traffic.data.map((r: any) => [r.label, String(r.checkIn), String(r.checkOut)])
         };
-        doc.table(table3, { width: 500 });
+        doc.table(table3, { width: 500, ...TABLE_OPTIONS });
         doc.moveDown();
       }
 
       // Section 4: Tỷ Lệ Lấp Đầy
       if (data.occupancy?.floors && data.occupancy.floors.length > 0) {
         const table4 = {
-          title: "4. TY LE LAP DAY",
-          headers: ["Bai xe", "Tang", "Tong", "Dang dung", "Trong", "Ty le (%)"],
+          title: makeTitle("4. TỶ LỆ LẤP ĐẦY"),
+          headers: ["Bãi xe", "Tầng", "Tổng", "Đang dùng", "Trống", "Tỷ lệ (%)"],
           rows: data.occupancy.floors.map((r: any) => [r.facilityName, r.floorName, String(r.total), String(r.occupied), String(r.available), String(r.occupancyRate)])
         };
-        doc.table(table4, { width: 500 });
+        doc.table(table4, { width: 500, ...TABLE_OPTIONS });
         doc.moveDown();
       }
 
       // Section 5: Khung Giờ Cao Điểm
       if (data.peakHours?.hourlyDistribution && data.peakHours.hourlyDistribution.length > 0) {
         const table5 = {
-          title: "5. KHUNG GIO CAO DIEM",
-          headers: ["Gio", "Xe vao", "Xe ra", "Tong"],
+          title: makeTitle("5. KHUNG GIỜ CAO ĐIỂM"),
+          headers: ["Giờ", "Xe vào", "Xe ra", "Tổng"],
           rows: data.peakHours.hourlyDistribution.map((r: any) => [r.label, String(r.checkIn), String(r.checkOut), String(r.totalActivity)])
         };
-        doc.table(table5, { width: 500 });
+        doc.table(table5, { width: 500, ...TABLE_OPTIONS });
       }
 
       doc.end();
@@ -292,6 +314,13 @@ export class ExportService {
     return Buffer.from(buffer as ArrayBuffer);
   }
 
+  private static readonly REPORT_TYPE_LABELS: Record<string, string> = {
+    'revenue': 'DOANH THU',
+    'traffic': 'LƯỢT XE VÀO RA',
+    'occupancy': 'TỶ LỆ LẤP ĐẦY',
+    'peak-hours': 'KHUNG GIỜ CAO ĐIỂM',
+  };
+
   private static async generatePdf(reportType: string, data: any): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ margin: 30, size: 'A4' });
@@ -300,39 +329,43 @@ export class ExportService {
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
-      // Simple font configuration - for a real app, a custom font supporting Vietnamese is needed
-      // Here we rely on standard fonts, which might lack full UTF-8 accent support.
-      doc.font('Helvetica-Bold').fontSize(18).text(`Bao Cao ${reportType.toUpperCase()}`, { align: 'center' });
+      // Register Vietnamese-compatible fonts
+      doc.registerFont('Roboto', FONT_REGULAR);
+      doc.registerFont('Roboto-Bold', FONT_BOLD);
+
+      const reportLabel = this.REPORT_TYPE_LABELS[reportType] || reportType.toUpperCase();
+      doc.font('Roboto-Bold').fontSize(18).text(`Báo Cáo ${reportLabel}`, { align: 'center' });
+      doc.font('Roboto').fontSize(10).text(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`, { align: 'center' });
       doc.moveDown();
 
       if (reportType === 'revenue' && data.byTimePeriod) {
         const table = {
-          title: "Doanh thu theo thoi gian",
-          headers: ["Thoi gian", "Tong doanh thu", "Giao dich", "Trung binh"],
+          title: makeTitle("Doanh thu theo thời gian"),
+          headers: ["Thời gian", "Tổng doanh thu", "Giao dịch", "Trung bình"],
           rows: data.byTimePeriod.map((r: any) => [r.label, String(r.totalRevenue), String(r.transactionCount), String(r.avgRevenue)])
         };
-        doc.table(table, { width: 500 });
+        doc.table(table, { width: 500, ...TABLE_OPTIONS });
       } else if (reportType === 'traffic' && data.data) {
         const table = {
-          title: "Luot xe vao ra",
-          headers: ["Thoi gian", "Xe vao", "Xe ra"],
+          title: makeTitle("Lượt xe vào ra"),
+          headers: ["Thời gian", "Xe vào", "Xe ra"],
           rows: data.data.map((r: any) => [r.label, String(r.checkIn), String(r.checkOut)])
         };
-        doc.table(table, { width: 500 });
+        doc.table(table, { width: 500, ...TABLE_OPTIONS });
       } else if (reportType === 'occupancy' && data.floors) {
         const table = {
-          title: "Ty le lap day",
-          headers: ["Bai xe", "Tang", "Tong", "Dang dung", "Trong", "Ty le (%)"],
+          title: makeTitle("Tỷ lệ lấp đầy"),
+          headers: ["Bãi xe", "Tầng", "Tổng", "Đang dùng", "Trống", "Tỷ lệ (%)"],
           rows: data.floors.map((r: any) => [r.facilityName, r.floorName, String(r.total), String(r.occupied), String(r.available), String(r.occupancyRate)])
         };
-        doc.table(table, { width: 500 });
+        doc.table(table, { width: 500, ...TABLE_OPTIONS });
       } else if (reportType === 'peak-hours' && data.hourlyDistribution) {
         const table = {
-          title: "Khung gio",
-          headers: ["Gio", "Vao", "Ra", "Tong"],
+          title: makeTitle("Khung giờ cao điểm"),
+          headers: ["Giờ", "Vào", "Ra", "Tổng"],
           rows: data.hourlyDistribution.map((r: any) => [r.label, String(r.checkIn), String(r.checkOut), String(r.totalActivity)])
         };
-        doc.table(table, { width: 500 });
+        doc.table(table, { width: 500, ...TABLE_OPTIONS });
       }
 
       doc.end();
