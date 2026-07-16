@@ -267,7 +267,7 @@ _L2D = {'O': '0', 'I': '1', 'B': '8', 'S': '5', 'Z': '2',    # letter→digit (d
 # PP = province (2 digits), L = series letter(s), D = optional digit, N = digits
 _VN_PLATE_RE = re.compile(
     r'^(?:'
-    r'\d{2}[A-Z]\d?-[\d.]{4,8}'      # Type A/A2: 30K-555.55, 63B9-1234
+    r'\d{2}[A-Z]{1,2}\d?-[\d.]{4,8}'      # Type A/A2: 30K-555.55, 63B9-1234, 66AA-138.61
     r'|'
     r'\d{2}-[A-Z]{1,2}[\d.]{4,6}'    # Type B: 30-A12345, 30-AB1234
     r')$'
@@ -284,9 +284,9 @@ def fix_vn_plate(raw: str) -> str:
 
     # 1b. Phat hien space lam ranh gioi series/so truoc khi xoa space
     #     Vi du: "63-B9 999.99" → space sau "B9" la ranh gioi → "63-B9-999.99"
-    #     Pattern: DD-LD<space>NNN  hoac  DD-L<space>NNN
-    s = re.sub(r'^(\d{2}-[A-Z]\d?) (\d)', r'\1-\2', s)  # "63-B9 999" → "63-B9-999"
-    s = re.sub(r'^(\d{2}[A-Z]\d?) (\d)', r'\1-\2', s)   # "63B9 999" → "63B9-999"
+    #     Pattern: DD-LD<space>NNN  hoac  DD-L<space>NNN hoac DD-LL<space>NNN
+    s = re.sub(r'^(\d{2}-[A-Z]{1,2}\d?) (\d)', r'\1-\2', s)
+    s = re.sub(r'^(\d{2}[A-Z]{1,2}\d?) (\d)', r'\1-\2', s)
 
     s = s.replace(' ', '')  # remove spaces for parsing
 
@@ -321,28 +321,24 @@ def fix_vn_plate(raw: str) -> str:
     if series and series[0] in _D2L:
         series[0] = _D2L[series[0]]
 
-    # 6. Neu series rong ma number bat dau bang letter → do la series letter (Type B plate)
-    #    Rules:
-    #      PP-L + 5digits    → 1-char series  e.g. 30-K12345
-    #      PP-L + NNNN.NN    → 1-char series  e.g. 51-G1234.56 (4 digits before dot)
-    #      PP-LD + NNN.NN    → 2-char series  e.g. 63-B9999.99 → series=B9, num=999.99
-    #      (Space separator already converted to dash in step 1b, so number_raw has no spaces)
-    if not series and number_raw and number_raw[0].isalpha():
+    # 6. Neu series rong ma number bat dau bang letter (hoac so giong letter) → do la series letter (Type B plate)
+    if not series and number_raw and (number_raw[0].isalpha() or number_raw[0] in _D2L):
         after_letter = number_raw[1:]
         has_dot = '.' in after_letter
         pure_digits = len(re.sub(r'[^0-9]', '', after_letter))
 
-        # Neu after_letter co >= 5 pure digits → 1-char series
-        # (K12345: 5 digits, G1234.56: 6 digits total, G123.45: 5 digits total)
-        # Neu after_letter co == 4 pure digits va bat dau bang digit → 2-char series
-        # (B9999.99: bat dau = 9, pure_digits sau do = 4 → series = B9)
-        is_two_char = (
-            after_letter
-            and after_letter[0].isdigit()
-            and pure_digits == 4
-        )
+        is_two_char = False
+        if pure_digits >= 6:
+            is_two_char = True
+        elif pure_digits == 5 and not has_dot:
+            # Assume 1-char series + 5 digits is more common
+            is_two_char = False
+            
+        # Neu ki tu thu hai sau so dau tien cung giong chu cai, ep kieu no luon
+        if after_letter and (after_letter[0].isalpha() or after_letter[0] in _D2L):
+            is_two_char = True
 
-        if is_two_char:
+        if is_two_char and after_letter:
             series = [number_raw[0], after_letter[0]]
             number_raw = after_letter[1:]
         else:
@@ -414,8 +410,9 @@ def detect_plates(img: np.ndarray, conf_thresh: float = 0.35) -> list:
             det_conf = float(box.conf[0])
 
             # Proportional padding (PP. [2])
-            pw = max(6, int((x2 - x1) * 0.06))
-            ph = max(4, int((y2 - y1) * 0.10))
+            # Tăng padding lên 15% chiều ngang và 20% chiều dọc để DBNet không bị cắt lẹm viền chữ số
+            pw = max(6, int((x2 - x1) * 0.15))
+            ph = max(4, int((y2 - y1) * 0.40))
             x1 = max(0, x1 - pw)
             y1 = max(0, y1 - ph)
             x2 = min(w, x2 + pw)
@@ -432,33 +429,44 @@ def detect_plates(img: np.ndarray, conf_thresh: float = 0.35) -> list:
 # ── Multi-pass OCR với early-exit ─────────────────────────────────────────────
 
 _RESIZE_MAX_W  = 640
-_EARLY_EXIT    = 0.80   # exit ngay khi dat nguong nay (cao hon vi dang OCR crop nho)
+_EARLY_EXIT    = 0.88   # exit ngay khi dat nguong nay (tang len 0.88 de cho phep chay them cac buoc xu ly hinh anh cho cac bien so hoi mo hoac bi nham 5 va 3)
 
 
-def _resize(img: np.ndarray, max_w: int = _RESIZE_MAX_W) -> np.ndarray:
+def _resize(img: np.ndarray, min_w: int = 480) -> np.ndarray:
+    """
+    Chỉ upscale ảnh nếu quá nhỏ để cải thiện OCR. 
+    Không downscale ảnh lớn vì sẽ làm mất chi tiết chữ số (đặc biệt số 5).
+    """
     h, w = img.shape[:2]
-    if w > max_w:
-        scale = max_w / w
-        img = cv2.resize(img, (max_w, int(h * scale)), interpolation=cv2.INTER_AREA)
+    if w < min_w:
+        scale = min_w / w
+        img = cv2.resize(img, (min_w, int(h * scale)), interpolation=cv2.INTER_CUBIC)
     return img
+
+
+def preprocess_binary(img: np.ndarray) -> np.ndarray:
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR)
 
 
 def ocr_image(img: np.ndarray) -> tuple[str, float]:
     """
     Multi-pass OCR voi lazy preprocessing va early-exit.
-    Uu tien original → normal → morph → glare → dark.
+    Uu tien original → binary → normal → morph → glare → dark.
     """
     img = _resize(img)
 
     preprocessors = [
         ("original", lambda: img),
+        ("binary",   lambda: preprocess_binary(img)),
         ("normal",   lambda: preprocess_normal(img)),
         ("morph",    lambda: preprocess_morph(img)),
         ("glare",    lambda: preprocess_glare(img)),
         ("dark",     lambda: preprocess_dark(img)),
     ]
 
-    best = None  # (text, conf)
+    best = None  # (text, conf, valid)
 
     for name, make_img in preprocessors:
         try:
@@ -469,23 +477,53 @@ def ocr_image(img: np.ndarray) -> tuple[str, float]:
                 continue
 
             raw  = assemble_rows(items)
-            text = fix_vn_plate(raw)
-            conf = avg_conf(items)
+            words = raw.split()
+            
+            best_sub_text, found_valid = "", False
+            for length in range(1, min(5, len(words) + 1)):
+                for i in range(len(words) - length + 1):
+                    sub_raw = " ".join(words[i:i+length])
+                    sub_text = fix_vn_plate(sub_raw)
+                    if is_valid_vn_plate(sub_text):
+                        best_sub_text = sub_text
+                        found_valid = True
+                        break
+                if found_valid:
+                    break
+                    
+            if found_valid:
+                text = best_sub_text
+                conf = avg_conf(items)
+                valid = True
+            else:
+                text = fix_vn_plate(raw)
+                conf = avg_conf(items)
+                valid = is_valid_vn_plate(text)
+
             alnum = re.sub(r'[^A-Z0-9]', '', text)
 
             if len(alnum) >= 4:
-                print(f"    [{name}] → '{text}' (conf={conf:.3f}, valid={is_valid_vn_plate(text)})")
+                print(f"    [{name}] → '{text}' (conf={conf:.3f}, valid={valid})")
+                
                 # Prefer valid VN plates; otherwise track best by conf
-                if best is None or conf > best[1]:
-                    best = (text, conf)
-                if conf >= _EARLY_EXIT:
+                if best is None:
+                    best = (text, conf, valid)
+                else:
+                    best_text, best_conf, best_valid = best
+                    if valid and not best_valid:
+                        best = (text, conf, valid)
+                    elif valid == best_valid and conf > best_conf:
+                        best = (text, conf, valid)
+                        
+                # Only early exit if the plate is actually valid
+                if conf >= _EARLY_EXIT and valid:
                     print(f"    [early-exit] conf={conf:.3f}")
-                    return best
+                    return (best[0], best[1])
 
         except Exception as e:
             print(f"    [{name}] OCR error: {e}")
 
-    return best if best else ("", 0.0)
+    return (best[0], best[1]) if best else ("", 0.0)
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -537,7 +575,7 @@ async def predict(file: UploadFile = File(...)):
                 })
 
         # ── Stage 2: Fallback — full-image OCR ────────────────────────────
-        if not all_results:
+        if not any(r["valid"] for r in all_results):
             print("[ALPR] Fallback: full-image OCR")
             text, conf = ocr_image(img)
             if text:
