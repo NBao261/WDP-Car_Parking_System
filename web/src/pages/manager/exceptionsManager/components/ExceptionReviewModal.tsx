@@ -4,6 +4,7 @@ import {
   EXCEPTION_STATUS_LABELS,
   EXCEPTION_TYPE_LABELS,
   ExceptionStatus,
+  ExceptionType,
 } from '../../../../services/exception.service';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
