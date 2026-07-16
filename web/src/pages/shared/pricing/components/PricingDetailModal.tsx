@@ -7,7 +7,6 @@ import {
   Building2,
   MapPin,
   Calendar,
-  Car,
   ShieldCheck,
   Moon,
   CreditCard,
@@ -20,7 +19,7 @@ import {
 import { pricingService, PricingPlan } from '../../../../services/pricing.service';
 import { Facility } from '../../../../services/facility.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { ICON_MAP, getVehicleColorTheme } from '../../../shared/vehicles/components/constants';
+import { ICON_MAP, getVehicleColorTheme, DEFAULT_ICON } from '../../../shared/vehicles/components/constants';
 import { FEE_TYPE_LABELS, mapToUiType } from './constants';
 
 interface PricingDetailModalProps {
@@ -73,7 +72,7 @@ export function PricingDetailModal({
       : (facilities.find((f) => f._id === facId)?.address ?? '');
 
   const uiFeeType = mapToUiType(plan.feeType, plan.feeMethod || '');
-  const VtIcon = vtIconKey && ICON_MAP[vtIconKey] ? ICON_MAP[vtIconKey] : Car;
+  const VtIcon = vtIconKey && ICON_MAP[vtIconKey] ? ICON_MAP[vtIconKey] : ICON_MAP[DEFAULT_ICON];
   const fmt = (n: number) => n.toLocaleString('vi-VN') + ' đ';
 
   const translateUnit = (unit: string) => {
@@ -222,7 +221,7 @@ export function PricingDetailModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase mb-1.5 flex items-center gap-1.5">
-                      <Car size={14} /> Loại xe
+                      <VtIcon size={14} /> Loại xe
                     </p>
                     <div className="flex items-center">
                       {(() => {
