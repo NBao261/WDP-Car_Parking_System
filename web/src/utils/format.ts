@@ -26,7 +26,7 @@ export function formatPlate(raw: string): string {
       if (suffixClean.length === 4) {
          formatted += suffixClean;
       } else if (suffixClean.length >= 5) {
-         formatted += `${suffixClean.substring(0, 3)}.${suffixClean.substring(3, 5)}`;
+         formatted += `${suffixClean.substring(0, 3)}.${suffixClean.substring(3)}`;
       } else {
          formatted += suffixClean;
       }
@@ -51,7 +51,7 @@ export function formatPlate(raw: string): string {
       formatted += tail;
     } else if (tail.length >= 5) {
       // 5 số thì thêm dấu chấm sau 3 số đầu
-      formatted += `${tail.substring(0, 3)}.${tail.substring(3, 5)}`;
+      formatted += `${tail.substring(0, 3)}.${tail.substring(3)}`;
     } else {
       formatted += tail;
     }
