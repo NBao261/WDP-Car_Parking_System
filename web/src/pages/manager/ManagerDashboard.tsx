@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Clock,
   Download,
@@ -24,8 +24,6 @@ import { toast } from 'sonner';
 import { FacilityListWidget } from './components/FacilityListWidget';
 import { TrafficChartWidget } from './components/DashboardCharts';
 import { TabbedInsightWidget } from './components/TabbedInsightWidget';
-import { OccupancyHorizontalBar } from './components/OccupancyHorizontalBar';
-import { AuditLogWidget } from './components/AuditLogWidget';
 import { AIChatWidget } from './components/AIChatWidget';
 import { CustomDropdown } from '../../components/ui/CustomDropdown';
 
@@ -80,7 +78,7 @@ function getRevenueFontSize(value: number): string {
 
 export default function ManagerDashboard() {
   const { user } = useAuthStore();
-  const managerFacilities = (user?.assignedFacilities ?? []) as AssignedFacility[];
+  const managerFacilities = useMemo(() => (user?.assignedFacilities ?? []) as AssignedFacility[], [user?.assignedFacilities]);
 
   const [timeFilter, setTimeFilter] = useState('today');
   const [facilityFilter, setFacilityFilter] = useState('all');
@@ -91,6 +89,7 @@ export default function ManagerDashboard() {
   const [occupancyData, setOccupancyData] = useState<OccupancyReportData | null>(null);
   const [peakHoursData, setPeakHoursData] = useState<PeakHoursReportData | null>(null);
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
+  const [facilityRevenues, setFacilityRevenues] = useState<Record<string, number>>({});
 
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -124,12 +123,22 @@ export default function ManagerDashboard() {
       setOccupancyData(occupancyRes.status === 'fulfilled' ? occupancyRes.value.data : null);
       setPeakHoursData(peakRes.status === 'fulfilled' ? peakRes.value.data : null);
       setVehicleTypes(vehicleTypesRes.status === 'fulfilled' ? vehicleTypesRes.value.data : []);
+
+      const revPromises = managerFacilities.map((f: AssignedFacility) => 
+        reportService.getRevenueReport({ startDate, endDate, groupBy, facilityId: f._id })
+          .then(res => ({ id: f._id, total: res.data.summary.grandTotal }))
+          .catch(() => ({ id: f._id, total: 0 }))
+      );
+      const revResults = await Promise.all(revPromises);
+      const revRecord: Record<string, number> = {};
+      revResults.forEach((r: { id: string; total: number }) => revRecord[r.id] = r.total);
+      setFacilityRevenues(revRecord);
     } catch (err) {
       console.error('Failed to fetch dashboard data', err);
     } finally {
       setLoading(false);
     }
-  }, [timeFilter, facilityFilter]);
+  }, [timeFilter, facilityFilter, managerFacilities]);
 
   useEffect(() => {
     fetchStaff();
@@ -203,7 +212,7 @@ export default function ManagerDashboard() {
             onChange={setFacilityFilter}
             options={[
               { label: 'Tất cả tòa nhà', value: 'all' },
-              ...managerFacilities.map((f) => ({ label: f.name, value: f._id })),
+              ...managerFacilities.map((f: AssignedFacility) => ({ label: f.name, value: f._id })),
             ]}
           />
 
@@ -383,22 +392,12 @@ export default function ManagerDashboard() {
         </div>
 
         {/* ROW 3: Facilities */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-4 border-t border-gray-100">
-          <div className="lg:col-span-6">
-            <FacilityListWidget
-              managerFacilities={managerFacilities}
-              staffList={staffList}
-              revenueData={revenueData}
-            />
-          </div>
-          <div className="lg:col-span-6">
-            <OccupancyHorizontalBar occupancyData={occupancyData} loading={loading} />
-          </div>
-        </div>
-
-        {/* ROW 4: Audit Logs */}
         <div className="pt-4 border-t border-gray-100">
-          <AuditLogWidget />
+          <FacilityListWidget
+            managerFacilities={managerFacilities}
+            staffList={staffList}
+            facilityRevenues={facilityRevenues}
+          />
         </div>
       </div>
 

@@ -14,13 +14,13 @@ export function CheckInHeader({
   ocrSuccess,
 }: CheckInHeaderProps) {
   return (
-    <div className="flex justify-between items-center mb-[20px] shrink-0">
+    <div className="flex justify-between items-center mb-6 shrink-0">
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        <div className="w-7 h-7 rounded-md border border-[#9FE870] bg-[#9FE870] flex items-center justify-center text-[#062F28] shrink-0">
+        <div className="w-9 h-9 rounded-md border border-[#9FE870] bg-[#9FE870] flex items-center justify-center text-[#062F28] shrink-0">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -34,17 +34,17 @@ export function CheckInHeader({
           </svg>
         </div>
         <div className="flex flex-col min-w-0">
-          <h2 className="text-[14px] font-bold text-[#060606] uppercase leading-tight tracking-tight truncate">
+          <h2 className="text-base font-bold text-[#060606] uppercase leading-tight tracking-tight truncate">
             Đăng Ký Xe Vào
           </h2>
-          <div className="flex items-center gap-1.5 text-[10px] text-[#888] font-medium mt-0.5 whitespace-nowrap overflow-hidden">
-            <span className="flex items-center gap-1 truncate">
-              <Building2 className="w-3 h-3 text-[#aaa] shrink-0" />{' '}
+          <div className="flex items-center gap-1.5 text-xs text-[#888] font-medium mt-1 whitespace-nowrap overflow-hidden">
+            <span className="flex items-center gap-1.5 truncate">
+              <Building2 className="w-3.5 h-3.5 text-[#aaa] shrink-0" />{' '}
               <span className="truncate">Tòa nhà: {facilityName}</span>
             </span>
             <span className="text-[#ccc] shrink-0">|</span>
-            <span className="flex items-center gap-1 truncate">
-              <DoorOpen className="w-3 h-3 text-[#aaa] shrink-0" />{' '}
+            <span className="flex items-center gap-1.5 truncate">
+              <DoorOpen className="w-3.5 h-3.5 text-[#aaa] shrink-0" />{' '}
               <span className="truncate">Cổng: {gateIn}</span>
             </span>
           </div>
@@ -53,7 +53,7 @@ export function CheckInHeader({
 
       <div className="flex-none ml-3">
         <div
-          className={`h-7 px-3 rounded-[4px] text-[12px] font-bold flex items-center justify-center transition-colors ${
+          className={`h-9 px-4 rounded-md text-[13px] font-bold flex items-center justify-center transition-colors ${
             checkInImage && !ocrSuccess
               ? 'bg-[#fdebea] text-[#d32f2f] border border-[#d32f2f]'
               : ocrSuccess

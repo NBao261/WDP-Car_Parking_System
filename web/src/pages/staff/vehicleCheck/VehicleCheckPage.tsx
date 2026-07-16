@@ -38,9 +38,9 @@ export default function VehicleCheckPage() {
   }, []);
 
   return (
-    <div ref={containerRef} className="flex flex-col flex-1 h-full min-h-0 bg-[#eff0ef] font-sans pt-2 overflow-hidden">
+    <div ref={containerRef} className="flex flex-col flex-1 h-full min-h-0 bg-[#eff0ef] font-sans pt-4 overflow-y-auto xl:overflow-hidden">
       <Toaster position="top-right" richColors />
-      <div className="flex-1 grid grid-cols-2 gap-2 px-2 pb-2 min-h-0 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 xl:grid-cols-2 gap-4 px-4 pb-4 min-h-0 overflow-y-auto xl:overflow-hidden">
         <LeftContainer checkInResult={checkInResult} setCheckInResult={setCheckInResult} />
         <RightContainer
           coPlateCam={coPlateCam} setCoPlateCam={setCoPlateCam}

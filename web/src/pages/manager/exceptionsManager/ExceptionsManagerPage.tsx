@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { AssignedFacility } from '../../../types/user.types';
 
 import {
   ShieldAlert,
@@ -23,7 +25,6 @@ import {
 } from '../../../services/exception.service';
 import { ExceptionFilterBar } from './components/ExceptionFilterBar';
 import { ExceptionReviewModal } from './components/ExceptionReviewModal';
-import { facilityService, Facility } from '../../../services/facility.service';
 
 export default function ExceptionsManagerPage() {
   const [allExceptions, setAllExceptions] = useState<IException[]>([]);
@@ -34,7 +35,8 @@ export default function ExceptionsManagerPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<ExceptionType | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<ExceptionStatus | 'all'>('all');
-  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const { user } = useAuthStore();
+  const facilities = useMemo(() => (user?.assignedFacilities ?? []) as AssignedFacility[], [user?.assignedFacilities]);
   const [filterFacility, setFilterFacility] = useState<string>('all');
   const [sortValue, setSortValue] = useState('createdAt_desc');
 
@@ -71,17 +73,6 @@ export default function ExceptionsManagerPage() {
     setPage(1);
   }, [filterType, filterStatus, filterFacility, searchTerm, sortValue]);
 
-  useEffect(() => {
-    const fetchFacilities = async () => {
-      try {
-        const res = await facilityService.getAll({ limit: 1000 });
-        if (res.data) setFacilities(res.data);
-      } catch (err) {
-        console.error('Failed to load facilities', err);
-      }
-    };
-    fetchFacilities();
-  }, []);
 
   const fetchExceptions = async () => {
     setLoading(true);
