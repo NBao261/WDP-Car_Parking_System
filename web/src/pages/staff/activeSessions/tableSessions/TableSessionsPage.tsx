@@ -20,7 +20,7 @@ export default function TableSessionsPage({ onTotalChange }: { onTotalChange?: (
   const currentData = logic.filteredSessions.slice((logic.currentPage - 1) * logic.itemsPerPage, logic.currentPage * logic.itemsPerPage);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full overflow-hidden relative">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col relative">
       <div className="px-4 py-2.5 border-b border-gray-200 flex items-center justify-between gap-4 flex-wrap bg-[#f5f5f5]">
         <div className="relative max-w-sm w-full">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />

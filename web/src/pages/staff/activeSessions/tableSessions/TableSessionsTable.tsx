@@ -15,7 +15,7 @@ export function TableSessionsTable({
   currentPage, itemsPerPage
 }: any) {
   return (
-    <div className="overflow-x-auto flex-1">
+    <div className="overflow-x-auto">
       <table className="w-full min-w-[1040px] table-fixed text-left text-sm whitespace-nowrap">
         <thead className="sticky top-0 bg-white z-10">
           <tr className="bg-[#f5f5f5] border-b border-[#e8e9e8] text-left">
