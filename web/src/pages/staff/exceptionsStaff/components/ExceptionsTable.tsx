@@ -1,4 +1,5 @@
-import React, { Fragment } from 'react';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { Loader2, ShieldAlert, X } from 'lucide-react';
 import { SortButton, FilterDropdown } from './ExceptionsFilters';
 
@@ -129,7 +130,7 @@ export function ExceptionsTable({
             </th>
           </tr>
         </thead>
-        <tbody className="">
+        <tbody className="divide-y divide-gray-50 relative">
           {isLoading ? (
             <tr>
               <td colSpan={9} className="px-6 py-12 text-center">
@@ -154,8 +155,14 @@ export function ExceptionsTable({
               const typeBadge = TYPE_BADGE[exc.typeEnum] || TYPE_BADGE.default;
               const stt = (currentPage - 1) * itemsPerPage + index + 1;
               return (
-                <Fragment key={exc.id}>
-                  <tr className="hover:bg-[#f5ffe8] transition-colors">
+              <motion.tr 
+                layout
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                key={exc.id}
+                className="hover:bg-[#f5ffe8] transition-colors group cursor-pointer"
+              >
                     <td className="px-4 py-4 text-[#6b6b6b] text-[13px] text-center font-medium truncate">
                       {stt}
                     </td>
@@ -204,16 +211,8 @@ export function ExceptionsTable({
                         Chi tiết
                       </button>
                     </td>
-                  </tr>
-                  {index < currentData.length - 1 && (
-                    <tr>
-                      <td colSpan={9} className="p-0">
-                        <div className="mx-4 border-b border-gray-200"></div>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
+              </motion.tr>
+            );
             })
           )}
         </tbody>

@@ -54,7 +54,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/manager/vehicles', label: 'Loại Xe', icon: Car, roles: [UserRole.MANAGER], category: 'MENU CHÍNH' },
   {
     path: '/manager/exceptions',
-    label: 'Quản Lý Ngoại Lệ',
+    label: 'Quản Lý Sự Cố',
     icon: AlertTriangle,
     roles: [UserRole.MANAGER],
     category: 'MENU CHÍNH',
@@ -65,7 +65,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/staff/active-sessions', label: 'Xe Đang Gửi', icon: Car, roles: [UserRole.STAFF], category: 'MENU CHÍNH' },
   {
     path: '/staff/exceptions',
-    label: 'Xử Lý Ngoại Lệ',
+    label: 'Xử Lý Sự Cố',
     icon: AlertTriangle,
     roles: [UserRole.STAFF],
     category: 'MENU CHÍNH',

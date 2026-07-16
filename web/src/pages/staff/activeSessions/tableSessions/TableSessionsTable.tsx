@@ -1,4 +1,5 @@
-import React, { Fragment } from 'react';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import { SortButton, FilterDropdown, SearchHeaderInput } from './TableSessionsFilters';
 import { calculateDuration, getActiveBadgeClasses } from './TableSessionsUtils';
@@ -38,12 +39,18 @@ export function TableSessionsTable({
             </th>
           </tr>
         </thead>
-        <tbody className="">
+        <tbody className="divide-y divide-gray-50 relative">
           {currentData.map((session:any, index:number) => {
             const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
             return (
-              <Fragment key={session._id}>
-                <tr className="hover:bg-[#f5ffe8] transition-colors">
+              <motion.tr 
+                layout
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                key={session._id}
+                className="hover:bg-[#9FE870]/10 transition-colors group"
+              >
                   <td className="px-4 py-4 text-[#6b6b6b] text-[13px] text-center font-medium truncate">{globalIndex}</td>
                   <td className="px-4 py-4 text-[#060606] font-medium text-sm truncate">{session.cardCode || session.code}</td>
                   <td className="px-4 py-4 font-mono font-bold text-[14px] text-[#060606] truncate">{session.licensePlate}</td>
@@ -62,15 +69,7 @@ export function TableSessionsTable({
                       Chi tiết
                     </button>
                   </td>
-                </tr>
-                {index < currentData.length - 1 && (
-                  <tr>
-                    <td colSpan={10} className="p-0">
-                      <div className="mx-4 border-b border-gray-200"></div>
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
+              </motion.tr>
             );
           })}
           {currentData.length === 0 && !loading && (<tr><td colSpan={10} className="px-5 py-12 text-center text-gray-400 text-sm">Không có phiên đỗ xe nào đang hoạt động</td></tr>)}

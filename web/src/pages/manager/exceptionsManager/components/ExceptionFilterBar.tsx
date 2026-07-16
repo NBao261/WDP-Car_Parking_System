@@ -178,6 +178,9 @@ interface ExceptionFilterBarProps {
   setFilterStatus: (status: ExceptionStatus | 'all') => void;
   filterType: ExceptionType | 'all';
   setFilterType: (type: ExceptionType | 'all') => void;
+  filterFacility: string;
+  setFilterFacility: (facilityId: string) => void;
+  facilities: any[];
   sortValue?: string;
   setSortValue?: (val: string) => void;
 }
@@ -189,6 +192,9 @@ export function ExceptionFilterBar({
   setFilterStatus,
   filterType,
   setFilterType,
+  filterFacility,
+  setFilterFacility,
+  facilities,
   sortValue = 'createdAt_desc',
   setSortValue,
 }: ExceptionFilterBarProps) {
@@ -201,10 +207,18 @@ export function ExceptionFilterBar({
   ];
 
   const typeOptions = [
-    { value: 'all', label: 'Tất cả loại ngoại lệ' },
+    { value: 'all', label: 'Tất cả loại sự cố' },
     ...Object.values(ExceptionType).map((type) => ({
       value: type,
       label: EXCEPTION_TYPE_LABELS[type],
+    })),
+  ];
+
+  const facilityOptions = [
+    { value: 'all', label: 'Tất cả tòa nhà' },
+    ...facilities.map((f) => ({
+      value: f._id,
+      label: f.name,
     })),
   ];
 
@@ -276,11 +290,22 @@ export function ExceptionFilterBar({
         </div>
 
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          {/* Facility Filter */}
+          <div className="relative w-auto sm:w-48 shrink-0">
+            <DropFilter
+              width="100%"
+              label="Tòa nhà"
+              value={filterFacility}
+              onChange={setFilterFacility}
+              options={facilityOptions}
+            />
+          </div>
+
           {/* Type Filter */}
           <div className="relative w-auto sm:w-48 shrink-0">
             <DropFilter
               width="100%"
-              label="Loại ngoại lệ"
+              label="Loại sự cố"
               value={filterType}
               onChange={(v) => setFilterType(v as ExceptionType | 'all')}
               options={typeOptions}
@@ -303,12 +328,14 @@ export function ExceptionFilterBar({
       {/* Only show Clear Filters Button if any filters are applied */}
       {(searchTerm ||
         filterType !== 'all' ||
+        filterFacility !== 'all' ||
         filterStatus !== 'all') && (
         <div style={{ display: 'flex', width: '100%' }}>
             <button
               onClick={() => {
                 setSearchTerm('');
                 setFilterType('all');
+                setFilterFacility('all');
                 setFilterStatus('all');
               }}
               style={{

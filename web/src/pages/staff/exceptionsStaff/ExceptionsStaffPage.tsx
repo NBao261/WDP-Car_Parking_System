@@ -97,10 +97,9 @@ export default function ExceptionsStaffPage() {
   const fetchExceptions = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params: any = { sortBy: 'createdAt', sortOrder: 'desc', limit: 50 };
-      if (filterStatus !== 'ALL') params.status = filterStatus.toLowerCase();
+      const params: any = { sortBy: 'createdAt', sortOrder: 'desc', limit: 1000 };
 
-      // Sử dụng API thực tế thay vì mock data để có thể thấy ngoại lệ mới tạo
+      // Sử dụng API thực tế thay vì mock data để có thể thấy sự cố mới tạo
       const [res, pricingRes]: [any, any] = await Promise.all([
         exceptionService.getExceptions(params),
         pricingService.getAll({ limit: 100 }),
@@ -132,7 +131,7 @@ export default function ExceptionsStaffPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [filterStatus]);
+  }, []);
 
   useEffect(() => {
     fetchExceptions();
@@ -140,6 +139,7 @@ export default function ExceptionsStaffPage() {
 
   // Search filter (client-side)
   const filteredList = exceptionsList.filter((exc) => {
+    if (filterStatus !== 'ALL' && exc.status !== filterStatus) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (

@@ -75,7 +75,7 @@ export function ExceptionReviewModal({
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-gray-100">
           <div>
-            <h2 className="text-xl font-semibold text-gray-800">Xem lại Ngoại Lệ</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Xem lại Sự Cố</h2>
             <p className="text-sm text-gray-500 mt-1">
               Xem xét thông tin chi tiết và ghi lại đánh giá của bạn
             </p>
@@ -97,7 +97,7 @@ export function ExceptionReviewModal({
               <span className="font-semibold text-gray-800">{sessionCode}</span>
             </div>
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-              <span className="block text-xs font-medium text-gray-500 mb-1">Loại ngoại lệ</span>
+              <span className="block text-xs font-medium text-gray-500 mb-1">Loại sự cố</span>
               <span className="font-semibold text-gray-800">
                 {EXCEPTION_TYPE_LABELS[exception.type]}
               </span>

@@ -116,7 +116,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { id: PERMISSIONS.SESSION_CREATE, label: 'Tạo lượt gửi xe (Check-in)' },
       { id: PERMISSIONS.SESSION_READ, label: 'Xem lượt gửi xe' },
       { id: PERMISSIONS.SESSION_CLOSE, label: 'Kết thúc lượt gửi (Check-out)' },
-      { id: PERMISSIONS.SESSION_EXCEPTION, label: 'Xử lý ngoại lệ lượt gửi' },
+      { id: PERMISSIONS.SESSION_EXCEPTION, label: 'Xử lý sự cố lượt gửi' },
     ],
   },
   {
@@ -138,7 +138,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { id: PERMISSIONS.REPORT_TRAFFIC, label: 'Báo cáo lưu lượng xe' },
       { id: PERMISSIONS.REPORT_OCCUPANCY, label: 'Báo cáo tỷ lệ lấp đầy' },
       { id: PERMISSIONS.REPORT_PEAK_HOURS, label: 'Báo cáo giờ cao điểm' },
-      { id: PERMISSIONS.REPORT_EXCEPTIONS, label: 'Báo cáo ngoại lệ' },
+      { id: PERMISSIONS.REPORT_EXCEPTIONS, label: 'Báo cáo sự cố' },
     ],
   },
   {

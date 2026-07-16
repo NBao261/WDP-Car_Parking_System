@@ -227,7 +227,7 @@ export const router = createBrowserRouter([
                 ),
               },
 
-              // FR-7: Ngoại lệ (Manager)
+              // FR-7: Sự cố (Manager)
               {
                 path: 'exceptions',
                 element: (

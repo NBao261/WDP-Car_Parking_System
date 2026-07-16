@@ -91,7 +91,7 @@ export function ExceptionWidget({ facilityId }: { facilityId?: string }) {
     try {
       const res = await exceptionService.addManagerReview(exceptionId, { managerNote });
       if (res.success) {
-        toast.success('Đã lưu đánh giá ngoại lệ');
+        toast.success('Đã lưu đánh giá sự cố');
         setIsModalOpen(false);
         fetchExceptions(); // Reload list
       } else {
@@ -238,7 +238,7 @@ export function ExceptionWidget({ facilityId }: { facilityId?: string }) {
                   onClick={() => toggleSort('type')}
                 >
                   <span className="flex items-center gap-1.5">
-                    Loại ngoại lệ
+                    Loại sự cố
                     <ArrowUpDown
                       size={14}
                       className={sortField === 'type' ? 'text-white' : 'text-[#062F28]/40'}

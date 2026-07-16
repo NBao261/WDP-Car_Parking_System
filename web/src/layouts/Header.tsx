@@ -32,7 +32,7 @@ const PATH_TRANSLATIONS: Record<string, string> = {
   profile: 'Hồ sơ',
   support: 'Hỗ trợ',
   billing: 'Giao dịch',
-  exceptions: 'Ngoại lệ',
+  exceptions: 'Sự cố',
   customers: 'Khách hàng',
   config: 'Cấu hình',
   logs: 'Lịch sử hoạt động',

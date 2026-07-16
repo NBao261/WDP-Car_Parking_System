@@ -454,7 +454,7 @@ export default function StaffDetailPage() {
                   <div className="p-3 bg-gray-50 rounded-lg flex gap-3 items-center">
                     <CheckCircle2 size={16} className="text-[#9FE870]" />
                     <span className="text-sm font-medium text-gray-800">
-                      Ghi nhận ngoại lệ (Exception Handling)
+                      Ghi nhận sự cố (Exception Handling)
                     </span>
                   </div>
                 </div>
