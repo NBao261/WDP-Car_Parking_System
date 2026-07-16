@@ -75,7 +75,7 @@ export function useTableSessionsLogic(onTotalChange?: (total: number) => void) {
   const filteredSessions = sessions
     .filter(s => search === '' || s.licensePlate.toUpperCase().includes(search) || s.code.toUpperCase().includes(search))
     .filter(s => filterGate === 'All' || s.gateIn === filterGate)
-    .filter(s => filterLocation === 'All' || (s.floorId && s.slotId ? `${s.floorId.name} - ${s.slotId.code}` : '') === filterLocation)
+    .filter(s => filterLocation === 'All' || filterLocation === '' || (s.floorId && s.slotId ? `${s.floorId.name} - ${s.slotId.code}` : '').toUpperCase().includes(filterLocation.toUpperCase()))
     .filter(s => filterStatus === 'All' || s.status === filterStatus)
     .sort((a, b) => {
       if (!sortConfig) return new Date(b.checkInTime).getTime() - new Date(a.checkInTime).getTime();

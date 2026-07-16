@@ -525,7 +525,7 @@ export default function CheckOutPanel({
                 })()
               ) : (
                 <div className="flex flex-col items-center">
-                  <img src="/Logo_chu.png" alt="LYNC PARK" className="h-16 mb-2 object-contain" />
+                  <img src="/Logo_chu.png" alt="LYNC PARK" className="h-24 mb-2 object-contain" />
                   <ImagePlus className="w-4 h-4 text-[#6b6b6b] mb-2" />
                   <span className="text-[10px] font-semibold text-[#6b6b6b]">Ảnh biển số (OCR)</span>
                   <span className="text-[9px] text-[#aaa]">Chưa có dữ liệu</span>
@@ -547,7 +547,7 @@ export default function CheckOutPanel({
                   <RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" />
                 ) : (
                   <div className="flex flex-col items-center">
-                    <img src="/Logo_chu.png" alt="LYNC PARK" className="h-16 mb-2 object-contain" />
+                    <img src="/Logo_chu.png" alt="LYNC PARK" className="h-24 mb-2 object-contain" />
                     <ImagePlus className="w-4 h-4 text-[#aaa] mb-2" />
                     <span className="text-[10px] font-semibold text-[#6b6b6b]">Chụp / Upload ảnh biển số (OCR)</span>
                     <span className="text-[9px] text-[#aaa]">Hỗ trợ JPG, PNG — chụp thẳng góc, đủ sáng</span>

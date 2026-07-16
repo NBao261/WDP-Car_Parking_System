@@ -4,7 +4,7 @@ export function CheckOutHeader({ building, gateOut, currentSession }: any) {
   return (
     <div className="flex justify-between items-center mb-[20px] shrink-0">
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        <div className="w-7 h-7 rounded-md border border-[#A3E635]/50 bg-[#ECFCCB] flex items-center justify-center text-[#65A30D] shrink-0">
+        <div className="w-7 h-7 rounded-md border border-[#062F28] bg-[#062F28] flex items-center justify-center text-[#9FE870] shrink-0">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
