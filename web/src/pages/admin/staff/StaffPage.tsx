@@ -122,7 +122,7 @@ export default function StaffPage() {
       {/* Overview & RBAC Info Cards */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Tổng quan người dùng (Left, Green Card) */}
-        <div className="bg-[#9FE870] p-6 rounded-[24px] shadow-sm text-[#062F28] flex flex-col justify-between relative overflow-hidden min-h-[220px]">
+        <div className="bg-[#9FE870] p-6 rounded-[24px] shadow-sm text-[#062F28] flex flex-col justify-between relative overflow-hidden min-h-[180px]">
           {/* Decorative background shapes simulating the image's waves */}
           <div className="absolute -bottom-24 -left-12 w-64 h-64 rounded-full border-[30px] border-white/20 blur-[2px] pointer-events-none"></div>
           <div className="absolute -bottom-32 -right-10 w-80 h-80 rounded-full border-[40px] border-white/10 blur-[2px] pointer-events-none"></div>
@@ -137,9 +137,9 @@ export default function StaffPage() {
             </button>
           </div>
 
-          <div className="relative z-10 mt-2 mb-8">
+          <div className="relative z-10 mt-2 mb-4">
             <div className="text-[44px] leading-none font-bold flex items-baseline gap-2">
-              {pagination.total} <span className="text-[16px] font-medium opacity-90">STAFF</span>
+              {pagination.total} <span className="text-[16px] font-medium opacity-90">NHÂN SỰ</span>
             </div>
           </div>
 
@@ -167,14 +167,14 @@ export default function StaffPage() {
           <div className="absolute top-0 left-0 bg-[#9FE870] px-6 py-3 rounded-br-[24px] z-10">
             <h3 className="font-bold text-[15px] text-[#062F28]">Phân quyền hệ thống (RBAC)</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
-            {/* System Admin */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 relative z-10">
+            {/* Quản trị hệ thống */}
             <div className="p-5 bg-white rounded-[20px] border border-gray-100 hover:border-[#9FE870]/50 transition-colors shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center border border-red-100">
                   <ShieldAlert size={18} className="text-red-500" />
                 </div>
-                <span className="font-bold text-sm text-[#062F28]">System Admin</span>
+                <span className="font-bold text-sm text-[#062F28]">Quản trị hệ thống</span>
               </div>
               <div className="text-lg font-extrabold text-[#062F28] mb-1">Toàn quyền</div>
               <p className="text-[#6b6b6b] text-[11px] leading-relaxed font-semibold">
@@ -182,27 +182,27 @@ export default function StaffPage() {
               </p>
             </div>
 
-            {/* Facility Manager */}
+            {/* Quản lý bãi đỗ */}
             <div className="p-5 bg-white rounded-[20px] border border-gray-100 hover:border-[#9FE870]/50 transition-colors shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100">
                   <Shield size={18} className="text-blue-500" />
                 </div>
-                <span className="font-bold text-sm text-[#062F28]">Facility Manager</span>
+                <span className="font-bold text-sm text-[#062F28]">Quản lý Bãi Đỗ</span>
               </div>
-              <div className="text-lg font-extrabold text-[#062F28] mb-1">Quản lý bãi đỗ</div>
+              <div className="text-lg font-extrabold text-[#062F28] mb-1">Quản lý bãi đỗ xe</div>
               <p className="text-[#6b6b6b] text-[11px] leading-relaxed font-semibold">
                 Xem doanh thu, thiết lập và gán slot thẻ tháng.
               </p>
             </div>
 
-            {/* Parking Staff */}
+            {/* Nhân viên Bãi Đỗ */}
             <div className="p-5 bg-white rounded-[20px] border border-gray-100 hover:border-[#9FE870]/50 transition-colors shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-xl bg-[#9FE870]/20 flex items-center justify-center border border-[#9FE870]/30">
                   <User size={18} className="text-[#062F28]" />
                 </div>
-                <span className="font-bold text-sm text-[#062F28]">Parking Staff</span>
+                <span className="font-bold text-sm text-[#062F28]">Nhân viên Vận hành</span>
               </div>
               <div className="text-lg font-extrabold text-[#062F28] mb-1">Vận hành trực tiếp</div>
               <p className="text-[#6b6b6b] text-[11px] leading-relaxed font-semibold">
