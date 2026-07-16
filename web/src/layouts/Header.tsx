@@ -34,6 +34,8 @@ const PATH_TRANSLATIONS: Record<string, string> = {
   billing: 'Giao dịch',
   exceptions: 'Ngoại lệ',
   customers: 'Khách hàng',
+  config: 'Cấu hình',
+  logs: 'Lịch sử hoạt động',
 };
 
 interface HeaderProps {
