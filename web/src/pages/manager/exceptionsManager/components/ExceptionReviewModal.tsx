@@ -26,6 +26,7 @@ export function ExceptionReviewModal({
   isSubmitting,
 }: ExceptionReviewModalProps) {
   const [managerNote, setManagerNote] = useState(exception?.managerNote || '');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Reset form when exception changes
   useState(() => {
@@ -129,7 +130,10 @@ export function ExceptionReviewModal({
               {exception.checkInImage && (
                 <div className="flex flex-col">
                   <h3 className="text-sm font-medium text-gray-700 mb-2">Ảnh lúc vào bãi</h3>
-                  <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video border border-gray-100 shadow-sm">
+                  <div 
+                    className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video border border-gray-100 shadow-sm cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setSelectedImage(getImageUrl(exception.checkInImage as string))}
+                  >
                     <img 
                       src={getImageUrl(exception.checkInImage)} 
                       alt="Check In" 
@@ -141,7 +145,10 @@ export function ExceptionReviewModal({
               {exception.checkOutImage && (
                 <div className="flex flex-col">
                   <h3 className="text-sm font-medium text-gray-700 mb-2">Ảnh xử lý sự cố</h3>
-                  <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video border border-gray-100 shadow-sm">
+                  <div 
+                    className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video border border-gray-100 shadow-sm cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setSelectedImage(getImageUrl(exception.checkOutImage as string))}
+                  >
                     <img 
                       src={getImageUrl(exception.checkOutImage)} 
                       alt="Check Out" 
@@ -219,6 +226,35 @@ export function ExceptionReviewModal({
           </button>
         </div>
       </motion.div>
+
+      {/* Image Fullscreen Viewer */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4"
+            onClick={() => setSelectedImage(null)}
+          >
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-4 right-4 p-2 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-colors"
+            >
+              <X size={24} />
+            </button>
+            <motion.img
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              src={selectedImage}
+              alt="Fullscreen view"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()} // Prevent click from closing when clicking on the image itself
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 
