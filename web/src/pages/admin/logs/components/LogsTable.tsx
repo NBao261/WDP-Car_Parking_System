@@ -30,7 +30,7 @@ function SortIcon({
 }) {
   return (
     <span className="flex items-center gap-1.5">
-      <ArrowUpDown size={13} className={active ? 'text-[#9FE870]' : 'text-gray-300'} />
+      <ArrowUpDown size={14} className={active ? 'text-[#9FE870]' : 'text-gray-300'} />
       {active && (
         <span className="text-[10px] text-[#9FE870] font-bold">
           {field === 'createdAt' ? (dir === 'desc' ? '↓ Mới' : '↑ Cũ') : dir === 'asc' ? 'A-Z' : 'Z-A'}
@@ -68,7 +68,8 @@ export function LogsTable({ logs, isLoading, indexOffset }: LogsTableProps) {
     } else if (sortDir === (field === 'createdAt' ? 'desc' : 'asc')) {
       setSortDir(field === 'createdAt' ? 'asc' : 'desc');
     } else {
-      setSortField('none');
+      setSortField('createdAt');
+      setSortDir('desc');
     }
   };
 

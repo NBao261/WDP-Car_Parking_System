@@ -36,22 +36,22 @@ export function StaffTable({
   onAssignFacility,
   indexOffset = 0,
 }: StaffTableProps) {
-  const [sortField, setSortField] = useState<'name' | 'role' | 'lastLogin' | 'none'>('none');
+  const [sortField, setSortField] = useState<'name' | 'role' | 'lastLogin'>('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const toggleSort = (field: 'name' | 'role' | 'lastLogin') => {
     if (sortField !== field) {
       setSortField(field);
-      setSortDir('asc');
-    } else if (sortDir === 'asc') {
-      setSortDir('desc');
+      setSortDir(field === 'lastLogin' ? 'desc' : 'asc');
+    } else if (sortDir === (field === 'lastLogin' ? 'desc' : 'asc')) {
+      setSortDir(field === 'lastLogin' ? 'asc' : 'desc');
     } else {
-      setSortField('none');
+      setSortField('name');
+      setSortDir('asc');
     }
   };
 
   const sortedUsers = [...users].sort((a, b) => {
-    if (sortField === 'none') return 0;
     let aVal: any = a[sortField];
     let bVal: any = b[sortField];
 
@@ -95,7 +95,10 @@ export function StaffTable({
                 >
                   <span className="flex items-center gap-1.5">
                     Thông tin User
-                    <ArrowUpDown size={13} className={sortField === 'name' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'name' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    {sortField === 'name' && (
+                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                    )}
                   </span>
                 </th>
                 <th 
@@ -104,7 +107,10 @@ export function StaffTable({
                 >
                   <span className="flex items-center gap-1.5">
                     Vai trò
-                    <ArrowUpDown size={13} className={sortField === 'role' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'role' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    {sortField === 'role' && (
+                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                    )}
                   </span>
                 </th>
                 <th className="px-6 py-4 w-[15%] text-center">Phân công</th>
@@ -115,7 +121,10 @@ export function StaffTable({
                 >
                   <span className="flex items-center gap-1.5">
                     Đăng nhập lần cuối
-                    <ArrowUpDown size={13} className={sortField === 'lastLogin' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'lastLogin' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    {sortField === 'lastLogin' && (
+                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
+                    )}
                   </span>
                 </th>
                 <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Thao tác</th>

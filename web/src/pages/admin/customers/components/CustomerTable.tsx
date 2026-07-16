@@ -26,22 +26,22 @@ export function CustomerTable({
   onRefresh,
   indexOffset = 0,
 }: CustomerTableProps) {
-  const [sortField, setSortField] = useState<'name' | 'createdAt' | 'lastLogin' | 'none'>('none');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [sortField, setSortField] = useState<'name' | 'createdAt' | 'lastLogin'>('createdAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   const toggleSort = (field: 'name' | 'createdAt' | 'lastLogin') => {
     if (sortField !== field) {
       setSortField(field);
-      setSortDir('asc');
-    } else if (sortDir === 'asc') {
-      setSortDir('desc');
+      setSortDir(field === 'name' ? 'asc' : 'desc');
+    } else if (sortDir === (field === 'name' ? 'asc' : 'desc')) {
+      setSortDir(field === 'name' ? 'desc' : 'asc');
     } else {
-      setSortField('none');
+      setSortField('createdAt');
+      setSortDir('desc');
     }
   };
 
   const sortedUsers = [...users].sort((a, b) => {
-    if (sortField === 'none') return 0;
     let aVal: any = a[sortField];
     let bVal: any = b[sortField];
 
@@ -85,7 +85,10 @@ export function CustomerTable({
                 >
                   <span className="flex items-center gap-1.5">
                     Thông tin Khách hàng
-                    <ArrowUpDown size={13} className={sortField === 'name' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'name' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    {sortField === 'name' && (
+                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                    )}
                   </span>
                 </th>
                 <th className="px-6 py-4 w-[15%]">Số điện thoại</th>
@@ -95,7 +98,10 @@ export function CustomerTable({
                 >
                   <span className="flex items-center gap-1.5">
                     Ngày tham gia
-                    <ArrowUpDown size={13} className={sortField === 'createdAt' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'createdAt' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    {sortField === 'createdAt' && (
+                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
+                    )}
                   </span>
                 </th>
                 <th className="px-6 py-4 w-[15%]">Trạng thái</th>
@@ -105,7 +111,10 @@ export function CustomerTable({
                 >
                   <span className="flex items-center gap-1.5">
                     Đăng nhập lần cuối
-                    <ArrowUpDown size={13} className={sortField === 'lastLogin' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'lastLogin' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    {sortField === 'lastLogin' && (
+                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
+                    )}
                   </span>
                 </th>
                 <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Thao tác</th>
