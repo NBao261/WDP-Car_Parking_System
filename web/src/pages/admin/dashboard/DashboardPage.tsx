@@ -7,6 +7,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 import { useDashboard, TIME_FILTER_OPTIONS, TimeFilter } from './hooks/useDashboard';
 import { DashboardCards } from './components/DashboardCards';
 import { DashboardCharts } from './components/DashboardCharts';
@@ -14,9 +15,27 @@ import { SystemStatsWidget } from './components/SystemStatsWidget';
 import { RevenueBreakdownWidget } from './components/RevenueBreakdownWidget';
 import { FacilityLeaderboardWidget } from './components/FacilityLeaderboardWidget';
 import { SystemAlertsWidget } from './components/SystemAlertsWidget';
+import { ExportConfirmModal } from './components/ExportConfirmModal';
 import { CustomDropdown } from '../../../components/ui/CustomDropdown';
 import { reportService } from '../../../services/report.service';
 import { format, subDays, startOfMonth, startOfYear } from 'date-fns';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring' as const, stiffness: 300, damping: 24 },
+  },
+};
 
 /* ── Helpers ── */
 
@@ -57,8 +76,18 @@ export default function DashboardPage() {
   } = useDashboard();
 
   const [exporting, setExporting] = useState(false);
+  const [exportModalState, setExportModalState] = useState<{
+    isOpen: boolean;
+    format: 'excel' | 'pdf' | null;
+  }>({ isOpen: false, format: null });
 
-  const handleExport = async (fmt: 'excel' | 'pdf') => {
+  const handleOpenExportModal = (fmt: 'excel' | 'pdf') => {
+    setExportModalState({ isOpen: true, format: fmt });
+  };
+
+  const confirmExport = async () => {
+    if (!exportModalState.format) return;
+    const fmt = exportModalState.format;
     try {
       setExporting(true);
       toast.info(`Đang xuất báo cáo ra ${fmt === 'pdf' ? 'PDF' : 'Excel'}...`);
@@ -79,6 +108,7 @@ export default function DashboardPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       toast.success('Xuất báo cáo thành công!');
+      setExportModalState({ isOpen: false, format: null });
     } catch {
       toast.error('Lỗi khi xuất báo cáo');
     } finally {
@@ -87,9 +117,14 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <motion.div 
+      className="space-y-6 w-full pb-12"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       {/* ═══ HEADER BAR ═══ */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <motion.header variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-[#1a1a1a] font-bold text-[22px] tracking-tight">Tổng quan hệ thống</h1>
           <p className="text-[13px] text-[#6b7280] mt-0.5">
@@ -125,27 +160,27 @@ export default function DashboardPage() {
           {/* Export Buttons */}
           <div className="flex gap-3">
             <button
-              onClick={() => handleExport('excel')}
+              onClick={() => handleOpenExportModal('excel')}
               disabled={exporting || isLoading}
               className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-white border-[1.5px] border-gray-200 text-[#1a1a1a] text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {exporting ? <Loader2 size={17} className="animate-spin" /> : <FileSpreadsheet size={17} />}
+              <FileSpreadsheet size={17} />
               Excel
             </button>
             <button
-              onClick={() => handleExport('pdf')}
+              onClick={() => handleOpenExportModal('pdf')}
               disabled={exporting || isLoading}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-[#062F28] text-white text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-[#a6e676] text-[#132c20] text-[14px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {exporting ? <Loader2 size={17} className="animate-spin" /> : <Download size={17} />}
+              <Download size={17} />
               PDF
             </button>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       {/* ═══ CONTENT ═══ */}
-      <div className="space-y-4">
+      <motion.div variants={itemVariants} className="space-y-4">
         {/* ── System Status Panel (Redesigned) ── */}
         <DashboardCards
           trafficData={trafficData}
@@ -179,7 +214,16 @@ export default function DashboardPage() {
           <FacilityLeaderboardWidget occupancyData={occupancyData} />
           <SystemAlertsWidget />
         </div>
-      </div>
-    </div>
+      </motion.div>
+
+      {/* Export Confirmation Modal */}
+      <ExportConfirmModal
+        isOpen={exportModalState.isOpen}
+        format={exportModalState.format}
+        isExporting={exporting}
+        onClose={() => setExportModalState({ ...exportModalState, isOpen: false })}
+        onConfirm={confirmExport}
+      />
+    </motion.div>
   );
 }
