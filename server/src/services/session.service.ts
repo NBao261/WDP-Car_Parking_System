@@ -12,6 +12,7 @@ import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { generateSessionCode, generateCardCode } from '../utils/codeGenerator';
 import { getIO } from '../config/socket';
 import { UploadService } from './upload.service';
+import { getCache, setCache, delCache, sIsMember, sAdd, sRem } from '../config/redis';
 
 interface CheckConditionsResult {
   eligible: boolean;
@@ -229,15 +230,22 @@ export class SessionService {
     }
 
     // 4. Tìm bảng giá active (lấy bảng giá mới nhất nếu có nhiều active)
-    const pricingPlan = await PricingPlan.findOne({
-      facilityId: data.facilityId,
-      vehicleTypeId: data.vehicleTypeId,
-      status: 'active',
-      isDeleted: false,
-    }).sort({ createdAt: -1 });
+    const pricingCacheKey = `pricing:active:${data.facilityId}:${data.vehicleTypeId}`;
+    let pricingPlan: any = await getCache(pricingCacheKey);
 
     if (!pricingPlan) {
-      throw new AppError('Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này', 400);
+      pricingPlan = await PricingPlan.findOne({
+        facilityId: data.facilityId,
+        vehicleTypeId: data.vehicleTypeId,
+        status: 'active',
+        isDeleted: false,
+      }).sort({ createdAt: -1 });
+
+      if (!pricingPlan) {
+        throw new AppError('Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này', 400);
+      }
+
+      await setCache(pricingCacheKey, pricingPlan, 900); // Cache 15 minutes
     }
 
     // 5. Tìm slot — dùng slot từ reservation nếu có, không thì auto-assign
@@ -313,11 +321,17 @@ export class SessionService {
 
     // Validate cardCode nếu có (đảm bảo thẻ NFC không đang được sử dụng)
     if (data.cardCode) {
+      const isCardActive = await sIsMember('activeCards', data.cardCode);
+      if (isCardActive) {
+        throw new AppError('Thẻ NFC này đang được sử dụng cho một xe khác (Chưa check-out)', 400);
+      }
+
       const activeCard = await ParkingSession.findOne({ 
         cardCode: data.cardCode, 
         status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } 
       });
       if (activeCard) {
+        await sAdd('activeCards', data.cardCode); // sync cache
         throw new AppError('Thẻ NFC này đang được sử dụng cho một xe khác (Chưa check-out)', 400);
       }
     }
@@ -363,6 +377,14 @@ export class SessionService {
     });
 
     await session.save();
+
+    // Invalidate plate search cache & add card to active set
+    if (!isNoPlateVehicle && session.licensePlate) {
+      await delCache(`session:plate:${session.licensePlate}`);
+    }
+    if (session.cardCode) {
+      await sAdd('activeCards', session.cardCode);
+    }
 
     // 7. Cập nhật slot → Occupied
     slot.status = SlotStatus.OCCUPIED;
@@ -474,14 +496,22 @@ export class SessionService {
   static async searchSession(query: { cardCode?: string; licensePlate?: string; code?: string }): Promise<IParkingSession> {
     const searchConditions: any = { status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } };
 
+    let cacheKey = '';
     if (query.cardCode) {
       searchConditions.cardCode = query.cardCode;
+      cacheKey = `session:card:${query.cardCode}`;
     } else if (query.licensePlate) {
       searchConditions.licensePlate = query.licensePlate.toUpperCase();
+      cacheKey = `session:plate:${searchConditions.licensePlate}`;
     } else if (query.code) {
       searchConditions.code = query.code;
     } else {
       throw new AppError('Cần ít nhất 1 tham số tìm kiếm (cardCode, licensePlate, hoặc code)', 400);
+    }
+
+    if (cacheKey) {
+      const cachedSession = await getCache<IParkingSession>(cacheKey);
+      if (cachedSession) return cachedSession as any;
     }
 
     const session = await ParkingSession.findOne(searchConditions)
@@ -494,6 +524,10 @@ export class SessionService {
 
     if (!session) {
       throw new AppError('Không tìm thấy lượt gửi xe', 404);
+    }
+
+    if (cacheKey) {
+      await setCache(cacheKey, session, 30); // 30s TTL
     }
 
     return session;
@@ -1027,6 +1061,15 @@ export class SessionService {
         });
       } catch (err) {
         // Ignore if socket is not initialized
+      }
+
+      // Invalidate search caches & remove from active set
+      if (session.licensePlate) {
+        await delCache(`session:plate:${session.licensePlate}`);
+      }
+      if (session.cardCode) {
+        await delCache(`session:card:${session.cardCode}`);
+        await sRem('activeCards', session.cardCode);
       }
 
       // 🔥 Background Upload: Đẩy cả ảnh checkIn và checkOut lên Cloudinary

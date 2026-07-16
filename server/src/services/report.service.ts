@@ -4,6 +4,7 @@ import { Payment } from '../models/payment.model';
 import { ParkingSlot, SlotStatus } from '../models/parkingSlot.model';
 import { Floor } from '../models/floor.model';
 import { AppError } from '../middlewares/error.middleware';
+import { getCache, setCache } from '../config/redis';
 
 // ─── Định nghĩa kiểu dữ liệu đầu vào ────────────────
 
@@ -130,6 +131,10 @@ export class ReportService {
    * 4. Tính tổng và trả về summary + data chi tiết
    */
   static async getTrafficReport(filters: DateRangeFilter) {
+    const cacheKey = `report:traffic:${Buffer.from(JSON.stringify(filters)).toString('base64')}`;
+    const cached = await getCache(cacheKey);
+    if (cached) return cached;
+
     const { facilityId, facilityIds, floorId, vehicleTypeId, startDate, endDate, groupBy = 'day' } = filters;
 
     // ── Bước 1: Xây dựng điều kiện lọc (match stage) ──
@@ -210,7 +215,7 @@ export class ReportService {
     const totalCheckIn = data.reduce((sum, d) => sum + d.checkIn, 0);
     const totalCheckOut = data.reduce((sum, d) => sum + d.checkOut, 0);
 
-    return {
+    const result = {
       groupBy,
       summary: {
         totalCheckIn,                              // Tổng lượt xe vào
@@ -219,6 +224,9 @@ export class ReportService {
       },
       data, // Dữ liệu chi tiết theo từng mốc thời gian
     };
+
+    await setCache(cacheKey, result, 600); // 10 phút cache
+    return result;
   }
 
   /**
@@ -236,6 +244,10 @@ export class ReportService {
    * 3. Aggregate theo 3 chiều phân tích
    */
   static async getRevenueReport(filters: RevenueFilter) {
+    const cacheKey = `report:revenue:${Buffer.from(JSON.stringify(filters)).toString('base64')}`;
+    const cached = await getCache(cacheKey);
+    if (cached) return cached;
+
     const { facilityId, facilityIds, vehicleTypeId, paymentMethod, startDate, endDate, groupBy = 'day' } = filters;
 
     // ── Pipeline chính: Doanh thu theo mốc thời gian ──
@@ -380,7 +392,7 @@ export class ReportService {
     const totalTransactions = data.reduce((sum, d) => sum + d.transactionCount, 0);
     const totalDays = data.length || 1; // Tránh chia cho 0
 
-    return {
+    const result = {
       groupBy,
       summary: {
         grandTotal,                                         // Tổng doanh thu
@@ -400,6 +412,9 @@ export class ReportService {
         count: v.count,
       })),
     };
+
+    await setCache(cacheKey, result, 600); // 10 phút cache
+    return result;
   }
 
   /**
@@ -416,6 +431,10 @@ export class ReportService {
    * 4. Tính occupancyRate và effectiveOccupancy
    */
   static async getOccupancyReport(filters: OccupancyFilter) {
+    const cacheKey = `report:occupancy:${Buffer.from(JSON.stringify(filters)).toString('base64')}`;
+    const cached = await getCache(cacheKey);
+    if (cached) return cached;
+
     const { facilityId, facilityIds, vehicleTypeId } = filters;
 
     // Điều kiện lọc slot (chỉ lấy slot chưa bị xóa mềm)
@@ -520,23 +539,27 @@ export class ReportService {
     const totalOccupied = floors.reduce((sum, f) => sum + f.occupied, 0);
     const totalReserved = floors.reduce((sum, f) => sum + f.reserved, 0);
     const totalAvailable = floors.reduce((sum, f) => sum + f.available, 0);
+    const totalMaintenance = floors.reduce((sum, f) => sum + f.maintenance, 0);
+    const totalLocked = floors.reduce((sum, f) => sum + f.locked, 0);
+    const overallOccupancyRate = totalSlots > 0 ? (totalOccupied / totalSlots) * 100 : 0;
+    const overallEffectiveOccupancy = totalSlots > 0 ? ((totalOccupied + totalReserved) / totalSlots) * 100 : 0;
 
-    return {
+    const result = {
       summary: {
-        totalSlots,                    // Tổng số slot toàn hệ thống
-        totalOccupied,                 // Tổng slot đang có xe
-        totalReserved,                 // Tổng slot đã đặt trước
-        totalAvailable,                // Tổng slot trống
-        // Tỷ lệ lấp đầy chung (%)
-        overallOccupancyRate: totalSlots > 0 ? Math.round((totalOccupied / totalSlots) * 10000) / 100 : 0,
-        // Tỷ lệ lấp đầy hiệu quả chung (%) — bao gồm cả reserved
-        effectiveOccupancyRate:
-          totalSlots > 0
-            ? Math.round(((totalOccupied + totalReserved) / totalSlots) * 10000) / 100
-            : 0,
+        totalSlots,
+        totalOccupied,
+        totalAvailable,
+        totalReserved,
+        totalMaintenance,
+        totalLocked,
+        overallOccupancyRate: Number(overallOccupancyRate.toFixed(2)),
+        overallEffectiveOccupancy: Number(overallEffectiveOccupancy.toFixed(2)),
       },
-      floors, // Dữ liệu chi tiết theo từng tầng
+      byFloor: floors,
     };
+
+    await setCache(cacheKey, result, 60); // 1 phút cache (real-time hơn một chút)
+    return result;
   }
 
   /**
@@ -552,6 +575,10 @@ export class ReportService {
    * 4. Xếp hạng và lấy top 3 giờ có tổng hoạt động cao nhất
    */
   static async getPeakHoursReport(filters: PeakHoursFilter) {
+    const cacheKey = `report:peak:${Buffer.from(JSON.stringify(filters)).toString('base64')}`;
+    const cached = await getCache(cacheKey);
+    if (cached) return cached;
+
     const { facilityId, facilityIds, vehicleTypeId, startDate, endDate } = filters;
 
     // ── Xây dựng điều kiện lọc ──
@@ -635,7 +662,7 @@ export class ReportService {
     const totalActivity = hourlyData.reduce((sum, h) => sum + h.totalActivity, 0);
     const avgActivityPerHour = totalActivity / 24;
 
-    return {
+    const result = {
       summary: {
         totalActivity,                                              // Tổng hoạt động trong khoảng thời gian
         avgActivityPerHour: Math.round(avgActivityPerHour * 100) / 100, // Trung bình hoạt động mỗi giờ
@@ -643,6 +670,9 @@ export class ReportService {
       },
       hourlyDistribution: hourlyData, // Phân bố hoạt động theo 24 giờ
     };
+
+    await setCache(cacheKey, result, 300); // 5 phút cache
+    return result;
   }
 
   // ─────────────────────────────────────────────────────

@@ -2,6 +2,7 @@ import { Role, IRole } from '../models/role.model';
 import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 import { DEFAULT_PERMISSIONS } from '../config/permissions';
+import { delPattern, delCache } from '../config/redis';
 
 export class RoleService {
   // ─── FR-19.1: Xem danh sách vai trò ─────────────────
@@ -38,6 +39,10 @@ export class RoleService {
   static async updatePermissions(id: string, permissions: string[]): Promise<IRole> {
     const role = await Role.findByIdAndUpdate(id, { permissions }, { new: true });
     if (!role) throw new AppError('Role not found', 404);
+
+    // Invalidate permission cache for all users with this role
+    await delPattern('permissions:user:*');
+
     return role;
   }
 
@@ -77,6 +82,9 @@ export class RoleService {
 
     const user = await User.findByIdAndUpdate(userId, updateData, { new: true }).select('-password');
     if (!user) throw new AppError('User not found', 404);
+
+    // Invalidate permission cache for this user
+    await delCache(`permissions:user:${userId}`);
 
     return user;
   }
@@ -123,6 +131,10 @@ export class RoleService {
     const defaultPerms = DEFAULT_PERMISSIONS[role.code] || [];
     role.permissions = defaultPerms;
     await role.save();
+
+    // Invalidate permission cache for all users with this role
+    await delPattern('permissions:user:*');
+
     return role;
   }
 }
