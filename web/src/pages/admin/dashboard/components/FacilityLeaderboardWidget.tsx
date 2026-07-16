@@ -55,7 +55,13 @@ export function FacilityLeaderboardWidget({ occupancyData }: Props) {
               );
             })
           ) : (
-             <div className="text-center py-6 text-[13px] text-gray-500">Chưa có dữ liệu phân khu</div>
+            <div className="flex flex-col items-center justify-center py-8 gap-3 h-full">
+              <div className="w-12 h-12 rounded-full bg-[#f0fdf4] flex items-center justify-center">
+                <div className="w-6 h-6 rounded-sm bg-[#bbf7d0]" />
+              </div>
+              <p className="text-[#9ca3af] text-[13px] font-medium">Chưa có dữ liệu phân khu</p>
+              <p className="text-[#d1d5db] text-[11px] text-center max-w-[160px]">Dữ liệu sẽ hiển thị khi có slot xe được cấu hình</p>
+            </div>
           )}
         </div>
       </div>
