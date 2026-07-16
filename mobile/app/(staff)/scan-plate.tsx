@@ -203,6 +203,7 @@ export default function StaffScanScreen() {
       try {
         const photo = await cameraRef.current.takePictureAsync({
           base64: false,
+          quality: 0.5,
         });
         if (photo) {
           const cropWidth = photo.width * (GUIDE_BOX_WIDTH / screenWidth);
@@ -222,7 +223,7 @@ export default function StaffScanScreen() {
                 },
               },
             ],
-            { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
+            { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG },
           );
 
           setScannedImage(manipResult.uri);

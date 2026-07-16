@@ -84,7 +84,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function SessionCard({ item }: { item: ParkingSession }) {
+const SessionCard = React.memo(({ item }: { item: ParkingSession }) => {
   const baseFee = (item as any).pricingPlan?.rates?.[0]?.amount || 20000;
   return (
     <View style={styles.card}>
@@ -142,15 +142,15 @@ function SessionCard({ item }: { item: ParkingSession }) {
       )}
     </View>
   );
-}
+});
 
-function ReservationCard2({
+const ReservationCard2 = React.memo(({
   item,
   onCancel,
 }: {
   item: Reservation;
   onCancel: (id: string) => void;
-}) {
+}) => {
   const [showQR, setShowQR] = React.useState(false);
   const checkinAt = new Date(
     (item as any).startTime || (item as any).checkInTime,
@@ -331,7 +331,7 @@ function ReservationCard2({
       )}
     </View>
   );
-}
+});
 
 function EmptyState({
   icon,
@@ -388,25 +388,27 @@ export default function ActivityScreen() {
     pricingPlan: s.pricingPlanId,
   });
 
-  const fetchAll = async () => {
+  const fetchData = async (currentTab: Tab) => {
     try {
-      const [actRes, histRes2, resRes] = await Promise.all([
-        sessionApi.getMySessions("active") as any,
-        sessionApi.getMySessions("completed") as any,
-        reservationApi.getReservations() as any,
-      ]);
-      if (actRes?.success) setActiveSessions(actRes.data.map(mapSession));
-      if (histRes2?.success) setHistSessions(histRes2.data.map(mapSession));
-      if (resRes?.success) {
-        const all: Reservation[] = resRes.data;
-        setUpcomingRes(
-          all.filter((r) => ["pending", "confirmed"].includes(r.status)),
-        );
-        setHistRes(
-          all.filter((r) =>
-            ["used", "cancelled", "expired"].includes(r.status),
-          ),
-        );
+      if (currentTab === "active") {
+        const actRes: any = await sessionApi.getMySessions("active");
+        if (actRes?.success) setActiveSessions(actRes.data.map(mapSession));
+      } else if (currentTab === "history") {
+        const histRes2: any = await sessionApi.getMySessions("completed");
+        if (histRes2?.success) setHistSessions(histRes2.data.map(mapSession));
+      } else if (currentTab === "reserved") {
+        const resRes: any = await reservationApi.getReservations();
+        if (resRes?.success) {
+          const all: Reservation[] = resRes.data;
+          setUpcomingRes(
+            all.filter((r) => ["pending", "confirmed"].includes(r.status)),
+          );
+          setHistRes(
+            all.filter((r) =>
+              ["used", "cancelled", "expired"].includes(r.status),
+            ),
+          );
+        }
       }
     } catch (e) {
       console.log("Activity fetch error:", e);
@@ -419,18 +421,19 @@ export default function ActivityScreen() {
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
-      fetchAll();
-    }, []),
+      fetchData(tab);
+    }, [tab]),
   );
+  
   const onRefresh = () => {
     setRefreshing(true);
-    fetchAll();
+    fetchData(tab);
   };
 
   const handleCancelReservation = async (id: string) => {
     try {
       await (reservationApi as any).cancelReservation(id);
-      fetchAll();
+      fetchData(tab);
     } catch (e) {
       console.log("Cancel error:", e);
     }
@@ -459,6 +462,10 @@ export default function ActivityScreen() {
           keyExtractor={(i) => i._id}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => <SessionCard item={item} />}
+          initialNumToRender={5}
+          maxToRenderPerBatch={5}
+          windowSize={5}
+          removeClippedSubviews={true}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
@@ -486,6 +493,10 @@ export default function ActivityScreen() {
           renderItem={({ item }) => (
             <ReservationCard2 item={item} onCancel={handleCancelReservation} />
           )}
+          initialNumToRender={5}
+          maxToRenderPerBatch={5}
+          windowSize={5}
+          removeClippedSubviews={true}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
@@ -508,6 +519,10 @@ export default function ActivityScreen() {
         keyExtractor={(i) => i._id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => <SessionCard item={item} />}
+        initialNumToRender={5}
+        maxToRenderPerBatch={5}
+        windowSize={5}
+        removeClippedSubviews={true}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

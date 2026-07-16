@@ -70,22 +70,67 @@ function EmptyState({
   );
 }
 
+const ExceptionCard = React.memo(({ item, typeConfig, statusConfig, time, date }: any) => {
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardRow1}>
+        <Text style={styles.cardPlate}>
+          {item.actualPlate || item.expectedPlate || "Không rõ"}
+        </Text>
+        <Text style={styles.cardTime}>{time}</Text>
+      </View>
+      <View style={styles.categoryRow}>
+        <View style={[styles.categoryPill, { backgroundColor: typeConfig.bg }]}>
+          <Text style={[styles.categoryText, { color: typeConfig.color }]}>
+            {typeConfig.label}
+          </Text>
+        </View>
+      </View>
+      {item.description ? (
+        <View style={styles.descWrap}>
+          <Text style={styles.descText} numberOfLines={2}>
+            {item.description}
+          </Text>
+        </View>
+      ) : null}
+      <View style={styles.footerRow}>
+        <View style={styles.dateWrap}>
+          <Ionicons name="calendar-outline" size={13} color={Colors.textTertiary} />
+          <Text style={styles.dateText}>{date}</Text>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
+          <View style={[styles.statusDot, { backgroundColor: statusConfig.dotColor }]} />
+          <Text style={[styles.statusText, { color: statusConfig.color }]}>
+            {statusConfig.label}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+});
+
 export default function ExceptionsScreen() {
   const [exceptions, setExceptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const { selectedFacilityId } = useAuthStore();
 
-  const fetchExceptions = async () => {
+  const fetchExceptions = async (pageNum = 1, isLoadMore = false) => {
     try {
       if (!selectedFacilityId) return;
       const res: any = await exceptionApi.getExceptions({
-        limit: 50,
+        facilityId: selectedFacilityId,
+        page: pageNum,
+        limit: 10,
         sortBy: "createdAt",
         sortOrder: "desc",
       });
       if (res.data) {
-        setExceptions(Array.isArray(res.data) ? res.data : []);
+        setExceptions(prev => isLoadMore ? [...prev, ...res.data] : res.data);
+        setTotalPages(res.totalPages || 1);
+        setPage(pageNum);
       }
     } catch (e) {
       console.log("Error fetching exceptions", e);
@@ -96,93 +141,33 @@ export default function ExceptionsScreen() {
   };
 
   useEffect(() => {
-    fetchExceptions();
+    setLoading(true);
+    fetchExceptions(1, false);
   }, [selectedFacilityId]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchExceptions();
+    fetchExceptions(1, false);
   }, [selectedFacilityId]);
 
-  const renderItem = ({ item }: { item: any }) => {
-    const typeConfig = EXCEPTION_CONFIG[item.type] || EXCEPTION_CONFIG.OTHER;
-    const statusConfig =
-      STATUS_CONFIG[item.status.toUpperCase()] || STATUS_CONFIG.PENDING;
-    const createdDate = new Date(item.createdAt);
-    const time = createdDate.toLocaleTimeString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    const date = createdDate.toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-
-    return (
-      <View style={styles.card}>
-        {/* Row 1: Plate + Time */}
-        <View style={styles.cardRow1}>
-          <Text style={styles.cardPlate}>
-            {item.actualPlate || item.expectedPlate || "Không rõ"}
-          </Text>
-          <Text style={styles.cardTime}>{time}</Text>
-        </View>
-
-        {/* Category pill */}
-        <View style={styles.categoryRow}>
-          <View
-            style={[styles.categoryPill, { backgroundColor: typeConfig.bg }]}
-          >
-            <Text
-              style={[styles.categoryText, { color: typeConfig.color }]}
-            >
-              {typeConfig.label}
-            </Text>
-          </View>
-        </View>
-
-        {/* Description */}
-        {item.description ? (
-          <View style={styles.descWrap}>
-            <Text style={styles.descText} numberOfLines={2}>
-              {item.description}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* Footer: Date + Status Badge */}
-        <View style={styles.footerRow}>
-          <View style={styles.dateWrap}>
-            <Ionicons
-              name="calendar-outline"
-              size={13}
-              color={Colors.textTertiary}
-            />
-            <Text style={styles.dateText}>{date}</Text>
-          </View>
-
-          <View
-            style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}
-          >
-            <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: statusConfig.dotColor },
-              ]}
-            />
-            <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {statusConfig.label}
-            </Text>
-          </View>
-        </View>
-      </View>
-    );
+  const loadMore = () => {
+    if (page < totalPages && !loading && !refreshing) {
+      fetchExceptions(page + 1, true);
+    }
   };
+
+  const renderItem = useCallback(({ item }: { item: any }) => {
+    const typeConfig = EXCEPTION_CONFIG[item.type] || EXCEPTION_CONFIG.OTHER;
+    const statusConfig = STATUS_CONFIG[item.status.toUpperCase()] || STATUS_CONFIG.PENDING;
+    const createdDate = new Date(item.createdAt);
+    const time = createdDate.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    const date = createdDate.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+    
+    return <ExceptionCard item={item} typeConfig={typeConfig} statusConfig={statusConfig} time={time} date={date} />;
+  }, []);
 
   return (
     <View style={styles.root}>
-      {/* Header */}
       <SafeAreaView edges={["top"]} style={styles.headerSafe}>
         <View style={styles.header}>
           <View>
@@ -199,6 +184,12 @@ export default function ExceptionsScreen() {
         renderItem={renderItem}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.list}
+        removeClippedSubviews={true}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
