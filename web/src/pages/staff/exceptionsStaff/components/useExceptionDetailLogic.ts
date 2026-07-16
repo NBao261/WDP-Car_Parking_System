@@ -64,7 +64,6 @@ export function useExceptionDetailLogic({ selectedException, onClose, onResolved
       await exceptionService.resolveException(selectedException.id, payload);
       toast.success("Đã xử lý sự cố thành công!");
       if (onResolved) onResolved();
-      onClose();
     } catch (error: any) { toast.error(error.message || "Lỗi khi xử lý sự cố!"); }
     finally { setIsResolving(false); }
   };

@@ -129,7 +129,14 @@ export default function ExceptionsStaffPage() {
       const listData = Array.isArray(res.data) ? res.data : res.data?.data;
 
       if (res.success && listData) {
-        setExceptionsList(listData.map((exc: any) => mapApiException(exc, pricingMap)));
+        const mappedList = listData.map((exc: any) => mapApiException(exc, pricingMap));
+        setExceptionsList(mappedList);
+        
+        setSelectedException(prev => {
+          if (!prev) return null;
+          const updated = mappedList.find((e: any) => e.id === prev.id);
+          return updated || prev;
+        });
       }
     } catch (error: any) {
       toast.error(error.message || 'Không thể tải danh sách sự cố!');
