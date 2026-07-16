@@ -118,7 +118,7 @@ export default function DashboardPage() {
 
   return (
     <motion.div 
-      className="space-y-6 max-w-[1400px] mx-auto pb-12"
+      className="space-y-6 w-full pb-12"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
