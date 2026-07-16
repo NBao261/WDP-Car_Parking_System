@@ -64,6 +64,13 @@ export function ExceptionReviewModal({
       ? exception.staffId.name
       : exception.staffId || 'Hệ thống';
 
+  const getImageUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const SERVER_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
+    return `${SERVER_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  };
+
   const modalContent = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
       <motion.div
@@ -115,6 +122,36 @@ export function ExceptionReviewModal({
               </span>
             </div>
           </div>
+
+          {/* Images */}
+          {(exception.checkInImage || exception.checkOutImage) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {exception.checkInImage && (
+                <div className="flex flex-col">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Ảnh lúc vào bãi</h3>
+                  <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video border border-gray-100 shadow-sm">
+                    <img 
+                      src={getImageUrl(exception.checkInImage)} 
+                      alt="Check In" 
+                      className="w-full h-full object-contain bg-black/5" 
+                    />
+                  </div>
+                </div>
+              )}
+              {exception.checkOutImage && (
+                <div className="flex flex-col">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Ảnh xử lý sự cố</h3>
+                  <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video border border-gray-100 shadow-sm">
+                    <img 
+                      src={getImageUrl(exception.checkOutImage)} 
+                      alt="Check Out" 
+                      className="w-full h-full object-contain bg-black/5" 
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Description */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
