@@ -9,6 +9,7 @@ export interface VehicleType {
 
   description: string;
   icon: string;
+  color: string;
   requiresPlate: boolean;
   floors?: {
     _id: string;
