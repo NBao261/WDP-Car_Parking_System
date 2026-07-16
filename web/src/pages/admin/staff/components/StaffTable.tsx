@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -10,6 +11,7 @@ import {
   KeyRound,
   Trash2,
   Building2,
+  ArrowUpDown,
 } from 'lucide-react';
 import { User as UserType } from '../../../../types/user.types';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
@@ -34,6 +36,38 @@ export function StaffTable({
   onAssignFacility,
   indexOffset = 0,
 }: StaffTableProps) {
+  const [sortField, setSortField] = useState<'name' | 'role' | 'lastLogin' | 'none'>('none');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (field: 'name' | 'role' | 'lastLogin') => {
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir('asc');
+    } else if (sortDir === 'asc') {
+      setSortDir('desc');
+    } else {
+      setSortField('none');
+    }
+  };
+
+  const sortedUsers = [...users].sort((a, b) => {
+    if (sortField === 'none') return 0;
+    let aVal: any = a[sortField];
+    let bVal: any = b[sortField];
+
+    if (sortField === 'lastLogin') {
+      aVal = a.lastLogin ? new Date(a.lastLogin).getTime() : 0;
+      bVal = b.lastLogin ? new Date(b.lastLogin).getTime() : 0;
+    }
+
+    if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+    if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+
+    if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   const {
     confirmState,
     isActionLoading,
@@ -55,11 +89,35 @@ export function StaffTable({
             <thead className="bg-[#FAFAFA] text-[#6b6b6b] text-[13px] border-b border-gray-100 font-semibold uppercase tracking-wider">
               <tr>
                 <th className="px-6 py-4 rounded-tl-2xl w-[5%] text-center">STT</th>
-                <th className="px-6 py-4 w-[25%]">Thông tin User</th>
-                <th className="px-6 py-4 w-[15%]">Vai trò</th>
+                <th 
+                  className="px-6 py-4 w-[25%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                  onClick={() => toggleSort('name')}
+                >
+                  <span className="flex items-center gap-1.5">
+                    Thông tin User
+                    <ArrowUpDown size={13} className={sortField === 'name' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  </span>
+                </th>
+                <th 
+                  className="px-6 py-4 w-[15%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                  onClick={() => toggleSort('role')}
+                >
+                  <span className="flex items-center gap-1.5">
+                    Vai trò
+                    <ArrowUpDown size={13} className={sortField === 'role' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  </span>
+                </th>
                 <th className="px-6 py-4 w-[15%] text-center">Phân công</th>
                 <th className="px-6 py-4 w-[15%]">Trạng thái</th>
-                <th className="px-6 py-4 w-[15%]">Đăng nhập lần cuối</th>
+                <th 
+                  className="px-6 py-4 w-[15%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                  onClick={() => toggleSort('lastLogin')}
+                >
+                  <span className="flex items-center gap-1.5">
+                    Đăng nhập lần cuối
+                    <ArrowUpDown size={13} className={sortField === 'lastLogin' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  </span>
+                </th>
                 <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Thao tác</th>
               </tr>
             </thead>
@@ -81,7 +139,7 @@ export function StaffTable({
                   </td>
                 </tr>
               ) : (
-                users.map((user, idx) => (
+                sortedUsers.map((user, idx) => (
                   <motion.tr key={user._id} className="hover:bg-[#9FE870]/10 transition-colors group">
                     <td className="px-6 py-4 text-[#6b6b6b] text-[13px] text-center font-medium">
                       {indexOffset + idx + 1}

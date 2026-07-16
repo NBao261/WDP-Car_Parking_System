@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { MoreVertical, Search, Edit, Lock, Unlock, KeyRound, Trash2, User } from 'lucide-react';
+import { MoreVertical, Search, Edit, Lock, Unlock, KeyRound, Trash2, User, ArrowUpDown } from 'lucide-react';
 import { User as UserType } from '../../../../types/user.types';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
 import { RoleIcon } from '../../../../components/ui/RoleIcon';
@@ -25,6 +26,38 @@ export function CustomerTable({
   onRefresh,
   indexOffset = 0,
 }: CustomerTableProps) {
+  const [sortField, setSortField] = useState<'name' | 'createdAt' | 'lastLogin' | 'none'>('none');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (field: 'name' | 'createdAt' | 'lastLogin') => {
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir('asc');
+    } else if (sortDir === 'asc') {
+      setSortDir('desc');
+    } else {
+      setSortField('none');
+    }
+  };
+
+  const sortedUsers = [...users].sort((a, b) => {
+    if (sortField === 'none') return 0;
+    let aVal: any = a[sortField];
+    let bVal: any = b[sortField];
+
+    if (sortField === 'createdAt' || sortField === 'lastLogin') {
+      aVal = a[sortField] ? new Date(a[sortField] as string).getTime() : 0;
+      bVal = b[sortField] ? new Date(b[sortField] as string).getTime() : 0;
+    }
+
+    if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+    if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+
+    if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   const {
     confirmState,
     isActionLoading,
@@ -46,11 +79,35 @@ export function CustomerTable({
             <thead className="bg-[#FAFAFA] text-[#6b6b6b] text-[13px] border-b border-gray-100 font-semibold uppercase tracking-wider">
               <tr>
                 <th className="px-6 py-4 rounded-tl-2xl w-[5%] text-center">STT</th>
-                <th className="px-6 py-4 w-[25%]">Thông tin Khách hàng</th>
+                <th 
+                  className="px-6 py-4 w-[25%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                  onClick={() => toggleSort('name')}
+                >
+                  <span className="flex items-center gap-1.5">
+                    Thông tin Khách hàng
+                    <ArrowUpDown size={13} className={sortField === 'name' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  </span>
+                </th>
                 <th className="px-6 py-4 w-[15%]">Số điện thoại</th>
-                <th className="px-6 py-4 w-[15%]">Ngày tham gia</th>
+                <th 
+                  className="px-6 py-4 w-[15%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                  onClick={() => toggleSort('createdAt')}
+                >
+                  <span className="flex items-center gap-1.5">
+                    Ngày tham gia
+                    <ArrowUpDown size={13} className={sortField === 'createdAt' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  </span>
+                </th>
                 <th className="px-6 py-4 w-[15%]">Trạng thái</th>
-                <th className="px-6 py-4 w-[15%]">Đăng nhập lần cuối</th>
+                <th 
+                  className="px-6 py-4 w-[15%] cursor-pointer select-none hover:text-[#062F28] transition-colors"
+                  onClick={() => toggleSort('lastLogin')}
+                >
+                  <span className="flex items-center gap-1.5">
+                    Đăng nhập lần cuối
+                    <ArrowUpDown size={13} className={sortField === 'lastLogin' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                  </span>
+                </th>
                 <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Thao tác</th>
               </tr>
             </thead>
@@ -72,7 +129,7 @@ export function CustomerTable({
                   </td>
                 </tr>
               ) : (
-                users.map((user, idx) => (
+                sortedUsers.map((user, idx) => (
                   <motion.tr
                     key={user._id}
                     className="hover:bg-[#9FE870]/10 transition-colors group"
