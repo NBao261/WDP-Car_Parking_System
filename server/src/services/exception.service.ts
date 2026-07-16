@@ -170,8 +170,13 @@ export class ExceptionService {
         .populate('newSlot', 'name')
         .populate({
           path: 'sessionId',
-          select: 'code licensePlate status facilityId',
-          populate: { path: 'facilityId', select: 'name' }
+          select: 'code licensePlate status facilityId vehicleTypeId checkInTime checkOutTime gateIn gateOut floorId slotId totalFee',
+          populate: [
+            { path: 'facilityId', select: 'name' },
+            { path: 'vehicleTypeId', select: 'name code' },
+            { path: 'floorId', select: 'name' },
+            { path: 'slotId', select: 'code name' }
+          ]
         })
         .lean(),
       Exception.countDocuments(filter)
