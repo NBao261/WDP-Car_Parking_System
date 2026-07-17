@@ -25,7 +25,7 @@ export function CheckInOCR({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="h-[210px] w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 hover:border-[#9FE870] hover:bg-[#f5ffe8] transition-all duration-200 disabled:opacity-60 bg-[#fcfcfc]"
+          className="h-full flex-1 w-full border border-dashed border-[#999] rounded-[6px] flex flex-col items-center justify-center gap-2 hover:border-[#9FE870] hover:bg-[#f5ffe8] transition-all duration-200 disabled:opacity-60 bg-[#fcfcfc] min-h-[150px]"
         >
           {isUploading ? (
             <RefreshCw className="w-6 h-6 animate-spin text-[#8bc34a]" />
@@ -43,7 +43,7 @@ export function CheckInOCR({
           )}
         </button>
       ) : (
-        <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden h-[210px] bg-[#f5f5f4]">
+        <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden h-full flex-1 bg-[#f5f5f4] min-h-[150px]">
           <img src={previewUrl} alt="preview" className="w-full h-full object-contain" />
           <button
             type="button"

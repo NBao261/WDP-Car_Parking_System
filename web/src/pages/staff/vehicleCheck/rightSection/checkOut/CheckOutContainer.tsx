@@ -152,6 +152,7 @@ export function CheckOutContainer({
           panelMsg={logic.panelMsg}
           setPanelMsg={logic.setPanelMsg}
           step={logic.step}
+          fee={logic.fee}
           isMismatch={isMismatch}
           isNoPlateVehicle={logic.isNoPlateVehicle}
           isSubmitting={logic.isSubmitting}
@@ -162,6 +163,7 @@ export function CheckOutContainer({
           handleReset={logic.handleReset}
           onCheckOut={onCheckOut}
           momoQR={logic.momoQR}
+          momoSuccess={logic.momoSuccess}
           pollIntervalRef={logic.pollIntervalRef}
           setMomoQR={logic.setMomoQR}
         />

@@ -26,7 +26,7 @@ export class ReservationService {
     const now = new Date();
 
     // Validate facility exists and is active
-    const facility = await ParkingFacility.findById(facilityId);
+    const facility = await ParkingFacility.findById(facilityId).lean();
     if (!facility) throw new AppError('Bãi xe không tồn tại', 404);
     if (facility.status !== 'active') throw new AppError('Bãi xe hiện đang không hoạt động', 400);
 
@@ -47,7 +47,7 @@ export class ReservationService {
     }
 
     // Validate vehicle type exists
-    const vehicleType = await VehicleType.findById(vehicleTypeId);
+    const vehicleType = await VehicleType.findById(vehicleTypeId).lean();
     if (!vehicleType) throw new AppError('Loại xe không tồn tại', 404);
 
     // Validate pricing plan exists
@@ -102,7 +102,7 @@ export class ReservationService {
     let reservationCode = generateReservationCode();
     let retries = 5;
     while (retries > 0) {
-      const codeExists = await Reservation.findOne({ code: reservationCode });
+      const codeExists = await Reservation.findOne({ code: reservationCode }).lean();
       if (!codeExists) break;
       reservationCode = generateReservationCode();
       retries--;
@@ -293,7 +293,8 @@ export class ReservationService {
       .populate('facilityId', 'name address')
       .populate('vehicleTypeId', 'name')
       .populate('slotId', 'code floorId')
-      .populate('userId', 'fullName email phone');
+      .populate('userId', 'fullName email phone')
+      .lean() as any;
 
     if (!reservation) throw new AppError('\u0110\u1eb7t ch\u1ed7 kh\u00f4ng t\u1ed3n t\u1ea1i', 404);
     return reservation;
@@ -309,7 +310,8 @@ export class ReservationService {
       .populate('vehicleTypeId', 'name requiresPlate')
       .populate('slotId', 'code floorId')
       .populate({ path: 'slotId', populate: { path: 'floorId', select: 'name' } })
-      .populate('userId', 'fullName email phone');
+      .populate('userId', 'fullName name email phone')
+      .lean() as any;
 
     if (!reservation) throw new AppError('Không tìm thấy mã đặt chỗ', 404);
 

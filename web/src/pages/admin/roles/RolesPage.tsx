@@ -5,6 +5,7 @@ import { roleService } from '../../../services/role.service';
 import { Role } from '../../../types/role.types';
 import { PermissionMatrixModal } from './components/PermissionMatrixModal';
 import { RoleCard } from './components/RoleCard';
+import { PageLoader } from '../../../components/PageLoader';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -126,10 +127,7 @@ export default function RoleListPage() {
 
       {/* Roles Grid */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="w-8 h-8 border-4 border-[#9FE870] border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-gray-500 font-medium">Đang tải danh sách vai trò...</p>
-        </div>
+        <PageLoader />
       ) : (
         <motion.div variants={containerVariants} className="space-y-6">
           {roles.length > 0 && (

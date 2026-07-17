@@ -2,7 +2,6 @@ import { Building2, Users, ArrowUpDown } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, AssignedFacility } from '../../../types/user.types';
-import { RevenueReportData } from '../../../services/report.service';
 import {
   Table,
   TableHeader,
@@ -15,10 +14,10 @@ import {
 interface FacilityListWidgetProps {
   managerFacilities: AssignedFacility[];
   staffList: User[];
-  revenueData: RevenueReportData | null;
+  facilityRevenues: Record<string, number>;
 }
 
-export function FacilityListWidget({ managerFacilities, staffList, revenueData }: FacilityListWidgetProps) {
+export function FacilityListWidget({ managerFacilities, staffList, facilityRevenues }: FacilityListWidgetProps) {
   const navigate = useNavigate();
   const [sortAsc, setSortAsc] = useState(false);
 
@@ -36,14 +35,7 @@ export function FacilityListWidget({ managerFacilities, staffList, revenueData }
         )
       ).length;
 
-      // Try to compute revenue for this facility from byTimePeriod
-      // Since revenue API doesn't break down by facility in byTimePeriod,
-      // we use a simple heuristic: if there's only one facility, use grandTotal
-      // Otherwise, show '--'
-      let revenue = 0;
-      if (revenueData && managerFacilities.length === 1) {
-        revenue = revenueData.summary.grandTotal;
-      }
+      let revenue = facilityRevenues[facility._id] || 0;
 
       return {
         ...facility,
@@ -54,7 +46,7 @@ export function FacilityListWidget({ managerFacilities, staffList, revenueData }
 
     // Sort by revenue (descending by default)
     return rows.sort((a, b) => (sortAsc ? a.revenue - b.revenue : b.revenue - a.revenue));
-  }, [managerFacilities, staffList, revenueData, sortAsc]);
+  }, [managerFacilities, staffList, facilityRevenues, sortAsc]);
 
   return (
     <div
@@ -140,9 +132,7 @@ export function FacilityListWidget({ managerFacilities, staffList, revenueData }
                     </span>
                   </TableCell>
                   <TableCell className="text-[12px] py-2.5 px-3 text-right font-semibold text-gray-800 tabular-nums whitespace-nowrap">
-                    {facility.revenue > 0
-                      ? `${facility.revenue.toLocaleString('vi-VN')} đ`
-                      : '--'}
+                    {facility.revenue.toLocaleString('vi-VN')} đ
                   </TableCell>
                 </TableRow>
               ))}

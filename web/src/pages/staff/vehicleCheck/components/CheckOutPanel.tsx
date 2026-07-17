@@ -3,6 +3,7 @@ import { formatPlate } from '../../../../utils/format';
 import { toast } from 'sonner';
 import { ImagePlus, RefreshCw, X, Building2, DoorOpen } from 'lucide-react';
 import axios from 'axios';
+import { getOptimizedImageUrl } from '../../../../utils/cloudinary';
 import { sessionService, ParkingSession } from '../../../../services/session.service';
 import { paymentService } from '../../../../services/payment.service';
 
@@ -519,8 +520,9 @@ export default function CheckOutPanel({
                     const cleanPath = imgSrc.startsWith('/') ? imgSrc : `/${imgSrc}`;
                     imgSrc = `${SERVER_URL}${cleanPath}`;
                   }
+                  const optimizedUrl = getOptimizedImageUrl(imgSrc, 400);
                   return (
-                    <img src={imgSrc} alt="check-in" className="w-full h-full object-contain" />
+                    <img src={optimizedUrl} alt="check-in" className="w-full h-full object-contain" />
                   );
                 })()
               ) : (

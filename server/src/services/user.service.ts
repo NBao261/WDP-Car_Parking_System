@@ -54,7 +54,8 @@ export class UserService {
 
   static async getUserById(userId: string): Promise<IUser | null> {
     const user = await User.findById(userId)
-      .populate('assignedFacilities', 'name address status openTime closeTime');
+      .populate('assignedFacilities', 'name address status openTime closeTime')
+      .lean() as IUser | null;
     if (!user) {
       throw new AppError('User not found', 404);
     }
@@ -65,7 +66,8 @@ export class UserService {
   static async getMe(userId: string): Promise<IUser | null> {
     const user = await User.findById(userId)
       .select('-password -customPermissions -failedLoginAttempts -lockedUntil')
-      .populate('assignedFacilities', 'name address status openTime closeTime');
+      .populate('assignedFacilities', 'name address status openTime closeTime')
+      .lean() as IUser | null;
     if (!user) {
       throw new AppError('User not found', 404);
     }
@@ -143,7 +145,7 @@ export class UserService {
 
   static async getAllUsers(filters: any = {}, skip = 0, limit = 10): Promise<{ users: IUser[]; total: number }> {
     const query = { isDeleted: false, ...filters };
-    const users = await User.find(query).skip(skip).limit(limit).sort({ createdAt: -1 });
+    const users = await User.find(query).skip(skip).limit(limit).sort({ createdAt: -1 }).lean() as any;
     const total = await User.countDocuments(query);
     return { users, total };
   }

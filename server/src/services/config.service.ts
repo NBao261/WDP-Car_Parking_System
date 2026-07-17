@@ -4,7 +4,7 @@ import { AppError } from '../middlewares/error.middleware';
 
 export class ConfigService {
   static async getConfig(key: string): Promise<ISystemConfig | null> {
-    const config = await SystemConfig.findOne({ key });
+    const config = await SystemConfig.findOne({ key }).lean() as ISystemConfig | null;
     if (!config) {
       throw new AppError('Config not found', 404);
     }
@@ -12,7 +12,7 @@ export class ConfigService {
   }
 
   static async getAllConfigs(): Promise<ISystemConfig[]> {
-    return SystemConfig.find();
+    return SystemConfig.find().lean() as any;
   }
 
   static async updateConfig(key: string, value: any, userId: string): Promise<ISystemConfig | null> {
@@ -29,7 +29,8 @@ export class ConfigService {
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 })
-      .populate('userId', 'name email role');
+      .populate('userId', 'name email role')
+      .lean();
     const total = await AuditLog.countDocuments(filters);
     return { logs, total };
   }

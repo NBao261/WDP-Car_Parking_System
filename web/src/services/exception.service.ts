@@ -47,6 +47,7 @@ export interface IException {
         vehicleTypeId?: { name: string; code: string };
         slotId?: { code: string };
         floorId?: { name: string };
+        facilityId?: { _id: string; name: string };
       }
     | string;
   type: ExceptionType;
@@ -58,6 +59,12 @@ export interface IException {
   managerNote: string;
   surcharge: number;
   status: ExceptionStatus;
+  actualPlate?: string;
+  expectedPlate?: string;
+  oldSlot?: { _id: string; name: string } | string;
+  newSlot?: { _id: string; name: string } | string;
+  checkInImage?: string;
+  checkOutImage?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -75,6 +82,7 @@ export interface GetExceptionsParams {
   status?: ExceptionStatus;
   type?: ExceptionType;
   sessionId?: string;
+  facilityId?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
@@ -89,7 +97,7 @@ export interface ExceptionsResponse {
 // ─── Service ─────────────────────────────────────────────────────────────────
 export const exceptionService = {
   /**
-   * Staff: Tạo ngoại lệ mới
+   * Staff: Tạo sự cố mới
    * POST /api/v1/exceptions
    */
   createException: async (
@@ -99,7 +107,7 @@ export const exceptionService = {
   },
 
   /**
-   * Staff / Manager: Lấy danh sách ngoại lệ
+   * Staff / Manager: Lấy danh sách sự cố
    * GET /api/v1/exceptions
    */
   getExceptions: async (
@@ -109,7 +117,7 @@ export const exceptionService = {
   },
 
   /**
-   * Lấy chi tiết một ngoại lệ theo ID
+   * Lấy chi tiết một sự cố theo ID
    * GET /api/v1/exceptions (filter by sessionId)
    */
   getExceptionsBySession: async (
@@ -119,7 +127,7 @@ export const exceptionService = {
   },
 
   /**
-   * Staff: Xử lý ngoại lệ
+   * Staff: Xử lý sự cố
    * PATCH /api/v1/exceptions/:id/resolve
    */
   resolveException: async (
@@ -130,7 +138,7 @@ export const exceptionService = {
   },
 
   /**
-   * Manager: Thêm ghi chú review ngoại lệ
+   * Manager: Thêm ghi chú review sự cố
    * PATCH /api/v1/exceptions/:id/review
    */
   addManagerReview: async (

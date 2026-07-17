@@ -96,16 +96,18 @@ export function VehicleRow({ vehicle, index, globalIndex, onEdit, onView, onDele
                 <Edit size={14} /> Chỉnh Sửa
               </button>
               <div className="h-px bg-gray-100 mx-2 my-1" />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete();
-                  setMenuOpen(false);
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-              >
-                <Trash2 size={14} /> Xóa
-              </button>
+              {!['XEOTODIEN', 'XEMAYDIEN', 'XEOTO', 'XEMAY', 'XEDAP'].includes(vehicle.code.toUpperCase()) && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                    setMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <Trash2 size={14} /> Xóa
+                </button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

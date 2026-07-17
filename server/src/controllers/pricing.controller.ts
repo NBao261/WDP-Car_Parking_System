@@ -21,10 +21,10 @@ export class PricingController {
     }
   }
 
-  static async deactivatePricingPlan(req: Request, res: Response, next: NextFunction) {
+  static async deletePricingPlan(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;
-      const plan = await PricingService.deactivatePricingPlan(id);
+      const plan = await PricingService.deletePricingPlan(id);
       res.status(200).json({ success: true, data: plan });
     } catch (error) {
       next(error);

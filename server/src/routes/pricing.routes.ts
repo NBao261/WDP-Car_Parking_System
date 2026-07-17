@@ -19,6 +19,6 @@ router.get('/:id/active-sessions', checkRole([UserRole.ADMIN, UserRole.MANAGER])
 // Tạo/Sửa/Xóa bảng giá (SRS 3.3: chỉ Admin + Manager)
 router.post('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(createPricingPlanSchema), checkPermission(PERMISSIONS.PRICING_CREATE), PricingController.createPricingPlan);
 router.patch('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(updatePricingPlanSchema), checkPermission(PERMISSIONS.PRICING_UPDATE), PricingController.updatePricingPlan);
-router.delete('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(objectIdParamSchema), checkPermission(PERMISSIONS.PRICING_DELETE), PricingController.deactivatePricingPlan);
+router.delete('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(objectIdParamSchema), checkPermission(PERMISSIONS.PRICING_DELETE), PricingController.deletePricingPlan);
 
 export default router;

@@ -48,7 +48,7 @@ export function useGlobalExceptionLogic(currentSession: any, coPlateCam: string,
 
   const handleSubmit = async () => {
     const sessionId = activeSession?._id;
-    if (!sessionId) { toast.error("Không xác định được phiên gửi xe. Vui lòng tìm kiếm vé trước khi báo ngoại lệ!"); return; }
+    if (!sessionId) { toast.error("Không xác định được phiên gửi xe. Vui lòng tìm kiếm vé trước khi báo sự cố!"); return; }
     if (!note.trim()) { toast.error("Vui lòng mô tả chi tiết tình huống sự cố!"); return; }
     setIsSubmitting(true);
     try {

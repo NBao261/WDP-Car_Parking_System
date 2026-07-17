@@ -20,13 +20,13 @@ export class PublicService {
     }
     
     if (query.vehicleTypeId) {
-      const plans = await PricingPlan.find({ vehicleTypeId: query.vehicleTypeId, status: 'active' }).select('facilityId');
+      const plans = await PricingPlan.find({ vehicleTypeId: query.vehicleTypeId, status: 'active' }).select('facilityId').lean();
       const facilityIds = plans.map(p => p.facilityId);
       query._id = { $in: facilityIds };
       delete query.vehicleTypeId;
     }
     
-    const facilities = await ParkingFacility.find(query).skip(skip).limit(limit).select('-createdAt -updatedAt');
+    const facilities = await ParkingFacility.find(query).skip(skip).limit(limit).select('-createdAt -updatedAt').lean();
     const total = await ParkingFacility.countDocuments(query);
     const result = { facilities, total };
 
@@ -40,7 +40,7 @@ export class PublicService {
     const cached = await getCache(cacheKey);
     if (cached) return cached;
 
-    const pricingPlans = await PricingPlan.find({ facilityId, status: 'active' }).populate('vehicleTypeId', 'name code icon');
+    const pricingPlans = await PricingPlan.find({ facilityId, status: 'active' }).populate('vehicleTypeId', 'name code icon').lean();
     
     // Cache for 2 hours
     await setCache(cacheKey, pricingPlans, 7200);

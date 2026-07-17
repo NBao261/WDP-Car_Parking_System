@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { getOptimizedImageUrl } from '../../../../utils/cloudinary';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,9 +16,10 @@ const SERVER_URL = import.meta.env.VITE_API_BASE_URL
   : 'http://localhost:5000';
 
 function getImageUrl(url?: string) {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  return `${SERVER_URL}${url}`;
+  if (!url) return undefined;
+  if (url.startsWith('http')) return getOptimizedImageUrl(url, 400);
+  const SERVER_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
+  return `${SERVER_URL}${url.startsWith('/') ? url : `/${url}`}`;
 }
 
 interface SlotGroup {

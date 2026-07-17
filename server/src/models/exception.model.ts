@@ -30,6 +30,8 @@ export interface IException extends Document {
   checkInImage?: string;
   checkOutImage?: string;
   cardCode?: string;
+  oldSlot?: mongoose.Types.ObjectId;
+  newSlot?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,6 +53,8 @@ const exceptionSchema = new Schema<IException>(
     checkInImage: { type: String },
     checkOutImage: { type: String },
     cardCode: { type: String },
+    oldSlot: { type: Schema.Types.ObjectId, ref: 'ParkingSlot' },
+    newSlot: { type: Schema.Types.ObjectId, ref: 'ParkingSlot' },
   },
   { timestamps: true }
 );

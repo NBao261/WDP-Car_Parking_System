@@ -19,6 +19,8 @@ export class PaymentService {
     sessionId: string;
     method: PaymentMethod;
     driverId?: string;
+    checkOutImage?: string;
+    gateOut?: string;
   }): Promise<{ payment: IPayment; paymentUrl?: string; qrCodeUrl?: string }> {
     const session = await ParkingSession.findById(data.sessionId);
     if (!session) {
@@ -42,7 +44,12 @@ export class PaymentService {
       method: data.method,
       status: PaymentStatus.PENDING,
       driverId: data.driverId || session.driverId,
-      note: 'Thanh toán trực tuyến (Pre-payment)',
+      note: JSON.stringify({
+        label: 'Thanh toán trực tuyến (Pre-payment)',
+        checkOutImage: data.checkOutImage || null,
+        gateOut: data.gateOut || null,
+        staffOutId: data.driverId || null,
+      }),
     });
 
     await payment.save();
@@ -137,12 +144,18 @@ export class PaymentService {
       await payment.save({ session: sessionMongoose });
 
       // 5. Cập nhật Session -> COMPLETED
-      // Lưu ý: Trường hợp thanh toán online trước khi xe ra tới cổng, ta ghi nhận checkOutTime 
-      // là thời điểm thanh toán. Hoặc ta có thể giữ pending checkout (tuỳ logic chi tiết).
-      // Để đơn giản hoá theo yêu cầu, ta đánh dấu checkout hoàn tất.
       session.checkOutTime = new Date();
       session.status = SessionStatus.COMPLETED;
       session.totalFee = payment.amount;
+
+      // Khôi phục checkOutImage, gateOut, staffOutId từ metadata payment.note
+      try {
+        const meta = JSON.parse(payment.note || '{}');
+        if (meta.checkOutImage) session.checkOutImage = meta.checkOutImage;
+        if (meta.gateOut) session.gateOut = meta.gateOut;
+        if (meta.staffOutId) session.staffOutId = new mongoose.Types.ObjectId(meta.staffOutId);
+      } catch (_) { /* note không phải JSON, bỏ qua */ }
+
       await session.save({ session: sessionMongoose });
 
       // 6. Cập nhật Slot -> AVAILABLE

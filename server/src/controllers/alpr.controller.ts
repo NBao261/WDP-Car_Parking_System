@@ -81,7 +81,9 @@ export const scanLicensePlate = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    const best = results.sort((a, b) => b.confidence - a.confidence)[0];
+    // Kết quả từ Python ALPR đã được sắp xếp chuẩn (ưu tiên biển hợp lệ trước, sau đó mới đến confidence).
+    // Do đó lấy luôn kết quả đầu tiên, tránh tự sort lại chỉ bằng confidence gây ra việc nhầm sticker/chữ quảng cáo.
+    const best = results[0];
     const normalizedPlate = normalizeLicensePlate(best.text);
 
     // ── 4. Trả về biển số + imageUrl (local) ngay lập tức ─────────────────

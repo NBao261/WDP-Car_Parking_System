@@ -95,6 +95,13 @@ export function TableSessionsDetailModal({ selectedSession, setSelectedSession, 
               <span className="font-semibold text-[#060606] text-[14px]">{selectedSession.cardCode || selectedSession.code || '—'}</span>
             </div>
 
+            {selectedSession.driverId?.name && (
+              <div className="flex justify-between items-center px-5 py-3.5 border-b border-gray-100">
+                <span className="text-gray-500 text-[13px] font-medium">Chủ xe (Đặt trước)</span>
+                <span className="font-semibold text-[#060606] text-[14px]">{selectedSession.driverId.name}</span>
+              </div>
+            )}
+
             <div className="flex justify-between items-center px-5 py-3.5 border-b border-gray-100">
               <span className="text-gray-500 text-[13px] font-medium">Loại xe</span>
               <span className="font-semibold text-[#060606] text-[14px]">{selectedSession.vehicleTypeId?.name || '—'}</span>

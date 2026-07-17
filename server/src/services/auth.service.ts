@@ -55,8 +55,8 @@ export class AuthService {
       throw new AppError('Account is locked', 403);
     }
 
-    if (user.status === UserStatus.INACTIVE) {
-      throw new AppError('Account is inactive', 403);
+    if (user.status === UserStatus.INACTIVE || user.isDeleted) {
+      throw new AppError('Account is inactive or has been deleted', 403);
     }
 
     const isMatch = await bcrypt.compare(passwordInput, user.password);
@@ -91,7 +91,7 @@ export class AuthService {
       const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET) as { userId: string; role: string };
       const user = await User.findById(decoded.userId);
       
-      if (!user || user.status !== UserStatus.ACTIVE) {
+      if (!user || user.status !== UserStatus.ACTIVE || user.isDeleted) {
         throw new AppError('Invalid token or user inactive', 401);
       }
 

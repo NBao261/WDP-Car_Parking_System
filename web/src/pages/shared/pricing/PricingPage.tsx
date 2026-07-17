@@ -17,6 +17,7 @@ import { PricingFilterBar } from './components/PricingFilterBar';
 import { PricingPagination } from './components/PricingPagination';
 import { PricingFacilityFilterBar } from './components/PricingFacilityFilterBar';
 import { mapToUiType } from './components/constants';
+import { PageLoader } from '../../../components/PageLoader';
 
 export default function PricingPage() {
   const { user } = useAuthStore();
@@ -310,17 +311,7 @@ export default function PricingPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse h-44 space-y-3"
-            >
-              <div className="h-4 bg-gray-100 rounded w-2/3" />
-              <div className="h-3 bg-gray-100 rounded w-1/2" />
-            </div>
-          ))}
-        </div>
+        <PageLoader />
       ) : !selectedFacility ? (
         <div className="space-y-6">
           <PricingFacilityFilterBar
@@ -541,25 +532,19 @@ export default function PricingPage() {
       <AnimatePresence>
         {modalOpen &&
           (() => {
-            // Compute allowed vehicle types for the selected facility (if any)
-            let allowedVehicleTypes = vehicleTypes;
-            if (selectedFacility) {
-              const facilityFloors = floors.filter((f) => f.facilityId === selectedFacility._id);
-              const vtIds = new Set<string>();
-              facilityFloors.forEach((fl) => {
-                fl.allowedVehicleTypes?.forEach((vt: any) => {
-                  vtIds.add(typeof vt === 'string' ? vt : vt._id);
-                });
-              });
-              allowedVehicleTypes = Array.from(vtIds)
-                .map((id) => vehicleTypes.find((v) => v._id === id))
-                .filter(Boolean) as VehicleType[];
-            }
+            const allowedVehicleTypes = vehicleTypes;
+
+            // Filter facilities to only include those with floors, plus the currently selected/edited one
+            const validFacilities = facilities.filter(f => 
+              floors.some(fl => fl.facilityId === f._id) || 
+              (editingPlan && (typeof editingPlan.facilityId === 'object' ? editingPlan.facilityId._id : editingPlan.facilityId) === f._id) ||
+              (selectedFacility && selectedFacility._id === f._id)
+            );
 
               return (
               <PricingFormModal
                 plan={editingPlan}
-                facilities={facilities}
+                facilities={validFacilities}
                 vehicleTypes={allowedVehicleTypes}
                 existingPlans={plans}
                 onClose={() => setModalOpen(false)}

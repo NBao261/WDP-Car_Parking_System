@@ -162,7 +162,7 @@ export class FloorService {
   }
 
   static async getFloorById(id: string): Promise<IFloor | null> {
-    const floor = await Floor.findById(id).populate('allowedVehicleTypes');
+    const floor = await Floor.findById(id).populate('allowedVehicleTypes').lean() as any;
     if (!floor) {
       throw new AppError('Floor not found', 404);
     }
@@ -171,7 +171,7 @@ export class FloorService {
 
   static async getAllFloors(filters: any = {}, skip = 0, limit = 10): Promise<{ floors: IFloor[]; total: number }> {
     const query = { isDeleted: false, ...filters };
-    const floors = await Floor.find(query).skip(skip).limit(limit).sort({ createdAt: -1 }).populate('allowedVehicleTypes');
+    const floors = await Floor.find(query).skip(skip).limit(limit).sort({ createdAt: -1 }).populate('allowedVehicleTypes').lean() as any;
     const total = await Floor.countDocuments(query);
     return { floors, total };
   }

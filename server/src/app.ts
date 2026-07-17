@@ -67,7 +67,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ─── Logging ──────────────────────────────────────────
-app.use(morgan('combined'));
+// app.use(morgan('combined'));
 
 // ─── API Docs ─────────────────────────────────────────
 setupSwagger(app);

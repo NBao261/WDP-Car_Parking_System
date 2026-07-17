@@ -38,8 +38,7 @@ export function useTableSessionsLogic(onTotalChange?: (total: number) => void) {
     setLoading(true);
     try {
       const facilityId = sessionStorage.getItem("staff_facility_id") || undefined;
-      const vehicleTypeId = filterVehicleTypeId !== 'All' ? filterVehicleTypeId : undefined;
-      const res = await sessionService.getActiveSessions({ limit: 100, facilityId, vehicleTypeId });
+      const res = await sessionService.getActiveSessions({ limit: 1000, facilityId });
       if (res.success && res.data) {
         setSessions(res.data as any);
         onTotalChange?.((res as any).total ?? res.data.length);
@@ -49,7 +48,7 @@ export function useTableSessionsLogic(onTotalChange?: (total: number) => void) {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchSessions(); }, [filterVehicleTypeId]);
+  useEffect(() => { fetchSessions(); }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value.replace(/\s+/g, '').toUpperCase());
@@ -73,6 +72,7 @@ export function useTableSessionsLogic(onTotalChange?: (total: number) => void) {
   const hasActiveFilters = search !== '' || filterVehicleTypeId !== 'All' || filterLocation !== 'All' || filterGate !== 'All' || filterStatus !== 'All' || sortConfig !== null;
 
   const filteredSessions = sessions
+    .filter(s => filterVehicleTypeId === 'All' || s.vehicleTypeId?._id === filterVehicleTypeId)
     .filter(s => search === '' || s.licensePlate.toUpperCase().includes(search) || s.code.toUpperCase().includes(search))
     .filter(s => filterGate === 'All' || s.gateIn === filterGate)
     .filter(s => filterLocation === 'All' || filterLocation === '' || (s.floorId && s.slotId ? `${s.floorId.name} - ${s.slotId.code}` : '').toUpperCase().includes(filterLocation.toUpperCase()))

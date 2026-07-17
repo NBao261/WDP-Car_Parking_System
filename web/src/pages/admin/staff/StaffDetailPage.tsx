@@ -22,7 +22,7 @@ import {
 import { userService } from '../../../services/user.service';
 import { User as UserType } from '../../../types/user.types';
 import { UserRole } from '../../../../../shared/types';
-import { Skeleton } from '../../../components/ui/Skeleton';
+import { Skeleton } from '../../../components/ui/skeleton';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -217,11 +217,7 @@ export default function StaffDetailPage() {
             disabled={isActionLoading || user.role === UserRole.ADMIN}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-red-50 border border-red-100 text-red-700 rounded-xl hover:bg-red-100 font-medium text-sm transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isActionLoading ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Lock size={16} />
-            )}
+            {isActionLoading ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
             Khóa tài khoản
           </button>
         )}
@@ -253,7 +249,9 @@ export default function StaffDetailPage() {
         </div>
       </motion.div>
 
-      <div className={`grid grid-cols-1 ${user.role === UserRole.ADMIN ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-6`}>
+      <div
+        className={`grid grid-cols-1 ${user.role === UserRole.ADMIN ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-6`}
+      >
         {/* Cột trái: Thông tin cá nhân & Bảo mật */}
         <motion.div variants={itemVariants} className="space-y-6">
           {/* Profile Card */}
@@ -317,63 +315,68 @@ export default function StaffDetailPage() {
         </motion.div>
 
         {/* Cột phải: Công việc & Phân quyền */}
-        <motion.div variants={itemVariants} className={`${user.role === UserRole.ADMIN ? '' : 'lg:col-span-2'} space-y-6`}>
+        <motion.div
+          variants={itemVariants}
+          className={`${user.role === UserRole.ADMIN ? '' : 'lg:col-span-2'} space-y-6`}
+        >
           {user.role === UserRole.ADMIN && renderSecurityCard()}
           {/* Work Assignments */}
           {(user.role === UserRole.MANAGER || user.role === UserRole.STAFF) && (
             <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-              <div>
-                <h3 className="text-[15px] font-bold text-[#062F28]">Phân công khu vực (Bãi đỗ)</h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Các bãi xe mà nhân sự này được phép quản lý/vận hành
-                </p>
+              <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#062F28]">
+                    Phân công khu vực (Bãi đỗ)
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Các bãi xe mà nhân sự này được phép quản lý/vận hành
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
+                  <Building2 size={20} />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
-                <Building2 size={20} />
-              </div>
-            </div>
 
-            <div className="p-6">
-              {user.assignedFacilities && user.assignedFacilities.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {user.assignedFacilities.map((facility: any, idx: number) => {
-                    const isObject = typeof facility === 'object';
-                    return (
-                      <div
-                        key={idx}
-                        className="p-4 rounded-xl border border-gray-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-start gap-3"
-                      >
-                        <div className="w-10 h-10 rounded-lg bg-[#9FE870]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Building2 size={18} className="text-[#062F28]" />
-                        </div>
-                        <div>
-                          <div className="font-bold text-gray-900 text-sm line-clamp-1">
-                            {isObject
-                              ? facility.name || 'Bãi đỗ chưa đặt tên'
-                              : `Facility ID: ${facility}`}
+              <div className="p-6">
+                {user.assignedFacilities && user.assignedFacilities.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {user.assignedFacilities.map((facility: any, idx: number) => {
+                      const isObject = typeof facility === 'object';
+                      return (
+                        <div
+                          key={idx}
+                          className="p-4 rounded-xl border border-gray-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-start gap-3"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-[#9FE870]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Building2 size={18} className="text-[#062F28]" />
                           </div>
-                          {isObject && facility.address && (
-                            <div className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
-                              {facility.address}
+                          <div>
+                            <div className="font-bold text-gray-900 text-sm line-clamp-1">
+                              {isObject
+                                ? facility.name || 'Bãi đỗ chưa đặt tên'
+                                : `Facility ID: ${facility}`}
                             </div>
-                          )}
+                            {isObject && facility.address && (
+                              <div className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                                {facility.address}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-10 bg-gray-50 rounded-xl border border-gray-100 border-dashed">
-                  <Building2 size={32} className="mx-auto text-gray-300 mb-3" />
-                  <div className="text-sm font-medium text-gray-900">Chưa được phân công</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Nhân sự này chưa được gán vào bất kỳ bãi xe nào.
+                      );
+                    })}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="text-center py-10 bg-gray-50 rounded-xl border border-gray-100 border-dashed">
+                    <Building2 size={32} className="mx-auto text-gray-300 mb-3" />
+                    <div className="text-sm font-medium text-gray-900">Chưa được phân công</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Nhân sự này chưa được gán vào bất kỳ bãi xe nào.
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
           )}
 
           {/* RBAC Permissions */}
@@ -451,7 +454,7 @@ export default function StaffDetailPage() {
                   <div className="p-3 bg-gray-50 rounded-lg flex gap-3 items-center">
                     <CheckCircle2 size={16} className="text-[#9FE870]" />
                     <span className="text-sm font-medium text-gray-800">
-                      Ghi nhận ngoại lệ (Exception Handling)
+                      Ghi nhận sự cố (Exception Handling)
                     </span>
                   </div>
                 </div>

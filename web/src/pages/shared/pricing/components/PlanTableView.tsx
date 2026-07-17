@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Edit, PowerOff, CheckCircle2, Trash2, MoreVertical, ArrowUpDown } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { pricingService, type PricingPlan } from '../../../../services/pricing.service';
 import { type Facility } from '../../../../services/facility.service';
@@ -234,6 +234,7 @@ export function PlanTableView({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
+            <AnimatePresence mode="popLayout">
             {plans.map((plan, index) => {
               const vtId =
                 typeof plan.vehicleTypeId === 'object'
@@ -254,7 +255,11 @@ export function PlanTableView({
               const baseRate = plan.rates[0];
 
               return (
-                <tr
+                <motion.tr
+                  layout
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   key={plan._id}
                   onClick={() => onViewDetail(plan)}
                   className={`hover:bg-[#9FE870]/10 transition-colors cursor-pointer border-b border-gray-50 last:border-0 ${!isActive ? 'opacity-75 bg-gray-50/50' : ''}`}
@@ -381,9 +386,10 @@ export function PlanTableView({
                       </button>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               );
             })}
+            </AnimatePresence>
           </tbody>
         </table>
       </div>

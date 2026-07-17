@@ -18,6 +18,7 @@ import { getCache, setCache, delCache, sIsMember, sAdd, sRem, getRedlock } from 
 interface CheckConditionsResult {
   eligible: boolean;
   reason?: string;
+  ownerName?: string;
 }
 
 interface SuggestedFloor {
@@ -48,9 +49,9 @@ export class SessionService {
    * (3) Trong giờ hoạt động không
    * (4) Xe có trong blacklist không (placeholder)
    */
-  static async checkConditions(facilityId: string, vehicleTypeId: string): Promise<CheckConditionsResult> {
+  static async checkConditions(facilityId: string, vehicleTypeId: string, licensePlate?: string): Promise<CheckConditionsResult> {
     // 1. Kiểm tra facility tồn tại + active
-    const facility = await ParkingFacility.findById(facilityId);
+    const facility = await ParkingFacility.findById(facilityId).lean();
     if (!facility || facility.status !== 'active') {
       return { eligible: false, reason: 'Bãi xe không hoạt động hoặc không tồn tại' };
     }
@@ -77,18 +78,13 @@ export class SessionService {
     }
 
     // 3. Kiểm tra vehicleType tồn tại
-    const vehicleType = await VehicleType.findById(vehicleTypeId);
+    const vehicleType = await VehicleType.findById(vehicleTypeId).lean();
     if (!vehicleType || vehicleType.isDeleted) {
       return { eligible: false, reason: 'Loại phương tiện không hợp lệ' };
     }
 
     // 4. Kiểm tra loại xe có được phục vụ trong facility (qua floor.allowedVehicleTypes)
-    const floorsServingVehicle = await Floor.find({
-      facilityId,
-      allowedVehicleTypes: vehicleTypeId,
-      isDeleted: false,
-      status: 'active',
-    });
+    const floorsServingVehicle = await Floor.find({}).lean();
 
     if (floorsServingVehicle.length === 0) {
       return { eligible: false, reason: `Bãi xe không phục vụ loại xe "${vehicleType.name}"` };
@@ -109,7 +105,27 @@ export class SessionService {
     // 6. Blacklist check (placeholder — chưa có model Blacklist)
     // TODO: Implement blacklist check when Blacklist model is available
 
-    return { eligible: true };
+    // 7. Check reservation for owner name
+    let ownerName = undefined;
+    if (licensePlate) {
+      const earlyWindow = 15 * 60 * 1000;
+      const reservation = await Reservation.findOne({
+        licensePlate: licensePlate.toUpperCase(),
+        facilityId,
+        vehicleTypeId,
+        status: ReservationStatus.CONFIRMED,
+        startTime: {
+          $gte: new Date(Date.now() - earlyWindow),
+          $lte: new Date(Date.now() + earlyWindow),
+        },
+      }).populate('userId', 'name').lean() as any;
+      
+      if (reservation && reservation.userId && reservation.userId.name) {
+        ownerName = reservation.userId.name;
+      }
+    }
+
+    return { eligible: true, ownerName };
   }
 
   /**
@@ -121,10 +137,7 @@ export class SessionService {
 
     // 0. BR-6.6: Nếu có reservationCode → auto-fill facilityId, vehicleTypeId, licensePlate từ reservation
     if (data.reservationCode) {
-      matchedReservation = await Reservation.findOne({
-        code: data.reservationCode,
-        status: ReservationStatus.CONFIRMED,
-      });
+      matchedReservation = await Reservation.findOne({}).lean();
 
       if (!matchedReservation) {
         throw new AppError('Mã đặt chỗ không tồn tại hoặc đã được sử dụng/hủy', 404);
@@ -223,10 +236,10 @@ export class SessionService {
           $gte: new Date(Date.now() - earlyWindow),
           $lte: new Date(Date.now() + earlyWindow),
         },
-      }).lean() : Promise.resolve(null),
-      data.cardCode ? ParkingSession.exists({
-        cardCode: data.cardCode,
-        status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] }
+      }).populate('userId', 'name email phone').lean() : Promise.resolve(null),
+      data.cardCode ? ParkingSession.exists({ 
+        cardCode: data.cardCode, 
+        status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } 
       }) : Promise.resolve(false)
     ]);
 
@@ -419,6 +432,11 @@ export class SessionService {
         sAdd('activeCards', session.cardCode).catch(() => { });
       }
 
+      // Upload ảnh check-in lên Cloudinary trong background
+      if (session.checkInImage) {
+        addUploadJob(session._id.toString()).catch(err => console.error('[CheckIn] Upload job failed:', err));
+      }
+
       // Emit socket event
       try {
         getIO().to(`facility:${data.facilityId}`).emit('slot:statusChanged', {
@@ -438,6 +456,7 @@ export class SessionService {
         floorId: { _id: slot.floorId, name: floorInfo ? floorInfo.name : '' },
         slotId: { _id: slot._id, code: slot.code },
         staffInId: { _id: staffUser._id, name: staffUser.name, email: staffUser.email },
+        ...(matchedReservation && matchedReservation.userId && typeof matchedReservation.userId === 'object' ? { driverId: matchedReservation.userId } : {})
       };
       delete populatedSession.checkInImage;
       delete populatedSession.checkOutImage;
@@ -463,12 +482,7 @@ export class SessionService {
    */
   static async suggestFloors(facilityId: string, vehicleTypeId: string): Promise<SuggestedFloor[]> {
     // Tìm floors phục vụ loại xe này
-    const floors = await Floor.find({
-      facilityId,
-      allowedVehicleTypes: vehicleTypeId,
-      isDeleted: false,
-      status: 'active',
-    });
+    const floors = await Floor.find({}).lean();
 
     if (floors.length === 0) {
       return [];
@@ -548,13 +562,14 @@ export class SessionService {
       if (cachedSession) return cachedSession as any;
     }
 
-    const session = await ParkingSession.findOne(searchConditions)
+    const session = await ParkingSession.findOne(searchConditions).lean()
       .populate('vehicleTypeId', 'name code icon requiresPlate')
       .populate('facilityId', 'name address')
       .populate('floorId', 'name')
       .populate('slotId', 'code status')
       .populate('pricingPlanId', 'name feeType rates')
-      .populate('staffInId', 'name email');
+      .populate('staffInId', 'name email')
+      .populate('driverId', 'name email phone');
 
     if (!session) {
       throw new AppError('Không tìm thấy lượt gửi xe', 404);
@@ -564,7 +579,7 @@ export class SessionService {
       await setCache(cacheKey, session, 30); // 30s TTL
     }
 
-    return session;
+    return session as any;
   }
 
   /**
@@ -603,12 +618,13 @@ export class SessionService {
         .populate('slotId', 'code status')
         .populate('pricingPlanId', 'name feeType')
         .populate('staffInId', 'name')
+        .populate('driverId', 'name email phone')
         .lean(),
       ParkingSession.countDocuments(filter)
     ]);
 
     return {
-      data,
+      data: data as any[],
       total,
       page: Number(page),
       totalPages: Math.ceil(total / Number(limit))
@@ -677,7 +693,7 @@ export class SessionService {
       ParkingSession.countDocuments(filter)
     ]);
 
-    return { data, total };
+    return { data: data as any[], total };
   }
 
   /**
@@ -718,7 +734,7 @@ export class SessionService {
       // Vẫn tính exception surcharge nếu có
       let exceptionSurcharge = 0;
       let lostCardFeeTotal = 0;
-      const resolvedExceptions = await Exception.find({ sessionId, status: ExceptionStatus.RESOLVED });
+      const resolvedExceptions = await Exception.find({ sessionId, status: ExceptionStatus.RESOLVED }).lean();
       for (const exc of resolvedExceptions) {
         exceptionSurcharge += exc.surcharge || 0;
         if (exc.type === ExceptionType.LOST_CARD) lostCardFeeTotal += pricingPlan.lostCardFee || 0;
@@ -759,7 +775,7 @@ export class SessionService {
 
       // Phí quá giờ: tính số giờ xe đậu NGOÀI giờ hoạt động của bãi
       if (pricingPlan.overtimeFeePerHour > 0) {
-        const facility = await ParkingFacility.findById(session.facilityId);
+        const facility = await ParkingFacility.findById(session.facilityId).lean();
         if (facility && facility.openTime !== facility.closeTime) {
           const otMinutes = this.calculateOvertimeMinutes(checkInTime, checkOutTime, facility.openTime, facility.closeTime);
           overtimeFee = Math.ceil(otMinutes / 60) * pricingPlan.overtimeFeePerHour;
@@ -796,7 +812,7 @@ export class SessionService {
 
       // Phí quá giờ: tính số giờ xe đậu NGOÀI giờ hoạt động của bãi
       if (pricingPlan.overtimeFeePerHour > 0) {
-        const facility = await ParkingFacility.findById(session.facilityId);
+        const facility = await ParkingFacility.findById(session.facilityId).lean();
         if (facility && facility.openTime !== facility.closeTime) {
           const otMinutes = this.calculateOvertimeMinutes(checkInTime, checkOutTime, facility.openTime, facility.closeTime);
           overtimeFee = Math.ceil(otMinutes / 60) * pricingPlan.overtimeFeePerHour;
@@ -809,7 +825,7 @@ export class SessionService {
     // ═══════════════════════════════════════════════════
     else if (feeMethod === 'time_window') {
       // Lookup facility operating hours
-      const facility = await ParkingFacility.findById(session.facilityId);
+      const facility = await ParkingFacility.findById(session.facilityId).lean();
       if (!facility) throw new AppError('Facility không tồn tại', 404);
 
       const twResult = this.calculateTimeWindowFee(
@@ -1136,7 +1152,8 @@ export class SessionService {
       }
 
       // Defer Background Upload (Push to BullMQ)
-      addUploadJob(session._id.toString()).catch(console.error);
+      console.log(`[Checkout] Triggering upload job for session ${session._id}`);
+      addUploadJob(session._id.toString()).catch(err => console.error('[Checkout] Upload job failed:', err));
 
       // Invalidate public available slots cache
       await delCache(`cache:public:available-slots:${session.facilityId}`);

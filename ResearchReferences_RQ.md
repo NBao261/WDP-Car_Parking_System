@@ -28,8 +28,8 @@
 
 - **Tác giả:** Icarte-Ahumada, G., He, Z., Godoy, V., García, F. & Oyarzún, M.
 - **Năm:** 2025
-- **Tiêu đề:** *A Multi-Agent System for Parking Allocation: An Approach to Allocate Parking Spaces*
-- **Tạp chí:** *Electronics*, Vol. 14, No. 5, Article 840. MDPI
+- **Tiêu đề:** _A Multi-Agent System for Parking Allocation: An Approach to Allocate Parking Spaces_
+- **Tạp chí:** _Electronics_, Vol. 14, No. 5, Article 840. MDPI
 - **DOI:** `10.3390/electronics14050840`
 - **Tóm tắt:** Sử dụng hệ thống đa tác tử (Multi-Agent System) với **Contract Net Protocol** để phân bổ chỗ đỗ dựa trên đặc tính phương tiện (kích thước, loại xe) và đặc tính chỗ đỗ. Bốn cơ chế phối hợp được đánh giá: Serial, Serial with Decommitment, Concurrent, Concurrent with Decommitment. Kết quả: Concurrent + Decommitment hiệu quả nhất.
 
@@ -37,7 +37,7 @@
 
 - **Tác giả:** Jakob, M. & Menendez, M.
 - **Năm:** 2021
-- **Tiêu đề:** *Optimal parking occupancy with and without differentiated parking: A macroscopic analysis*
+- **Tiêu đề:** _Optimal parking occupancy with and without differentiated parking: A macroscopic analysis_
 - **Tạp chí:** Transportation Letters: The International Journal of Transportation Research
 - **DOI:** `10.1080/19427867.2021.1988245`
 - **Tóm tắt:** Đề xuất framework tính toán tỷ lệ lấp đầy tối ưu bằng mô hình giao thông vĩ mô. Nghiên cứu chỉ ra rằng cả tỷ lệ quá cao (gây cruising) lẫn quá thấp (lãng phí tài nguyên) đều ảnh hưởng xấu. Chính sách "differentiated parking" — dành riêng chỗ cho từng loại xe (EV, xe thường) — giúp cân bằng hiệu quả.
@@ -75,7 +75,7 @@ Algorithm:
 
 - **Tác giả:** (Authors listed in arXiv preprint)
 - **Năm:** 2025
-- **Tiêu đề:** *Reducing Street Parking Search Time via Smart Assignment Strategies*
+- **Tiêu đề:** _Reducing Street Parking Search Time via Smart Assignment Strategies_
 - **Nguồn:** arXiv preprint
 - **Identifier:** `arXiv:2508.19979`
 - **Tóm tắt:** Đề xuất chiến lược "Cord-Approx" sử dụng **Hungarian Algorithm** (thuật toán đối sánh tối ưu) để gán chỗ đỗ cho xe. Mô phỏng tại Madrid cho thấy giảm **72–76% thời gian tìm chỗ** so với hệ thống không phối hợp (uncoordinated).
@@ -84,7 +84,7 @@ Algorithm:
 
 - **Tác giả:** Wang, S., Levin, M. W. & Caverly, R. J.
 - **Năm:** 2021
-- **Tiêu đề:** *Optimal parking management of connected autonomous vehicles: A control-theoretic approach*
+- **Tiêu đề:** _Optimal parking management of connected autonomous vehicles: A control-theoretic approach_
 - **Tạp chí:** Transportation Research Part C: Emerging Technologies, Elsevier
 - **DOI:** `10.1016/j.trc.2020.102924`
 - **Tóm tắt:** Áp dụng lý thuyết điều khiển (control theory) cho bài toán quản lý bãi đỗ xe tự động. Chứng minh hệ thống phối hợp trung tâm (centralized coordination) vượt trội hơn phi tập trung (decentralized). Cơ sở cho RQ2: auto-assign hiệu quả hơn manual.
@@ -127,8 +127,8 @@ So sánh:
 
 - **Tác giả:** Amari, A., Moussaid, L. & Tallal, S.
 - **Năm:** 2023
-- **Tiêu đề:** *New Parking Lot Selection Approach Based on the Multi-Criteria Decision Making (MCDM) Methods: Health Criteria*
-- **Tạp chí:** *Sustainability*, Vol. 15, No. 2, Article 938. MDPI
+- **Tiêu đề:** _New Parking Lot Selection Approach Based on the Multi-Criteria Decision Making (MCDM) Methods: Health Criteria_
+- **Tạp chí:** _Sustainability_, Vol. 15, No. 2, Article 938. MDPI
 - **DOI:** `10.3390/su15020938`
 - **Tóm tắt:** Sử dụng phương pháp **CRITIC** (CRiteria Importance Through Intercriteria Correlation) để xác định trọng số **khách quan** cho mỗi tiêu chí phân bổ. Kết hợp **TOPSIS**, CODA, EDAS, WASPAS để xếp hạng các slot ứng viên. Tiêu chí bao gồm: khoảng cách, chi phí, tình trạng giao thông, thể trạng người lái (health criteria).
 
@@ -136,8 +136,8 @@ So sánh:
 
 - **Tác giả:** Shirazi, F. & Farzaneh, N.
 - **Năm:** 2025
-- **Tiêu đề:** *A Multi-Criteria Parking Space Proposing System based on Cheetah Optimizer Algorithm*
-- **Tạp chí:** *Journal of Artificial Intelligence and Data Mining (JAIDM)*, Vol. 13, No. 4, pp. 441–451. Shahrood University of Technology
+- **Tiêu đề:** _A Multi-Criteria Parking Space Proposing System based on Cheetah Optimizer Algorithm_
+- **Tạp chí:** _Journal of Artificial Intelligence and Data Mining (JAIDM)_, Vol. 13, No. 4, pp. 441–451. Shahrood University of Technology
 - **DOI:** `10.22044/jadm.2025.15911.2705`
 - **Tóm tắt:** Đề xuất thuật toán **COA (Cheetah Optimization Algorithm)** — metaheuristic bio-inspired mô phỏng hành vi săn mồi của báo ghê-ta — để giải bài toán phân bổ slot cá nhân hóa. COA benchmark so với GA và WOA, cho kết quả tốt hơn về tốc độ hội tụ và chất lượng giải trong real-time.
 
@@ -145,8 +145,8 @@ So sánh:
 
 - **Tác giả:** Zhang, X., Zhao, C., Liao, F., Li, X. & Du, Y.
 - **Năm:** 2022
-- **Tiêu đề:** *Online parking assignment in an environment of partially connected vehicles: A multi-agent deep reinforcement learning approach*
-- **Tạp chí:** *Transportation Research Part C: Emerging Technologies*, Vol. 138, Article 103624. Elsevier
+- **Tiêu đề:** _Online parking assignment in an environment of partially connected vehicles: A multi-agent deep reinforcement learning approach_
+- **Tạp chí:** _Transportation Research Part C: Emerging Technologies_, Vol. 138, Article 103624. Elsevier
 - **DOI:** `10.1016/j.trc.2022.103624`
 - **Tóm tắt:** Giải quyết bài toán **Online Parking Assignment (OPA)** trong môi trường hỗn hợp Connected Vehicles (CVs) + non-connected vehicles (NCVs). Đề xuất **MARL framework** với hai agents độc lập phối hợp theo value decomposition. Kết quả: cải thiện **15% hiệu quả phân bổ** so với FCFS baseline. Ràng buộc cứng (hard constraints) — vehicle-type match, slot availability — được áp dụng trực tiếp vào WSM hệ thống.
 
@@ -205,7 +205,7 @@ Lưu ý:
 
 - **Tác giả:** Zhang, C., Liu, W., Yan, C., Ye, X. & Chen, J.
 - **Năm:** 2024
-- **Tiêu đề:** *Optimization Method for Allocating Peak-Period Parking Demand in Hub Parking Lot Clusters*
+- **Tiêu đề:** _Optimization Method for Allocating Peak-Period Parking Demand in Hub Parking Lot Clusters_
 - **Tạp chí:** Systems (MDPI), Vol. 12, No. 10, Article 404
 - **DOI:** `10.3390/systems12100404`
 - **Tóm tắt:** Phát triển mô hình tối ưu phân bổ nhu cầu đỗ xe giờ cao điểm cho cụm bãi xe hub. Sử dụng **NSGA-II** (Non-dominated Sorting Genetic Algorithm II) để giải. Kết quả: giảm **4.5% tổng thời gian chờ** (13,860 giây tiết kiệm trong 1 giờ).
@@ -214,7 +214,7 @@ Lưu ý:
 
 - **Tác giả:** Wang, Z., Zhang, C., Xue, S., Luo, Y., Chen, J., Wang, W. & Yan, X.
 - **Năm:** 2024
-- **Tiêu đề:** *Dynamic coordinated strategy for parking guidance in a mixed driving parking lot involving human-driven and autonomous vehicles*
+- **Tiêu đề:** _Dynamic coordinated strategy for parking guidance in a mixed driving parking lot involving human-driven and autonomous vehicles_
 - **Tạp chí:** Electronic Research Archive, 32(1), 523–550. AIMS Press
 - **DOI:** `10.3934/era.2024026`
 - **Tóm tắt:** Đề xuất chiến lược phối hợp động (DCS) sử dụng **Parking-Cruising Path Tree (PCPT)** cho bãi đỗ hỗn hợp xe người lái + xe tự lái. Tối ưu phân bổ slot và dẫn đường với tỷ lệ tối ưu lên đến **18%**. Cơ sở cho hướng nâng cấp RQ4.
@@ -223,8 +223,8 @@ Lưu ý:
 
 - **Tác giả:** Wang, S., Li, Z. & Xie, N.
 - **Năm:** 2022
-- **Tiêu đề:** *A reservation and allocation model for shared-parking addressing the uncertainty in drivers' arrival/departure time*
-- **Tạp chí:** *Transportation Research Part C: Emerging Technologies*, Vol. 135, Article 103484. Elsevier
+- **Tiêu đề:** _A reservation and allocation model for shared-parking addressing the uncertainty in drivers' arrival/departure time_
+- **Tạp chí:** _Transportation Research Part C: Emerging Technologies_, Vol. 135, Article 103484. Elsevier
 - **DOI:** `10.1016/j.trc.2021.103484`
 - **Tóm tắt:** Phát triển mô hình tối ưu **đặt chỗ và phân bổ cho shared parking** có tính đến sự **không chắc chắn về thời gian đến/đi** của người lái. Framework chance-constrained đảm bảo tỷ lệ phục vụ đạt ngưỡng dù demand stochastic. Nguyên lý: tính cả slot Reserved khi đánh giá effective occupancy → tránh over-allocation.
 
@@ -287,8 +287,8 @@ Metrics thu thập:
 
 - **Tác giả:** Quamar, A., Efthymiou, V., Lei, C. & Özcan, F.
 - **Năm:** 2022
-- **Tiêu đề:** *Natural Language Interfaces to Data*
-- **Tạp chí:** *Foundations and Trends® in Databases*, Vol. 11, No. 4, pp. 319–414
+- **Tiêu đề:** _Natural Language Interfaces to Data_
+- **Tạp chí:** _Foundations and Trends® in Databases_, Vol. 11, No. 4, pp. 319–414
 - **DOI:** `10.1561/1900000078`
 - **Tóm tắt:** Survey toàn diện về Natural Language Interfaces to Data (NLIDB), phân loại các phương pháp: rule-based, deep learning, hybrid. Trình bày conversational interfaces cho data analytics, bao gồm intent recognition, entity extraction, và query generation. Cơ sở lý thuyết cho việc cho phép Manager truy vấn dữ liệu hệ thống bằng câu hỏi tiếng Việt/Anh.
 
@@ -296,8 +296,8 @@ Metrics thu thập:
 
 - **Tác giả:** Chen, K.L. & Tsai, M.H.
 - **Năm:** 2021
-- **Tiêu đề:** *Conversation-Based Information Delivery Method for Facility Management*
-- **Tạp chí:** *Sensors*, Vol. 21, No. 14, Article 4771. MDPI
+- **Tiêu đề:** _Conversation-Based Information Delivery Method for Facility Management_
+- **Tạp chí:** _Sensors_, Vol. 21, No. 14, Article 4771. MDPI
 - **DOI:** `10.3390/s21144771`
 - **Tóm tắt:** Đề xuất phương pháp giao tiếp hội thoại (chatbot) cho quản lý cơ sở vật chất. Kiến trúc 4 module: Decision Mechanism, Equipment Dataset, Intent Analysis, Knowledge Base. Prototype tại tòa nhà hành chính Shulin (New Taipei City). Trực tiếp áp dụng cho RQ5: Manager chat hỏi thông tin bãi xe thay vì thao tác trên giao diện truyền thống.
 
@@ -305,8 +305,8 @@ Metrics thu thập:
 
 - **Tác giả:** Alhammadi, M.
 - **Năm:** 2023
-- **Tiêu đề:** *Optimising Customer Service Delivery and Response Time through AI-Enhanced Chatbots in Facilities Management: A Mixed-Methods Research*
-- **Tạp chí:** *American Journal of Smart Technology and Solutions*, Vol. 2, No. 2
+- **Tiêu đề:** _Optimising Customer Service Delivery and Response Time through AI-Enhanced Chatbots in Facilities Management: A Mixed-Methods Research_
+- **Tạp chí:** _American Journal of Smart Technology and Solutions_, Vol. 2, No. 2
 - **DOI:** `10.54536/ajsts.v2i2.2206`
 - **Tóm tắt:** Nghiên cứu hỗn hợp (mixed-methods) sử dụng Technology Acceptance Model (TAM) và Social Response Theory (SRT). Khảo sát 10 facility managers tại UAE, Qatar, Saudi Arabia. Kết quả: Pearson Correlation > 0.7 giữa Perceived Usefulness, Ease of Use, và User Satisfaction. Chứng minh chatbot cải thiện **responsiveness** và **operational efficiency** trong quản lý cơ sở vật chất.
 
@@ -314,8 +314,8 @@ Metrics thu thập:
 
 - **Tác giả:** Delgado, S., Villamarin, A. & Insuasti, J.
 - **Năm:** 2025
-- **Tiêu đề:** *AI-Powered Chatbots in Organizations: A Systematic Literature Review*
-- **Tạp chí:** *Journal of Information Systems Engineering & Management*, Vol. 10, No. 22s
+- **Tiêu đề:** _AI-Powered Chatbots in Organizations: A Systematic Literature Review_
+- **Tạp chí:** _Journal of Information Systems Engineering & Management_, Vol. 10, No. 22s
 - **DOI:** `10.52783/jisem.v10i22s.3542`
 - **Tóm tắt:** Systematic Literature Review (SLR) tổng hợp 53 bài báo về chatbot AI trong tổ chức. Phân loại ứng dụng: customer service, HR, **internal operations** (bao gồm reporting, analytics, knowledge management). Xác định benefits (tự động hóa, giảm thời gian truy xuất), challenges (trust, integration, ethics), và future directions. Cơ sở cho đánh giá tính khả thi của chatbot trong hệ thống quản lý bãi xe.
 
@@ -336,7 +336,7 @@ Algorithm:
      • 'occupancy_report' — "Tỷ lệ lấp đầy tầng 2 hiện tại?"
      • 'peak_hours' — "Giờ nào đông nhất tuần này?"
      • 'facility_info' — "Bãi xe A mấy giờ đóng cửa?"
-     • 'exception_summary' — "Tuần này có bao nhiêu ngoại lệ?"
+     • 'exception_summary' — "Tuần này có bao nhiêu sự côs?"
    - Sử dụng keyword matching + pattern rules (phase 1)
    - Nâng cấp: LLM-based intent classification (phase 2)
 
@@ -382,8 +382,8 @@ Complexity: O(1) cho intent classification, O(n) cho query execution
 
 - **Tác giả:** Hong, S., Shin, H., Choi, J. & Park, N.
 - **Năm:** 2022
-- **Tiêu đề:** *Prediction-based One-shot Dynamic Parking Pricing*
-- **Tạp chí:** *Proceedings of the 31st ACM International Conference on Information & Knowledge Management (CIKM '22)*. ACM
+- **Tiêu đề:** _Prediction-based One-shot Dynamic Parking Pricing_
+- **Tạp chí:** _Proceedings of the 31st ACM International Conference on Information & Knowledge Management (CIKM '22)_. ACM
 - **DOI:** `10.1145/3511808.3557421`
 - **Tóm tắt:** Đề xuất framework proactive dynamic pricing dựa trên dự đoán occupancy. Sử dụng **Neural Ordinary Differential Equations (NODEs)** để dự đoán tỷ lệ lấp đầy trong tương lai dựa trên dữ liệu lịch sử occupancy + price. Khai thác tính chất continuous và bijective của NODEs để thiết kế phương pháp tối ưu giá **"one-shot"** — tìm giải pháp giá tối ưu chỉ trong 1 iteration, nhanh hơn đáng kể so với black-box/white-box search. Đánh giá trên dữ liệu đa năm từ **San Francisco và Seattle**. Trực tiếp áp dụng cho RQ6: dự đoán occupancy → đề xuất mức giá tối ưu cho từng tòa nhà.
 
@@ -391,8 +391,8 @@ Complexity: O(1) cho intent classification, O(n) cho query execution
 
 - **Tác giả:** Poh, L.Z., Connie, T., Ong, T.S. & Goh, M.K.O.
 - **Năm:** 2023
-- **Tiêu đề:** *Deep Reinforcement Learning-Based Dynamic Pricing for Parking Solutions*
-- **Tạp chí:** *Algorithms*, Vol. 16, No. 1, Article 32. MDPI
+- **Tiêu đề:** _Deep Reinforcement Learning-Based Dynamic Pricing for Parking Solutions_
+- **Tạp chí:** _Algorithms_, Vol. 16, No. 1, Article 32. MDPI
 - **DOI:** `10.3390/a16010032`
 - **Tóm tắt:** Đề xuất mô hình **DRL-DP (Deep Reinforcement Learning-based Dynamic Pricing)** để tối ưu hóa bãi xe và tăng lợi nhuận. Mô hình hóa bài toán pricing như sequential decision-making: agent học cách điều chỉnh giá dựa trên **occupancy rate** và **vehicle flow** hiện tại. State space: (occupancy, time_of_day, day_of_week). Action space: tăng/giảm/giữ giá. Reward: revenue × occupancy_balance. Kết quả: DRL-DP đạt cân bằng giữa tối đa doanh thu và duy trì utilization rate. Cơ sở cho RQ6: sử dụng RL để học chính sách giá tối ưu dựa trên tần suất gửi xe.
 
@@ -400,8 +400,8 @@ Complexity: O(1) cho intent classification, O(n) cho query execution
 
 - **Tác giả:** Saharan, S., Kumar, N. & Bawa, S.
 - **Năm:** 2020
-- **Tiêu đề:** *An efficient smart parking pricing system for smart city environment: A machine-learning based approach*
-- **Tạp chí:** *Future Generation Computer Systems*, Vol. 106, pp. 622–640. Elsevier
+- **Tiêu đề:** _An efficient smart parking pricing system for smart city environment: A machine-learning based approach_
+- **Tạp chí:** _Future Generation Computer Systems_, Vol. 106, pp. 622–640. Elsevier
 - **DOI:** `10.1016/j.future.2020.01.031`
 - **Tóm tắt:** Đề xuất hệ thống pricing thông minh sử dụng machine learning để điều chỉnh giá gửi xe dựa trên **demand prediction** và **arrival rate**. Framework 3 tầng: (1) Data Collection — thu thập occupancy, arrival rate, duration từ IoT sensors; (2) ML Prediction — dự đoán demand cho từng khu vực/khung giờ; (3) Pricing Engine — tính giá dựa trên predicted demand, current supply, và price elasticity. Đánh giá trên smart city testbed. **Trực tiếp áp dụng cho RQ6:** framework ML pricing cho các tòa nhà khác nhau — tòa nhà demand cao → giá cao hơn, tòa nhà demand thấp → giá khuyến mãi.
 
@@ -409,8 +409,8 @@ Complexity: O(1) cho intent classification, O(n) cho query execution
 
 - **Tác giả:** Bayih, S.H. & Tilahun, S.L.
 - **Năm:** 2024
-- **Tiêu đề:** *Dynamic vehicle parking pricing: A review*
-- **Tạp chí:** *Operations Research and Decisions*, Vol. 34, No. 1, pp. 35–59. Wrocław University of Science and Technology
+- **Tiêu đề:** _Dynamic vehicle parking pricing: A review_
+- **Tạp chí:** _Operations Research and Decisions_, Vol. 34, No. 1, pp. 35–59. Wrocław University of Science and Technology
 - **DOI:** `10.37190/ord240103`
 - **Tóm tắt:** Review toàn diện các phương pháp dynamic parking pricing: game theory, dynamic/stochastic control, multi-objective programming, queuing theory, AI-based methods. Phân loại theo mục tiêu: revenue maximization, congestion reduction, occupancy targeting (85% benchmark). Xác định rằng AI-based pricing (ML, DRL) đang thay thế dần các phương pháp truyền thống vì khả năng học từ dữ liệu lịch sử và thích ứng realtime. **Áp dụng cho RQ6:** cung cấp evidence-base rằng dynamic pricing dựa trên AI và demand frequency là hướng nghiên cứu chính thống.
 
@@ -476,23 +476,25 @@ Complexity: O(n) cho data aggregation, O(1) cho suggestion
 
 ## Bảng tổng hợp thuật toán áp dụng
 
-| RQ | Thuật toán chính | Paper gốc | Đơn giản hóa cho hệ thống | Nâng cấp tương lai |
-|----|-----------------|-----------|---------------------------|-------------------|
-| **RQ1** | Multi-Agent Zoning + Differentiated Parking | [P1] Icarte-Ahumada 2025, [P2] Jakob & Menendez 2021 | Dynamic Vehicle-Type Zoning (rule-based) | Adaptive Zoning với ML |
-| **RQ2** | Hungarian Algorithm + Coordinated Assignment | [P3] arXiv 2025, [P4] Wang, Levin & Caverly 2021 | Greedy Matching (nearest-first) | Full Hungarian / MARL [P7] |
-| **RQ3** | TOPSIS/CRITIC + COA + MARL hard constraints | [P5] Amari 2023, [P6] Shirazi 2025, [P7] Zhang 2022 | Weighted Scoring Model (WSM) | COA [P6] hoặc MARL [P7] |
-| **RQ4** | NSGA-II + DCS/PCPT + Chance-Constrained Reservation | [P8] Zhang 2024, [P9] Wang et al. 2024, [P10] Wang 2022 | Threshold-based Load Balancing | DCS [P9] / MARL [P7] |
-| **RQ5** | NLI Text-to-SQL + Conversational FM Chatbot + TAM | [P11] Quamar 2022, [P12] Chen & Tsai 2021, [P13] Alhammadi 2023, [P14] Delgado 2025 | Intent-based NLQ (keyword matching + template query) | LLM-based Text-to-SQL [P11] |
-| **RQ6** | NODE Prediction + DRL Dynamic Pricing + ML Pricing Framework | [P15] Hong et al. 2022, [P16] Poh et al. 2023, [P17] Saharan et al. 2020, [P18] Bayih & Tilahun 2024 | Demand-based Pricing Suggestion (rule-based + statistics) | Full DRL-DP agent [P16] |
+| RQ      | Thuật toán chính                                             | Paper gốc                                                                                            | Đơn giản hóa cho hệ thống                                 | Nâng cấp tương lai          |
+| ------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------- |
+| **RQ1** | Multi-Agent Zoning + Differentiated Parking                  | [P1] Icarte-Ahumada 2025, [P2] Jakob & Menendez 2021                                                 | Dynamic Vehicle-Type Zoning (rule-based)                  | Adaptive Zoning với ML      |
+| **RQ2** | Hungarian Algorithm + Coordinated Assignment                 | [P3] arXiv 2025, [P4] Wang, Levin & Caverly 2021                                                     | Greedy Matching (nearest-first)                           | Full Hungarian / MARL [P7]  |
+| **RQ3** | TOPSIS/CRITIC + COA + MARL hard constraints                  | [P5] Amari 2023, [P6] Shirazi 2025, [P7] Zhang 2022                                                  | Weighted Scoring Model (WSM)                              | COA [P6] hoặc MARL [P7]     |
+| **RQ4** | NSGA-II + DCS/PCPT + Chance-Constrained Reservation          | [P8] Zhang 2024, [P9] Wang et al. 2024, [P10] Wang 2022                                              | Threshold-based Load Balancing                            | DCS [P9] / MARL [P7]        |
+| **RQ5** | NLI Text-to-SQL + Conversational FM Chatbot + TAM            | [P11] Quamar 2022, [P12] Chen & Tsai 2021, [P13] Alhammadi 2023, [P14] Delgado 2025                  | Intent-based NLQ (keyword matching + template query)      | LLM-based Text-to-SQL [P11] |
+| **RQ6** | NODE Prediction + DRL Dynamic Pricing + ML Pricing Framework | [P15] Hong et al. 2022, [P16] Poh et al. 2023, [P17] Saharan et al. 2020, [P18] Bayih & Tilahun 2024 | Demand-based Pricing Suggestion (rule-based + statistics) | Full DRL-DP agent [P16]     |
 
 ### Lý do đơn giản hóa
 
 Các thuật toán gốc trong bài báo (Hungarian, NSGA-II, DRL, Text-to-SQL) yêu cầu:
+
 - Dataset lớn để training (DRL, LLM fine-tuning)
 - Thời gian tính toán cao (NSGA-II cho multi-objective)
 - Hạ tầng phức tạp (Multi-Agent System, LLM inference server)
 
 Trong phạm vi đồ án 9 tuần, hệ thống áp dụng **phiên bản đơn giản hóa** nhưng giữ nguyên **nguyên lý cốt lõi** của từng thuật toán:
+
 - **WSM** giữ nguyên ý tưởng multi-criteria ranking từ TOPSIS/CRITIC [P5]
 - **Greedy Matching** giữ nguyên ý tưởng coordinated assignment từ Hungarian [P3]
 - **Hard Constraints** (vehicleType match + slot Available) từ MARL framework [P7]
@@ -509,11 +511,12 @@ Trong phạm vi đồ án 9 tuần, hệ thống áp dụng **phiên bản đơn
 
 ### [P1] Multi-Agent System for Parking Allocation
 
-Icarte-Ahumada, G., He, Z., Godoy, V., García, F. & Oyarzún, M. (2025). "A Multi-Agent System for Parking Allocation: An Approach to Allocate Parking Spaces." *Electronics*, 14(5), Article 840. MDPI.
+Icarte-Ahumada, G., He, Z., Godoy, V., García, F. & Oyarzún, M. (2025). "A Multi-Agent System for Parking Allocation: An Approach to Allocate Parking Spaces." _Electronics_, 14(5), Article 840. MDPI.
+
 - **DOI:** [10.3390/electronics14050840](https://doi.org/10.3390/electronics14050840)
 - **Link:** [https://www.mdpi.com/2079-9292/14/5/840](https://www.mdpi.com/2079-9292/14/5/840)
 - **Ranking:** Scopus **Q1** (Electrical & Electronic Engineering) | IF = 2.6 | CiteScore = 6.1
-- ⚠️ **Lưu ý:** Tạp chí là *Electronics* (ISSN 2079-9292), không phải *Applied Sciences*.
+- ⚠️ **Lưu ý:** Tạp chí là _Electronics_ (ISSN 2079-9292), không phải _Applied Sciences_.
 - **Literature Review:** Nghiên cứu đề xuất hệ thống đa tác tử (MAS) sử dụng **Contract Net Protocol** — nơi mỗi xe và mỗi slot đỗ là một agent tự trị. Bốn cơ chế phối hợp được đánh giá: Serial, Serial with Decommitment, Concurrent, và Concurrent with Decommitment. Kết quả cho thấy **cơ chế Concurrent + Decommitment** hiệu quả nhất trong việc giảm thời gian phân bổ và tối ưu hóa tỷ lệ sử dụng slot. Bài báo cung cấp cơ sở lý thuyết cho RQ1 về việc phân bổ slot dựa trên đặc tính phương tiện (kích thước, loại xe) — nguyên lý này được đơn giản hóa thành rule-based zoning trong hệ thống của chúng tôi.
 - **Thuật toán sử dụng:**
   - **Contract Net Protocol (CNP):** Agent xe gửi Call-for-Proposal → Agent slot đánh giá khả năng (vehicle size, type compatibility) → trả Bid → Agent xe chọn Bid tốt nhất → Award.
@@ -524,7 +527,8 @@ Icarte-Ahumada, G., He, Z., Godoy, V., García, F. & Oyarzún, M. (2025). "A Mul
 
 ### [P2] Optimal Parking Occupancy with Differentiated Parking
 
-Jakob, M. & Menendez, M. (2021). "Optimal parking occupancy with and without differentiated parking: A macroscopic analysis." *Transportation Letters*, Taylor & Francis.
+Jakob, M. & Menendez, M. (2021). "Optimal parking occupancy with and without differentiated parking: A macroscopic analysis." _Transportation Letters_, Taylor & Francis.
+
 - **DOI:** [10.1080/19427867.2021.1988245](https://doi.org/10.1080/19427867.2021.1988245)
 - **Link:** [https://www.researchgate.net/publication/342371999](https://www.researchgate.net/publication/342371999_Optimal_Parking_Occupancy_with_and_without_Differentiated_Parking_A_Macroscopic_Analysis)
 - **Ranking:** Scopus **Q2** (Transportation) | IF = 3.3 | CiteScore = 7.7 | SJR = 0.889
@@ -532,13 +536,14 @@ Jakob, M. & Menendez, M. (2021). "Optimal parking occupancy with and without dif
 - **Thuật toán sử dụng:**
   - **Macroscopic Fundamental Diagram (MFD):** Mô hình hóa mối quan hệ giữa mật độ xe, lưu lượng, và tốc độ trung bình trên toàn mạng lưới.
   - **Optimal Occupancy Computation:** `O* = argmin_{O} [CruisingDelay(O) + UnderUtilizationCost(O)]` — tìm điểm cân bằng tối ưu.
-  - **Zone Differentiation Model:** Chia bãi xe thành zones theo loại xe → tính riêng O* cho mỗi zone → so sánh với bãi không phân zone.
+  - **Zone Differentiation Model:** Chia bãi xe thành zones theo loại xe → tính riêng O\* cho mỗi zone → so sánh với bãi không phân zone.
 
 ---
 
 ### [P3] Reducing Parking Search Time via Smart Assignment
 
-(Authors). (2025). "Reducing Street Parking Search Time via Smart Assignment Strategies." *arXiv preprint*.
+(Authors). (2025). "Reducing Street Parking Search Time via Smart Assignment Strategies." _arXiv preprint_.
+
 - **Identifier:** arXiv:2508.19979
 - **Link:** [https://arxiv.org/abs/2508.19979](https://arxiv.org/abs/2508.19979)
 - **Ranking:** Preprint (chưa peer-review) — tuy nhiên mô phỏng trên dataset thực tế Madrid.
@@ -552,7 +557,8 @@ Jakob, M. & Menendez, M. (2021). "Optimal parking occupancy with and without dif
 
 ### [P4] Optimal Parking Management of CAVs
 
-Wang, S., Levin, M. W. & Caverly, R. J. (2021). "Optimal parking management of connected autonomous vehicles: A control-theoretic approach." *Transportation Research Part C: Emerging Technologies*, Elsevier.
+Wang, S., Levin, M. W. & Caverly, R. J. (2021). "Optimal parking management of connected autonomous vehicles: A control-theoretic approach." _Transportation Research Part C: Emerging Technologies_, Elsevier.
+
 - **DOI:** [10.1016/j.trc.2020.102924](https://doi.org/10.1016/j.trc.2020.102924)
 - **Link:** [https://doi.org/10.1016/j.trc.2020.102924](https://doi.org/10.1016/j.trc.2020.102924)
 - **Ranking:** Scopus **Q1** (Transportation, Computer Science) | IF = 7.9 | SJR = 2.734
@@ -566,10 +572,11 @@ Wang, S., Levin, M. W. & Caverly, R. J. (2021). "Optimal parking management of c
 
 ### [P5] MCDM Techniques for Smart Parking (TOPSIS + CRITIC)
 
-Amari, A., Moussaid, L. & Tallal, S. (2023). "New Parking Lot Selection Approach Based on the Multi-Criteria Decision Making (MCDM) Methods: Health Criteria." *Sustainability*, 15(2), Article 938. MDPI.
+Amari, A., Moussaid, L. & Tallal, S. (2023). "New Parking Lot Selection Approach Based on the Multi-Criteria Decision Making (MCDM) Methods: Health Criteria." _Sustainability_, 15(2), Article 938. MDPI.
+
 - **DOI:** [10.3390/su15020938](https://doi.org/10.3390/su15020938)
 - **Link:** [https://doi.org/10.3390/su15020938](https://doi.org/10.3390/su15020938)
-- **Ranking:** *Sustainability* (MDPI) — Scopus **Q2** (Environmental Science) | IF = 3.3 | CiteScore = 5.8
+- **Ranking:** _Sustainability_ (MDPI) — Scopus **Q2** (Environmental Science) | IF = 3.3 | CiteScore = 5.8
 - **Literature Review:** Nhóm bài nghiên cứu sử dụng phương pháp **CRITIC** (CRiteria Importance Through Intercriteria Correlation) để xác định trọng số **khách quan** cho mỗi tiêu chí phân bổ — thay vì gán trọng số chủ quan. Kết hợp với **TOPSIS** để xếp hạng các slot ứng viên dựa trên khoảng cách đến giải pháp lý tưởng. Tiêu chí bao gồm: khoảng cách đến cổng, chi phí, tình trạng giao thông, thể trạng người lái. Đây là nền tảng lý thuyết cho **Weighted Scoring Model (WSM)** trong RQ3 — hệ thống của chúng tôi đơn giản hóa TOPSIS thành WSM với 4 tiêu chí có trọng số cấu hình được.
 - **Thuật toán sử dụng:**
   - **CRITIC Weighting:** `W_j = (σ_j × Σ(1 - r_jk)) / Σ_all` — trọng số tỷ lệ với độ lệch chuẩn (σ) và mức độ xung đột giữa các tiêu chí (1 - correlation).
@@ -580,7 +587,8 @@ Amari, A., Moussaid, L. & Tallal, S. (2023). "New Parking Lot Selection Approach
 
 ### [P6] Cheetah Optimization Algorithm for Parking
 
-Shirazi, F. & Farzaneh, N. (2025). "A Multi-Criteria Parking Space Proposing System based on Cheetah Optimizer Algorithm." *Journal of Artificial Intelligence and Data Mining (JAIDM)*, 13(4), 441–451. Shahrood University of Technology.
+Shirazi, F. & Farzaneh, N. (2025). "A Multi-Criteria Parking Space Proposing System based on Cheetah Optimizer Algorithm." _Journal of Artificial Intelligence and Data Mining (JAIDM)_, 13(4), 441–451. Shahrood University of Technology.
+
 - **DOI:** [10.22044/jadm.2025.15911.2705](https://doi.org/10.22044/jadm.2025.15911.2705)
 - **Link:** [https://doi.org/10.22044/jadm.2025.15911.2705](https://doi.org/10.22044/jadm.2025.15911.2705)
 - **Ranking:** Scopus-indexed | IF không áp dụng | Regional journal (Iran, open access)
@@ -594,7 +602,8 @@ Shirazi, F. & Farzaneh, N. (2025). "A Multi-Criteria Parking Space Proposing Sys
 
 ### [P7] Online Parking Assignment with Multi-Agent Deep RL
 
-Zhang, X., Zhao, C., Liao, F., Li, X. & Du, Y. (2022). "Online parking assignment in an environment of partially connected vehicles: A multi-agent deep reinforcement learning approach." *Transportation Research Part C: Emerging Technologies*, 138, Article 103624. Elsevier.
+Zhang, X., Zhao, C., Liao, F., Li, X. & Du, Y. (2022). "Online parking assignment in an environment of partially connected vehicles: A multi-agent deep reinforcement learning approach." _Transportation Research Part C: Emerging Technologies_, 138, Article 103624. Elsevier.
+
 - **DOI:** [10.1016/j.trc.2022.103624](https://doi.org/10.1016/j.trc.2022.103624)
 - **Link:** [https://doi.org/10.1016/j.trc.2022.103624](https://doi.org/10.1016/j.trc.2022.103624)
 - **Ranking:** Scopus **Q1** (Transportation, Computer Science) | IF = 7.9 | SJR = 2.734
@@ -608,7 +617,8 @@ Zhang, X., Zhao, C., Liao, F., Li, X. & Du, Y. (2022). "Online parking assignmen
 
 ### [P8] Peak-Period Parking Demand Allocation (NSGA-II)
 
-Zhang, C., Liu, W., Yan, C., Ye, X. & Chen, J. (2024). "Optimization Method for Allocating Peak-Period Parking Demand in Hub Parking Lot Clusters." *Systems*, 12(10), 404. MDPI.
+Zhang, C., Liu, W., Yan, C., Ye, X. & Chen, J. (2024). "Optimization Method for Allocating Peak-Period Parking Demand in Hub Parking Lot Clusters." _Systems_, 12(10), 404. MDPI.
+
 - **DOI:** [10.3390/systems12100404](https://doi.org/10.3390/systems12100404)
 - **Link:** [https://www.mdpi.com/2079-8954/12/10/404](https://www.mdpi.com/2079-8954/12/10/404)
 - **Ranking:** JCR **Q1** (Social Sciences, Interdisciplinary) | Scopus **Q2** (Modeling & Simulation) | IF = 3.1 | CiteScore = 4.1
@@ -622,7 +632,8 @@ Zhang, C., Liu, W., Yan, C., Ye, X. & Chen, J. (2024). "Optimization Method for 
 
 ### [P9] Dynamic Coordinated Strategy for Mixed-Traffic Parking
 
-Wang, Z., Zhang, C., Xue, S., Luo, Y., Chen, J., Wang, W. & Yan, X. (2024). "Dynamic coordinated strategy for parking guidance in a mixed driving parking lot involving human-driven and autonomous vehicles." *Electronic Research Archive*, 32(1), 523–550. AIMS Press.
+Wang, Z., Zhang, C., Xue, S., Luo, Y., Chen, J., Wang, W. & Yan, X. (2024). "Dynamic coordinated strategy for parking guidance in a mixed driving parking lot involving human-driven and autonomous vehicles." _Electronic Research Archive_, 32(1), 523–550. AIMS Press.
+
 - **DOI:** [10.3934/era.2024026](https://doi.org/10.3934/era.2024026)
 - **Link:** [https://www.aimspress.com/article/doi/10.3934/era.2024026](https://www.aimspress.com/article/doi/10.3934/era.2024026)
 - **Ranking:** Scopus & SCIE indexed | IF = 1.1 | CiteScore = 1.7
@@ -636,7 +647,8 @@ Wang, Z., Zhang, C., Xue, S., Luo, Y., Chen, J., Wang, W. & Yan, X. (2024). "Dyn
 
 ### [P10] Reservation & Allocation Model for Shared Parking under Uncertainty
 
-Wang, S., Li, Z. & Xie, N. (2022). "A reservation and allocation model for shared-parking addressing the uncertainty in drivers' arrival/departure time." *Transportation Research Part C: Emerging Technologies*, 135, Article 103484. Elsevier.
+Wang, S., Li, Z. & Xie, N. (2022). "A reservation and allocation model for shared-parking addressing the uncertainty in drivers' arrival/departure time." _Transportation Research Part C: Emerging Technologies_, 135, Article 103484. Elsevier.
+
 - **DOI:** [10.1016/j.trc.2021.103484](https://doi.org/10.1016/j.trc.2021.103484)
 - **Link:** [https://doi.org/10.1016/j.trc.2021.103484](https://doi.org/10.1016/j.trc.2021.103484)
 - **Ranking:** Scopus **Q1** (Transportation, Computer Science) | IF = 7.9 | SJR = 2.734
@@ -650,10 +662,11 @@ Wang, S., Li, Z. & Xie, N. (2022). "A reservation and allocation model for share
 
 ### [P11] Natural Language Interfaces to Data (NLI Survey)
 
-Quamar, A., Efthymiou, V., Lei, C. & Özcan, F. (2022). "Natural Language Interfaces to Data." *Foundations and Trends® in Databases*, 11(4), 319–414.
+Quamar, A., Efthymiou, V., Lei, C. & Özcan, F. (2022). "Natural Language Interfaces to Data." _Foundations and Trends® in Databases_, 11(4), 319–414.
+
 - **DOI:** [10.1561/1900000078](https://doi.org/10.1561/1900000078)
 - **Link:** [https://doi.org/10.1561/1900000078](https://doi.org/10.1561/1900000078)
-- **Ranking:** *Foundations and Trends® in Databases* — **Top-tier survey journal** | IF không áp dụng (survey/monograph) | Được trích dẫn rộng rãi trong cộng đồng NLP/DB
+- **Ranking:** _Foundations and Trends® in Databases_ — **Top-tier survey journal** | IF không áp dụng (survey/monograph) | Được trích dẫn rộng rãi trong cộng đồng NLP/DB
 - **Literature Review:** Monograph toàn diện (96 trang) phân loại các phương pháp Natural Language Interface to Data (NLIDB): (1) Rule-based — sử dụng ontology, semantic index, knowledge graph; (2) Deep Learning — Seq2Seq, attention-based, pre-trained language models; (3) Hybrid — kết hợp cả hai. Trình bày chi tiết 3 thách thức cốt lõi: entity identification (nhận diện thực thể từ câu hỏi), entity connection (nối thực thể thành quan hệ có nghĩa), query generation (sinh truy vấn SQL/SPARQL). Chương về **Conversational Interfaces** mô tả cách duy trì ngữ cảnh qua multi-turn dialogue — rất phù hợp cho RQ5 vì Manager có thể hỏi liên tiếp: "Doanh thu hôm nay?" → "So với hôm qua thì sao?". Đây là nền tảng lý thuyết cho toàn bộ pipeline NLQ trong hệ thống.
 - **Thuật toán sử dụng:**
   - **Entity Recognition Pipeline:** Tokenize → POS tagging → Named Entity Recognition → Entity Linking (map entity tới DB schema).
@@ -664,7 +677,8 @@ Quamar, A., Efthymiou, V., Lei, C. & Özcan, F. (2022). "Natural Language Interf
 
 ### [P12] Conversation-Based Information Delivery for Facility Management
 
-Chen, K.L. & Tsai, M.H. (2021). "Conversation-Based Information Delivery Method for Facility Management." *Sensors*, 21(14), Article 4771. MDPI.
+Chen, K.L. & Tsai, M.H. (2021). "Conversation-Based Information Delivery Method for Facility Management." _Sensors_, 21(14), Article 4771. MDPI.
+
 - **DOI:** [10.3390/s21144771](https://doi.org/10.3390/s21144771)
 - **Link:** [https://doi.org/10.3390/s21144771](https://doi.org/10.3390/s21144771)
 - **Ranking:** Scopus **Q1** (Instrumentation) | IF = 3.4 | CiteScore = 7.3
@@ -679,7 +693,8 @@ Chen, K.L. & Tsai, M.H. (2021). "Conversation-Based Information Delivery Method 
 
 ### [P13] AI-Enhanced Chatbots in Facilities Management (TAM Study)
 
-Alhammadi, M. (2023). "Optimising Customer Service Delivery and Response Time through AI-Enhanced Chatbots in Facilities Management: A Mixed-Methods Research." *American Journal of Smart Technology and Solutions*, 2(2).
+Alhammadi, M. (2023). "Optimising Customer Service Delivery and Response Time through AI-Enhanced Chatbots in Facilities Management: A Mixed-Methods Research." _American Journal of Smart Technology and Solutions_, 2(2).
+
 - **DOI:** [10.54536/ajsts.v2i2.2206](https://doi.org/10.54536/ajsts.v2i2.2206)
 - **Link:** [https://doi.org/10.54536/ajsts.v2i2.2206](https://doi.org/10.54536/ajsts.v2i2.2206)
 - **Ranking:** Peer-reviewed journal | Open access | Regional scope (Middle East)
@@ -693,7 +708,8 @@ Alhammadi, M. (2023). "Optimising Customer Service Delivery and Response Time th
 
 ### [P14] AI-Powered Chatbots in Organizations (Systematic Literature Review)
 
-Delgado, S., Villamarin, A. & Insuasti, J. (2025). "AI-Powered Chatbots in Organizations: A Systematic Literature Review." *Journal of Information Systems Engineering & Management*, 10(22s).
+Delgado, S., Villamarin, A. & Insuasti, J. (2025). "AI-Powered Chatbots in Organizations: A Systematic Literature Review." _Journal of Information Systems Engineering & Management_, 10(22s).
+
 - **DOI:** [10.52783/jisem.v10i22s.3542](https://doi.org/10.52783/jisem.v10i22s.3542)
 - **Link:** [https://doi.org/10.52783/jisem.v10i22s.3542](https://doi.org/10.52783/jisem.v10i22s.3542)
 - **Ranking:** Scopus-indexed | Peer-reviewed | Open access
@@ -707,7 +723,8 @@ Delgado, S., Villamarin, A. & Insuasti, J. (2025). "AI-Powered Chatbots in Organ
 
 ### [P15] Prediction-based One-shot Dynamic Parking Pricing (CIKM 2022)
 
-Hong, S., Shin, H., Choi, J. & Park, N. (2022). "Prediction-based One-shot Dynamic Parking Pricing." *Proceedings of the 31st ACM International Conference on Information & Knowledge Management (CIKM '22)*, pp. 713–722. ACM.
+Hong, S., Shin, H., Choi, J. & Park, N. (2022). "Prediction-based One-shot Dynamic Parking Pricing." _Proceedings of the 31st ACM International Conference on Information & Knowledge Management (CIKM '22)_, pp. 713–722. ACM.
+
 - **DOI:** [10.1145/3511808.3557421](https://doi.org/10.1145/3511808.3557421)
 - **Link:** [https://doi.org/10.1145/3511808.3557421](https://doi.org/10.1145/3511808.3557421)
 - **Ranking:** **ACM CIKM** — Top-tier conference (CORE Rank A) | Acceptance rate ~22%
@@ -721,7 +738,8 @@ Hong, S., Shin, H., Choi, J. & Park, N. (2022). "Prediction-based One-shot Dynam
 
 ### [P16] Deep Reinforcement Learning-Based Dynamic Pricing for Parking
 
-Poh, L.Z., Connie, T., Ong, T.S. & Goh, M.K.O. (2023). "Deep Reinforcement Learning-Based Dynamic Pricing for Parking Solutions." *Algorithms*, 16(1), Article 32. MDPI.
+Poh, L.Z., Connie, T., Ong, T.S. & Goh, M.K.O. (2023). "Deep Reinforcement Learning-Based Dynamic Pricing for Parking Solutions." _Algorithms_, 16(1), Article 32. MDPI.
+
 - **DOI:** [10.3390/a16010032](https://doi.org/10.3390/a16010032)
 - **Link:** [https://doi.org/10.3390/a16010032](https://doi.org/10.3390/a16010032)
 - **Ranking:** Scopus-indexed | ESCI (Emerging Sources Citation Index) | Open access
@@ -735,7 +753,8 @@ Poh, L.Z., Connie, T., Ong, T.S. & Goh, M.K.O. (2023). "Deep Reinforcement Learn
 
 ### [P17] Smart Parking Pricing System: Machine Learning-Based Approach
 
-Saharan, S., Kumar, N. & Bawa, S. (2020). "An efficient smart parking pricing system for smart city environment: A machine-learning based approach." *Future Generation Computer Systems*, 106, 622–640. Elsevier.
+Saharan, S., Kumar, N. & Bawa, S. (2020). "An efficient smart parking pricing system for smart city environment: A machine-learning based approach." _Future Generation Computer Systems_, 106, 622–640. Elsevier.
+
 - **DOI:** [10.1016/j.future.2020.01.031](https://doi.org/10.1016/j.future.2020.01.031)
 - **Link:** [https://doi.org/10.1016/j.future.2020.01.031](https://doi.org/10.1016/j.future.2020.01.031)
 - **Ranking:** Scopus **Q1** (Computer Science) | IF = 7.5 | CiteScore = 13.2
@@ -749,7 +768,8 @@ Saharan, S., Kumar, N. & Bawa, S. (2020). "An efficient smart parking pricing sy
 
 ### [P18] Dynamic Vehicle Parking Pricing: A Review
 
-Bayih, S.H. & Tilahun, S.L. (2024). "Dynamic vehicle parking pricing: A review." *Operations Research and Decisions*, 34(1), 35–59. Wrocław University of Science and Technology.
+Bayih, S.H. & Tilahun, S.L. (2024). "Dynamic vehicle parking pricing: A review." _Operations Research and Decisions_, 34(1), 35–59. Wrocław University of Science and Technology.
+
 - **DOI:** [10.37190/ord240103](https://doi.org/10.37190/ord240103)
 - **Link:** [https://doi.org/10.37190/ord240103](https://doi.org/10.37190/ord240103)
 - **Ranking:** Scopus-indexed | WoS (ESCI) | Peer-reviewed | Open access
@@ -761,6 +781,4 @@ Bayih, S.H. & Tilahun, S.L. (2024). "Dynamic vehicle parking pricing: A review."
 
 ---
 
-> **Ghi chú:** Tất cả 18 paper đã được xác minh DOI. Paper [P2] (Jakob & Menendez, *Transportation Letters*, 2021) có DOI `10.1080/19427867.2021.1988245` tồn tại nhưng nằm sau paywall Taylor & Francis — có thể tra toàn văn qua ResearchGate hoặc email tác giả. Paper [P4], [P7], [P10], [P17] thuộc Elsevier (paywall) — truy cập qua thư viện trường hoặc Sci-Hub. Các paper [P1], [P5], [P6], [P8], [P9], [P11], [P12], [P13], [P14], [P16], [P18] là open access. Paper [P15] (CIKM '22) truy cập qua ACM Digital Library hoặc arXiv preprint.
-
-
+> **Ghi chú:** Tất cả 18 paper đã được xác minh DOI. Paper [P2] (Jakob & Menendez, _Transportation Letters_, 2021) có DOI `10.1080/19427867.2021.1988245` tồn tại nhưng nằm sau paywall Taylor & Francis — có thể tra toàn văn qua ResearchGate hoặc email tác giả. Paper [P4], [P7], [P10], [P17] thuộc Elsevier (paywall) — truy cập qua thư viện trường hoặc Sci-Hub. Các paper [P1], [P5], [P6], [P8], [P9], [P11], [P12], [P13], [P14], [P16], [P18] là open access. Paper [P15] (CIKM '22) truy cập qua ACM Digital Library hoặc arXiv preprint.

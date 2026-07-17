@@ -4,6 +4,7 @@ import {
   EXCEPTION_STATUS_LABELS,
   EXCEPTION_TYPE_LABELS,
   ExceptionStatus,
+  ExceptionType,
 } from '../../../../services/exception.service';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,6 +27,7 @@ export function ExceptionReviewModal({
   isSubmitting,
 }: ExceptionReviewModalProps) {
   const [managerNote, setManagerNote] = useState(exception?.managerNote || '');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Reset form when exception changes
   useState(() => {
@@ -64,6 +66,29 @@ export function ExceptionReviewModal({
       ? exception.staffId.name
       : exception.staffId || 'Hệ thống';
 
+  const staffOutName =
+    typeof exception.resolvedByStaffId === 'object' && exception.resolvedByStaffId
+      ? (exception.resolvedByStaffId as any).name
+      : (exception.resolvedByStaffId || 'Chưa xử lý');
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleString('vi-VN', {
+      hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+  };
+
+  const getImageUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const SERVER_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
+    return `${SERVER_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  };
+
   const modalContent = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
       <motion.div
@@ -75,7 +100,7 @@ export function ExceptionReviewModal({
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-gray-100">
           <div>
-            <h2 className="text-xl font-semibold text-gray-800">Xem lại Ngoại Lệ</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Xem lại Sự Cố</h2>
             <p className="text-sm text-gray-500 mt-1">
               Xem xét thông tin chi tiết và ghi lại đánh giá của bạn
             </p>
@@ -91,20 +116,16 @@ export function ExceptionReviewModal({
         {/* Content */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
           {/* Info Grid */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
               <span className="block text-xs font-medium text-gray-500 mb-1">Mã lượt gửi</span>
               <span className="font-semibold text-gray-800">{sessionCode}</span>
             </div>
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-              <span className="block text-xs font-medium text-gray-500 mb-1">Loại ngoại lệ</span>
+              <span className="block text-xs font-medium text-gray-500 mb-1">Loại sự cố</span>
               <span className="font-semibold text-gray-800">
                 {EXCEPTION_TYPE_LABELS[exception.type]}
               </span>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-              <span className="block text-xs font-medium text-gray-500 mb-1">Nhân viên tạo</span>
-              <span className="font-medium text-gray-800">{staffName}</span>
             </div>
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
               <span className="block text-xs font-medium text-gray-500 mb-1">Trạng thái</span>
@@ -114,7 +135,95 @@ export function ExceptionReviewModal({
                 {EXCEPTION_STATUS_LABELS[exception.status]}
               </span>
             </div>
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <span className="block text-xs font-medium text-gray-500 mb-1">Thời gian báo cáo</span>
+              <span className="font-medium text-gray-800">{formatDate(exception.createdAt.toString())}</span>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <span className="block text-xs font-medium text-gray-500 mb-1">Nhân viên báo cáo</span>
+              <span className="font-medium text-gray-800">{staffName}</span>
+            </div>
+            {exception.status === ExceptionStatus.RESOLVED && (
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">Nhân viên xử lý</span>
+                <span className="font-medium text-gray-800">{staffOutName}</span>
+              </div>
+            )}
+            {(exception.surcharge !== undefined && exception.surcharge > 0) && (
+              <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                <span className="block text-xs font-medium text-amber-600 mb-1">Phụ phí thu thêm</span>
+                <span className="font-semibold text-amber-700">{formatCurrency(exception.surcharge)}</span>
+              </div>
+            )}
+            {exception.expectedPlate && (
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">
+                  {exception.type === ExceptionType.WRONG_PLATE ? 'Biển số ban đầu' : 'Biển hệ thống'}
+                </span>
+                <span className="font-semibold text-blue-600">{exception.expectedPlate}</span>
+              </div>
+            )}
+            {exception.actualPlate && (
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">
+                  {exception.type === ExceptionType.WRONG_PLATE ? 'Biển số sau khi sửa' : 'Biển thực tế (OCR)'}
+                </span>
+                <span className="font-semibold text-gray-800">{exception.actualPlate}</span>
+              </div>
+            )}
+            {exception.oldSlot && (
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">Chỗ đỗ ban đầu</span>
+                <span className="font-semibold text-blue-600">
+                  {typeof exception.oldSlot === 'object' ? exception.oldSlot.name : exception.oldSlot}
+                </span>
+              </div>
+            )}
+            {exception.newSlot && (
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <span className="block text-xs font-medium text-gray-500 mb-1">Chỗ đỗ sau sửa</span>
+                <span className="font-semibold text-gray-800">
+                  {typeof exception.newSlot === 'object' ? exception.newSlot.name : exception.newSlot}
+                </span>
+              </div>
+            )}
           </div>
+
+          {/* Images */}
+          {(exception.checkInImage || exception.checkOutImage) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {exception.checkInImage && (
+                <div className="flex flex-col">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Ảnh lúc vào bãi</h3>
+                  <div 
+                    className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video border border-gray-100 shadow-sm cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setSelectedImage(getImageUrl(exception.checkInImage as string))}
+                  >
+                    <img 
+                      src={getImageUrl(exception.checkInImage)} 
+                      alt="Check In" 
+                      className="w-full h-full object-contain bg-black/5" 
+                    />
+                  </div>
+                </div>
+              )}
+              {exception.checkOutImage && (
+                <div className="flex flex-col">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Ảnh xử lý sự cố</h3>
+                  <div 
+                    className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video border border-gray-100 shadow-sm cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setSelectedImage(getImageUrl(exception.checkOutImage as string))}
+                  >
+                    <img 
+                      src={getImageUrl(exception.checkOutImage)} 
+                      alt="Check Out" 
+                      className="w-full h-full object-contain bg-black/5" 
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Description */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -182,6 +291,35 @@ export function ExceptionReviewModal({
           </button>
         </div>
       </motion.div>
+
+      {/* Image Fullscreen Viewer */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4"
+            onClick={() => setSelectedImage(null)}
+          >
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-4 right-4 p-2 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-colors"
+            >
+              <X size={24} />
+            </button>
+            <motion.img
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              src={selectedImage}
+              alt="Fullscreen view"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()} // Prevent click from closing when clicking on the image itself
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 

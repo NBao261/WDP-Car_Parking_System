@@ -22,13 +22,13 @@ export default function CheckInConfirmPanel({ data }: CheckInConfirmPanelProps) 
   }
 
   const {
-    cardCode = "—",
-    plate = "—",
-    vehicleType = "—",
-    checkInTime = "—",
-    checkInDate = "—",
-    gate = "—",
-    zone = "—"
+    cardCode = '—',
+    plate = '—',
+    vehicleType = '—',
+    checkInTime = '—',
+    checkInDate = '—',
+    gate = '—',
+    zone = '—',
   } = data;
 
   return (

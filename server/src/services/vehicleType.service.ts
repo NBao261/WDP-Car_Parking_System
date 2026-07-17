@@ -65,6 +65,19 @@ export class VehicleTypeService {
       throw new AppError('Vehicle type not found', 404);
     }
 
+    const defaultCodes = ['XEOTODIEN', 'XEMAYDIEN', 'XEOTO', 'XEMAY', 'XEDAP'];
+    if (defaultCodes.includes(oldVehicleType.code.toUpperCase())) {
+      if (data.name && data.name !== oldVehicleType.name) {
+        throw new AppError('Không thể sửa tên của loại xe mặc định', 400);
+      }
+      if (data.description !== undefined && data.description !== oldVehicleType.description) {
+        throw new AppError('Không thể sửa mô tả của loại xe mặc định', 400);
+      }
+      if (data.icon && data.icon !== oldVehicleType.icon) {
+        throw new AppError('Không thể sửa biểu tượng của loại xe mặc định', 400);
+      }
+    }
+
     if (data.code && data.code.toUpperCase() !== oldVehicleType.code.toUpperCase()) {
       const existingType = await VehicleType.findOne({ code: data.code.toUpperCase() });
       if (existingType) {
@@ -109,6 +122,15 @@ export class VehicleTypeService {
   }
 
   static async softDeleteVehicleType(id: string): Promise<IVehicleType | null> {
+    const defaultCodes = ['XEOTODIEN', 'XEMAYDIEN', 'XEOTO', 'XEMAY', 'XEDAP'];
+    const vehicleTypeToSoftDelete = await VehicleType.findById(id);
+    if (!vehicleTypeToSoftDelete) {
+      throw new AppError('Vehicle type not found', 404);
+    }
+    if (defaultCodes.includes(vehicleTypeToSoftDelete.code.toUpperCase())) {
+      throw new AppError('Không thể xoá các loại xe mặc định của hệ thống', 400);
+    }
+
     // Check if this vehicle type is assigned to any floor
     const floorsWithThisType = await Floor.countDocuments({
       allowedVehicleTypes: id,
@@ -179,7 +201,8 @@ export class VehicleTypeService {
       })
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean() as any;
     const total = await VehicleType.countDocuments(query);
     return { vehicleTypes, total };
   }

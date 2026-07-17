@@ -9,6 +9,7 @@ export function useCheckOutState() {
   const [checkInTimeDisplay, setCheckInTimeDisplay] = useState('Không có dữ liệu');
   const [step, setStep] = useState<'SEARCH' | 'CONFIRM' | 'OPEN' | 'MISMATCH'>('SEARCH');
   const [currentSession, setCurrentSession] = useState<ParkingSession | null>(null);
+  const [fee, setFee] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [ocrPreviewUrl, setOcrPreviewUrl] = useState<string | null>(null);
@@ -23,6 +24,7 @@ export function useCheckOutState() {
   const [momoQR, setMomoQR] = useState<string | null>(null);
   const [transactionCode, setTransactionCode] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [momoSuccess, setMomoSuccess] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,6 +48,7 @@ export function useCheckOutState() {
     checkInTimeDisplay, setCheckInTimeDisplay,
     step, setStep,
     currentSession, setCurrentSession,
+    fee, setFee,
     isSubmitting, setIsSubmitting,
     isUploading, setIsUploading,
     ocrPreviewUrl, setOcrPreviewUrl,
@@ -58,6 +61,7 @@ export function useCheckOutState() {
     momoQR, setMomoQR,
     transactionCode, setTransactionCode,
     isPolling, setIsPolling,
+    momoSuccess, setMomoSuccess,
     searchInputRef, fileInputRef, pollIntervalRef,
     building, gateOut
   };

@@ -129,12 +129,46 @@ export class PricingService {
 
   static async updatePricingPlan(id: string, data: Partial<IPricingPlan>): Promise<IPricingPlan | null> {
 
+    const planToUpdate = await PricingPlan.findById(id);
+    if (!planToUpdate) {
+      throw new AppError('Pricing plan not found', 404);
+    }
+
     // ── Chặn sửa giá khi có session active đang dùng bảng giá này ──
     const pricingAffectingFields: (keyof IPricingPlan)[] = [
       'rates', 'feeType', 'feeMethod', 'overnightFee', 'overtimeFeePerHour',
       'firstBlockHours', 'maxDailyFee', 'gracePeriodMinutes', 'lostCardFee',
     ];
-    const isModifyingPricing = pricingAffectingFields.some(field => field in data);
+    
+    let isModifyingPricing = false;
+    for (const field of pricingAffectingFields) {
+      if (field in data) {
+        if (field === 'rates') {
+          const newRates = (data.rates || []).map((r: any) => ({
+            label: r.label, amount: Number(r.amount), unit: r.unit, startTime: r.startTime || undefined, endTime: r.endTime || undefined
+          }));
+          const oldRates = planToUpdate.rates.map(r => ({
+            label: r.label, amount: Number(r.amount), unit: r.unit, startTime: r.startTime || undefined, endTime: r.endTime || undefined
+          }));
+          if (JSON.stringify(newRates) !== JSON.stringify(oldRates)) {
+            isModifyingPricing = true;
+            break;
+          }
+        } else {
+          // Normalize values for comparison
+          let newVal = data[field];
+          let oldVal = planToUpdate[field as keyof IPricingPlan];
+          
+          if (newVal === '' || newVal === null) newVal = undefined;
+          if (oldVal === null) oldVal = undefined;
+          
+          if (String(newVal) !== String(oldVal)) {
+            isModifyingPricing = true;
+            break;
+          }
+        }
+      }
+    }
 
     if (isModifyingPricing) {
       const activeSessionCount = await ParkingSession.countDocuments({
@@ -144,7 +178,7 @@ export class PricingService {
 
       if (activeSessionCount > 0) {
         throw new AppError(
-          `Không thể chỉnh sửa thông tin giá vì hiện có ${activeSessionCount} lượt gửi xe đang sử dụng bảng giá này. Vui lòng đợi tất cả xe ra bãi hoặc tạo bảng giá mới.`,
+          `Không thể chỉnh sửa thông tin giá vì hiện có ${activeSessionCount} lượt gửi xe đang sử dụng bảng giá này. Bạn chỉ có thể đổi tên bảng giá. Vui lòng đợi tất cả xe ra bãi hoặc tạo bảng giá mới.`,
           400
         );
       }
@@ -164,17 +198,13 @@ export class PricingService {
 
     // If the plan is being set to active, deactivate others
     if (data.status === 'active') {
-      const planToUpdate = await PricingPlan.findById(id);
-      if (planToUpdate) {
-        await PricingPlan.updateMany(
-          { facilityId: planToUpdate.facilityId, vehicleTypeId: planToUpdate.vehicleTypeId, _id: { $ne: id }, status: 'active' },
-          { status: 'inactive' }
-        );
-      }
+      await PricingPlan.updateMany(
+        { facilityId: planToUpdate.facilityId, vehicleTypeId: planToUpdate.vehicleTypeId, _id: { $ne: id }, status: 'active' },
+        { status: 'inactive' }
+      );
     } else if (data.status === 'inactive' || data.isDeleted) {
       // Prevent deactivating the last active plan
-      const planToUpdate = await PricingPlan.findById(id);
-      if (planToUpdate && planToUpdate.status === 'active') {
+      if (planToUpdate.status === 'active') {
         const activeCount = await PricingPlan.countDocuments({
           facilityId: planToUpdate.facilityId,
           vehicleTypeId: planToUpdate.vehicleTypeId,
@@ -197,25 +227,20 @@ export class PricingService {
     return updatedPlan;
   }
 
-  static async deactivatePricingPlan(id: string): Promise<IPricingPlan | null> {
-    const planToUpdate = await PricingPlan.findById(id);
-    if (!planToUpdate) {
-      throw new AppError('Pricing plan not found', 404);
-    }
-    
-    if (planToUpdate.status === 'active') {
-      const activeCount = await PricingPlan.countDocuments({
-        facilityId: planToUpdate.facilityId,
-        vehicleTypeId: planToUpdate.vehicleTypeId,
-        status: 'active',
-        _id: { $ne: id }
-      });
-      if (activeCount === 0) {
-        throw new AppError('Không thể vô hiệu hoá bảng giá này vì đây là bảng giá active duy nhất cho loại xe tại bãi xe này', 400);
-      }
+  static async deletePricingPlan(id: string): Promise<IPricingPlan | null> {
+    const activeSessionCount = await ParkingSession.countDocuments({
+      pricingPlanId: id,
+      status: { $in: ['active', 'exception'] },
+    });
+
+    if (activeSessionCount > 0) {
+      throw new AppError(
+        `Không thể xoá bảng giá này vì hiện có ${activeSessionCount} lượt gửi xe đang sử dụng. Vui lòng đợi tất cả xe ra bãi hoặc chuyển sang vô hiệu hoá.`,
+        400
+      );
     }
 
-    const plan = await PricingPlan.findByIdAndUpdate(id, { status: 'inactive' }, { new: true });
+    const plan = await PricingPlan.findByIdAndUpdate(id, { isDeleted: true, status: 'inactive' }, { new: true });
     if (!plan) {
       throw new AppError('Pricing plan not found', 404);
     }
@@ -226,7 +251,7 @@ export class PricingService {
   }
 
   static async getPricingPlanById(id: string): Promise<IPricingPlan | null> {
-    const plan = await PricingPlan.findById(id).populate('vehicleTypeId facilityId');
+    const plan = await PricingPlan.findById(id).populate('vehicleTypeId facilityId').lean() as any;
     if (!plan) {
       throw new AppError('Pricing plan not found', 404);
     }
@@ -234,12 +259,14 @@ export class PricingService {
   }
 
   static async getAllPricingPlans(filters: any = {}, skip = 0, limit = 10): Promise<{ pricingPlans: IPricingPlan[]; total: number }> {
-    const pricingPlans = await PricingPlan.find(filters)
+    const query = { isDeleted: false, ...filters };
+    const pricingPlans = await PricingPlan.find(query)
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 })
-      .populate('vehicleTypeId facilityId');
-    const total = await PricingPlan.countDocuments(filters);
+      .populate('vehicleTypeId facilityId')
+      .lean() as any;
+    const total = await PricingPlan.countDocuments(query);
     return { pricingPlans, total };
   }
 

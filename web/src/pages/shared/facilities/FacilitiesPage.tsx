@@ -23,28 +23,7 @@ import { Facility } from '../../../services/facility.service';
 import { Floor } from '../../../services/floor.service';
 import { vehicleTypeService } from '../../../services/vehicleType.service';
 
-// ── Skeleton Card ────────
-function SkeletonFacilityCard() {
-  return (
-    <div className="bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] p-5 space-y-3 animate-pulse h-52">
-      <div className="flex justify-between">
-        <div className="space-y-2 flex-1">
-          <div className="h-3.5 bg-gray-100 rounded w-2/3" />
-          <div className="h-3 bg-gray-100 rounded w-1/2" />
-        </div>
-        <div className="w-9 h-9 bg-gray-100 rounded-xl" />
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-12 bg-gray-100 rounded-xl" />
-        ))}
-      </div>
-      <div className="h-1.5 bg-gray-100 rounded-full" />
-    </div>
-  );
-}
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
+import { PageLoader } from '../../../components/PageLoader';
 
 export default function FacilitiesPage() {
   const data = useFacilitiesData();
@@ -112,17 +91,7 @@ export default function FacilitiesPage() {
           />
 
           {data.isLoading ? (
-            <div
-              className={
-                viewMode === 'grid'
-                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'
-                  : 'space-y-4'
-              }
-            >
-              {Array.from({ length: 3 }).map((_, i) => (
-                <SkeletonFacilityCard key={i} />
-              ))}
-            </div>
+            <PageLoader />
           ) : data.paginatedFacilities.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] py-20 flex flex-col items-center gap-4">
               <div

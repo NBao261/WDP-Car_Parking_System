@@ -24,9 +24,7 @@ export default function ExceptionForm({ onClose }: { onClose: () => void }) {
     // NOTE: ExceptionForm không có sessionId (MongoDB ObjectId) trực tiếp.
     // Flow đúng: Staff cần tìm session trước (qua CheckOutPanel) để có _id.
     // Form này chỉ dùng như fallback — thực tế nên dùng GlobalExceptionPanel.
-    toast.warning(
-      "Vui lòng báo sự cố trực tiếp từ màn hình Kiểm Tra Xe để gắn đúng phiên gửi xe!"
-    );
+    toast.warning('Vui lòng báo sự cố trực tiếp từ màn hình Kiểm Tra Xe để gắn đúng phiên gửi xe!');
     onClose();
   };
 

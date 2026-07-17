@@ -232,6 +232,12 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
           </div>
 
           <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 space-y-4">
+            {isEdit && ['XEOTODIEN', 'XEMAYDIEN', 'XEOTO', 'XEMAY', 'XEDAP'].includes(vehicle!.code.toUpperCase()) && (
+              <div className="bg-blue-50 text-blue-700 text-sm p-3 rounded-xl border border-blue-100 flex items-start gap-2 mb-2">
+                <span className="font-semibold whitespace-nowrap mt-0.5">Lưu ý:</span>
+                <span>Đây là loại xe mặc định. Bạn chỉ có thể sửa cấu hình tầng đỗ và yêu cầu biển số.</span>
+              </div>
+            )}
             {/* Icon picker */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -240,11 +246,13 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
               <div className="flex flex-wrap gap-2">
                 {ICON_OPTIONS.map(({ name, label, Icon }) => {
                   const isSelected = form.icon === name;
+                  const isDefaultType = isEdit && ['XEOTODIEN', 'XEMAYDIEN', 'XEOTO', 'XEMAY', 'XEDAP'].includes(vehicle!.code.toUpperCase());
                   return (
                     <button
                       key={name}
                       type="button"
                       title={label}
+                      disabled={isDefaultType}
                       onClick={() => {
                         setForm({ ...form, icon: name });
                         setErrors((e) => ({ ...e, icon: undefined }));
@@ -253,7 +261,7 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                         isSelected
                           ? 'border-[#9FE870] bg-[#9FE870]/15 text-[#062F28] shadow-sm'
                           : 'border-gray-200 text-gray-500 hover:border-[#9FE870]/50 hover:bg-[#9FE870]/5 hover:text-[#062F28]'
-                      }`}
+                      } ${isDefaultType && !isSelected ? 'opacity-50 cursor-not-allowed' : ''} ${isDefaultType && isSelected ? 'cursor-not-allowed' : ''}`}
                     >
                       <Icon size={18} strokeWidth={1.5} className="shrink-0" />
                       <span className="text-xs font-semibold whitespace-nowrap">
@@ -277,9 +285,10 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
               </label>
               <input
                 type="text"
+                disabled={isEdit && ['XEOTODIEN', 'XEMAYDIEN', 'XEOTO', 'XEMAY', 'XEDAP'].includes(vehicle!.code.toUpperCase())}
                 value={form.name}
                 onChange={(e) => setName(e.target.value)}
-                className={`${inputBase} ${errors.name ? inputErr : inputOk}`}
+                className={`${inputBase} ${errors.name ? inputErr : inputOk} disabled:opacity-60 disabled:cursor-not-allowed`}
                 placeholder="Xe máy, Ô tô, Xe đạp"
               />
               {errors.name && (
@@ -406,7 +415,15 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                             <div className="px-3 pt-2.5 pb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider sticky top-0 bg-white/95 backdrop-blur-sm z-10">
                               Danh Sách Tòa Nhà
                             </div>
-                            {facilities.map((fac) => (
+                            {facilities
+                              .filter((fac) =>
+                                floorsList.some((fl) => {
+                                  const flFacId =
+                                    typeof fl.facilityId === 'object' ? (fl.facilityId as any)._id : fl.facilityId;
+                                  return flFacId === fac._id;
+                                })
+                              )
+                              .map((fac) => (
                               <div
                                 key={fac._id}
                                 onClick={() => {
@@ -554,9 +571,10 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mô Tả</label>
               <textarea
                 rows={2}
+                disabled={isEdit && ['XEOTODIEN', 'XEMAYDIEN', 'XEOTO', 'XEMAY', 'XEDAP'].includes(vehicle!.code.toUpperCase())}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className={`${inputBase} ${inputOk} resize-none`}
+                className={`${inputBase} ${inputOk} resize-none disabled:opacity-60 disabled:cursor-not-allowed`}
                 placeholder="Mô tả ngắn về loại xe..."
               />
             </div>

@@ -178,6 +178,9 @@ interface ExceptionFilterBarProps {
   setFilterStatus: (status: ExceptionStatus | 'all') => void;
   filterType: ExceptionType | 'all';
   setFilterType: (type: ExceptionType | 'all') => void;
+  filterFacility: string;
+  setFilterFacility: (facilityId: string) => void;
+  facilities: any[];
   sortValue?: string;
   setSortValue?: (val: string) => void;
 }
@@ -189,6 +192,9 @@ export function ExceptionFilterBar({
   setFilterStatus,
   filterType,
   setFilterType,
+  filterFacility,
+  setFilterFacility,
+  facilities,
   sortValue = 'createdAt_desc',
   setSortValue,
 }: ExceptionFilterBarProps) {
@@ -201,10 +207,18 @@ export function ExceptionFilterBar({
   ];
 
   const typeOptions = [
-    { value: 'all', label: 'Tất cả loại ngoại lệ' },
+    { value: 'all', label: 'Tất cả loại sự cố' },
     ...Object.values(ExceptionType).map((type) => ({
       value: type,
       label: EXCEPTION_TYPE_LABELS[type],
+    })),
+  ];
+
+  const facilityOptions = [
+    { value: 'all', label: 'Tất cả tòa nhà' },
+    ...facilities.map((f) => ({
+      value: f._id,
+      label: f.name,
     })),
   ];
 
@@ -276,11 +290,22 @@ export function ExceptionFilterBar({
         </div>
 
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          {/* Facility Filter */}
+          <div className="relative w-auto sm:w-48 shrink-0">
+            <DropFilter
+              width="100%"
+              label="Tòa nhà"
+              value={filterFacility}
+              onChange={setFilterFacility}
+              options={facilityOptions}
+            />
+          </div>
+
           {/* Type Filter */}
           <div className="relative w-auto sm:w-48 shrink-0">
             <DropFilter
               width="100%"
-              label="Loại ngoại lệ"
+              label="Loại sự cố"
               value={filterType}
               onChange={(v) => setFilterType(v as ExceptionType | 'all')}
               options={typeOptions}
@@ -300,106 +325,18 @@ export function ExceptionFilterBar({
         </div>
       </div>
 
-      {/* Bottom Row: Sorting and Clear Filters */}
-      {setSortValue && (
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: 16,
-            width: '100%',
-          }}
-        >
-          <span className="text-sm text-gray-500 font-medium shrink-0">Sắp xếp:</span>
-
-          {/* Sort: Ngày tạo */}
-          <div className="relative w-auto sm:w-36 shrink-0">
-            <DropFilter
-              width="100%"
-              label="Ngày tạo"
-              value={sortField === 'createdAt' ? sortDir : 'none'}
-              onChange={(v) => {
-                if (v === 'none') setSortValue('createdAt_desc');
-                else setSortValue(`createdAt_${v}`);
-              }}
-              icon={ArrowUpDown}
-              options={[
-                { value: 'none', label: 'Ngày tạo' },
-                { value: 'desc', label: 'Mới nhất' },
-                { value: 'asc', label: 'Cũ nhất' },
-              ]}
-            />
-          </div>
-
-          {/* Sort: Mã lượt gửi */}
-          <div className="relative w-auto sm:w-40 shrink-0">
-            <DropFilter
-              width="100%"
-              label="Mã lượt gửi"
-              value={sortField === 'sessionId' ? sortDir : 'none'}
-              onChange={(v) => {
-                if (v === 'none') setSortValue('createdAt_desc');
-                else setSortValue(`sessionId_${v}`);
-              }}
-              icon={ArrowUpDown}
-              options={[
-                { value: 'none', label: 'Mã lượt gửi' },
-                { value: 'asc', label: 'Mã (A-Z)' },
-                { value: 'desc', label: 'Mã (Z-A)' },
-              ]}
-            />
-          </div>
-
-          {/* Sort: Xe */}
-          <div className="relative w-auto sm:w-32 shrink-0">
-            <DropFilter
-              width="100%"
-              label="Xe"
-              value={sortField === 'licensePlate' ? sortDir : 'none'}
-              onChange={(v) => {
-                if (v === 'none') setSortValue('createdAt_desc');
-                else setSortValue(`licensePlate_${v}`);
-              }}
-              icon={ArrowUpDown}
-              options={[
-                { value: 'none', label: 'Xe' },
-                { value: 'asc', label: 'Xe (A-Z)' },
-                { value: 'desc', label: 'Xe (Z-A)' },
-              ]}
-            />
-          </div>
-
-          {/* Sort: Người tạo */}
-          <div className="relative w-auto sm:w-40 shrink-0">
-            <DropFilter
-              width="100%"
-              label="Người tạo"
-              value={sortField === 'staffId' ? sortDir : 'none'}
-              onChange={(v) => {
-                if (v === 'none') setSortValue('createdAt_desc');
-                else setSortValue(`staffId_${v}`);
-              }}
-              icon={ArrowUpDown}
-              options={[
-                { value: 'none', label: 'Người tạo' },
-                { value: 'asc', label: 'Tên (A-Z)' },
-                { value: 'desc', label: 'Tên (Z-A)' },
-              ]}
-            />
-          </div>
-
-          {/* Clear Filters Button */}
-          {(searchTerm ||
-            filterType !== 'all' ||
-            filterStatus !== 'all' ||
-            sortValue !== 'createdAt_desc') && (
+      {/* Only show Clear Filters Button if any filters are applied */}
+      {(searchTerm ||
+        filterType !== 'all' ||
+        filterFacility !== 'all' ||
+        filterStatus !== 'all') && (
+        <div style={{ display: 'flex', width: '100%' }}>
             <button
               onClick={() => {
                 setSearchTerm('');
                 setFilterType('all');
+                setFilterFacility('all');
                 setFilterStatus('all');
-                if (setSortValue) setSortValue('createdAt_desc');
               }}
               style={{
                 height: 40,
@@ -423,7 +360,6 @@ export function ExceptionFilterBar({
               <X size={15} />
               Bỏ lọc
             </button>
-          )}
         </div>
       )}
     </div>

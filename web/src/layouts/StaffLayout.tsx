@@ -14,7 +14,7 @@ export default function StaffLayout() {
 
   useEffect(() => {
     const handleF9 = (e?: Event) => {
-      // Bỏ qua nếu đang ở trang Xử lý ngoại lệ riêng
+      // Bỏ qua nếu đang ở trang Xử lý sự cố riêng
       if (location.pathname.includes('/exceptions')) return;
 
       const customEvent = e as CustomEvent;

@@ -64,6 +64,7 @@ parkingSessionSchema.index({ licensePlate: 1, status: 1 });
 parkingSessionSchema.index({ cardCode: 1, status: 1 });
 parkingSessionSchema.index({ facilityId: 1, status: 1 });
 parkingSessionSchema.index({ checkInTime: -1 });
+parkingSessionSchema.index({ slotId: 1, status: 1 });
 
 export const ParkingSession = mongoose.model<IParkingSession>(
   'ParkingSession',

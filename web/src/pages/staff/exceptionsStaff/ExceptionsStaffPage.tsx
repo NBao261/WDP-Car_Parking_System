@@ -55,12 +55,12 @@ function mapApiException(exc: any, pricingMap?: Map<string, number>): ExceptionD
     vehicleType: (session?.vehicleTypeId as any)?.name || '—',
     checkInTime: session?.checkInTime
       ? new Date(session.checkInTime).toLocaleString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
       : '—',
     slotCode: (session?.slotId as any)?.code || '—',
     floorName: (session?.floorId as any)?.name || '—',
@@ -69,6 +69,7 @@ function mapApiException(exc: any, pricingMap?: Map<string, number>): ExceptionD
     vehicleTypeIdStr: (session?.vehicleTypeId as any)?._id || '',
     gateIn: session?.gateIn || '—',
     sessionId: session?._id || (typeof exc.sessionId === 'string' ? exc.sessionId : ''),
+    sessionStatus: session?.status || 'UNKNOWN',
     updatedAt: new Date(exc.updatedAt).toLocaleString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
@@ -96,10 +97,15 @@ export default function ExceptionsStaffPage() {
   const fetchExceptions = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params: any = { sortBy: 'createdAt', sortOrder: 'desc', limit: 50 };
-      if (filterStatus !== 'ALL') params.status = filterStatus.toLowerCase();
+      const currentFacilityId = sessionStorage.getItem('staff_facility_id');
+      const params: any = {
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+        limit: 1000,
+        ...(currentFacilityId ? { facilityId: currentFacilityId } : {}),
+      };
 
-      // Sử dụng API thực tế thay vì mock data để có thể thấy ngoại lệ mới tạo
+      // Sử dụng API thực tế thay vì mock data để có thể thấy sự cố mới tạo
       const [res, pricingRes]: [any, any] = await Promise.all([
         exceptionService.getExceptions(params),
         pricingService.getAll({ limit: 100 }),
@@ -123,15 +129,22 @@ export default function ExceptionsStaffPage() {
       const listData = Array.isArray(res.data) ? res.data : res.data?.data;
 
       if (res.success && listData) {
-        setExceptionsList(listData.map((exc: any) => mapApiException(exc, pricingMap)));
+        const mappedList = listData.map((exc: any) => mapApiException(exc, pricingMap));
+        setExceptionsList(mappedList);
+        
+        setSelectedException(prev => {
+          if (!prev) return null;
+          const updated = mappedList.find((e: any) => e.id === prev.id);
+          return updated || prev;
+        });
       }
     } catch (error: any) {
-      toast.error(error.message || "Không thể tải danh sách sự cố!");
+      toast.error(error.message || 'Không thể tải danh sách sự cố!');
       setExceptionsList([]);
     } finally {
       setIsLoading(false);
     }
-  }, [filterStatus]);
+  }, []);
 
   useEffect(() => {
     fetchExceptions();
@@ -139,6 +152,7 @@ export default function ExceptionsStaffPage() {
 
   // Search filter (client-side)
   const filteredList = exceptionsList.filter((exc) => {
+    if (filterStatus !== 'ALL' && exc.status !== filterStatus) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (

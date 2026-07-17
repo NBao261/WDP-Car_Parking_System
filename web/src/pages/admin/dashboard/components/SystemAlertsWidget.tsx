@@ -4,7 +4,7 @@ import { exceptionService, IException, ExceptionType, ExceptionStatus, EXCEPTION
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
-/* ── Icon map theo loại ngoại lệ ── */
+/* ── Icon map theo loại sự cố ── */
 function getExceptionMeta(type: ExceptionType, status: ExceptionStatus) {
   const iconMap: Record<ExceptionType, { icon: typeof AlertTriangle; iconColor: string; bg: string }> = {
     [ExceptionType.LOST_CARD]:   { icon: CreditCard,    iconColor: 'text-amber-500',  bg: 'bg-amber-50' },
@@ -75,7 +75,7 @@ export function SystemAlertsWidget() {
             <TerminalSquare size={16} className="text-[#062F28]" />
           </div>
           <div>
-            <h2 className="text-[15px] font-semibold text-[#1a1a1a]">Ngoại lệ gần đây</h2>
+            <h2 className="text-[15px] font-semibold text-[#1a1a1a]">Sự cố gần đây</h2>
             <p className="text-[12px] text-[#6b7280]">
               {total > 0 ? `${total} sự cố được ghi nhận trong hệ thống` : 'Các sự cố trong hoạt động bãi đỗ'}
             </p>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
@@ -18,6 +18,7 @@ import { ConfirmModal } from '../../../../components/ConfirmModal';
 import { RoleIcon } from '../../../../components/ui/RoleIcon';
 import { StatusBadge } from '../../../../components/ui/StatusBadge';
 import { useUserActions } from '../hooks/useUserActions';
+import { PageLoader } from '../../../../components/PageLoader';
 
 interface StaffTableProps {
   users: UserType[];
@@ -83,10 +84,13 @@ export function StaffTable({
 
   return (
     <>
+      {isLoading ? (
+        <PageLoader />
+      ) : (
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-visible relative">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-[#FAFAFA] text-[#6b6b6b] text-[13px] border-b border-gray-100 font-semibold uppercase tracking-wider">
+            <thead className="bg-[#9FE870] text-[#062F28] text-[13px] border-b border-[#9FE870] font-semibold uppercase tracking-wider">
               <tr>
                 <th 
                   className="px-4 py-4 rounded-tl-2xl w-[5%] text-center"
@@ -99,9 +103,9 @@ export function StaffTable({
                 >
                   <span className="flex items-center gap-1.5">
                     User
-                    <ArrowUpDown size={14} className={sortField === 'name' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'name' ? 'text-white' : 'text-[#062F28]/40'} />
                     {sortField === 'name' && (
-                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                      <span className="text-[10px] text-white font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
                     )}
                   </span>
                 </th>
@@ -111,9 +115,9 @@ export function StaffTable({
                 >
                   <span className="flex items-center gap-1.5">
                     Vai trò
-                    <ArrowUpDown size={14} className={sortField === 'role' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'role' ? 'text-white' : 'text-[#062F28]/40'} />
                     {sortField === 'role' && (
-                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                      <span className="text-[10px] text-white font-bold">{sortDir === 'asc' ? 'A-Z' : 'Z-A'}</span>
                     )}
                   </span>
                 </th>
@@ -125,9 +129,9 @@ export function StaffTable({
                 >
                   <span className="flex items-center gap-1.5">
                     Đăng nhập
-                    <ArrowUpDown size={14} className={sortField === 'lastLogin' ? 'text-[#9FE870]' : 'text-gray-300'} />
+                    <ArrowUpDown size={14} className={sortField === 'lastLogin' ? 'text-white' : 'text-[#062F28]/40'} />
                     {sortField === 'lastLogin' && (
-                      <span className="text-[10px] text-[#9FE870] font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
+                      <span className="text-[10px] text-white font-bold">{sortDir === 'desc' ? '↓ Mới' : '↑ Cũ'}</span>
                     )}
                   </span>
                 </th>
@@ -135,14 +139,7 @@ export function StaffTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
-                    <div className="w-6 h-6 border-2 border-[#9FE870] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                    Đang tải dữ liệu...
-                  </td>
-                </tr>
-              ) : users.length === 0 ? (
+              {users.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
                     <div className="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -152,11 +149,13 @@ export function StaffTable({
                   </td>
                 </tr>
               ) : (
-                sortedUsers.map((user, idx) => (
+                <AnimatePresence mode="popLayout">
+                {sortedUsers.map((user, idx) => (
                   <motion.tr 
                     layout
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     key={user._id} 
                     className="hover:bg-[#9FE870]/10 transition-colors group"
                   >
@@ -291,12 +290,14 @@ export function StaffTable({
                       </DropdownMenu.Root>
                     </td>
                   </motion.tr>
-                ))
+                ))}
+                </AnimatePresence>
               )}
             </tbody>
           </table>
         </div>
       </div>
+      )}
 
       <ConfirmModal
         isOpen={confirmState.isOpen}

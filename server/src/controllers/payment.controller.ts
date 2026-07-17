@@ -11,14 +11,14 @@ export class PaymentController {
    */
   static async createIntent(req: Request, res: Response, next: NextFunction) {
     try {
-      const { sessionId, method } = req.body;
+      const { sessionId, method, checkOutImage, gateOut } = req.body;
       const driverId = req.user?.userId; // Lấy từ token người dùng
       
       if (!Object.values(PaymentMethod).includes(method as PaymentMethod)) {
         return next(new AppError('Phương thức thanh toán không hợp lệ', 400));
       }
 
-      const result = await PaymentService.createPaymentIntent({ sessionId, method: method as PaymentMethod, driverId });
+      const result = await PaymentService.createPaymentIntent({ sessionId, method: method as PaymentMethod, driverId, checkOutImage, gateOut });
       res.status(201).json({ success: true, data: result });
     } catch (error) {
       next(error);

@@ -43,5 +43,6 @@ const paymentSchema = new Schema<IPayment>(
 
 paymentSchema.index({ sessionId: 1 });
 paymentSchema.index({ createdAt: -1 });
+paymentSchema.index({ status: 1, createdAt: -1 }); // Revenue tracking
 
 export const Payment = mongoose.model<IPayment>('Payment', paymentSchema);

@@ -143,7 +143,7 @@ export class FacilityService {
 
 
   static async getFacilityById(id: string): Promise<IParkingFacility | null> {
-    const facility = await ParkingFacility.findById(id);
+    const facility = await ParkingFacility.findById(id).lean() as any;
     if (!facility) {
       throw new AppError('Facility not found', 404);
     }
@@ -151,7 +151,7 @@ export class FacilityService {
   }
 
   static async getAllFacilities(filters: any = {}, skip = 0, limit = 10): Promise<{ facilities: IParkingFacility[]; total: number }> {
-    const facilities = await ParkingFacility.find(filters).skip(skip).limit(limit).sort({ createdAt: -1 });
+    const facilities = await ParkingFacility.find(filters).skip(skip).limit(limit).sort({ createdAt: -1 }).lean() as any;
     const total = await ParkingFacility.countDocuments(filters);
     return { facilities, total };
   }
@@ -176,7 +176,7 @@ export class FacilityService {
       facilityId,
       status: 'active',
       isDeleted: false,
-    }).select('allowedVehicleTypes');
+    }).select('allowedVehicleTypes').lean() as any;
 
     // Gộp unique VehicleType IDs từ tất cả các tầng
     const vehicleTypeIdSet = new Set<string>();
@@ -190,7 +190,7 @@ export class FacilityService {
     const allowedVehicleTypes = await VehicleType.find({
       _id: { $in: Array.from(vehicleTypeIdSet) },
       isDeleted: false,
-    }).sort({ name: 1 });
+    }).sort({ name: 1 }).lean() as any;
 
     const result = { facilityId, allowedVehicleTypes };
     

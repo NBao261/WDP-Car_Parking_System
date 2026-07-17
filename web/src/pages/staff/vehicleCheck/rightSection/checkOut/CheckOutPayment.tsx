@@ -5,6 +5,7 @@ export function CheckOutPayment({
   panelMsg,
   setPanelMsg,
   step,
+  fee,
   isMismatch,
   isNoPlateVehicle,
   isSubmitting,
@@ -15,6 +16,7 @@ export function CheckOutPayment({
   handleReset,
   onCheckOut,
   momoQR,
+  momoSuccess,
   pollIntervalRef,
   setMomoQR,
 }: any) {
@@ -22,7 +24,7 @@ export function CheckOutPayment({
     <>
       {!paymentSuccess && (
         <div className="flex flex-col gap-1 mt-1">
-          <label className="block text-[10px] font-semibold text-[#060606]">
+          <label className="block text-xs font-semibold text-[#060606]">
             {panelMsg
               ? 'Trạng thái'
               : step === 'CONFIRM' && !isMismatch && !isNoPlateVehicle
@@ -32,7 +34,7 @@ export function CheckOutPayment({
           {panelMsg ? (
             <button
               onClick={() => setPanelMsg(null)}
-              className={`w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all ${panelMsg.type === 'error' ? 'bg-[#FEE2E2] text-[#EF4444] border border-[#EF4444]' : panelMsg.type === 'warning' ? 'bg-[#fff8e1] text-[#f57f17] border border-[#fbc02d]' : 'bg-[#ECFCCB] text-[#1A202C] border border-[#A3E635]'}`}
+              className={`w-full h-10 rounded-[6px] font-bold text-sm flex items-center justify-center transition-all ${panelMsg.type === 'error' ? 'bg-[#FEE2E2] text-[#EF4444] border border-[#EF4444]' : panelMsg.type === 'warning' ? 'bg-[#fff8e1] text-[#f57f17] border border-[#fbc02d]' : 'bg-[#ECFCCB] text-[#1A202C] border border-[#A3E635]'}`}
             >
               {panelMsg.text}
             </button>
@@ -44,7 +46,7 @@ export function CheckOutPayment({
                 e.stopPropagation();
                 if (onFlagException) onFlagException();
               }}
-              className="w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all bg-[#EF4444] text-white border border-[#DC2626] hover:bg-[#DC2626]"
+              className="w-full h-10 rounded-[6px] font-bold text-sm flex items-center justify-center transition-all bg-[#EF4444] text-white border border-[#DC2626] hover:bg-[#DC2626]"
             >
               Cảnh báo không khớp (F9)
             </button>
@@ -52,7 +54,7 @@ export function CheckOutPayment({
             <button
               onClick={handleCashCheckOut}
               disabled={isSubmitting}
-              className="w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all bg-[#A3E635] text-[#1A202C] hover:bg-[#84CC16] border border-[#A3E635]"
+              className="w-full h-10 rounded-[6px] font-bold text-sm flex items-center justify-center transition-all bg-[#A3E635] text-[#1A202C] hover:bg-[#84CC16] border border-[#A3E635]"
             >
               {isSubmitting ? 'Đang xử lý...' : 'Xác nhận xe ra'}
             </button>
@@ -61,20 +63,21 @@ export function CheckOutPayment({
               <button
                 onClick={handleCashCheckOut}
                 disabled={isSubmitting}
-                className="flex-1 h-7 font-bold rounded-[6px] transition-colors text-[11px] bg-[#dcdcdc] hover:bg-[#c9c9c9] text-[#333]"
+                className={`flex-1 h-10 font-bold rounded-[6px] transition-colors text-sm ${fee === 0 ? 'bg-[#A3E635] hover:bg-[#84CC16] text-[#1A202C]' : 'bg-[#dcdcdc] hover:bg-[#c9c9c9] text-[#333]'}`}
               >
-                Tiền Mặt
+                {fee === 0 ? 'Mở barie (0đ)' : 'Tiền Mặt'}
               </button>
               <button
                 onClick={handleMomoCheckOut}
-                disabled={isSubmitting}
-                className="flex-1 h-7 font-bold rounded-[6px] transition-colors text-[11px] bg-[#A3E635] hover:bg-[#84CC16] text-[#1A202C]"
+                disabled={isSubmitting || fee === 0}
+                title={fee === 0 ? "Không thể tạo QR Momo cho hóa đơn 0đ" : ""}
+                className={`flex-1 h-10 font-bold rounded-[6px] transition-colors text-sm ${fee === 0 ? 'bg-[#fcfcfc] border border-[#e8e9e8] text-[#9b9b9b] cursor-not-allowed' : 'bg-[#A3E635] hover:bg-[#84CC16] text-[#1A202C]'}`}
               >
                 QR MoMo
               </button>
             </div>
           ) : (
-            <div className="w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all bg-[#fcfcfc] border border-[#e8e9e8] text-[#9b9b9b]">
+            <div className="w-full h-10 rounded-[6px] font-bold text-sm flex items-center justify-center transition-all bg-[#fcfcfc] border border-[#e8e9e8] text-[#9b9b9b]">
               —
             </div>
           )}
@@ -83,14 +86,14 @@ export function CheckOutPayment({
 
       {paymentSuccess && (
         <div className="flex flex-col gap-1.5 mt-2">
-          <label className="block text-[10px] font-semibold text-[#060606]">Trạng thái</label>
+          <label className="block text-xs font-semibold text-[#060606]">Trạng thái</label>
           <button
             onClick={() => {
               setPaymentSuccess(false);
               handleReset();
               if (onCheckOut) onCheckOut(null);
             }}
-            className="w-full h-9 bg-[#A3E635] text-[#1A202C] font-bold text-[14px] flex items-center justify-center rounded-[6px] hover:bg-[#84CC16] transition-colors cursor-pointer"
+            className="w-full h-12 bg-[#A3E635] text-[#1A202C] font-bold text-lg flex items-center justify-center rounded-[6px] hover:bg-[#84CC16] transition-colors cursor-pointer"
           >
             Mời xe ra (Bấm Enter mở chắn)
           </button>
@@ -107,15 +110,24 @@ export function CheckOutPayment({
             <div className="bg-white p-2 rounded-xl border-2 border-pink-100 shadow-inner mb-4">
               <img src={momoQR} alt="Momo QR Code" className="w-40 h-40 object-contain" />
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-[#A50064] font-medium mb-4 bg-pink-50 px-4 py-2 rounded-full">
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Đang chờ khách thanh toán...
+            <div className={`flex items-center gap-2 text-[11px] font-medium mb-4 px-4 py-2 rounded-full ${momoSuccess ? 'text-green-600 bg-green-50' : 'text-[#A50064] bg-pink-50'}`}>
+              {momoSuccess ? (
+                <>
+                  <div className="w-3.5 h-3.5 rounded-full bg-green-500 text-white flex items-center justify-center text-[8px] font-bold">✓</div>
+                  Thanh toán thành công!
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Đang chờ khách thanh toán...
+                </>
+              )}
             </div>
             <button
               onClick={() => {
                 setMomoQR(null);
                 if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
               }}
-              className="w-full h-9 border border-gray-200 text-gray-600 font-bold text-[12px] rounded-[6px] hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+              className="w-full h-12 border border-gray-200 text-gray-600 font-bold text-sm rounded-[6px] hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
             >
               <X className="w-4 h-4" /> Hủy giao dịch Momo
             </button>

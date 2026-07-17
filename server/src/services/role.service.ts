@@ -7,12 +7,12 @@ import { delPattern, delCache } from '../config/redis';
 export class RoleService {
   // ─── FR-19.1: Xem danh sách vai trò ─────────────────
   static async getAllRoles(): Promise<IRole[]> {
-    return await Role.find();
+    return await Role.find().lean() as any;
   }
 
   // ─── FR-19.1: Xem chi tiết vai trò ──────────────────
   static async getRoleById(id: string): Promise<IRole> {
-    const role = await Role.findById(id);
+    const role = await Role.findById(id).lean() as any;
     if (!role) throw new AppError('Role not found', 404);
     return role;
   }
@@ -72,7 +72,7 @@ export class RoleService {
   // ─── FR-19.3: Gán vai trò cho người dùng ────────────
   // PQ-05: Có thể bổ sung quyền ngoài vai trò (custom permissions)
   static async assignRole(userId: string, roleCode: string, customPermissions?: string[]) {
-    const role = await Role.findOne({ code: roleCode });
+    const role = await Role.findOne({ code: roleCode }).lean();
     if (!role) throw new AppError('Role not found', 404);
 
     const updateData: any = { role: roleCode };
@@ -107,7 +107,7 @@ export class RoleService {
     defaults.forEach((p) => permissionSet.add(p));
 
     // 2. DB role permissions
-    const role = await Role.findOne({ code: user.role });
+    const role = await Role.findOne({ code: user.role }).lean();
     const rolePermissions = role?.permissions || [];
     rolePermissions.forEach((p) => permissionSet.add(p));
 

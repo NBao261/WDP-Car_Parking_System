@@ -5,7 +5,7 @@ import { useReservation } from './hooks/useReservation';
 import { BookingForm } from './components/BookingForm';
 import { FacilitySummary } from './components/FacilitySummary';
 import { SuccessTicketModal } from './components/SuccessTicketModal';
-import { Skeleton } from '../../../components/ui/Skeleton';
+import { Skeleton } from '../../../components/ui/skeleton';
 
 const ReservationSkeleton = () => (
   <div className="w-full max-w-5xl mx-auto flex flex-col gap-6 pb-20 mt-4">

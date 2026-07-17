@@ -5,6 +5,7 @@ import { ParkingSlot, SlotStatus } from '../models/parkingSlot.model';
 import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 import { getIO } from '../config/socket';
+import { addExceptionUploadJob } from '../queues/uploadQueue';
 
 interface CreateExceptionDto {
   sessionId: string;
@@ -89,6 +90,14 @@ export class ExceptionService {
       // Bỏ qua lỗi socket
     }
 
+    // Upload ảnh exception lên Cloudinary (background)
+    if (
+      (exception.checkInImage && exception.checkInImage.startsWith('/uploads/')) ||
+      (exception.checkOutImage && exception.checkOutImage.startsWith('/uploads/'))
+    ) {
+      addExceptionUploadJob((exception._id as any).toString()).catch(console.error);
+    }
+
     return exception;
   }
 
@@ -117,7 +126,11 @@ export class ExceptionService {
           }
           filter.sessionId = sessionId;
         } else {
-          const sessions = await ParkingSession.find({ facilityId: { $in: dbUser.assignedFacilities } }).select('_id').lean();
+          const queryObj: any = { facilityId: { $in: dbUser.assignedFacilities } };
+          if (query.facilityId && dbUser.assignedFacilities.some(id => id.toString() === query.facilityId)) {
+            queryObj.facilityId = query.facilityId;
+          }
+          const sessions = await ParkingSession.find(queryObj).select('_id').lean();
           const sessionIds = sessions.map(s => s._id);
           filter.sessionId = { $in: sessionIds };
         }
@@ -127,6 +140,19 @@ export class ExceptionService {
       }
     } else {
       if (sessionId) filter.sessionId = sessionId;
+      if (query.facilityId) {
+        const sessions = await ParkingSession.find({ facilityId: query.facilityId }).select('_id').lean();
+        const fSessionIds = sessions.map(s => s._id);
+        if (filter.sessionId) {
+          if (Array.isArray(filter.sessionId.$in)) {
+             filter.sessionId.$in = filter.sessionId.$in.filter((id: any) => fSessionIds.some(fid => fid.toString() === id.toString()));
+          } else {
+             filter.sessionId = fSessionIds.some(fid => fid.toString() === filter.sessionId.toString()) ? filter.sessionId : null;
+          }
+        } else {
+          filter.sessionId = { $in: fSessionIds };
+        }
+      }
     }
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -140,16 +166,24 @@ export class ExceptionService {
         .populate('staffId', 'name')
         .populate('resolvedByStaffId', 'name')
         .populate('managerId', 'name')
+        .populate('oldSlot', 'name')
+        .populate('newSlot', 'name')
         .populate({
           path: 'sessionId',
-          select: 'code licensePlate status'
+          select: 'code licensePlate status facilityId vehicleTypeId checkInTime checkOutTime gateIn gateOut floorId slotId totalFee',
+          populate: [
+            { path: 'facilityId', select: 'name' },
+            { path: 'vehicleTypeId', select: 'name code' },
+            { path: 'floorId', select: 'name' },
+            { path: 'slotId', select: 'code name' }
+          ]
         })
         .lean(),
       Exception.countDocuments(filter)
     ]);
 
     return {
-      data,
+      data: data as any[],
       total,
       page: Number(page),
       totalPages: Math.ceil(total / Number(limit))
@@ -231,6 +265,8 @@ export class ExceptionService {
       }
 
       const oldSlotId = session.slotId;
+      exception.oldSlot = oldSlotId as mongoose.Types.ObjectId;
+      exception.newSlot = newSlot._id as mongoose.Types.ObjectId;
 
       // Lưu trạng thái gốc của slot mới TRƯỚC khi thay đổi
       const newSlotWasLocked = newSlot.status === SlotStatus.LOCKED;
@@ -294,6 +330,8 @@ export class ExceptionService {
       .populate('staffId', 'name email')
       .populate('resolvedByStaffId', 'name email')
       .populate('managerId', 'name email')
+      .populate('oldSlot', 'name')
+      .populate('newSlot', 'name')
       .populate('sessionId');
 
     try {

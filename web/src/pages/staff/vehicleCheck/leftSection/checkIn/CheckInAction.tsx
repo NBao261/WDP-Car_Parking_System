@@ -24,14 +24,14 @@ export function CheckInAction({
 
   return (
     <div className="flex flex-col gap-1 mt-1">
-      <label className="block text-[10px] font-semibold text-[#060606]">Trạng thái</label>
+      <label className="block text-xs font-semibold text-[#060606]">Trạng thái</label>
       {(() => {
         if (checkInError) {
           return (
             <button
               onClick={handleCheckInClick}
               disabled={isSubmitting}
-              className="w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all bg-[#fdebea] text-[#d32f2f] border border-[#d32f2f]">
+              className="w-full h-10 rounded-[6px] font-bold text-sm flex items-center justify-center transition-all bg-[#fdebea] text-[#d32f2f] border border-[#d32f2f]">
               {isSubmitting ? 'Đang xử lý...' : checkInError}
             </button>
           );
@@ -41,7 +41,7 @@ export function CheckInAction({
             <button
               onClick={handleCheckInClick}
               disabled={isSubmitting}
-              className="w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all bg-[#d32f2f] text-white border border-[#d32f2f] hover:bg-[#c62828]">
+              className="w-full h-10 rounded-[6px] font-bold text-sm flex items-center justify-center transition-all bg-[#d32f2f] text-white border border-[#d32f2f] hover:bg-[#c62828]">
               {isSubmitting ? 'Đang xử lý...' : pendingClear ? 'Mở chắn' : `Bãi ${selectedTypeName} Đã Đầy`}
             </button>
           );
@@ -53,7 +53,7 @@ export function CheckInAction({
               handleCheckInClick();
             }}
             disabled={isSubmitting || pendingClear}
-            className={`w-full h-7 rounded-[6px] font-bold text-[11px] flex items-center justify-center transition-all ${pendingClear
+            className={`w-full h-10 rounded-[6px] font-bold text-sm flex items-center justify-center transition-all ${pendingClear
               ? 'bg-[#062F28] text-white'
               : isSubmitting
                 ? 'bg-gray-400 text-white cursor-not-allowed'

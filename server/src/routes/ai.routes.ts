@@ -2,28 +2,8 @@ import { Router } from 'express';
 import { AIController } from '../controllers/ai.controller';
 import { verifyToken, checkPermission } from '../middlewares/auth.middleware';
 import { PERMISSIONS } from '../config/permissions';
-import rateLimit from 'express-rate-limit';
-import { RedisStore } from 'rate-limit-redis';
-import { getRedis, isRedisConnected } from '../config/redis';
 
 const router = Router();
-
-// Strict AI Rate Limiter (5 requests per minute)
-const aiRateLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  message: { error: 'Bạn đã vượt quá giới hạn gọi AI Chatbot (5 lần/phút). Vui lòng đợi trong giây lát.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  store: new RedisStore({
-    sendCommand: async (...args: string[]) => {
-      const client = getRedis();
-      if (!client) throw new Error('Redis not connected');
-      // @ts-ignore
-      return (client.call as any)(...args);
-    },
-  }),
-});
 
 // ─── Tất cả route AI yêu cầu đăng nhập ───────────────────
 router.use(verifyToken);
@@ -34,7 +14,6 @@ router.use(verifyToken);
 router.post(
   '/chat-query',
   checkPermission(PERMISSIONS.AI_CHATBOT),
-  aiRateLimiter,
   AIController.chatQuery
 );
 
