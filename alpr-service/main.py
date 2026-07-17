@@ -74,6 +74,7 @@ def _load_models():
             text_det_thresh=0.2,
             text_det_box_thresh=0.3,
             det_limit_side_len=960,           # tang kich thuoc detection len 960 de OCR toan anh ro hon
+            ocr_version='PP-OCRv3'            # Dung v3 de on dinh tren CPU khong co tap lenh AVX moi
         )
         print("[OK] PaddleOCR loaded")
     except Exception as e:
@@ -477,6 +478,7 @@ def ocr_image(img: np.ndarray) -> tuple[str, float]:
                 continue
 
             raw  = assemble_rows(items)
+            print(f"[DEBUG] raw: {raw}", flush=True)
             # Filter noise words
             noise_words = {"honda", "yamaha", "suzuki", "sym", "piaggio", "hotline", "xemay", "xe"}
             words = [w for w in raw.split() if w.lower() not in noise_words and not w.lower().startswith("hotline")]

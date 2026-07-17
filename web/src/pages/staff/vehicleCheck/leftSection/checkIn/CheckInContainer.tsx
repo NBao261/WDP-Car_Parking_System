@@ -206,6 +206,7 @@ export function CheckInContainer({ onCheckIn }: { onCheckIn: (data: any) => void
           displayPlate={displayPlate} plate={logic.plate} setPlate={logic.setPlate} checkInError={logic.checkInError} setCheckInError={logic.setCheckInError}
           isSubmitting={logic.isSubmitting} pendingClear={logic.pendingClear} handleCheckInEnter={logic.handleCheckInClick}
           selectedVehicleTypeId={logic.selectedVehicleTypeId} setSelectedVehicleTypeId={logic.setSelectedVehicleTypeId} vehicleTypes={logic.vehicleTypes}
+          ownerName={logic.reservationInfo?.userId?.fullName || logic.reservationInfo?.userId?.name || ""}
         />
         <CheckInAction
           vehicleTypes={logic.vehicleTypes} selectedVehicleTypeId={logic.selectedVehicleTypeId} slotAvailability={logic.slotAvailability} capacityLoaded={logic.capacityLoaded}
