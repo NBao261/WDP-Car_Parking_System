@@ -14,12 +14,13 @@ interface CheckInFormProps {
   selectedVehicleTypeId: string;
   setSelectedVehicleTypeId: (val: string) => void;
   vehicleTypes: VehicleType[];
+  ownerName?: string;
 }
 
 export function CheckInForm({
   displayPlate, plate, setPlate, checkInError, setCheckInError,
   isSubmitting, pendingClear, handleCheckInEnter,
-  selectedVehicleTypeId, setSelectedVehicleTypeId, vehicleTypes
+  selectedVehicleTypeId, setSelectedVehicleTypeId, vehicleTypes, ownerName
 }: CheckInFormProps) {
   return (
     <>
@@ -51,7 +52,7 @@ export function CheckInForm({
         </div>
         <div className="flex flex-col gap-1">
           <label className="block text-xs font-semibold text-[#060606]">Chủ xe</label>
-          <input type="text" value={plate ? "Khách vãng lai" : ""} readOnly
+          <input type="text" value={ownerName || (plate ? "Khách vãng lai" : "")} readOnly
             className="w-full h-9 px-3 bg-[#fdfdfd] border border-[#e8e9e8] rounded-[6px] text-[#555] text-xs font-medium outline-none" />
         </div>
         <div className="flex flex-col gap-1">
