@@ -16,7 +16,10 @@ export const initUploadQueue = () => {
 
   try {
     const queueConnection = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null });
+    queueConnection.on('error', (err) => logger.error('[BullMQ] Queue connection error:', err));
+    
     const workerConnection = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null });
+    workerConnection.on('error', (err) => logger.error('[BullMQ] Worker connection error:', err));
 
     uploadQueue = new Queue(uploadQueueName, { connection: queueConnection });
 
