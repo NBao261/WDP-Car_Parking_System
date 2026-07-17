@@ -28,7 +28,7 @@ const startServer = async (): Promise<void> => {
     initUploadQueue();
 
     // Start listening
-    server.listen(env.PORT, () => {
+    server.listen(env.PORT, '0.0.0.0', () => {
       logger.info(`🚀 Server running on port ${env.PORT} [${env.NODE_ENV}]`);
       logger.info(`📄 API Docs: http://localhost:${env.PORT}/api-docs`);
     });
