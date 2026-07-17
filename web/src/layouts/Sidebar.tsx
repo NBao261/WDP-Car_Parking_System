@@ -134,17 +134,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 px-4 pb-6 overflow-y-auto custom-scrollbar">
-          {Object.entries(groupedItems).map(([category, items]) => {
-            if (items.length === 0) return null;
-            return (
-              <div key={category} className="mb-6">
-                <div className="text-xs font-bold text-gray-400 mb-2 px-3 tracking-wider">
-                  {category}
-                </div>
-                <div className="space-y-2">
-                  {items.map((item) => (
-                    <NavLink
-                      key={item.path}
+          <div className="space-y-2 mt-4">
+            {groupedItems['MENU CHÍNH']?.map((item) => (
+              <NavLink
+                key={item.path}
                       to={item.path}
                       end={item.path === '/admin' || item.path === '/manager' || item.path === '/staff'}
                       onClick={onClose}
@@ -159,11 +152,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                       <item.icon size={20} className="shrink-0" />
                       <span>{item.label}</span>
                     </NavLink>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+            ))}
+          </div>
         </nav>
 
         <div className="p-4 mt-auto shrink-0">

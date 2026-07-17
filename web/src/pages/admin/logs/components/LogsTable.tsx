@@ -7,7 +7,8 @@ import {
   ChevronUp,
   FileJson,
   Package,
-import { User } from 'lucide-react';
+  User,
+} from 'lucide-react';
 import { AuditLog } from '../../../../services/config.service';
 import { PageLoader } from '../../../../components/PageLoader';
 
