@@ -133,6 +133,19 @@ export class SessionService {
    * Tạo session + cập nhật slot → Occupied + sinh mã thẻ
    */
   static async checkIn(data: CheckInData): Promise<IParkingSession> {
+    const redlock = getRedlock();
+    let checkInLock: any = null;
+    
+    if (redlock && data.staffInId) {
+      try {
+        const lockKey = `lock:checkin:staff:${data.staffInId}`;
+        checkInLock = await redlock.acquire([lockKey], 5000);
+      } catch (error) {
+        throw new AppError('Hệ thống đang xử lý yêu cầu, vui lòng không gửi liên tục.', 429);
+      }
+    }
+    
+    try {
     let matchedReservation = null;
 
     // 0. BR-6.6: Nếu có reservationCode → auto-fill facilityId, vehicleTypeId, licensePlate từ reservation
@@ -473,6 +486,11 @@ export class SessionService {
         ).catch(() => { });
       }
       throw error;
+    }
+    } finally {
+      if (checkInLock) {
+        await checkInLock.release().catch(() => {});
+      }
     }
   }
 

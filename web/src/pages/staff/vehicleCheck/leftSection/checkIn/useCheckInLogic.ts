@@ -1,3 +1,4 @@
+import React from 'react';
 import { toast } from "sonner";
 import { apiClient } from "../../../../../services/api";
 import { sessionService } from "../../../../../services/session.service";
@@ -140,9 +141,16 @@ export function useCheckInLogic(onCheckIn: (data: any) => void) {
     }
   };
 
+  const isSubmittingRef = React.useRef(false);
+
   const handleCheckInClick = () => {
-    if (state.pendingClear) return; // Prevent multiple clicks while auto-clearing
-    handleCheckIn();
+    if (state.pendingClear) return;
+    if (isSubmittingRef.current) return;
+    
+    isSubmittingRef.current = true;
+    handleCheckIn().finally(() => {
+      isSubmittingRef.current = false;
+    });
   };
 
   // Hoisting the remaining `useEffect` hooks and functions...

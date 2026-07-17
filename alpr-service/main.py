@@ -267,7 +267,7 @@ _L2D = {'O': '0', 'I': '1', 'B': '8', 'S': '5', 'Z': '2',    # letter→digit (d
 # PP = province (2 digits), L = series letter(s), D = optional digit, N = digits
 _VN_PLATE_RE = re.compile(
     r'^(?:'
-    r'\d{2}[A-Z]{1,2}\d?-[\d.]{4,8}'      # Type A/A2: 30K-555.55, 63B9-1234, 66AA-138.61
+    r'\d{2}[A-Z]{1,2}\d?-[\d.]{4,6}'      # Type A/A2: 30K-555.55, 63B9-1234, 66AA-138.61
     r'|'
     r'\d{2}-[A-Z]{1,2}[\d.]{4,6}'    # Type B: 30-A12345, 30-AB1234
     r')$'
@@ -477,7 +477,9 @@ def ocr_image(img: np.ndarray) -> tuple[str, float]:
                 continue
 
             raw  = assemble_rows(items)
-            words = raw.split()
+            # Filter noise words
+            noise_words = {"honda", "yamaha", "suzuki", "sym", "piaggio", "hotline", "xemay", "xe"}
+            words = [w for w in raw.split() if w.lower() not in noise_words and not w.lower().startswith("hotline")]
             
             best_sub_text, found_valid = "", False
             for length in range(1, min(5, len(words) + 1)):
