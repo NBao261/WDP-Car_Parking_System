@@ -1,0 +1,17 @@
+
+# AG Kit agent folder
+.agent/
+
+# Virtual environments
+alpr-service/venv/
+alpr-service/env/
+alpr-service/venv310/
+venv/
+env/
+.venv/
+
+# Uploaded images
+server/public/uploads/
+
+# Dependencies
+node_modules/

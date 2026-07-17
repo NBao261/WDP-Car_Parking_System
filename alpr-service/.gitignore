@@ -1,0 +1,10 @@
+venv_cpu/
+venv_gpu/
+__pycache__/
+*.pyc
+
+venv/
+env/
+.venv/
+
+alpr-service/

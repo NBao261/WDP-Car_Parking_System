@@ -3,6 +3,8 @@ import { connectDatabase } from './database/connection';
 import { env } from './config/env';
 import { logger } from './config/logger';
 import { createSocketServer } from './config/socket';
+import { getRedis } from './config/redis';
+import { initUploadQueue } from './queues/uploadQueue';
 import http from 'http';
 
 const startServer = async (): Promise<void> => {
@@ -11,12 +13,19 @@ const startServer = async (): Promise<void> => {
     await connectDatabase();
     logger.info('✅ MongoDB connected');
 
+    // Connect to Redis (non-blocking — app works without Redis)
+    getRedis();
+    logger.info('✅ Redis client initialized');
+
     // Create HTTP server
     const server = http.createServer(app);
 
     // Initialize Socket.IO
     createSocketServer(server);
     logger.info('✅ Socket.IO initialized');
+
+    // Initialize Background Queues
+    initUploadQueue();
 
     // Start listening
     server.listen(env.PORT, () => {

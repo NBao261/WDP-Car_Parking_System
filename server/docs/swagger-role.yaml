@@ -1,0 +1,316 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - Roles & Permissions
+  version: 1.0.0
+paths:
+  /roles:
+    get:
+      summary: Get all roles
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+              example:
+                success: true
+                data:
+                  - _id: "60b9b0b9e6b3f3b3b4f3b3b7"
+                    code: "admin"
+                    name: "Administrator"
+                    description: "Full system access"
+                    permissions: ["*"]
+                    isDefault: true
+                  - _id: "60b9b0b9e6b3f3b3b4f3b3b8"
+                    code: "manager"
+                    name: "Manager"
+                    permissions: ["facility:read", "floor:manage"]
+                    isDefault: true
+
+    post:
+      summary: Create a role
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name]
+              properties:
+                code:
+                  type: string
+                  description: Unique code for the role
+                  example: "auditor"
+                name:
+                  type: string
+                  example: "System Auditor"
+                description:
+                  type: string
+                  example: "Can view audit logs and reports"
+                permissions:
+                  type: array
+                  items:
+                    type: string
+                  example: ["reports:view", "logs:view"]
+                isDefault:
+                  type: boolean
+                  example: false
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64f1a2b3c4d5e6f7a8b9c0d1"
+                  code: "auditor"
+                  name: "System Auditor"
+                  permissions: ["reports:view", "logs:view"]
+                  isDefault: false
+        '400':
+          description: Bad Request
+
+  /roles/{id}:
+    get:
+      summary: Get role by ID
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b7"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b7"
+                  code: "admin"
+                  name: "Administrator"
+                  description: "Full system access"
+                  permissions: ["*"]
+                  isDefault: true
+        '404':
+          description: Role not found
+    delete:
+      summary: Delete a role
+      description: |
+        Xóa vai trò. Không cho phép xóa role mặc định (isDefault = true)
+        hoặc role đang được gán cho user.
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  message: "Role deleted successfully"
+        '400':
+          description: Cannot delete default or assigned role
+
+  /roles/{id}/permissions:
+    put:
+      summary: Update permissions for a role
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b7"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [permissions]
+              properties:
+                permissions:
+                  type: array
+                  items:
+                    type: string
+                  example: ["users:read", "users:write", "facility:read"]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b7"
+                  code: "manager"
+                  permissions: ["users:read", "users:write", "facility:read"]
+        '404':
+          description: Role Not Found
+
+  /roles/{id}/reset-permissions:
+    post:
+      summary: Reset permissions to default
+      description: Reset quyền của role về giá trị mặc định ban đầu (theo DEFAULT_PERMISSIONS config).
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b7"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b7"
+                  code: "staff"
+                  name: "Staff"
+                  permissions: ["session:create", "session:read", "slot:read"]
+        '404':
+          description: Role not found
+
+  /roles/assign:
+    post:
+      summary: Assign role and custom permissions to a user
+      description: |
+        Gán vai trò cho user. Có thể kèm theo customPermissions (PQ-05)
+        để cấp thêm quyền ngoài quyền mặc định của role.
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, roleCode]
+              properties:
+                userId:
+                  type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b5"
+                roleCode:
+                  type: string
+                  example: "staff"
+                customPermissions:
+                  type: array
+                  items:
+                    type: string
+                  description: Extra permissions ngoài default của role
+                  example: ["slots:create"]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "60b9b0b9e6b3f3b3b4f3b3b5"
+                  name: "Nguyen Van B"
+                  role: "staff"
+                  customPermissions: ["slots:create"]
+        '404':
+          description: User or Role Not Found
+
+  /roles/user/{userId}/permissions:
+    get:
+      summary: Get merged permissions of a user
+      description: |
+        Trả về danh sách quyền đã merged (role permissions + customPermissions).
+        Dùng để kiểm tra quyền thực tế của user.
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            example: "60b9b0b9e6b3f3b3b4f3b3b5"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  userId: "60b9b0b9e6b3f3b3b4f3b3b5"
+                  role: "staff"
+                  rolePermissions: ["session:create", "session:read", "slot:read"]
+                  customPermissions: ["slots:create"]
+                  mergedPermissions: ["session:create", "session:read", "slot:read", "slots:create"]
+        '404':
+          description: User not found
+
+components:
+  schemas:
+    Role:
+      type: object
+      properties:
+        _id:
+          type: string
+        code:
+          type: string
+          description: Mã vai trò (unique)
+        name:
+          type: string
+          description: Tên hiển thị
+        description:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+          description: Danh sách quyền
+        isDefault:
+          type: boolean
+          description: Có phải role mặc định không (không thể xóa)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

@@ -4,10 +4,13 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
 import { env } from './config/env';
 import { errorHandler } from './middlewares/error.middleware';
 import { notFoundHandler } from './middlewares/notFound.middleware';
 import { setupSwagger } from './config/swagger';
+import { RedisStore } from 'rate-limit-redis';
+import { getRedis, isRedisConnected } from './config/redis';
 
 // Import routes
 import authRoutes from './routes/auth.routes';
@@ -24,18 +27,37 @@ import exceptionRoutes from './routes/exception.routes';
 import feedbackRoutes from './routes/feedback.routes';
 import reportRoutes from './routes/report.routes';
 import configRoutes from './routes/config.routes';
+import publicRoutes from './routes/public.routes';
+import roleRoutes from './routes/role.routes';
+import alprRoutes from './routes/alpr.routes';
+import aiRoutes from './routes/ai.routes';
+import uploadRoutes from './routes/upload.routes';
+import vehicleRoutes from './routes/vehicle.routes';
+
 
 const app = express();
 
 // ─── Security ─────────────────────────────────────────
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 2000, // Increased from 100 to 2000 to prevent 429 in development/dashboard navigation
     standardHeaders: true,
     legacyHeaders: false,
+    store: new RedisStore({
+      sendCommand: async (...args: string[]): Promise<any> => {
+        const client = getRedis();
+        if (client) {
+          return (client.call as any)(...args);
+        }
+        // Fallback or throw if Redis is disconnected. rate-limit-redis handles errors gracefully by default.
+        throw new Error('Redis not connected');
+      },
+    }),
   })
 );
 
@@ -45,7 +67,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ─── Logging ──────────────────────────────────────────
-app.use(morgan('combined'));
+// app.use(morgan('combined'));
 
 // ─── API Docs ─────────────────────────────────────────
 setupSwagger(app);
@@ -55,9 +77,13 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ─── Static Files ─────────────────────────────────────
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+
 // ─── API Routes ───────────────────────────────────────
 const API_PREFIX = '/api/v1';
 
+app.use(`${API_PREFIX}/public`, publicRoutes);
 app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/facilities`, facilityRoutes);
@@ -72,6 +98,12 @@ app.use(`${API_PREFIX}/exceptions`, exceptionRoutes);
 app.use(`${API_PREFIX}/feedbacks`, feedbackRoutes);
 app.use(`${API_PREFIX}/reports`, reportRoutes);
 app.use(`${API_PREFIX}/config`, configRoutes);
+app.use(`${API_PREFIX}/roles`, roleRoutes);
+app.use(`${API_PREFIX}/alpr`, alprRoutes);
+app.use(`${API_PREFIX}/ai`, aiRoutes);
+app.use(`${API_PREFIX}/upload`, uploadRoutes);
+app.use(`${API_PREFIX}/vehicles`, vehicleRoutes);
+
 
 // ─── Error Handling ───────────────────────────────────
 app.use(notFoundHandler);

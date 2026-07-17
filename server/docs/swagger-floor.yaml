@@ -1,0 +1,307 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - Floors
+  version: 1.0.0
+paths:
+  /floors:
+    get:
+      summary: Get all floors
+      description: Lấy danh sách tầng, có thể filter theo facilityId và status.
+      tags: [Floors]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: facilityId
+          schema:
+            type: string
+          description: Lọc theo bãi xe
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [active, inactive]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "64a1b2c3d4e5f6a7b8c9d0e1"
+                    facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                    name: "Tầng 1 - Ô tô 4 chỗ"
+                    allowedVehicleTypes:
+                      - _id: "60b9b0b9e6b3f3b3b4f3b3b6"
+                        name: "Ô tô 4 chỗ"
+                        code: "CAR4"
+                        slotSize: "medium"
+                    totalSlots: 5
+                    distanceToGate: 10
+                    status: "active"
+                    isDeleted: false
+                pagination:
+                  total: 5
+                  page: 1
+                  limit: 10
+                  pages: 1
+    post:
+      summary: Create a floor
+      description: |
+        Tạo tầng mới. Two-way sync: khi tạo floor với `allowedVehicleTypes`,
+        hệ thống tự động thêm floor._id vào `VehicleType.floors[]` cho mỗi vehicleType.
+      tags: [Floors]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [facilityId, name]
+              properties:
+                facilityId:
+                  type: string
+                  description: ObjectId của bãi xe
+                  example: "60b9b0b9e6b3f3b3b4f3b3b4"
+                name:
+                  type: string
+                  example: "Tầng 1 - Ô tô 4 chỗ"
+                allowedVehicleTypes:
+                  type: array
+                  items:
+                    type: string
+                  description: Danh sách ObjectId loại xe được phép đỗ tại tầng này
+                  example:
+                    - "60b9b0b9e6b3f3b3b4f3b3b6"
+                distanceToGate:
+                  type: number
+                  description: Khoảng cách đến cổng (mét)
+                  example: 10
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64a1b2c3d4e5f6a7b8c9d0e1"
+                  facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  name: "Tầng 1 - Ô tô 4 chỗ"
+                  allowedVehicleTypes:
+                    - "60b9b0b9e6b3f3b3b4f3b3b6"
+                  totalSlots: 0
+                  distanceToGate: 10
+                  status: "active"
+                  isDeleted: false
+
+  /floors/{id}:
+    get:
+      summary: Get floor by ID
+      tags: [Floors]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "64a1b2c3d4e5f6a7b8c9d0e1"
+      responses:
+        '200':
+          description: OK (allowedVehicleTypes populated)
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64a1b2c3d4e5f6a7b8c9d0e1"
+                  facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  name: "Tầng 1 - Ô tô 4 chỗ"
+                  allowedVehicleTypes:
+                    - _id: "60b9b0b9e6b3f3b3b4f3b3b6"
+                      name: "Ô tô 4 chỗ"
+                      code: "CAR4"
+                      slotSize: "medium"
+                  totalSlots: 5
+                  distanceToGate: 10
+                  status: "active"
+    patch:
+      summary: Update floor
+      tags: [Floors]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "64a1b2c3d4e5f6a7b8c9d0e1"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Tầng 1 - VIP"
+                distanceToGate:
+                  type: number
+                  example: 5
+                status:
+                  type: string
+                  enum: [active, inactive]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64a1b2c3d4e5f6a7b8c9d0e1"
+                  name: "Tầng 1 - VIP"
+                  distanceToGate: 5
+                  status: "active"
+    delete:
+      summary: Soft delete floor
+      description: |
+        Xóa mềm tầng. Cascade: tất cả slot chuyển sang maintenance.
+        Two-way sync: tự động xóa floor._id khỏi `VehicleType.floors[]`
+        cho tất cả vehicleType liên quan.
+      tags: [Floors]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Floor deleted successfully"
+
+  /floors/{id}/assign-vehicles:
+    patch:
+      summary: Gán loại xe cho tầng
+      description: |
+        Gán danh sách loại xe được phép đỗ tại tầng này.
+        **Two-way sync:** Khi gán/xóa vehicleType cho floor, hệ thống tự động đồng bộ
+        `VehicleType.floors[]` ↔ `Floor.allowedVehicleTypes[]` cả 2 chiều.
+        - VehicleType bị loại bỏ → `$pull` floor._id khỏi `VehicleType.floors[]`
+        - VehicleType mới thêm → `$addToSet` floor._id vào `VehicleType.floors[]`
+      tags: [Floors]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "64a1b2c3d4e5f6a7b8c9d0e1"
+          description: MongoDB ObjectId của Floor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [allowedVehicleTypes]
+              properties:
+                allowedVehicleTypes:
+                  type: array
+                  items:
+                    type: string
+                  description: Danh sách MongoDB ObjectId của VehicleType
+                  example:
+                    - "60b9b0b9e6b3f3b3b4f3b3b6"
+                    - "60b9b0b9e6b3f3b3b4f3b3b7"
+            example:
+              allowedVehicleTypes:
+                - "60b9b0b9e6b3f3b3b4f3b3b6"
+                - "60b9b0b9e6b3f3b3b4f3b3b7"
+      responses:
+        '200':
+          description: Gán thành công
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64a1b2c3d4e5f6a7b8c9d0e1"
+                  facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  name: "Tầng 1 - Ô tô 4 chỗ"
+                  allowedVehicleTypes:
+                    - "60b9b0b9e6b3f3b3b4f3b3b6"
+                    - "60b9b0b9e6b3f3b3b4f3b3b7"
+                  totalSlots: 5
+                  status: "active"
+        '404':
+          description: Floor not found
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Floor not found"
+
+components:
+  schemas:
+    Floor:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: MongoDB ObjectId
+        facilityId:
+          type: string
+          description: ObjectId của bãi xe chứa tầng này
+        name:
+          type: string
+          description: Tên tầng
+        allowedVehicleTypes:
+          type: array
+          items:
+            type: string
+          description: "Two-way ref: danh sách VehicleType ObjectId được phép đỗ (↔ VehicleType.floors)"
+        totalSlots:
+          type: integer
+          description: Tổng số slot trong tầng
+        distanceToGate:
+          type: number
+          nullable: true
+          description: Khoảng cách đến cổng/thang máy (mét)
+        status:
+          type: string
+          enum: [active, inactive]
+        isDeleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

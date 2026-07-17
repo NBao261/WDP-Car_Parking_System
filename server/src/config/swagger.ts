@@ -20,11 +20,17 @@ const options: swaggerJsdoc.Options = {
         },
       },
     },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
   },
-  apis: ['./src/routes/*.ts'],
+  apis: ['./src/routes/*.ts', './docs/*.yaml'],
 };
 
 export const setupSwagger = (app: Express): void => {
   const specs = swaggerJsdoc(options);
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 };
+// trigger restart 3

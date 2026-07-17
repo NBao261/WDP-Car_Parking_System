@@ -1,0 +1,288 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - Slots
+  version: 1.0.0
+paths:
+  /slots:
+    post:
+      summary: Create a parking slot
+      description: Tạo 1 slot mới trong tầng. Tự động cập nhật totalSlots của Floor.
+      tags: [Slots]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, facilityId, floorId, vehicleTypeId]
+              properties:
+                code:
+                  type: string
+                  example: "A01"
+                facilityId:
+                  type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b4"
+                floorId:
+                  type: string
+                  example: "64a1b2c3d4e5f6a7b8c9d0e1"
+                vehicleTypeId:
+                  type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b6"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64b1c2d3e4f5a6b7c8d9e0f1"
+                  code: "A01"
+                  facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  floorId: "64a1b2c3d4e5f6a7b8c9d0e1"
+                  vehicleTypeId: "60b9b0b9e6b3f3b3b4f3b3b6"
+                  status: "available"
+                  currentSessionId: null
+        '400':
+          description: Slot code already exists in this facility
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Slot code already exists in this facility"
+
+  /slots/bulk:
+    post:
+      summary: Create bulk parking slots
+      description: Tạo nhiều slot cùng lúc với prefix + số bắt đầu. VD prefix="A", startNumber=1, count=5 → A1, A2, A3, A4, A5.
+      tags: [Slots]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [facilityId, floorId, vehicleType, prefix, startNumber, count]
+              properties:
+                facilityId:
+                  type: string
+                  example: "60b9b0b9e6b3f3b3b4f3b3b4"
+                floorId:
+                  type: string
+                  example: "64a1b2c3d4e5f6a7b8c9d0e1"
+                vehicleType:
+                  type: string
+                  description: ObjectId của VehicleType
+                  example: "60b9b0b9e6b3f3b3b4f3b3b6"
+                prefix:
+                  type: string
+                  example: "A"
+                startNumber:
+                  type: integer
+                  example: 1
+                count:
+                  type: integer
+                  example: 5
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "64b1c2d3e4f5a6b7c8d9e0f1"
+                    code: "A1"
+                    status: "available"
+                  - _id: "64b1c2d3e4f5a6b7c8d9e0f2"
+                    code: "A2"
+                    status: "available"
+        '400':
+          description: Some slot codes already exist
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Some slot codes already exist: A1, A2"
+
+  /slots/floor/{floorId}:
+    get:
+      summary: Get all slots by floor
+      description: Lấy danh sách tất cả slot của 1 tầng, sorted by code. VehicleType được populated.
+      tags: [Slots]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: floorId
+          required: true
+          schema:
+            type: string
+            example: "64a1b2c3d4e5f6a7b8c9d0e1"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "64b1c2d3e4f5a6b7c8d9e0f1"
+                    code: "A01"
+                    floorId: "64a1b2c3d4e5f6a7b8c9d0e1"
+                    facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                    vehicleTypeId:
+                      _id: "60b9b0b9e6b3f3b3b4f3b3b6"
+                      name: "Ô tô 4 chỗ"
+                      code: "CAR4"
+                    status: "available"
+                    currentSessionId: null
+
+  /slots/{id}:
+    get:
+      summary: Get slot by ID
+      tags: [Slots]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK (vehicleTypeId populated)
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64b1c2d3e4f5a6b7c8d9e0f1"
+                  code: "A01"
+                  floorId: "64a1b2c3d4e5f6a7b8c9d0e1"
+                  facilityId: "60b9b0b9e6b3f3b3b4f3b3b4"
+                  vehicleTypeId:
+                    _id: "60b9b0b9e6b3f3b3b4f3b3b6"
+                    name: "Ô tô 4 chỗ"
+                    code: "CAR4"
+                    slotSize: "medium"
+                  status: "available"
+                  currentSessionId: null
+    delete:
+      summary: Delete a slot
+      description: Xóa vĩnh viễn slot. Không cho phép xóa slot đang occupied hoặc reserved. Tự động giảm totalSlots của Floor.
+      tags: [Slots]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Slot deleted successfully"
+        '400':
+          description: Cannot delete occupied/reserved slot
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Cannot delete a slot that is currently occupied or reserved"
+
+  /slots/{id}/status:
+    patch:
+      summary: Update slot status
+      description: |
+        Cập nhật trạng thái slot. Staff chỉ được phép chuyển giữa `maintenance` ↔ `available`.
+        Không cho phép chuyển slot đang `occupied` sang `maintenance`/`locked`.
+      tags: [Slots]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [available, maintenance, locked]
+                  example: "maintenance"
+                reason:
+                  type: string
+                  example: "Sửa chữa mặt sàn"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "64b1c2d3e4f5a6b7c8d9e0f1"
+                  code: "A01"
+                  status: "maintenance"
+        '403':
+          description: Staff không có quyền
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Nhân viên chỉ có quyền cập nhật trạng thái bảo trì hoặc trống"
+
+components:
+  schemas:
+    ParkingSlot:
+      type: object
+      properties:
+        _id:
+          type: string
+        code:
+          type: string
+          description: Mã slot (unique trong mỗi facility)
+        floorId:
+          type: string
+          description: ObjectId tầng chứa slot
+        facilityId:
+          type: string
+          description: ObjectId bãi xe
+        vehicleTypeId:
+          type: string
+          description: ObjectId loại xe phù hợp
+        status:
+          type: string
+          enum: [available, occupied, reserved, maintenance, locked]
+        currentSessionId:
+          type: object
+          nullable: true
+          description: Đối tượng phiên gửi xe hiện tại (được populate, null nếu trống)
+        maintenanceReason:
+          type: string
+        isDeleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

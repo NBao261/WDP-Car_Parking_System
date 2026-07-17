@@ -1,0 +1,328 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - AI Features
+  version: 1.0.0
+paths:
+  # ═══════════════════════════════════════════════════════
+  # AI CHATBOT (FR-6.5 / RQ5)
+  # ═══════════════════════════════════════════════════════
+
+  /ai/chat-query:
+    post:
+      summary: Gửi câu hỏi cho AI Chatbot (FR-6.5)
+      description: |
+        Manager/Admin gửi câu hỏi bằng ngôn ngữ tự nhiên (tiếng Việt/Anh).
+        AI sẽ phân tích intent, truy vấn dữ liệu MongoDB, và trả lời.
+
+        **Pipeline 4-module [P12]:**
+        1. Intent Analysis (Gemini) → phân loại intent + trích xuất entity
+        2. Entity Resolution → resolve timeRange, facilityName
+        3. MongoDB Query → gọi ReportService tương ứng
+        4. Response Generation (Gemini) → format câu trả lời tiếng Việt
+
+        **Intents hỗ trợ:**
+        - `revenue_report` — Hỏi về doanh thu
+        - `traffic_report` — Hỏi về lượt xe vào/ra
+        - `occupancy_report` — Hỏi về tỷ lệ lấp đầy
+        - `peak_hours` — Hỏi về giờ cao điểm
+        - `facility_info` — Hỏi về thông tin bãi xe
+        - `exception_summary` — Hỏi về ngoại lệ/sự cố
+        - `active_sessions` — Hỏi về xe đang gửi
+
+        **Ví dụ câu hỏi:**
+        - "Hôm nay doanh thu bao nhiêu?"
+        - "Tuần này có bao nhiêu lượt xe?"
+        - "Tỷ lệ lấp đầy tầng 2?"
+        - "Giờ nào đông nhất hôm qua?"
+        - "Có bao nhiêu xe đang gửi?"
+        - "Tóm tắt ngoại lệ tháng này?"
+      tags: [AI Chatbot]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+                  description: Câu hỏi của Manager (tiếng Việt hoặc tiếng Anh)
+                  example: "Hôm nay doanh thu bao nhiêu?"
+            examples:
+              revenue_query:
+                summary: Hỏi doanh thu
+                value:
+                  message: "Hôm nay doanh thu bao nhiêu?"
+              traffic_query:
+                summary: Hỏi lượt xe
+                value:
+                  message: "Tuần này có bao nhiêu lượt xe vào ra?"
+              occupancy_query:
+                summary: Hỏi tỷ lệ lấp đầy
+                value:
+                  message: "Tình trạng bãi xe hiện tại thế nào?"
+              peak_query:
+                summary: Hỏi giờ cao điểm
+                value:
+                  message: "Giờ nào đông nhất hôm qua?"
+              active_sessions_query:
+                summary: Hỏi xe đang gửi
+                value:
+                  message: "Có bao nhiêu xe đang gửi trong bãi?"
+              exception_query:
+                summary: Hỏi ngoại lệ
+                value:
+                  message: "Tóm tắt sự cố tuần này?"
+      responses:
+        '200':
+          description: Trả lời thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      answer:
+                        type: string
+                        description: Câu trả lời ngôn ngữ tự nhiên (tiếng Việt)
+                      data:
+                        type: object
+                        description: Dữ liệu raw từ MongoDB (summary)
+                      chartType:
+                        type: string
+                        nullable: true
+                        enum: [bar, line, pie, table, null]
+                        description: Gợi ý loại biểu đồ phù hợp
+                      intent:
+                        type: string
+                        description: Intent đã được phân loại
+                      processingTimeMs:
+                        type: number
+                        description: Thời gian xử lý (ms)
+              examples:
+                revenue_response:
+                  summary: Trả lời doanh thu
+                  value:
+                    success: true
+                    data:
+                      answer: "Doanh thu hôm nay là 2.500.000đ từ 45 lượt giao dịch. Trung bình mỗi giao dịch thu 55.556đ. So với hôm qua, doanh thu tăng 12%."
+                      data:
+                        grandTotal: 2500000
+                        totalTransactions: 45
+                        avgRevenuePerDay: 2500000
+                      chartType: "bar"
+                      intent: "revenue_report"
+                      processingTimeMs: 1250
+                unknown_response:
+                  summary: Không hiểu câu hỏi
+                  value:
+                    success: true
+                    data:
+                      answer: "Xin lỗi, tôi chưa hiểu câu hỏi. Bạn có thể hỏi tôi về:\n• Doanh thu\n• Lượt xe vào/ra\n• Tỷ lệ lấp đầy\n• Giờ cao điểm\n• Ngoại lệ\n• Xe đang gửi"
+                      data: {}
+                      chartType: null
+                      intent: "unknown"
+                      processingTimeMs: 800
+        '400':
+          description: Thiếu hoặc sai định dạng câu hỏi
+          content:
+            application/json:
+              examples:
+                empty_message:
+                  summary: Câu hỏi rỗng
+                  value:
+                    success: false
+                    message: "Vui lòng nhập câu hỏi"
+                too_long:
+                  summary: Câu hỏi quá dài
+                  value:
+                    success: false
+                    message: "Câu hỏi quá dài (tối đa 500 ký tự)"
+        '403':
+          description: Không có quyền truy cập (chỉ Manager/Admin)
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không có quyền thực hiện hành động này"
+        '503':
+          description: Chatbot chưa được cấu hình (thiếu API key)
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Chatbot AI chưa được cấu hình. Vui lòng liên hệ Admin."
+
+  # ═══════════════════════════════════════════════════════
+  # CHAT HISTORY
+  # ═══════════════════════════════════════════════════════
+
+  /ai/chat-history:
+    get:
+      summary: Lấy lịch sử chat
+      description: |
+        Lấy lịch sử hội thoại chat của user hiện tại.
+        Kết quả phân trang, sắp xếp theo thời gian mới nhất.
+      tags: [AI Chatbot]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Trang hiện tại
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          description: Số bản ghi mỗi trang
+      responses:
+        '200':
+          description: Lấy lịch sử thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            _id:
+                              type: string
+                            userId:
+                              type: string
+                            message:
+                              type: string
+                              description: Câu hỏi gốc
+                            intent:
+                              type: string
+                              description: Intent đã phân loại
+                            entities:
+                              type: object
+                              description: Entities đã trích xuất
+                            response:
+                              type: string
+                              description: Câu trả lời của AI
+                            responseData:
+                              type: object
+                              description: Dữ liệu raw
+                            chartType:
+                              type: string
+                              nullable: true
+                            processingTimeMs:
+                              type: number
+                            createdAt:
+                              type: string
+                              format: date-time
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      totalPages:
+                        type: integer
+              example:
+                success: true
+                data:
+                  data:
+                    - _id: "684c1a2b3c4d5e6f7a8b9c0d"
+                      message: "Hôm nay doanh thu bao nhiêu?"
+                      intent: "revenue_report"
+                      entities:
+                        timeRange: "today"
+                      response: "Doanh thu hôm nay là 2.500.000đ"
+                      chartType: "bar"
+                      processingTimeMs: 1250
+                      createdAt: "2026-06-19T08:30:00.000Z"
+                  total: 15
+                  page: 1
+                  totalPages: 1
+        '403':
+          description: Không có quyền
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không có quyền thực hiện hành động này"
+    delete:
+      summary: Xóa lịch sử chat
+      description: Xóa toàn bộ lịch sử hội thoại chat của user hiện tại.
+      tags: [AI Chatbot]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Xóa thành công
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Đã xóa 15 tin nhắn"
+                data:
+                  deletedCount: 15
+        '403':
+          description: Không có quyền
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không có quyền thực hiện hành động này"
+
+  # ═══════════════════════════════════════════════════════
+  # QUICK REPLIES
+  # ═══════════════════════════════════════════════════════
+
+  /ai/quick-replies:
+    get:
+      summary: Lấy gợi ý câu hỏi nhanh
+      description: |
+        Trả về danh sách câu hỏi gợi ý để Manager bắt đầu hội thoại.
+        Dùng cho UI hiển thị quick action buttons.
+      tags: [AI Chatbot]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lấy gợi ý thành công
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - "Hôm nay doanh thu bao nhiêu?"
+                  - "Tỷ lệ lấp đầy bãi xe hiện tại?"
+                  - "Tuần này có bao nhiêu lượt xe?"
+                  - "Giờ nào đông nhất hôm nay?"
+                  - "Có bao nhiêu xe đang gửi?"
+                  - "Tóm tắt ngoại lệ tuần này?"
+        '403':
+          description: Không có quyền
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không có quyền thực hiện hành động này"

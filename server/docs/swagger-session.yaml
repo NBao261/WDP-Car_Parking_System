@@ -1,0 +1,562 @@
+openapi: 3.0.0
+info:
+  title: Smart Parking API - Session
+  version: 1.0.0
+paths:
+  /sessions/check-conditions:
+    post:
+      summary: Kiểm tra điều kiện xe vào bãi (FR-8.1)
+      description: |
+        Kiểm tra xe có đủ điều kiện vào bãi hay không:
+        (1) Bãi xe active, (2) Trong giờ hoạt động, (3) Loại xe được phục vụ, (4) Còn slot trống
+
+        **Security (FR-18.6):** Staff chỉ được check điều kiện tại bãi mình được phân công. Trả về 403 nếu không thuộc bãi.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [facilityId, vehicleTypeId]
+              properties:
+                facilityId:
+                  type: string
+                  description: MongoDB ObjectId của bãi xe
+                  example: "683f1a2b3c4d5e6f7a8b9c0d"
+                vehicleTypeId:
+                  type: string
+                  description: MongoDB ObjectId của loại phương tiện
+                  example: "683f1a2b3c4d5e6f7a8b9c01"
+            example:
+              facilityId: "683f1a2b3c4d5e6f7a8b9c0d"
+              vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c01"
+      responses:
+        '200':
+          description: Kết quả kiểm tra điều kiện (eligible true hoặc false)
+          content:
+            application/json:
+              examples:
+                eligible:
+                  summary: Còn chỗ, đủ điều kiện
+                  value:
+                    success: true
+                    data:
+                      eligible: true
+                      availableSlotCount: 42
+                not_eligible:
+                  summary: Không đủ điều kiện (bãi đầy, sai giờ, v.v.)
+                  value:
+                    success: true
+                    data:
+                      eligible: false
+                      reason: "Bãi đầy cho loại xe \"Xe Máy\""
+                      availableSlotCount: 0
+        '403':
+          description: Staff không được phân công tại bãi này
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không được phân công tại bãi xe này"
+
+  /sessions/check-in:
+    post:
+      summary: Tạo lượt gửi xe - Check-in (FR-9.1)
+      description: |
+        Tạo parking session mới khi xe vào bãi. Hỗ trợ 2 chế độ:
+
+        **Chế độ 1 — Có đặt trước (Reservation):**
+        Chỉ cần truyền `reservationCode` + `gateIn`. Hệ thống tự động:
+        - Lấy `facilityId`, `vehicleTypeId`, `licensePlate` từ reservation
+        - Dùng slot đã reserved sẵn → chuyển `Reserved → Occupied`
+        - Chuyển reservation status → `used` (BR-6.6)
+        - Validate Staff được phân công tại facility của reservation
+
+        **Chế độ 2 — Walk-in (Không đặt trước):**
+        Truyền đầy đủ `facilityId` + `vehicleTypeId` + `licensePlate` + `gateIn`.
+        Hệ thống auto-assign slot vào tầng có nhiều chỗ trống nhất.
+
+        **Lưu ý:** Nếu walk-in nhưng biển số xe khớp với 1 reservation confirmed → hệ thống tự match và dùng slot đã đặt.
+
+        **Security (FR-18.6):** Staff chỉ được check-in tại bãi mình được phân công.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [gateIn]
+              description: "Truyền reservationCode HOẶC (facilityId + vehicleTypeId + licensePlate)"
+              properties:
+                reservationCode:
+                  type: string
+                  description: "Mã đặt chỗ (RSV-YYYYMMDD-XXXX). Nếu có, hệ thống tự fill facilityId/vehicleTypeId/licensePlate"
+                  example: "RSV-20260525-A1B2"
+                facilityId:
+                  type: string
+                  description: "MongoDB ObjectId của bãi xe (không cần nếu có reservationCode)"
+                  example: "683f1a2b3c4d5e6f7a8b9c0d"
+                vehicleTypeId:
+                  type: string
+                  description: "MongoDB ObjectId của loại phương tiện (không cần nếu có reservationCode)"
+                  example: "683f1a2b3c4d5e6f7a8b9c01"
+                licensePlate:
+                  type: string
+                  description: "Biển số xe (không cần nếu có reservationCode)"
+                  example: "59A-12345"
+                gateIn:
+                  type: string
+                  description: Tên/mã cổng vào
+                  example: "GATE-A"
+                floorId:
+                  type: string
+                  description: (Optional) Chọn tầng cụ thể, bỏ qua để auto-assign
+                  example: "683f1a2b3c4d5e6f7a8b9c02"
+                slotId:
+                  type: string
+                  description: (Optional) Chọn slot cụ thể, bỏ qua để auto-assign
+                  example: "683f1a2b3c4d5e6f7a8b9c03"
+                checkInImage:
+                  type: string
+                  description: "URL hoặc path của ảnh check-in"
+                  example: "http://res.cloudinary.com/demo/image/upload/sample.jpg"
+            examples:
+              reservation_checkin:
+                summary: "✅ Check-in bằng mã đặt chỗ (chỉ cần 2 trường)"
+                value:
+                  reservationCode: "RSV-20260525-A1B2"
+                  gateIn: "GATE-A"
+              walkin_checkin:
+                summary: "🚗 Check-in walk-in (không đặt trước)"
+                value:
+                  facilityId: "683f1a2b3c4d5e6f7a8b9c0d"
+                  vehicleTypeId: "683f1a2b3c4d5e6f7a8b9c01"
+                  licensePlate: "59A-12345"
+                  gateIn: "GATE-A"
+                  checkInImage: "http://res.cloudinary.com/demo/image/upload/sample.jpg"
+      responses:
+        '201':
+          description: Lượt gửi xe tạo thành công
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c10"
+                  code: "PS-20260514-A1B2"
+                  cardCode: "CARD-X1Y2-Z3W4"
+                  licensePlate: "59A-12345"
+                  vehicleTypeId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c01"
+                    name: "Xe Máy"
+                    code: "MOTO"
+                    icon: ""
+                  facilityId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c0d"
+                    name: "Central Hub Parking"
+                    address: "123 Main Street, District 1, HCMC"
+                  floorId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c02"
+                    name: "Tầng 2 (Xe máy)"
+                  slotId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c03"
+                    code: "B2-001"
+                  checkInTime: "2026-05-14T06:30:00.000Z"
+                  gateIn: "GATE-A"
+                  staffInId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c99"
+                    name: "Staff Nguyen"
+                    email: "staff@smartparking.com"
+                  checkInImage: "http://res.cloudinary.com/demo/image/upload/sample.jpg"
+                  status: "active"
+                  totalFee: 0
+        '400':
+          description: Không đủ điều kiện hoặc lỗi validation
+          content:
+            application/json:
+              examples:
+                duplicate_plate:
+                  summary: Xe đang có lượt gửi
+                  value:
+                    success: false
+                    message: "Xe biển số \"59A-12345\" đang có lượt gửi chưa kết thúc (PS-20260514-A1B2)"
+                no_slot:
+                  summary: Hết slot
+                  value:
+                    success: false
+                    message: "Bãi đầy cho loại xe \"Xe Máy\""
+                no_pricing:
+                  summary: Không có bảng giá
+                  value:
+                    success: false
+                    message: "Không tìm thấy bảng giá active cho tổ hợp bãi xe + loại xe này"
+                plate_mismatch:
+                  summary: Biển số không khớp reservation
+                  value:
+                    success: false
+                    message: "Biển số xe không khớp với mã đặt chỗ. Mã RSV-20260525-A1B2 đã đăng ký cho biển số 59A-99999"
+                missing_fields:
+                  summary: Thiếu thông tin (không có reservationCode và không đủ fields)
+                  value:
+                    success: false
+                    message: "Cần truyền reservationCode HOẶC đầy đủ facilityId + vehicleTypeId + licensePlate"
+        '403':
+          description: Staff không được phân công tại bãi này
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không được phân công tại bãi xe này"
+        '404':
+          description: Mã đặt chỗ không tồn tại
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Mã đặt chỗ không tồn tại hoặc đã được sử dụng/hủy"
+
+
+  /sessions/suggest-floor:
+    get:
+      summary: Gợi ý tầng/khu vực phù hợp (FR-8.3)
+      description: |
+        Trả về danh sách tầng có slot trống cho loại xe, sorted theo số slot available giảm dần.
+        Dùng để Staff hướng dẫn Driver đỗ xe đúng khu vực.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: facilityId
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "683f1a2b3c4d5e6f7a8b9c0d"
+          description: MongoDB ObjectId của bãi xe
+        - name: vehicleTypeId
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "683f1a2b3c4d5e6f7a8b9c01"
+          description: MongoDB ObjectId của loại phương tiện
+      responses:
+        '200':
+          description: Danh sách tầng gợi ý
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - floorId: "683f1a2b3c4d5e6f7a8b9c02"
+                    floorName: "Tầng 2 (Xe máy)"
+                    availableSlots: 180
+                    totalSlots: 200
+                  - floorId: "683f1a2b3c4d5e6f7a8b9c04"
+                    floorName: "Tầng 4 (Xe máy)"
+                    availableSlots: 95
+                    totalSlots: 150
+
+  /sessions/active:
+    get:
+      summary: Xem danh sách lượt gửi đang hoạt động (FR-9.2)
+      description: |
+        Lấy danh sách các session đang active.
+        Hỗ trợ phân trang, lọc theo bãi xe, tầng, loại xe, biển số, và sắp xếp.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: Số trang
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+          description: Số lượng trên 1 trang
+        - name: facilityId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: MongoDB ObjectId của bãi xe
+        - name: vehicleTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: MongoDB ObjectId của loại phương tiện
+        - name: floorId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: MongoDB ObjectId của tầng
+        - name: licensePlate
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Biển số xe (tìm kiếm tương đối)
+        - name: sortBy
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [checkInTime, licensePlate, totalFee]
+            default: "checkInTime"
+          description: Trường để sắp xếp
+        - name: sortOrder
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: "desc"
+          description: Thứ tự sắp xếp
+      responses:
+        '200':
+          description: Danh sách lượt gửi xe đang hoạt động
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "683f1a2b3c4d5e6f7a8b9c10"
+                    code: "PS-20260514-A1B2"
+                    licensePlate: "59A-12345"
+                    status: "active"
+                    checkInTime: "2026-05-14T06:30:00.000Z"
+                    checkInImage: "http://res.cloudinary.com/demo/image/upload/sample.jpg"
+                    totalFee: 0
+                total: 1
+                page: 1
+                totalPages: 1
+
+  /sessions/search:
+    get:
+      summary: Tìm lượt gửi xe (FR-10.1)
+      description: |
+        Tìm parking session đang active theo 1 trong 3 cách:
+        - Mã thẻ xe (cardCode)
+        - Biển số xe (licensePlate)
+        - Mã lượt gửi (code)
+        Cần ít nhất 1 tham số.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cardCode
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "CARD-X1Y2-Z3W4"
+          description: Mã thẻ xe (quét/nhập)
+        - name: licensePlate
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "59A-12345"
+          description: Biển số xe
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "PS-20260514-A1B2"
+          description: Mã lượt gửi xe
+      responses:
+        '200':
+          description: Thông tin lượt gửi xe
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c10"
+                  code: "PS-20260514-A1B2"
+                  cardCode: "CARD-X1Y2-Z3W4"
+                  licensePlate: "59A-12345"
+                  vehicleTypeId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c01"
+                    name: "Xe Máy"
+                    code: "MOTO"
+                  facilityId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c0d"
+                    name: "Central Hub Parking"
+                  floorId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c02"
+                    name: "Tầng 2 (Xe máy)"
+                  slotId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c03"
+                    code: "B2-001"
+                    status: "occupied"
+                  pricingPlanId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c05"
+                    name: "Xe Máy - Theo giờ"
+                    feeType: "hourly"
+                    rates:
+                      - label: "Giờ đầu"
+                        amount: 5000
+                        unit: "VND/giờ"
+                      - label: "Giờ tiếp theo"
+                        amount: 3000
+                        unit: "VND/giờ"
+                  checkInTime: "2026-05-14T06:30:00.000Z"
+                  gateIn: "GATE-A"
+                  staffInId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c99"
+                    name: "Staff Nguyen"
+                  checkInImage: "http://res.cloudinary.com/demo/image/upload/sample.jpg"
+                  status: "active"
+                  totalFee: 0
+        '404':
+          description: Không tìm thấy lượt gửi xe
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Không tìm thấy lượt gửi xe"
+
+  /sessions/{id}/fee:
+    get:
+      summary: Tính phí tự động (FR-10.2)
+      description: |
+        Tính toán phí gửi xe tạm tính hoặc phí lúc check-out dựa trên bảng giá áp dụng.
+        Hỗ trợ làm tròn giờ, tính phí qua đêm, phí quá giờ.
+
+        **Security (FR-18.6):** Staff chỉ được tính phí session thuộc facility mình được phân công.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "683f1a2b3c4d5e6f7a8b9c10"
+          description: MongoDB ObjectId của session
+      responses:
+        '200':
+          description: Thông tin phí gửi xe
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  totalFee: 15000
+                  details:
+                    durationHours: 4
+                    baseFee: 15000
+                    overnightFee: 0
+                    overtimeFee: 0
+                    pricingPlanName: "Xe Máy - Theo giờ"
+                    daysDiff: 0
+        '403':
+          description: Staff không được phân công tại bãi của session này
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không được phân công tại bãi xe này"
+        '404':
+          description: Không tìm thấy session
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Session không tồn tại"
+
+  /sessions/{id}/check-out:
+    post:
+      summary: Thu phí gửi xe và check-out (FR-10.3)
+      description: |
+        Thực hiện check-out cho xe:
+        - Tính phí và ghi nhận vào session
+        - Cập nhật thời gian check-out, cổng ra, nhân viên thu phí
+        - Chuyển trạng thái session -> "completed"
+        - Cập nhật trạng thái slot tương ứng -> "available"
+
+        **Security (FR-18.6):** Staff chỉ được check-out session thuộc facility mình được phân công.
+        Staff khác ca (nhưng cùng bãi) vẫn được phép checkout xe của ca trước.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "683f1a2b3c4d5e6f7a8b9c10"
+          description: MongoDB ObjectId của session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [gateOut]
+              properties:
+                gateOut:
+                  type: string
+                  description: Tên/mã cổng ra
+                  example: "GATE-B"
+            example:
+              gateOut: "GATE-B"
+      responses:
+        '200':
+          description: Check-out thành công
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c10"
+                  code: "PS-20260514-A1B2"
+                  licensePlate: "59A-12345"
+                  status: "completed"
+                  checkOutTime: "2026-05-14T10:30:00.000Z"
+                  gateOut: "GATE-B"
+                  totalFee: 15000
+                  staffOutId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c98"
+                    name: "Staff B (Ca Chiều)"
+                    email: "staffb@smartparking.com"
+        '400':
+          description: Lượt gửi xe đã kết thúc trước đó
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Lượt gửi xe đã kết thúc"
+        '403':
+          description: Staff không được phân công tại bãi của session này
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Bạn không được phân công tại bãi xe này"
+        '404':
+          description: Không tìm thấy session
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Session không tồn tại"

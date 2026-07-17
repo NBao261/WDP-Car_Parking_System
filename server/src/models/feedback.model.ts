@@ -17,7 +17,8 @@ export enum FeedbackStatus {
 
 export interface IFeedback extends Document {
   userId: mongoose.Types.ObjectId;
-  sessionId: mongoose.Types.ObjectId | null;
+  facilityId: mongoose.Types.ObjectId;
+  sessionId: mongoose.Types.ObjectId;
   type: FeedbackType;
   description: string;
   images: string[];
@@ -30,7 +31,8 @@ export interface IFeedback extends Document {
 const feedbackSchema = new Schema<IFeedback>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    sessionId: { type: Schema.Types.ObjectId, ref: 'ParkingSession', default: null },
+    facilityId: { type: Schema.Types.ObjectId, ref: 'ParkingFacility', required: true },
+    sessionId: { type: Schema.Types.ObjectId, ref: 'ParkingSession', required: true },
     type: { type: String, enum: Object.values(FeedbackType), required: true },
     description: { type: String, required: true },
     images: [{ type: String }],
@@ -41,6 +43,7 @@ const feedbackSchema = new Schema<IFeedback>(
 );
 
 feedbackSchema.index({ userId: 1 });
+feedbackSchema.index({ facilityId: 1 });
 feedbackSchema.index({ status: 1 });
 
 export const Feedback = mongoose.model<IFeedback>('Feedback', feedbackSchema);

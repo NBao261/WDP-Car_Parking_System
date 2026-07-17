@@ -1,0 +1,1 @@
+const axios = require('axios'); async function run() { const start = Date.now(); try { await axios.get('http://localhost:5000/api/v1/sessions/search?licensePlate=99-E1-222.68'); } catch (e) {} console.log('Search time:', Date.now() - start, 'ms'); } run();

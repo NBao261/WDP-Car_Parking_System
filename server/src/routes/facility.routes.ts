@@ -1,4 +1,67 @@
 import { Router } from 'express';
+import { FacilityController } from '../controllers/facility.controller';
+import { verifyToken, checkRole, checkPermission } from '../middlewares/auth.middleware';
+import { UserRole } from '../models/user.model';
+import { validate } from '../middlewares/validate.middleware';
+import { createFacilitySchema, updateFacilitySchema } from '../validations/facility.validation';
+import { PERMISSIONS } from '../config/permissions';
+
 const router = Router();
-// CRUD /api/v1/facilities
+
+router.use(verifyToken);
+
+// Xem thông tin tòa nhà (Admin, Manager, Staff đều có FACILITY_READ)
+router.get(
+  '/',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
+  checkPermission(PERMISSIONS.FACILITY_READ),
+  FacilityController.getAllFacilities
+);
+router.get(
+  '/:id',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
+  checkPermission(PERMISSIONS.FACILITY_READ),
+  FacilityController.getFacilityById
+);
+
+// Cấu hình vận hành (Admin, Manager, Staff) — BFF endpoint cho Staff Check-in
+router.get(
+  '/:id/operations-config',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
+  checkPermission(PERMISSIONS.FACILITY_READ),
+  FacilityController.getOperationsConfig
+);
+
+// Tạo/Sửa/Xóa tòa nhà (chỉ Admin + Manager theo SRS 3.1)
+router.post(
+  '/',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER]),
+  validate(createFacilitySchema),
+  checkPermission(PERMISSIONS.FACILITY_CREATE),
+  FacilityController.createFacility
+);
+router.patch(
+  '/:id',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER]),
+  validate(updateFacilitySchema),
+  checkPermission(PERMISSIONS.FACILITY_UPDATE),
+  FacilityController.updateFacility
+);
+
+// Vô hiệu hoá facility (status → inactive, cascade floors/slots)
+router.patch(
+  '/:id/deactivate',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER]),
+  checkPermission(PERMISSIONS.FACILITY_UPDATE),
+  FacilityController.deactivateFacility
+);
+
+// Xoá mềm facility (isDeleted = true, cascade floors/slots/staff)
+router.delete(
+  '/:id',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER]),
+  checkPermission(PERMISSIONS.FACILITY_DELETE),
+  FacilityController.softDeleteFacility
+);
+
 export default router;

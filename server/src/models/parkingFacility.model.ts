@@ -15,6 +15,12 @@ export interface IParkingFacility extends Document {
   closeTime: string; // HH:mm
   description: string;
   images: string[];
+  // GeoJSON Point — coordinates: [longitude, latitude]
+  location: {
+    type: 'Point';
+    coordinates: [number, number]; // [lng, lat]
+  };
+  assignedUsers: mongoose.Types.ObjectId[]; 
   status: FacilityStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -31,6 +37,12 @@ const parkingFacilitySchema = new Schema<IParkingFacility>(
     closeTime: { type: String, required: true },
     description: { type: String, default: '' },
     images: [{ type: String }],
+    // GeoJSON Point cho bản đồ — coordinates: [longitude, latitude]
+    location: {
+      type: { type: String, enum: ['Point'], default: 'Point' },
+      coordinates: { type: [Number], default: [0, 0] },
+    },
+    assignedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }], 
     status: { type: String, enum: Object.values(FacilityStatus), default: FacilityStatus.ACTIVE },
     isDeleted: { type: Boolean, default: false },
   },
@@ -38,5 +50,7 @@ const parkingFacilitySchema = new Schema<IParkingFacility>(
 );
 
 parkingFacilitySchema.index({ status: 1 });
+parkingFacilitySchema.index({ assignedUsers: 1 });
+parkingFacilitySchema.index({ location: '2dsphere' });
 
 export const ParkingFacility = mongoose.model<IParkingFacility>('ParkingFacility', parkingFacilitySchema);

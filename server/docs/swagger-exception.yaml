@@ -1,0 +1,333 @@
+components:
+  schemas:
+    Exception:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Mã ngoại lệ
+        sessionId:
+          type: string
+          description: ID của lượt gửi xe (hoặc object đầy đủ nếu populated)
+        type:
+          type: string
+          enum: [lost_card, wrong_plate, overtime, wrong_zone, unpaid, other]
+          description: Loại ngoại lệ
+        description:
+          type: string
+          description: Mô tả chi tiết
+        staffId:
+          type: string
+          description: ID nhân viên tạo ngoại lệ (hoặc object đầy đủ)
+        resolvedByStaffId:
+          type: string
+          description: ID nhân viên đã xử lý ngoại lệ (hoặc object đầy đủ)
+          nullable: true
+        staffNote:
+          type: string
+          description: Ghi chú xử lý của nhân viên
+        managerId:
+          type: string
+          description: ID quản lý đã review (hoặc object đầy đủ, optional)
+          nullable: true
+        managerNote:
+          type: string
+          description: Ghi chú review của quản lý
+        surcharge:
+          type: number
+          description: Phụ phí phạt
+        status:
+          type: string
+          enum: [new, resolved]
+          description: Trạng thái xử lý (chỉ 2 trạng thái)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+paths:
+  /exceptions:
+    get:
+      summary: Lấy danh sách ngoại lệ
+      description: Staff và Manager đều xem được. Hỗ trợ lọc theo status, type, sessionId và phân trang.
+      tags: [Exceptions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Số trang
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Số lượng / trang
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [new, resolved]
+          description: Lọc theo trạng thái
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [lost_card, wrong_plate, overtime, wrong_zone, unpaid, other]
+          description: Lọc theo loại ngoại lệ
+        - in: query
+          name: sessionId
+          schema:
+            type: string
+          description: Lọc theo ID lượt gửi xe
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            default: createdAt
+          description: Sắp xếp theo trường
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Thứ tự sắp xếp
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - _id: "683f1a2b3c4d5e6f7a8b9c20"
+                    sessionId:
+                      _id: "683f1a2b3c4d5e6f7a8b9c10"
+                      code: "PS-20260514-A1B2"
+                      licensePlate: "59A-12345"
+                    type: "lost_card"
+                    description: "Khách làm mất thẻ xe"
+                    staffId:
+                      _id: "683f1a2b3c4d5e6f7a8b9c99"
+                      name: "Staff Nguyen"
+                      email: "staff@example.com"
+                    resolvedByStaffId: null
+                    staffNote: ""
+                    managerId: null
+                    managerNote: ""
+                    surcharge: 50000
+                    status: "new"
+                    createdAt: "2026-05-14T08:00:00.000Z"
+                pagination:
+                  total: 1
+                  page: 1
+                  totalPages: 1
+
+    post:
+      summary: Tạo ngoại lệ mới (Staff)
+      description: |
+        Staff tạo ngoại lệ cho lượt gửi xe.
+        Khi tạo ngoại lệ loại `lost_card`, `wrong_plate`, hoặc `wrong_zone`, hệ thống sẽ tự động **khoá session** (chuyển sang trạng thái `EXCEPTION`) và chặn checkout.
+        Sau đó Staff tự xử lý bằng endpoint `PATCH /:id/resolve` để mở khoá session.
+      tags: [Exceptions]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sessionId
+                - type
+                - description
+              properties:
+                sessionId:
+                  type: string
+                  example: "683f1a2b3c4d5e6f7a8b9c10"
+                type:
+                  type: string
+                  enum: [lost_card, wrong_plate, overtime, wrong_zone, unpaid, other]
+                  example: "lost_card"
+                description:
+                  type: string
+                  example: "Khách làm mất thẻ xe"
+                surcharge:
+                  type: number
+                  example: 50000
+            example:
+              sessionId: "683f1a2b3c4d5e6f7a8b9c10"
+              type: "lost_card"
+              description: "Khách làm mất thẻ xe"
+              surcharge: 50000
+      responses:
+        '201':
+          description: Tạo ngoại lệ thành công. Session đã bị khoá (nếu lost_card/wrong_plate/wrong_zone).
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c20"
+                  sessionId: "683f1a2b3c4d5e6f7a8b9c10"
+                  type: "lost_card"
+                  description: "Khách làm mất thẻ xe"
+                  staffId: "683f1a2b3c4d5e6f7a8b9c99"
+                  resolvedByStaffId: null
+                  staffNote: ""
+                  surcharge: 50000
+                  status: "new"
+                  createdAt: "2026-05-14T08:00:00.000Z"
+        '400':
+          description: Session đã kết thúc hoặc dữ liệu không hợp lệ
+        '404':
+          description: Session không tồn tại
+
+  /exceptions/{id}/resolve:
+    patch:
+      summary: Staff xử lý ngoại lệ
+      description: |
+        **Staff tự xử lý** ngoại lệ (không cần Manager duyệt).
+
+        **Flow theo loại:**
+        - `wrong_plate`: **Bắt buộc** truyền `newLicensePlate` → cập nhật biển số + mở khoá session
+        - `wrong_zone`: **Bắt buộc** truyền `newSlotId` → chuyển slot + mở khoá session. Slot mới phải `AVAILABLE` hoặc `LOCKED`, cùng facility và cùng loại xe.
+        - `lost_card`: Mở khoá session cho phép checkout
+        - `overtime/unpaid/other`: Ghi nhận, không khoá session
+
+        **Kết quả:** Exception status → `resolved`, Session status → `active`
+      tags: [Exceptions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID ngoại lệ cần xử lý
+          example: "683f1a2b3c4d5e6f7a8b9c20"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                staffNote:
+                  type: string
+                  description: Ghi chú xử lý của staff
+                  example: "Đã xác minh CCCD số 012345678901, cho phép checkout"
+                newLicensePlate:
+                  type: string
+                  description: "Biển số mới (**bắt buộc** nếu type = wrong_plate)"
+                  example: "59A-99999"
+                newSlotId:
+                  type: string
+                  description: "ID slot thực tế mới (**bắt buộc** nếu type = wrong_zone). Slot phải `AVAILABLE` hoặc `LOCKED`."
+                  example: "683f1a2b3c4d5e6f7a8b9c03"
+            example:
+              staffNote: "Đã xác minh CCCD, thu phụ phí 50,000 VND"
+      responses:
+        '200':
+          description: Xử lý ngoại lệ thành công. Session đã mở khoá.
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c20"
+                  type: "lost_card"
+                  status: "resolved"
+                  staffNote: "Đã xác minh CCCD, thu phụ phí 50,000 VND"
+                  resolvedByStaffId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c99"
+                    name: "Staff Nguyen"
+                    email: "staff@example.com"
+                  surcharge: 50000
+        '400':
+          description: |
+            - Ngoại lệ đã được xử lý trước đó
+            - Thiếu newLicensePlate (khi type = wrong_plate)
+            - Thiếu newSlotId (khi type = wrong_zone)
+            - Slot mới không khả dụng / không cùng facility / không cùng loại xe
+        '404':
+          description: Ngoại lệ hoặc session không tồn tại
+
+  /exceptions/{id}/review:
+    patch:
+      summary: Manager review + thêm ghi chú
+      description: |
+        Manager xem lại ngoại lệ (đã xử lý hoặc chưa) và thêm ghi chú review.
+        **Không thay đổi** status hay session — chỉ ghi nhận review của Manager.
+      tags: [Exceptions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID ngoại lệ
+          example: "683f1a2b3c4d5e6f7a8b9c20"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - managerNote
+              properties:
+                managerNote:
+                  type: string
+                  description: Ghi chú review của manager
+                  example: "Đã xác nhận quy trình xử lý đúng. Nhắc nhở khách giữ thẻ cẩn thận."
+            example:
+              managerNote: "Đã xác nhận quy trình xử lý đúng."
+      responses:
+        '200':
+          description: Review thành công
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  _id: "683f1a2b3c4d5e6f7a8b9c20"
+                  type: "lost_card"
+                  status: "resolved"
+                  managerId:
+                    _id: "683f1a2b3c4d5e6f7a8b9c88"
+                    name: "Manager Tran"
+                    email: "manager@example.com"
+                  managerNote: "Đã xác nhận quy trình xử lý đúng."
+        '404':
+          description: Ngoại lệ không tồn tại
+
+  /exceptions/detect-overdue:
+    post:
+      summary: Kích hoạt quét tự động xe quá hạn (Admin/System)
+      description: |
+        Quét toàn bộ session active để phát hiện xe quá hạn (vượt quá 24h).
+        Tự động tạo exception với type = "overtime" cho các session vi phạm.
+      tags: [Exceptions]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Quét hoàn tất
+          content:
+            application/json:
+              example:
+                success: true
+                message: "Đã quét và phát hiện 3 lượt gửi xe quá hạn."
+                data:
+                  count: 3
