@@ -21,9 +21,9 @@ const SEGMENTS = [
 ];
 
 export function OccupancyDonutWidget({ occupancyData }: OccupancyDonutWidgetProps) {
-  const totalMaintenance = occupancyData?.floors?.reduce(
-    (sum, f) => sum + (f.maintenance || 0) + (f.locked || 0), 0
-  ) || 0;
+  const totalMaintenance =
+    occupancyData?.byFloor?.reduce((sum, f) => sum + (f.maintenance || 0) + (f.locked || 0), 0) ||
+    0;
 
   const pieData = occupancyData?.summary
     ? [
