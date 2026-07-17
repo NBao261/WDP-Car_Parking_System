@@ -453,7 +453,7 @@ export default function ActivityScreen() {
             title="Không có xe đang đỗ"
             subtitle="Khi bạn gửi xe, thông tin sẽ hiện ở đây"
             actionLabel="Tìm bãi xe"
-            onAction={() => router.push("/(driver)/facilities" as any)}
+            onAction={() => router.push("/(driver)/home" as any)}
           />
         );
       return (

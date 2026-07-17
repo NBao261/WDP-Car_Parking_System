@@ -95,7 +95,7 @@ export default function CreateFeedbackScreen() {
         ]);
       }
     } catch (error: any) {
-      Alert.alert("Lỗi", error?.response?.data?.message || "Không thể gửi phản hồi lúc này.");
+      Alert.alert("Lỗi", error?.message || "Không thể gửi phản hồi lúc này.");
     } finally {
       setSubmitting(false);
     }
