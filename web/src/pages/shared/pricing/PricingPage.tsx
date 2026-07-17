@@ -541,20 +541,7 @@ export default function PricingPage() {
       <AnimatePresence>
         {modalOpen &&
           (() => {
-            // Compute allowed vehicle types for the selected facility (if any)
-            let allowedVehicleTypes = vehicleTypes;
-            if (selectedFacility) {
-              const facilityFloors = floors.filter((f) => f.facilityId === selectedFacility._id);
-              const vtIds = new Set<string>();
-              facilityFloors.forEach((fl) => {
-                fl.allowedVehicleTypes?.forEach((vt: any) => {
-                  vtIds.add(typeof vt === 'string' ? vt : vt._id);
-                });
-              });
-              allowedVehicleTypes = Array.from(vtIds)
-                .map((id) => vehicleTypes.find((v) => v._id === id))
-                .filter(Boolean) as VehicleType[];
-            }
+            const allowedVehicleTypes = vehicleTypes;
 
             // Filter facilities to only include those with floors, plus the currently selected/edited one
             const validFacilities = facilities.filter(f => 
