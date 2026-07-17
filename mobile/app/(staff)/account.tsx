@@ -168,23 +168,6 @@ export default function StaffAccountScreen() {
             </View>
           </View>
 
-          {/* Support Section */}
-          <View style={styles.menuSection}>
-            <Text style={styles.sectionTitle}>HỖ TRỢ & Ý KIẾN</Text>
-            <View style={styles.sectionCard}>
-              <MenuItem
-                icon="chatbubble-ellipses-outline"
-                label="Gửi phản hồi đóng góp"
-                onPress={() => router.push("/feedback/create" as any)}
-              />
-              <View style={styles.divider} />
-              <MenuItem
-                icon="list-outline"
-                label="Lịch sử phản hồi của tôi"
-                onPress={() => router.push("/feedback" as any)}
-              />
-            </View>
-          </View>
 
           {/* Logout Button */}
           <TouchableOpacity
