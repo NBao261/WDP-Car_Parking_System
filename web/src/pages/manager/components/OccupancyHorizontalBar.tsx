@@ -51,13 +51,20 @@ interface OccupancyHorizontalBarProps {
 
 export function OccupancyHorizontalBar({ occupancyData, loading }: OccupancyHorizontalBarProps) {
   const chartData = (() => {
-    if (!occupancyData?.floors?.length) return [];
+    if (!occupancyData?.byFloor?.length) return [];
     const facilityMap = new Map<
       string,
-      { name: string; 'Đang dùng': number; 'Đã đặt': number; 'Chỗ trống': number; 'Bảo trì': number; _total: number }
+      {
+        name: string;
+        'Đang dùng': number;
+        'Đã đặt': number;
+        'Chỗ trống': number;
+        'Bảo trì': number;
+        _total: number;
+      }
     >();
 
-    for (const floor of occupancyData.floors) {
+    for (const floor of occupancyData.byFloor) {
       const existing = facilityMap.get(floor.facilityId);
       if (existing) {
         existing['Đang dùng'] += floor.occupied;
@@ -99,9 +106,19 @@ export function OccupancyHorizontalBar({ occupancyData, loading }: OccupancyHori
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 0, bottom: 5 }} barCategoryGap="30%">
+            <BarChart
+              data={chartData}
+              layout="vertical"
+              margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+              barCategoryGap="30%"
+            >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
+              <XAxis
+                type="number"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#9ca3af', fontSize: 11 }}
+              />
               <YAxis
                 dataKey="name"
                 type="category"
@@ -110,7 +127,10 @@ export function OccupancyHorizontalBar({ occupancyData, loading }: OccupancyHori
                 tick={{ fill: '#374151', fontSize: 12, fontWeight: 500 }}
                 width={110}
               />
-              <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: '#f5f5f3', opacity: 0.6 }} />
+              <RechartsTooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: '#f5f5f3', opacity: 0.6 }}
+              />
               <Legend
                 verticalAlign="top"
                 height={28}

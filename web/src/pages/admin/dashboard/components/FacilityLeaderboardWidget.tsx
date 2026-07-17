@@ -6,8 +6,8 @@ interface Props {
 }
 
 export function FacilityLeaderboardWidget({ occupancyData }: Props) {
-  const floors = occupancyData?.floors || [];
-  
+  const floors = occupancyData?.byFloor || [];
+
   // Sort by highest occupancy rate
   const sortedFloors = [...floors].sort((a, b) => {
     const rateA = (a.occupied + a.reserved) / a.total;
@@ -34,28 +34,41 @@ export function FacilityLeaderboardWidget({ occupancyData }: Props) {
               const total = floor.total > 0 ? floor.total : 1; // prevent div by zero
               const rate = ((floor.occupied + floor.reserved) / total) * 100;
               return (
-                <div key={floor.facilityId} className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/50">
+                <div
+                  key={floor.facilityId}
+                  className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/50"
+                >
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-[13px] font-bold text-[#1a1a1a] truncate">{floor.facilityName}</span>
-                      <span className="text-[12px] font-semibold text-[#132c20] tabular-nums">{rate.toFixed(1)}%</span>
+                      <span className="text-[13px] font-bold text-[#1a1a1a] truncate">
+                        {floor.facilityName}
+                      </span>
+                      <span className="text-[12px] font-semibold text-[#132c20] tabular-nums">
+                        {rate.toFixed(1)}%
+                      </span>
                     </div>
                     <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className={`h-full rounded-full transition-all duration-1000 ease-out ${rate >= 90 ? 'bg-rose-500' : rate >= 70 ? 'bg-amber-500' : 'bg-[#9FE870]'}`}
                         style={{ width: `${rate}%` }}
                       />
                     </div>
                     <div className="flex justify-between items-center mt-1.5 text-[11px] text-[#6b7280]">
-                      <span><strong className="text-[#1a1a1a]">{floor.occupied}</strong> đang dùng</span>
-                      <span><strong className="text-[#1a1a1a]">{floor.available}</strong> chỗ trống</span>
+                      <span>
+                        <strong className="text-[#1a1a1a]">{floor.occupied}</strong> đang dùng
+                      </span>
+                      <span>
+                        <strong className="text-[#1a1a1a]">{floor.available}</strong> chỗ trống
+                      </span>
                     </div>
                   </div>
                 </div>
               );
             })
           ) : (
-             <div className="text-center py-6 text-[13px] text-gray-500">Chưa có dữ liệu phân khu</div>
+            <div className="text-center py-6 text-[13px] text-gray-500">
+              Chưa có dữ liệu phân khu
+            </div>
           )}
         </div>
       </div>

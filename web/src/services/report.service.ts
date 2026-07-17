@@ -104,9 +104,9 @@ export interface OccupancyReportData {
     totalReserved: number;
     totalAvailable: number;
     overallOccupancyRate: number;
-    effectiveOccupancyRate: number;
+    overallEffectiveOccupancy: number;
   };
-  floors: OccupancyFloor[];
+  byFloor: OccupancyFloor[];
 }
 
 export interface PeakHourDataPoint {

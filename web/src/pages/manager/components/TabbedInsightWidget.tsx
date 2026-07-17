@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip as RechartsTooltip,
-} from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { Loader2 } from 'lucide-react';
 import { RevenueReportData, OccupancyReportData } from '../../../services/report.service';
 import { VehicleType } from '../../../services/vehicleType.service';
@@ -62,11 +56,11 @@ export function TabbedInsightWidget({
   const filteredTypes =
     facilityFilter !== 'all'
       ? vehicleTypes.filter((v) =>
-        v.floors?.some((f) => {
-          const fId = typeof f.facilityId === 'string' ? f.facilityId : f.facilityId._id;
-          return fId === facilityFilter;
-        })
-      )
+          v.floors?.some((f) => {
+            const fId = typeof f.facilityId === 'string' ? f.facilityId : f.facilityId._id;
+            return fId === facilityFilter;
+          })
+        )
       : vehicleTypes;
 
   const colorPalette = ['#0a2012', '#86cd3d', '#e8f5e9', '#e5e7eb', '#9ca3af'];
@@ -83,15 +77,16 @@ export function TabbedInsightWidget({
 
   /* ── Occupancy Donut Data ── */
   const totalMaintenance =
-    occupancyData?.floors?.reduce((sum, f) => sum + (f.maintenance || 0) + (f.locked || 0), 0) || 0;
+    occupancyData?.byFloor?.reduce((sum, f) => sum + (f.maintenance || 0) + (f.locked || 0), 0) ||
+    0;
 
   const occPieData = occupancyData?.summary
     ? [
-      { name: 'Chỗ trống', value: occupancyData.summary.totalAvailable },
-      { name: 'Đã đặt', value: occupancyData.summary.totalReserved },
-      { name: 'Đang dùng', value: occupancyData.summary.totalOccupied },
-      { name: 'Bảo trì', value: totalMaintenance },
-    ].filter((item) => item.value > 0)
+        { name: 'Chỗ trống', value: occupancyData.summary.totalAvailable },
+        { name: 'Đã đặt', value: occupancyData.summary.totalReserved },
+        { name: 'Đang dùng', value: occupancyData.summary.totalOccupied },
+        { name: 'Bảo trì', value: totalMaintenance },
+      ].filter((item) => item.value > 0)
     : [];
   const totalSlots = occupancyData?.summary?.totalSlots || 0;
 
@@ -115,10 +110,11 @@ export function TabbedInsightWidget({
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-3.5 py-1.5 rounded-md text-[13px] font-medium transition-all ${activeTab === tab.key
+              className={`px-3.5 py-1.5 rounded-md text-[13px] font-medium transition-all ${
+                activeTab === tab.key
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
-                }`}
+              }`}
             >
               {tab.label}
             </button>
@@ -140,7 +136,9 @@ export function TabbedInsightWidget({
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={totalVehicles === 0 ? pieData.map((p) => ({ ...p, value: 1 })) : pieData}
+                      data={
+                        totalVehicles === 0 ? pieData.map((p) => ({ ...p, value: 1 })) : pieData
+                      }
                       cx="50%"
                       cy="50%"
                       innerRadius={55}
@@ -179,7 +177,9 @@ export function TabbedInsightWidget({
                     >
                       {totalVehicles > 0 ? Math.round((item.value / totalVehicles) * 100) : 0}%
                     </div>
-                    <span className="text-[12px] font-medium text-gray-700 truncate">{item.name}</span>
+                    <span className="text-[12px] font-medium text-gray-700 truncate">
+                      {item.name}
+                    </span>
                   </div>
                   <span className="text-[12px] font-bold text-gray-900 tabular-nums">
                     {item.value.toLocaleString()}
