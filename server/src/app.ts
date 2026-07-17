@@ -37,6 +37,9 @@ import vehicleRoutes from './routes/vehicle.routes';
 
 const app = express();
 
+// Trust proxy is required for rate limit to work behind Google Cloud Run
+app.set('trust proxy', 1);
+
 // ─── Security ─────────────────────────────────────────
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
