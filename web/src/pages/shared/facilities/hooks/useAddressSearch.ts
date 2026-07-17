@@ -20,7 +20,7 @@ interface UseAddressSearchReturn {
   /** Current search query */
   query: string;
   /** Update search query (triggers debounced API call) */
-  setQuery: (q: string) => void;
+  setQuery: (q: string, skipSearch?: boolean) => void;
   /** Suggestions from Nominatim */
   suggestions: NominatimResult[];
   /** Whether the API call is in progress */
