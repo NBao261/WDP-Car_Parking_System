@@ -73,7 +73,7 @@ def _load_models():
             lang='en',
             text_det_thresh=0.2,
             text_det_box_thresh=0.3,
-            det_limit_side_len=480,           # giam kich thuoc detection → nhanh hon
+            det_limit_side_len=960,           # tang kich thuoc detection len 960 de OCR toan anh ro hon
         )
         print("[OK] PaddleOCR loaded")
     except Exception as e:
@@ -386,7 +386,7 @@ def is_valid_vn_plate(text: str) -> bool:
 
 # ── YOLO plate detection ──────────────────────────────────────────────────────
 
-def detect_plates(img: np.ndarray, conf_thresh: float = 0.35) -> list:
+def detect_plates(img: np.ndarray, conf_thresh: float = 0.25) -> list:
     """
     Dung YOLO de detect bien so xe.
     Returns: list of (crop_image, yolo_confidence)
