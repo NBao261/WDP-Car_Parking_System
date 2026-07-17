@@ -37,8 +37,6 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/admin/staff', label: 'Nhân Sự', icon: Briefcase, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
   { path: '/admin/customers', label: 'Khách Hàng', icon: Users, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
   { path: '/admin/roles', label: 'Phân Quyền', icon: Shield, roles: [UserRole.ADMIN], category: 'MENU CHÍNH' },
-  { path: '/admin/config', label: 'Cấu Hình Hệ Thống', icon: Settings, roles: [UserRole.ADMIN], category: 'TÙY CHỈNH' },
-  { path: '/admin/logs', label: 'Lịch Sử Hoạt Động', icon: ScrollText, roles: [UserRole.ADMIN], category: 'TÙY CHỈNH' },
 
   // ── Manager ──
   { path: '/manager', label: 'Trang Chủ', icon: LayoutDashboard, roles: [UserRole.MANAGER], category: 'MENU CHÍNH' },
@@ -107,10 +105,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     if (!user) return {};
     const items = NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user.role));
 
-    // Maintain order by using an ordered structure
     const groups: Record<string, NavItem[]> = {
       'MENU CHÍNH': [],
-      'TÙY CHỈNH': [],
     };
 
     items.forEach(item => {
@@ -145,7 +141,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div className="text-xs font-bold text-gray-400 mb-2 px-3 tracking-wider">
                   {category}
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {items.map((item) => (
                     <NavLink
                       key={item.path}
@@ -153,7 +149,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                       end={item.path === '/admin' || item.path === '/manager' || item.path === '/staff'}
                       onClick={onClose}
                       className={({ isActive }) => `
-                        flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 font-medium text-sm
+                        flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 font-medium text-[15px]
                         ${isActive
                           ? 'bg-white text-[#062F28] shadow-sm font-bold'
                           : 'text-gray-500 hover:bg-gray-200/50 hover:text-[#062F28]'
