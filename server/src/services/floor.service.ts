@@ -78,23 +78,16 @@ export class FloorService {
     const addedIds = newIds.filter((vtId) => !oldIds.includes(vtId));
 
     if (removedIds.length > 0) {
-      // Check if there are active slots for the removed vehicle types
-      const activeSlots = await ParkingSlot.countDocuments({
+      // Check if there are any slots for the removed vehicle types
+      const existingSlots = await ParkingSlot.countDocuments({
         floorId: id,
         vehicleTypeId: { $in: removedIds },
-        status: { $in: ['occupied', 'reserved'] },
         isDeleted: false,
       });
 
-      if (activeSlots > 0) {
-        throw new AppError('Không thể gỡ loại xe đang có xe đỗ hoặc đặt chỗ tại tầng này', 400);
+      if (existingSlots > 0) {
+        throw new AppError('Không thể gỡ loại xe đã được phân bổ chỗ đỗ tại tầng này. Vui lòng xoá chỗ đỗ trước.', 400);
       }
-
-      // Soft delete all remaining slots for the removed vehicle types on this floor
-      await ParkingSlot.updateMany(
-        { floorId: id, vehicleTypeId: { $in: removedIds }, isDeleted: false },
-        { $set: { isDeleted: true, status: 'maintenance' } }
-      );
     }
 
     // Cập nhật Floor
@@ -128,23 +121,20 @@ export class FloorService {
   }
 
   static async softDeleteFloor(id: string): Promise<IFloor | null> {
-    // Check if there are active occupied or reserved slots before deleting
-    const activeSlots = await ParkingSlot.countDocuments({
+    // Check if there are any existing slots before deleting
+    const existingSlots = await ParkingSlot.countDocuments({
       floorId: id,
-      status: { $in: ['occupied', 'reserved'] },
+      isDeleted: false,
     });
 
-    if (activeSlots > 0) {
-      throw new AppError('Cannot delete floor with active parking sessions', 400);
+    if (existingSlots > 0) {
+      throw new AppError('Không thể xoá tầng đã được phân bổ chỗ đỗ. Vui lòng xoá các chỗ đỗ thuộc tầng này trước.', 400);
     }
 
     const floor = await Floor.findByIdAndUpdate(id, { isDeleted: true, status: 'inactive' }, { new: true });
     if (!floor) {
       throw new AppError('Floor not found', 404);
     }
-
-    // Cascade delete/deactivate slots
-    await ParkingSlot.updateMany({ floorId: id }, { status: 'maintenance' });
 
     // Two-way sync: xóa floor._id khỏi VehicleType.floors[] cho tất cả vehicleType liên quan
     if (floor.allowedVehicleTypes && floor.allowedVehicleTypes.length > 0) {
