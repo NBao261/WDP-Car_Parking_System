@@ -1,5 +1,16 @@
-import { TrendingUp, CarFront, GaugeCircle, ArrowDownRight, ArrowUpRight, Clock } from 'lucide-react';
-import { TrafficReportData, RevenueReportData, OccupancyReportData } from '../../../../services/report.service';
+import {
+  TrendingUp,
+  CarFront,
+  GaugeCircle,
+  ArrowDownRight,
+  ArrowUpRight,
+  Clock,
+} from 'lucide-react';
+import {
+  TrafficReportData,
+  RevenueReportData,
+  OccupancyReportData,
+} from '../../../../services/report.service';
 
 interface DashboardCardsProps {
   trafficData: TrafficReportData | null;
@@ -41,7 +52,7 @@ export function DashboardCards({
 
   const totalSlots = occupancyData?.summary.totalSlots ?? 0;
   const totalOccupied = occupancyData?.summary.totalOccupied ?? 0;
-  const occupancyRate = occupancyData?.summary.effectiveOccupancyRate ?? 0;
+  const occupancyRate = occupancyData?.summary.overallEffectiveOccupancy ?? 0;
 
   const checkIn = trafficData?.summary.totalCheckIn ?? 0;
   const checkOut = trafficData?.summary.totalCheckOut ?? 0;
@@ -54,7 +65,6 @@ export function DashboardCards({
 
   return (
     <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 xl:gap-4">
-
       {/* ── Card 1: Tổng doanh thu — Hero Green Gradient ── */}
       <div className="col-span-2 xl:col-span-1 relative overflow-hidden bg-gradient-to-br from-[#9ee671] to-[#72d645] rounded-xl p-5 text-black flex flex-col justify-between h-[168px] shadow-sm">
         {/* Decorative SVG waves */}
@@ -68,29 +78,43 @@ export function DashboardCards({
 
         <div className="relative z-10 flex items-center gap-2">
           <TrendingUp size={15} className="text-[#0a1a12]/60" />
-          <span className="text-[13px] font-semibold text-[#0a1a12]/70 uppercase tracking-wide">Tổng doanh thu</span>
+          <span className="text-[13px] font-semibold text-[#0a1a12]/70 uppercase tracking-wide">
+            Tổng doanh thu
+          </span>
         </div>
 
         <div className="relative z-10">
           {loading ? (
             <Skeleton className="h-10 w-32 mb-2" />
           ) : (
-            <div className={`font-bold leading-none tracking-tight tabular-nums text-[#0a1a12] ${getRevenueFontSize(totalRevenue)}`}>
+            <div
+              className={`font-bold leading-none tracking-tight tabular-nums text-[#0a1a12] ${getRevenueFontSize(totalRevenue)}`}
+            >
               {totalRevenue.toLocaleString('vi-VN')}
-              {totalRevenue > 0 && <span className="text-[18px] font-medium opacity-60 ml-1">đ</span>}
+              {totalRevenue > 0 && (
+                <span className="text-[18px] font-medium opacity-60 ml-1">đ</span>
+              )}
             </div>
           )}
           <div className="mt-3 grid grid-cols-2 gap-2">
             <div>
               <p className="text-[10px] text-[#0a1a12]/50 font-medium">TB/ngày</p>
-              {loading ? <Skeleton className="h-4 w-12 mt-0.5" /> : (
-                <p className="text-[13px] font-bold text-[#0a1a12]/80 tabular-nums">{formatCompactVND(avgRevenue)}</p>
+              {loading ? (
+                <Skeleton className="h-4 w-12 mt-0.5" />
+              ) : (
+                <p className="text-[13px] font-bold text-[#0a1a12]/80 tabular-nums">
+                  {formatCompactVND(avgRevenue)}
+                </p>
               )}
             </div>
             <div>
               <p className="text-[10px] text-[#0a1a12]/50 font-medium">Giao dịch</p>
-              {loading ? <Skeleton className="h-4 w-10 mt-0.5" /> : (
-                <p className="text-[13px] font-bold text-[#0a1a12]/80 tabular-nums">{totalTransactions.toLocaleString('vi-VN')}</p>
+              {loading ? (
+                <Skeleton className="h-4 w-10 mt-0.5" />
+              ) : (
+                <p className="text-[13px] font-bold text-[#0a1a12]/80 tabular-nums">
+                  {totalTransactions.toLocaleString('vi-VN')}
+                </p>
               )}
             </div>
           </div>
@@ -167,12 +191,16 @@ export function DashboardCards({
             {loading ? (
               <Skeleton className="h-7 w-24" />
             ) : (
-              <div className="text-[24px] font-bold text-[#0a2012] tracking-tight truncate">{occupancyStatus}</div>
+              <div className="text-[24px] font-bold text-[#0a2012] tracking-tight truncate">
+                {occupancyStatus}
+              </div>
             )}
             {loading ? (
               <Skeleton className="h-7 w-12" />
             ) : (
-              <div className="text-[26px] font-semibold text-gray-700 tabular-nums">{occupancyRate}%</div>
+              <div className="text-[26px] font-semibold text-gray-700 tabular-nums">
+                {occupancyRate}%
+              </div>
             )}
           </div>
           {/* Progress bar — Manager style */}
@@ -183,12 +211,15 @@ export function DashboardCards({
             />
           </div>
           <div className="flex justify-between mt-1.5">
-            <span className="text-[10px] text-gray-400">{totalOccupied.toLocaleString('vi-VN')} xe</span>
-            <span className="text-[10px] text-gray-400">/ {totalSlots.toLocaleString('vi-VN')} chỗ</span>
+            <span className="text-[10px] text-gray-400">
+              {totalOccupied.toLocaleString('vi-VN')} xe
+            </span>
+            <span className="text-[10px] text-gray-400">
+              / {totalSlots.toLocaleString('vi-VN')} chỗ
+            </span>
           </div>
         </div>
       </div>
-
     </div>
   );
 }
