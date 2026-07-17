@@ -236,9 +236,9 @@ export class ReservationService {
    */
   static async autoExpireReservations(): Promise<number> {
     const now = new Date();
-    const graceMs = 30 * 60 * 1000; // 30 phút
+    const graceMs = 15 * 60 * 1000; // 15 phút
 
-    // Tìm reservation đã quá hạn 30 phút mà chưa đến
+    // Tìm reservation đã quá hạn 15 phút mà chưa đến
     const expiredReservations = await Reservation.find({
       status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
       startTime: { $lte: new Date(now.getTime() - graceMs) },
