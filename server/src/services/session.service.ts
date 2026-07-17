@@ -159,10 +159,11 @@ export class SessionService {
       // Validate thời gian check-in: chỉ cho phép trong khoảng 15 phút trước startTime → endTime
       const now = new Date();
       const earlyWindow = 15 * 60 * 1000; // 15 phút
-      const earliestCheckIn = new Date(matchedReservation.startTime.getTime() - earlyWindow);
+      const resStartTime = new Date(matchedReservation.startTime);
+      const earliestCheckIn = new Date(resStartTime.getTime() - earlyWindow);
 
       if (now < earliestCheckIn) {
-        const startTimeStr = matchedReservation.startTime.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+        const startTimeStr = resStartTime.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
         const minutesEarly = Math.ceil((earliestCheckIn.getTime() - now.getTime()) / 60000);
         throw new AppError(
           `Chưa đến giờ check-in. Giờ đặt chỗ là ${startTimeStr}. Bạn chỉ được vào sớm tối đa 15 phút (vui lòng chờ thêm ${minutesEarly} phút).`,
@@ -170,7 +171,7 @@ export class SessionService {
         );
       }
 
-      const expirationTime = new Date(matchedReservation.startTime.getTime() + earlyWindow); // Hết hạn sau 15 phút
+      const expirationTime = new Date(resStartTime.getTime() + earlyWindow); // Hết hạn sau 15 phút
 
       if (now > expirationTime) {
         throw new AppError('Đặt chỗ đã hết hạn. Vui lòng tạo đặt chỗ mới hoặc check-in walk-in.', 400);
@@ -425,8 +426,7 @@ export class SessionService {
       try {
         const saveOps: any[] = [session.save()];
         if (matchedReservation) {
-          matchedReservation.status = ReservationStatus.USED;
-          saveOps.push(matchedReservation.save());
+          saveOps.push(Reservation.updateOne({ _id: matchedReservation._id }, { status: ReservationStatus.USED }));
         }
         await Promise.all(saveOps);
       } catch (err) {
