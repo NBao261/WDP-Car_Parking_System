@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, ShieldAlert, X } from 'lucide-react';
 import { SortButton, FilterDropdown } from './ExceptionsFilters';
+import { PageLoader } from '../../../../components/PageLoader';
 
 const STATUS_BADGE: Record<string, { bg: string; text: string; border: string; label: string }> = {
   RESOLVED: {
@@ -54,8 +55,12 @@ export function ExceptionsTable({
   itemsPerPage,
 }: any) {
   return (
-    <div className="overflow-x-auto flex-1">
-      <table className="w-full text-sm text-left table-fixed whitespace-nowrap">
+    <>
+      {isLoading ? (
+        <PageLoader />
+      ) : (
+      <div className="overflow-x-auto flex-1">
+        <table className="w-full text-sm text-left table-fixed whitespace-nowrap">
         <thead className="sticky top-0 bg-white z-10">
           <tr className="bg-[#f5f5f5] border-b border-[#e8e9e8] text-left">
             <th className="px-4 py-3 text-[#6b6b6b] text-[11px] uppercase font-semibold w-[50px] text-center align-middle">
@@ -131,16 +136,7 @@ export function ExceptionsTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50 relative">
-          {isLoading ? (
-            <tr>
-              <td colSpan={9} className="px-6 py-12 text-center">
-                <div className="flex items-center justify-center gap-2 text-[#6b6b6b]">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Đang tải dữ liệu...</span>
-                </div>
-              </td>
-            </tr>
-          ) : exceptionsList.length === 0 ? (
+          {exceptionsList.length === 0 ? (
             <tr>
               <td colSpan={9} className="px-6 py-16 text-center">
                 <div className="flex flex-col items-center justify-center text-[#6b6b6b]">
@@ -218,5 +214,7 @@ export function ExceptionsTable({
         </tbody>
       </table>
     </div>
+    )}
+    </>
   );
 }

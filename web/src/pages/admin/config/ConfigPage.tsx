@@ -16,6 +16,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { configService, SystemConfig } from '../../../services/config.service';
+import { PageLoader } from '../../../components/PageLoader';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -251,26 +252,8 @@ export default function ConfigPage() {
 
       {/* Config groups */}
       {isLoading ? (
-        <motion.div variants={itemVariants} className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 animate-pulse"
-            >
-              <div className="h-4 bg-gray-100 rounded w-1/4" />
-              <div className="space-y-3">
-                {[1, 2, 3].map((j) => (
-                  <div key={j} className="flex justify-between items-center py-3">
-                    <div className="space-y-1 flex-1">
-                      <div className="h-3.5 bg-gray-100 rounded w-1/3" />
-                      <div className="h-3 bg-gray-100 rounded w-1/2" />
-                    </div>
-                    <div className="h-8 w-32 bg-gray-100 rounded-lg ml-4" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+        <motion.div variants={itemVariants}>
+          <PageLoader />
         </motion.div>
       ) : configs.length === 0 ? (
         <motion.div

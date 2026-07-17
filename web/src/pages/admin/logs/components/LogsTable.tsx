@@ -7,9 +7,9 @@ import {
   ChevronUp,
   FileJson,
   Package,
-  User,
-} from 'lucide-react';
+import { User } from 'lucide-react';
 import { AuditLog } from '../../../../services/config.service';
+import { PageLoader } from '../../../../components/PageLoader';
 
 interface LogsTableProps {
   logs: AuditLog[];
@@ -86,42 +86,7 @@ export function LogsTable({ logs, isLoading, indexOffset }: LogsTableProps) {
 
   // ── Loading skeleton ──
   if (isLoading) {
-    return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-[#9FE870] text-[#062F28] text-[13px] border-b border-[#9FE870] font-semibold uppercase tracking-wider">
-            <tr>
-              <th className="px-6 py-4 w-[5%] text-center rounded-tl-2xl">STT</th>
-              <th className="px-6 py-4 w-[20%]">Thời gian</th>
-              <th className="px-6 py-4 w-[25%]">Người thực hiện</th>
-              <th className="px-6 py-4 w-[15%]">Hành động</th>
-              <th className="px-6 py-4 w-[25%]">Đối tượng</th>
-              <th className="px-6 py-4 text-right rounded-tr-2xl w-[10%]">Chi tiết</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {[...Array(8)].map((_, i) => (
-              <tr key={i} className="animate-pulse">
-                <td className="px-6 py-4 text-center"><div className="h-4 bg-gray-100 rounded mx-auto w-5" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded w-36" /></td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 shrink-0" />
-                    <div className="space-y-1.5">
-                      <div className="h-3.5 bg-gray-100 rounded w-28" />
-                      <div className="h-3 bg-gray-100 rounded w-16" />
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4"><div className="h-6 bg-gray-100 rounded-lg w-20" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded w-32" /></td>
-                <td className="px-6 py-4 text-right"><div className="h-8 w-8 bg-gray-100 rounded-xl ml-auto" /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   // ── Empty state ──

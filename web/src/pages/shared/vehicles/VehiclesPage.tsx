@@ -21,6 +21,7 @@ import { facilityService, Facility } from '../../../services/facility.service';
 import { VehicleFormModal } from './components/VehicleFormModal';
 import { VehicleRow } from './components/VehicleRow';
 import { VehicleDetailModal } from './components/VehicleDetailModal';
+import { PageLoader } from '../../../components/PageLoader';
 import React from 'react';
 
 
@@ -222,6 +223,11 @@ export default function VehiclesPage() {
       </motion.div>
 
       {/* Table */}
+      {isLoading ? (
+        <motion.div variants={itemVariants}>
+          <PageLoader />
+        </motion.div>
+      ) : (
       <motion.div
         variants={itemVariants}
         className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col"
@@ -283,14 +289,7 @@ export default function VehiclesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-14 text-center text-gray-400">
-                    <div className="w-6 h-6 border-2 border-[#9FE870] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                    Đang tải...
-                  </td>
-                </tr>
-              ) : paginatedVehicles.length === 0 ? (
+              {paginatedVehicles.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-14 text-center text-gray-400">
                     <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -411,6 +410,7 @@ export default function VehiclesPage() {
           </div>
         )}
       </motion.div>
+      )}
 
       <VehicleFormModal
         isOpen={isModalOpen}

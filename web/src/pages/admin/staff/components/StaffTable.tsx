@@ -18,6 +18,7 @@ import { ConfirmModal } from '../../../../components/ConfirmModal';
 import { RoleIcon } from '../../../../components/ui/RoleIcon';
 import { StatusBadge } from '../../../../components/ui/StatusBadge';
 import { useUserActions } from '../hooks/useUserActions';
+import { PageLoader } from '../../../../components/PageLoader';
 
 interface StaffTableProps {
   users: UserType[];
@@ -83,6 +84,9 @@ export function StaffTable({
 
   return (
     <>
+      {isLoading ? (
+        <PageLoader />
+      ) : (
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-visible relative">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
@@ -135,14 +139,7 @@ export function StaffTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
-                    <div className="w-6 h-6 border-2 border-[#9FE870] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                    Đang tải dữ liệu...
-                  </td>
-                </tr>
-              ) : users.length === 0 ? (
+              {users.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
                     <div className="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -300,6 +297,7 @@ export function StaffTable({
           </table>
         </div>
       </div>
+      )}
 
       <ConfirmModal
         isOpen={confirmState.isOpen}
