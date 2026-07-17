@@ -1,5 +1,6 @@
 import { VehicleType, IVehicleType } from '../models/vehicleType.model';
 import { Floor } from '../models/floor.model';
+import { ParkingSlot } from '../models/parkingSlot.model';
 import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
 import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { AppError } from '../middlewares/error.middleware';
@@ -88,6 +89,26 @@ export class VehicleTypeService {
     // Kiểm tra tên trùng (bỏ dấu), loại trừ chính nó
     if (data.name && data.name !== oldVehicleType.name) {
       await this.checkDuplicateName(data.name, id);
+    }
+
+    // Validation for floors removal
+    if (data.floors) {
+      const oldFloorIds = oldVehicleType.floors.map((f: any) => f.toString());
+      const newFloorIds = data.floors.map((f: any) => f.toString());
+      const removedFloors = oldFloorIds.filter(f => !newFloorIds.includes(f));
+
+      if (removedFloors.length > 0) {
+        // Check if there are any slots for this vehicle type on the removed floors
+        const existingSlots = await ParkingSlot.countDocuments({
+          floorId: { $in: removedFloors },
+          vehicleTypeId: id,
+          isDeleted: false,
+        });
+
+        if (existingSlots > 0) {
+          throw new AppError('Không thể gỡ loại xe khỏi tầng đã được phân bổ chỗ đỗ. Vui lòng xoá chỗ đỗ trước.', 400);
+        }
+      }
     }
 
     const vehicleType = await VehicleType.findByIdAndUpdate(id, data, { new: true, runValidators: true });
