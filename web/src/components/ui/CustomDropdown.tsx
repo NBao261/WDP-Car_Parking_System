@@ -22,6 +22,7 @@ interface CustomDropdownProps {
   options: Option[];
   width?: number | string;
   icon?: React.ElementType;
+  placeholder?: string;
 }
 
 export function CustomDropdown({ value, onChange, options, width = 180, icon: Icon }: CustomDropdownProps) {
