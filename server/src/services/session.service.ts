@@ -150,7 +150,7 @@ export class SessionService {
 
     // 0. BR-6.6: Nếu có reservationCode → auto-fill facilityId, vehicleTypeId, licensePlate từ reservation
     if (data.reservationCode) {
-      matchedReservation = await Reservation.findOne({}).lean();
+      matchedReservation = await Reservation.findOne({ code: data.reservationCode }).lean();
 
       if (!matchedReservation) {
         throw new AppError('Mã đặt chỗ không tồn tại hoặc đã được sử dụng/hủy', 404);
