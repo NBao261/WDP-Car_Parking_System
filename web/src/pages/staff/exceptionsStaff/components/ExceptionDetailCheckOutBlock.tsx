@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Loader2, CheckCircle, RefreshCw, X, Camera } from 'lucide-react';
 import { paymentService } from '../../../../services/payment.service';
 import { sessionService } from '../../../../services/session.service';
+import { getImageUrl } from '../../../../services/api';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { ExceptionData } from './ExceptionsList';
@@ -194,7 +195,7 @@ export function ExceptionDetailCheckOutBlock({
             </button>
           ) : (
             <div className="relative rounded-xl overflow-hidden border border-[#e8e9e8]">
-              <img src={checkOutImageUrl} alt="Checkout" className="w-full h-32 object-cover" />
+              <img src={getImageUrl(checkOutImageUrl)} alt="Checkout" className="w-full h-32 object-cover" />
               <button
                 onClick={() => setCheckOutImageUrl('')}
                 className="absolute top-2 right-2 w-7 h-7 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center backdrop-blur-sm transition-colors"

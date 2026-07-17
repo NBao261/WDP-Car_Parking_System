@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Loader2, Camera, Receipt, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { apiClient } from '../../../../services/api';
+import { apiClient, getImageUrl } from '../../../../services/api';
 import { sessionService } from '../../../../services/session.service';
 import { paymentService } from '../../../../services/payment.service';
 import { formatCurrency } from '../../../../utils/format';
@@ -235,7 +235,7 @@ export function DirectCheckoutModal({
                 {checkoutImage ? (
                   <div className="relative aspect-video rounded-xl overflow-hidden border-2 border-gray-200 group">
                     <img
-                      src={checkoutImage}
+                      src={getImageUrl(checkoutImage)}
                       alt="Checkout"
                       className="w-full h-full object-cover"
                     />

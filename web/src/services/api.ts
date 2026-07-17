@@ -3,6 +3,13 @@ import { useAuthStore } from '../store/useAuthStore';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
+export const getImageUrl = (path?: string | null) => {
+  if (!path) return '';
+  if (path.startsWith('http') || path.startsWith('blob:')) return path;
+  const baseUrl = API_BASE_URL.replace('/api/v1', '');
+  return `${baseUrl}${path}`;
+};
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 60000,
