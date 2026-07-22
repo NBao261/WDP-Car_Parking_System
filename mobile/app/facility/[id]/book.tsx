@@ -161,8 +161,8 @@ export default function BookingScreen() {
       Alert.alert("Thiếu thông tin", "Vui lòng chọn xe để đặt chỗ.");
       return;
     }
-    if (startTime.getTime() - Date.now() < 30 * 60 * 1000) {
-      Alert.alert("Thời gian không hợp lệ", "Phải đặt trước ít nhất 30 phút.");
+    if (startTime.getTime() - Date.now() < 5 * 60 * 1000) {
+      Alert.alert("Thời gian không hợp lệ", "Phải đặt trước ít nhất 5 phút.");
       return;
     }
 
